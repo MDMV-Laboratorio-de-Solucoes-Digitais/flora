@@ -146,3 +146,9 @@ $RECYCLE.BIN/
 *.swp
 *.swo
 *~
+
+# Agentic Tools
+.agents
+.codegraph
+.omo
+.opencode
