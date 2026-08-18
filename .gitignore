@@ -18,6 +18,7 @@
 # -------------------------------------------------------------------------
 # Build artifacts
 target/
+/target
 **/target/
 !src-tauri/target/
 
