@@ -138,9 +138,10 @@ $RECYCLE.BIN/
 *.iml
 *.iws
 
-# Zed & Fleet
+# Others
 .zed/
 .fleet/
+.helix/
 
 # Vim / Emacs
 *.swp
@@ -149,6 +150,7 @@ $RECYCLE.BIN/
 
 # Agentic Tools
 .agents
+.claude
 .codegraph
 .omo
 .opencode
