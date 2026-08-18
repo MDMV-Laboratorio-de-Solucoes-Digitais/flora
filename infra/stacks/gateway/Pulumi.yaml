@@ -1,3 +1,0 @@
-name: gateway 
-runtime: nodejs
-description: Gateway Application Load Balancer

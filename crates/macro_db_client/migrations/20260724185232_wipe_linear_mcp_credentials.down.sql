@@ -1,2 +1,0 @@
--- Irreversible: the deleted rows (and their encrypted credentials) cannot
--- be restored. Reverting this migration is a no-op.

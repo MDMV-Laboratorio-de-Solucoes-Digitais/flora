@@ -1,5 +1,0 @@
-[install]
-linker = "hoisted"
-
-[loader]
-".md" = "text"

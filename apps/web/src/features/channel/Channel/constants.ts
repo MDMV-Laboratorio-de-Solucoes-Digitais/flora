@@ -1,1 +1,0 @@
-export const NEAR_BOTTOM_THRESHOLD = 50;

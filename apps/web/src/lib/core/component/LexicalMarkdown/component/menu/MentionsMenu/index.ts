@@ -1,1 +1,0 @@
-export { MentionsMenu } from './MentionsMenu';

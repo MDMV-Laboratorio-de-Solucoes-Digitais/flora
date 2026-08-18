@@ -1,1 +1,0 @@
-export { SkillsMenu } from './SkillsMenu';

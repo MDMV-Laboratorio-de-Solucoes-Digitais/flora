@@ -1,2 +1,0 @@
-prepare:
-    sqlx prepare -- --all-features

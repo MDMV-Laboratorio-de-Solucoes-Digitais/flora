@@ -1,6 +1,0 @@
-{
-  "name": "app-route-lambda",
-  "module": "index.mjs",
-  "type": "module",
-  "private": true
-}

@@ -1,3 +1,0 @@
-name: email-suppression
-runtime: nodejs
-description:  Macro Email Suppression Lambda

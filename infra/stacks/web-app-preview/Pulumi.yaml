@@ -1,3 +1,0 @@
-name: web-app-preview
-runtime: nodejs
-description: Preview deployment infrastructure for web app (S3 + CloudFront)

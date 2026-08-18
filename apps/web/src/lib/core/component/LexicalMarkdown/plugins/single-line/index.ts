@@ -1,1 +1,0 @@
-export { singleLinePlugin } from './singleLinePlugin';

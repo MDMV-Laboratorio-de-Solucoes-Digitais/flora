@@ -1,2 +1,0 @@
-test $FOO="hello" $BAR="world":
-    cargo test --all-features

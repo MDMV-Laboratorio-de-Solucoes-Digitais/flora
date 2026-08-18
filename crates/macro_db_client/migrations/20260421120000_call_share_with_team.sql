@@ -1,2 +1,0 @@
-ALTER TABLE calls
-    ADD COLUMN share_with_team BOOLEAN NOT NULL DEFAULT TRUE;

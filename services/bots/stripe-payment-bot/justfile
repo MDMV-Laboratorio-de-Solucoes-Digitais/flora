@@ -1,5 +1,0 @@
-dev:
-  bunx wrangler dev
-
-check:
-  bunx tsc --noEmit --project tsconfig.json
