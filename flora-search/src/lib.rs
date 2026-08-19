@@ -1,8 +1,12 @@
 //! Meilisearch integration for global search across organization entities.
-
+#![allow(
+    clippy::multiple_crate_versions,
+    reason = "transitive dependency overrides"
+)]
 use flora_core::{Error, Result};
 use meilisearch_sdk::{client::Client, search::SearchResults};
 use serde_json::Value;
+use std::fmt;
 use uuid::Uuid;
 
 /// Search service for global search across entities in an organization.
@@ -11,15 +15,28 @@ pub struct SearchService {
     index_template: String,
 }
 
+impl fmt::Debug for SearchService {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SearchService")
+            .field("client", &"<Client>")
+            .field("index_template", &self.index_template)
+            .finish()
+    }
+}
+
 impl SearchService {
-    /// Creates a new SearchService.
+    /// Creates a new `SearchService`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the client fails to connect.
     pub fn new(url: &str, api_key: Option<&str>, index_template: &str) -> Result<Self> {
-        let client = if let Some(key) = api_key {
-            Client::new(url, Some(key))
-        } else {
-            Client::new(url, None::<&str>)
-        }
-        .map_err(|e| Error::Search(e.to_string()))?;
+        let client = api_key
+            .map_or_else(
+                || Client::new(url, None::<&str>),
+                |key| Client::new(url, Some(key)),
+            )
+            .map_err(|e| Error::Search(e.to_string()))?;
 
         Ok(Self {
             client,
@@ -27,11 +44,24 @@ impl SearchService {
         })
     }
 
+    /// Suppresses the false-positive nursery lint: `{org_id}` is a literal search pattern
+    /// for `str::replace`, not a format argument.
+    #[allow(
+        clippy::allow_attributes,
+        clippy::allow_attributes_without_reason,
+        clippy::literal_string_with_formatting_args,
+        reason = "The '{org_id}' argument is a literal search-and-replace pattern for str::replace(), \
+not a formatting argument. This is a false positive from the nursery lint."
+    )]
     fn index_name(&self, org_id: &Uuid) -> String {
         self.index_template.replace("{org_id}", &org_id.to_string())
     }
 
     /// Indexes a message for full-text search.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the index fails to add the document.
     pub async fn index_message(
         &self,
         org_id: &Uuid,
@@ -46,7 +76,7 @@ impl SearchService {
             "sender_id": message.sender_id.to_string(),
             "created_at": message.created_at.to_rfc3339(),
         });
-        index
+        let _task = index
             .add_documents(&[doc], Some("id"))
             .await
             .map_err(|e| Error::Search(e.to_string()))?;
@@ -54,6 +84,10 @@ impl SearchService {
     }
 
     /// Searches for documents matching a query within an organization.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the search fails.
     pub async fn search(
         &self,
         org_id: &Uuid,

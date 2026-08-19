@@ -9,11 +9,13 @@ use crate::models::Role;
 use crate::traits::RoleRepository;
 
 /// `PostgreSQL` implementation of the `RoleRepository` trait.
+#[derive(Debug)]
 pub struct PgRoleRepository {
     pool: PgPool,
 }
 
 impl PgRoleRepository {
+    /// Creates a new `PgRoleRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }

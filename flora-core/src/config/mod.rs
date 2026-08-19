@@ -17,16 +17,21 @@ use serde::Deserialize;
 /// Root configuration for Flora.
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct Config {
+    /// Application-level settings.
     pub app: app::AppConfig,
+    /// Database connection settings.
     pub database: database::DatabaseConfig,
+    /// OIDC provider configuration.
     pub oidc: oidc::OidcConfig,
+    /// Storage backend configuration.
     pub storage: storage::StorageConfig,
+    /// Search engine configuration.
     pub search: search::SearchConfig,
+    /// Messaging service configuration.
     pub messaging: messaging::MessagingConfig,
+    /// Notification delivery configuration.
     pub notifications: notifications::NotificationsConfig,
 }
-
-
 
 impl Config {
     /// Load configuration from environment variables and config files.
@@ -34,7 +39,10 @@ impl Config {
     /// # Errors
     ///
     /// Returns an error if configuration values are missing or invalid.
-    #[expect(clippy::result_large_err)]
+    #[expect(
+        clippy::result_large_err,
+        reason = "Config loading is a top-level initialization; returning a large error enum is appropriate here."
+    )]
     pub fn load() -> figment::Result<Self> {
         let figment = Figment::new().merge(figment::providers::Env::prefixed("FLORA_"));
 

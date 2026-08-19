@@ -9,11 +9,13 @@ use crate::models::{Organization, Pagination, UpdateOrganizationInput};
 use crate::traits::OrganizationRepository;
 
 /// `PostgreSQL` implementation of the `OrganizationRepository` trait.
+#[derive(Debug)]
 pub struct PgOrganizationRepository {
     pool: PgPool,
 }
 
 impl PgOrganizationRepository {
+    /// Creates a new `PgOrganizationRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }

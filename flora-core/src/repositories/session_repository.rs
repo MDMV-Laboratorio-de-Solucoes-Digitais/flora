@@ -9,11 +9,13 @@ use crate::models::Session;
 use crate::traits::SessionRepository;
 
 /// `PostgreSQL` implementation of the `SessionRepository` trait.
+#[derive(Debug)]
 pub struct PgSessionRepository {
     pool: PgPool,
 }
 
 impl PgSessionRepository {
+    /// Creates a new `PgSessionRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -113,7 +115,7 @@ impl SessionRepository for PgSessionRepository {
     }
 
     async fn revoke_all_for_user(&self, user_id: Uuid) -> Result<()> {
-        sqlx::query("UPDATE sessions SET is_active = false WHERE user_id = $1")
+        let _ = sqlx::query("UPDATE sessions SET is_active = false WHERE user_id = $1")
             .bind(user_id)
             .execute(&self.pool)
             .await
@@ -126,6 +128,7 @@ impl SessionRepository for PgSessionRepository {
             .execute(&self.pool)
             .await
             .map_err(Error::from_sqlx)?;
-        Ok(usize::try_from(result.rows_affected()).unwrap_or_else(|_| usize::try_from(result.rows_affected()).unwrap_or(0)))
+        Ok(usize::try_from(result.rows_affected())
+            .unwrap_or_else(|_| usize::try_from(result.rows_affected()).unwrap_or(0)))
     }
 }

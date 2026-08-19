@@ -7,14 +7,18 @@ use uuid::Uuid;
 /// Organization context extracted from the session.
 #[derive(Clone, Debug)]
 pub struct OrgContext {
+    /// The organization the authenticated user belongs to.
     pub organization_id: Uuid,
+    /// The active workspace within the organization (None if not yet selected).
     pub workspace_id: Option<Uuid>,
 }
 
 /// User identity extracted from JWT/session.
 #[derive(Clone, Debug)]
 pub struct UserContext {
+    /// The unique user identifier.
     pub user_id: Uuid,
+    /// The user's email address.
     pub email: String,
 }
 

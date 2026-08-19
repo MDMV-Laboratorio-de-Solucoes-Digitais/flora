@@ -9,11 +9,13 @@ use crate::models::{Pagination, Task, TaskStatus};
 use crate::traits::TaskRepository;
 
 /// `PostgreSQL` implementation of the `TaskRepository` trait.
+#[derive(Debug)]
 pub struct PgTaskRepository {
     pool: PgPool,
 }
 
 impl PgTaskRepository {
+    /// Creates a new `PgTaskRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -149,7 +151,7 @@ impl TaskRepository for PgTaskRepository {
         .bind(task.assignee_id)
         .bind(&task.title)
         .bind(&task.description)
-        .bind(task.status.to_string())
+        .bind(task.status)
         .fetch_one(&self.pool)
         .await
         .map_err(Error::from_sqlx)?;
@@ -172,7 +174,7 @@ impl TaskRepository for PgTaskRepository {
         .bind(task.assignee_id)
         .bind(&task.title)
         .bind(&task.description)
-        .bind(task.status.to_string())
+        .bind(task.status)
         .fetch_optional(&self.pool)
         .await
         .map_err(Error::from_sqlx)?

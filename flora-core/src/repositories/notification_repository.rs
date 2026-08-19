@@ -10,11 +10,13 @@ use crate::models::{Notification, Pagination};
 use crate::traits::NotificationRepository;
 
 /// `PostgreSQL` implementation of the `NotificationRepository` trait.
+#[derive(Debug)]
 pub struct PgNotificationRepository {
     pool: PgPool,
 }
 
 impl PgNotificationRepository {
+    /// Creates a new `PgNotificationRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -109,7 +111,7 @@ impl NotificationRepository for PgNotificationRepository {
     }
 
     async fn mark_all_as_read(&self, user_id: Uuid) -> Result<()> {
-        sqlx::query("UPDATE notifications SET is_read = true WHERE user_id = $1")
+        let _ = sqlx::query("UPDATE notifications SET is_read = true WHERE user_id = $1")
             .bind(user_id)
             .execute(&self.pool)
             .await
@@ -123,6 +125,7 @@ impl NotificationRepository for PgNotificationRepository {
             .execute(&self.pool)
             .await
             .map_err(Error::from_sqlx)?;
-        Ok(usize::try_from(result.rows_affected()).unwrap_or_else(|_| usize::try_from(result.rows_affected()).unwrap_or(0)))
+        Ok(usize::try_from(result.rows_affected())
+            .unwrap_or_else(|_| usize::try_from(result.rows_affected()).unwrap_or(0)))
     }
 }

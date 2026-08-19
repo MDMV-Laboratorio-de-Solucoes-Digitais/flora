@@ -9,11 +9,13 @@ use crate::models::Membership;
 use crate::traits::MembershipRepository;
 
 /// `PostgreSQL` implementation of the `MembershipRepository` trait.
+#[derive(Debug)]
 pub struct PgMembershipRepository {
     pool: PgPool,
 }
 
 impl PgMembershipRepository {
+    /// Creates a new `PgMembershipRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }

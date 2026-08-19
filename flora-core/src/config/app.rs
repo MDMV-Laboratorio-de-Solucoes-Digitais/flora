@@ -2,6 +2,7 @@
 
 use serde::Deserialize;
 
+/// Configuration for application-level settings.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AppConfig {
     /// Application name (default: "Flora Workspace")

@@ -10,7 +10,9 @@ use uuid::Uuid;
 /// Sessions are short-lived and tied to a specific organization context.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Session {
+    /// Unique identifier.
     pub id: Uuid,
+    /// The user this session belongs to.
     pub user_id: Uuid,
     /// The organization this session is scoped to.
     pub organization_id: Uuid,
@@ -28,7 +30,9 @@ pub struct Session {
     pub last_activity_at: DateTime<Utc>,
     /// Whether the session is active (not revoked).
     pub is_active: bool,
+    /// When the session was created.
     pub created_at: DateTime<Utc>,
+    /// When the session was last updated.
     pub updated_at: DateTime<Utc>,
 }
 

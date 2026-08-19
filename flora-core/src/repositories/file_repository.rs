@@ -9,11 +9,13 @@ use crate::models::{File, Pagination};
 use crate::traits::FileRepository;
 
 /// `PostgreSQL` implementation of the `FileRepository` trait.
+#[derive(Debug)]
 pub struct PgFileRepository {
     pool: PgPool,
 }
 
 impl PgFileRepository {
+    /// Creates a new `PgFileRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }

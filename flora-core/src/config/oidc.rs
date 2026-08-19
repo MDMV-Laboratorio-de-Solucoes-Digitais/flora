@@ -2,6 +2,7 @@
 
 use serde::Deserialize;
 
+/// Configuration for OIDC / Zitadel authentication.
 #[derive(Debug, Clone, Deserialize)]
 pub struct OidcConfig {
     /// Zitadel issuer URL (e.g., <https://zitadel.example.com>).

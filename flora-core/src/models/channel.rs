@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow};
+use sqlx::FromRow;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -11,15 +11,21 @@ use validator::Validate;
 /// Channels can be public (visible to all org members) or private.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Channel {
+    /// Unique identifier.
     pub id: Uuid,
+    /// The workspace this channel belongs to.
     pub workspace_id: Uuid,
     /// Denormalized for fast tenant isolation checks.
     pub organization_id: Uuid,
+    /// Display name of the channel.
     pub name: String,
     #[serde(rename = "type")]
     #[sqlx(rename = "type")]
+    /// Type of channel (public or private).
     pub channel_type: ChannelType,
+    /// When the channel was created.
     pub created_at: DateTime<Utc>,
+    /// When the channel was last updated.
     pub updated_at: DateTime<Utc>,
 }
 
@@ -49,8 +55,11 @@ impl Channel {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct CreateChannelInput {
     #[validate(length(min = 1, max = 255, message = "name must be 1-255 characters"))]
+    /// Channel name.
     pub name: String,
+    /// Type of channel (public or private).
     pub channel_type: ChannelType,
+    /// Optional description.
     #[validate(length(max = 255))]
     pub description: Option<String>,
 }
@@ -59,8 +68,11 @@ pub struct CreateChannelInput {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct UpdateChannelInput {
     #[validate(length(min = 1, max = 255))]
+    /// New name for the channel.
     pub name: Option<String>,
+    /// New description.
     pub description: Option<String>,
+    /// New channel type.
     pub channel_type: Option<ChannelType>,
 }
 
@@ -68,7 +80,9 @@ pub struct UpdateChannelInput {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "VARCHAR", rename_all = "PascalCase")]
 pub enum ChannelType {
+    /// Visible to all members of the organization.
     Public,
+    /// Only visible to explicitly invited members.
     Private,
 }
 
@@ -85,7 +99,7 @@ impl std::fmt::Display for ChannelType {
 impl std::str::FromStr for ChannelType {
     type Err = String;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "public" => Ok(Self::Public),
             "private" => Ok(Self::Private),

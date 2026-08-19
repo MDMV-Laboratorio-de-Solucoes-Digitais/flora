@@ -1,12 +1,14 @@
 //! Storage provider trait for abstract file storage.
+//!
+//! This allows swapping between `LocalFileSystem`, S3-compatible, etc.
+#![allow(
+    async_fn_in_trait,
+    reason = "Async trait methods are needed for I/O operations across different storage backends"
+)]
 
 use crate::error::Result;
-use async_trait::async_trait;
 
 /// Trait for abstract file storage operations.
-///
-/// This allows swapping between `LocalFileSystem`, S3-compatible, etc.
-#[async_trait]
 pub trait StorageProvider: Send + Sync {
     /// Store data at the given path.
     async fn put(&self, path: &str, data: &[u8]) -> Result<()>;
@@ -21,6 +23,8 @@ pub trait StorageProvider: Send + Sync {
     async fn exists(&self, path: &str) -> Result<bool>;
 
     /// Generate a presigned URL for direct upload/download (optional).
+    ///
+    /// Returns `Ok(None)` if not supported by the provider.
     async fn presigned_url(&self, _path: &str, _expiry_secs: u64) -> Result<Option<String>> {
         Ok(None)
     }

@@ -16,7 +16,7 @@ pub struct User {
     pub id: Uuid,
     /// Unique email address.
     pub email: String,
-    /// OIDC subject identifier (e.g., from Zitadel).
+    /// OIDC subject identifier (e. g., from Zitadel).
     pub oidc_subject: Option<String>,
     /// Display name (from OIDC profile or manual).
     pub display_name: String,
@@ -26,7 +26,9 @@ pub struct User {
     pub profile: serde_json::Value,
     /// Whether the account is active.
     pub is_active: bool,
+    /// When the user account was created.
     pub created_at: DateTime<Utc>,
+    /// When the user account was last updated.
     pub updated_at: DateTime<Utc>,
 }
 
@@ -50,12 +52,7 @@ impl User {
 
     /// Creates a user from an OIDC claims payload.
     #[must_use]
-    pub fn from_oidc(
-        subject: &str,
-        email: &str,
-        name: &str,
-        picture: Option<String>,
-    ) -> Self {
+    pub fn from_oidc(subject: &str, email: &str, name: &str, picture: Option<String>) -> Self {
         let mut user = Self::new(email, name);
         user.oidc_subject = Some(subject.to_string());
         user.avatar_url = picture;
@@ -67,8 +64,10 @@ impl User {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct CreateUserInput {
     #[validate(email(message = "invalid email address"))]
+    /// User email address.
     pub email: String,
     #[validate(length(min = 1, max = 255, message = "display name must be 1-255 characters"))]
+    /// Display name.
     pub display_name: String,
 }
 
@@ -76,6 +75,8 @@ pub struct CreateUserInput {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct UpdateUserInput {
     #[validate(length(min = 1, max = 255))]
+    /// Updated display name.
     pub display_name: Option<String>,
+    /// Updated avatar URL.
     pub avatar_url: Option<String>,
 }

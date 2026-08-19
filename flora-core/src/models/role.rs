@@ -8,12 +8,14 @@ use uuid::Uuid;
 /// A role defines a set of permissions within an organization.
 ///
 /// Roles are scoped to an organization. The `permissions` field is a JSONB
-/// array of permission strings (e.g., [`channel:read`, `task:write`]).
+/// array of permission strings (e. g., [`channel:read`, `task:write`]).
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Role {
+    /// Unique identifier.
     pub id: Uuid,
+    /// The organization this role belongs to.
     pub organization_id: Uuid,
-    /// Role name (e.g., "Owner", "Admin", "Member").
+    /// Role name (e. g., "Owner", "Admin", "Member").
     pub name: String,
     /// JSONB array of permission strings.
     pub permissions: serde_json::Value,
@@ -21,7 +23,9 @@ pub struct Role {
     pub description: Option<String>,
     /// Whether this is a built-in role (cannot be deleted).
     pub is_builtin: bool,
+    /// When the role was created.
     pub created_at: DateTime<Utc>,
+    /// When the role was last updated.
     pub updated_at: DateTime<Utc>,
 }
 
@@ -70,39 +74,66 @@ impl Role {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Permission {
     // Organization
+    /// Read organization-level data.
     OrgRead,
+    /// Write organization-level data.
     OrgWrite,
+    /// Full organization administration.
     OrgAdmin,
     // Workspace
+    /// Read workspace data.
     WorkspaceRead,
+    /// Write workspace data.
     WorkspaceWrite,
+    /// Full workspace administration.
     WorkspaceAdmin,
     // Channels & Messaging
+    /// Read messages in channels.
     ChannelRead,
+    /// Post messages to channels.
     ChannelWrite,
+    /// Delete messages or channels.
     ChannelDelete,
+    /// Read messages.
     MessageRead,
+    /// Write messages.
     MessageWrite,
+    /// Edit messages.
     MessageEdit,
+    /// Delete messages.
     MessageDelete,
     // Tasks
+    /// Read tasks.
     TaskRead,
+    /// Write tasks.
     TaskWrite,
+    /// Assign tasks to users.
     TaskAssign,
+    /// Delete tasks.
     TaskDelete,
     // Files
+    /// Read files.
     FileRead,
+    /// Upload and modify files.
     FileWrite,
+    /// Delete files.
     FileDelete,
     // Search
+    /// Perform global searches.
     SearchGlobal,
     // Notifications
+    /// Read notifications.
     NotificationRead,
     // RBAC
+    /// Read roles.
     RoleRead,
+    /// Create and modify roles.
     RoleWrite,
+    /// Read memberships.
     MemberRead,
+    /// Invite members.
     MemberInvite,
+    /// Remove members.
     MemberRemove,
 }
 
@@ -144,7 +175,7 @@ impl std::fmt::Display for Permission {
 impl std::str::FromStr for Permission {
     type Err = String;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "org:read" => Ok(Self::OrgRead),
             "org:write" => Ok(Self::OrgWrite),

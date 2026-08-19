@@ -10,11 +10,15 @@ use uuid::Uuid;
 /// This is the "User ↔ Organization" join with per-organization role assignment.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Membership {
+    /// The user ID.
     pub user_id: Uuid,
+    /// The organization ID.
     pub organization_id: Uuid,
+    /// The role ID within this organization.
     pub role_id: Uuid,
+    /// Timestamp when the membership was created.
     pub joined_at: DateTime<Utc>,
-    /// Optional metadata (e.g., invitation source).
+    /// Optional metadata (e. g., invitation source).
     pub metadata: serde_json::Value,
 }
 
@@ -34,8 +38,12 @@ impl Membership {
 
 /// Role name constants for built-in roles.
 pub mod role_names {
+    /// Owner role name.
     pub const OWNER: &str = "Owner";
+    /// Admin role name.
     pub const ADMIN: &str = "Admin";
+    /// Member role name.
     pub const MEMBER: &str = "Member";
+    /// Guest role name.
     pub const GUEST: &str = "Guest";
 }

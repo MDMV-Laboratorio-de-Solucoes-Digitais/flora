@@ -12,11 +12,15 @@ use validator::Validate;
 /// Soft-deletion is supported via `is_deleted` flag.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Message {
+    /// Unique identifier.
     pub id: Uuid,
+    /// The channel this message belongs to.
     pub channel_id: Uuid,
     /// Denormalized for fast tenant isolation checks.
     pub organization_id: Uuid,
+    /// The user who sent the message.
     pub sender_id: Uuid,
+    /// Text content of the message.
     pub content: String,
     /// Optional self-referential FK for replies (threading).
     pub thread_id: Option<Uuid>,
@@ -24,7 +28,9 @@ pub struct Message {
     pub is_edited: bool,
     /// Soft-delete flag (true = deleted, false = active).
     pub is_deleted: bool,
+    /// When the message was created.
     pub created_at: DateTime<Utc>,
+    /// When the message was last updated.
     pub updated_at: DateTime<Utc>,
 }
 
@@ -52,7 +58,9 @@ impl Message {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct CreateMessageInput {
     #[validate(length(min = 1, max = 10000, message = "content must be 1-10000 characters"))]
+    /// Text content of the message.
     pub content: String,
+    /// Thread parent message ID (for replies).
     pub thread_id: Option<Uuid>,
 }
 
@@ -60,5 +68,6 @@ pub struct CreateMessageInput {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct UpdateMessageInput {
     #[validate(length(min = 1, max = 10000))]
+    /// Updated text content.
     pub content: String,
 }

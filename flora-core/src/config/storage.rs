@@ -2,6 +2,7 @@
 
 use serde::Deserialize;
 
+/// Configuration for file storage (local or S3-compatible).
 #[derive(Debug, Clone, Deserialize)]
 pub struct StorageConfig {
     /// Storage backend: "local" or "s3".
@@ -59,15 +60,15 @@ impl StorageConfig {
                 "storage.local_path is required when backend is 'local'".to_owned(),
             ));
         }
-        if self.backend == "s3"
-            && self.s3_bucket.is_none() {
-                return Err(crate::Error::Configuration(
-                    "storage.s3_bucket is required when backend is 's3'".to_owned(),
-                ));
-            }
+        if self.backend == "s3" && self.s3_bucket.is_none() {
+            return Err(crate::Error::Configuration(
+                "storage.s3_bucket is required when backend is 's3'".to_owned(),
+            ));
+        }
         Ok(())
     }
 
+    /// Returns `true` if the storage backend is local.
     #[must_use]
     pub fn is_local(&self) -> bool {
         self.backend == "local"

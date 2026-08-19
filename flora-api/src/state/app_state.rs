@@ -1,39 +1,47 @@
-//! Application state shared across all request handlers.
+// Application state that holds connections, services, and configuration.
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
+use std::sync::Arc;
 
-use flora_core::error::{Error, Result};
-use redis::aio::ConnectionManager;
+use flora_core::PgPool;
+use flora_core::config::Config;
 
-/// Application state shared across all request handlers.
-#[derive(Clone)]
+/// Application state shared across all requests.
+#[derive(Debug, Clone)]
 pub struct AppState {
-    pub config: flora_core::config::Config,
-    pub db_pool: sqlx::PgPool,
-    pub redis_manager: ConnectionManager,
+    /// Database connection pool.
+    pub db_pool: Arc<PgPool>,
+    /// Application configuration.
+    pub config: Arc<Config>,
 }
 
 impl AppState {
-    /// Creates a new `AppState` by connecting to `PostgreSQL` and Valkey.
+    /// Creates a new `AppState` with the given database pool and configuration.
     ///
     /// # Errors
     ///
-    /// Returns an error if the database or Redis connection fails.
-    pub async fn new(config: flora_core::config::Config) -> Result<Self> {
-        let db_pool = sqlx::PgPool::connect(&config.database.postgres_url)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
-
-        // redis 1.6: ConnectionManager::new(client) takes a Client directly.
-        // The manager internally manages the multiplexed connection pool.
-        let redis_client = redis::Client::open(config.messaging.valkey_url.clone())
-            .map_err(|e| Error::Database(e.to_string()))?;
-        let redis_manager = ConnectionManager::new(redis_client)
-            .await
-            .map_err(|e| Error::Messaging(e.to_string()))?;
-
+    /// Returns an error if the database pool cannot be created.
+    pub async fn new(config: Config) -> anyhow::Result<Self> {
+        let db_pool = flora_core::database::create_pool(&config).await?;
         Ok(Self {
-            config,
-            db_pool,
-            redis_manager,
+            db_pool: Arc::new(db_pool),
+            config: Arc::new(config),
         })
+    }
+}
+
+impl<S> FromRequestParts<S> for AppState
+where
+    S: Send + Sync + Clone + 'static,
+{
+    type Rejection = (axum::http::StatusCode, String);
+
+    async fn from_request_parts(_parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        // The AppState is typically injected via `.with_state()` in the router,
+        // so this extractor is rarely needed directly.
+        Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "AppState extractor not available".to_string(),
+        ))
     }
 }

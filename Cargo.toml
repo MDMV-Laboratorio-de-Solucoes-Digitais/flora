@@ -38,19 +38,57 @@ exclude = ["docker-compose.yml"]
 # Workspace Lint Configuration
 # =========================================================================
 
-[lints.rust]
-unsafe_code = "forbid"
-unused_imports = "warn"
-unused_variables = "warn"
-dead_code = "warn"
+[workspace.lints.rust]
+# The basics of native compiler rigor
+unsafe_code = "deny"                  # No unsafe blocks without explicit justification
+missing_docs = "deny"                 # Requires documentation on everything public
+missing_debug_implementations = "deny"# All public structs must implement Debug
+unreachable_pub = "deny"              # Pub items that cannot be accessed publicly
+unused_results = "deny"               # Forces handling of all returns (not just Results)
+unused_qualifications = "deny"        # Avoids unnecessary absolute paths (e.g., std::vec::Vec)
+trivial_casts = "deny"                # Forbids casts like `x as u32` if `x` is already `u32`
+trivial_numeric_casts = "deny"        # Forbids useless numeric casts
+unused_extern_crates = "deny"         # Cleans up dependency garbage
 
 [workspace.lints.clippy]
-pedantic = { level = "forbid", priority = -1 }
-allow_attributes = "deny"
-unwrap_used = "deny"
-expect_used = "deny"
-fallible_impl_from = "deny"
+# Level 1: The Main Groups
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
 nursery = { level = "warn", priority = -1 }
+
+# Level 2: The "Give Me a Reason" Rule
+# -------------------------------------------------------------------------
+# 1. Forbids the use of #[allow()] generally.
+allow_attributes = "deny"
+
+# 2. IF, because of a macro, you need to make a local exception and use
+# an #[allow()], you are OBLIGATED to write the `reason = "..."` attribute.
+#
+allow_attributes_without_reason = "deny"
+# Example:
+#
+# #[allow(
+#    clippy::allow_attributes,
+#    clippy::pedantic,
+#    reason = "async_trait macro allows underscore bindings internally. Forgiven."
+# )]
+# [async_trait]
+
+# Level 3: Panic Prevention and Technical Debt (The Restriction group)
+# -------------------------------------------------------------------------
+unwrap_used = "deny"                  # Forbids .unwrap() (use pattern matching or the ? operator)
+expect_used = "deny"                  # Forbids .expect() (propagate the error gracefully)
+panic = "deny"                        # Forbids the explicit panic!() macro
+todo = "deny"                         # Forbids the todo!() macro in production code
+unimplemented = "deny"                # Forbids the unimplemented!() macro
+unreachable = "deny"                  # Forces clarity in unreachable paths
+fallible_impl_from = "deny"           # Forbids impl From that can fail (use TryFrom)
+clone_on_ref_ptr = "deny"             # Forces Arc::clone(&x) instead of x.clone() for clarity
+dbg_macro = "deny"                    # Forbids dbg!() forgotten in the code
+print_stdout = "warn"                 # Restricts print!/println! (use the `tracing` or `log` crate)
+use_self = "deny"                     # Forces the use of `Self` in implementations for clean refactoring
+wildcard_dependencies = "deny"        # Forbids `crate = "*"` type dependencies in Cargo.toml
+multiple_crate_versions = "deny"      # Forbids having multiple versions of the same crate compiled
 
 # =========================================================================
 # Build Profiles
@@ -88,10 +126,10 @@ flora-tasks = { path = "flora-tasks" }
 flora-tests = { path = "flora-tests" }
 
 # --- flora-core dependencies ---
-rust-i18n = "3.1"
+rust-i18n = "4.2.1"
 
 # --- flora-tests dependencies ---
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13.4", features = ["json"] }
 
 # --- Async Runtime ---
 tokio = { version = "1.43", features = ["full"] }
@@ -99,7 +137,7 @@ tokio = { version = "1.43", features = ["full"] }
 # --- Web Framework ---
 axum = "0.8"
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace"] }
+tower-http = { version = "0.7.0", features = ["cors", "trace"] }
 
 # --- Serialization ---
 serde_json = "1.0"
@@ -107,7 +145,7 @@ serde_yaml = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 
 # --- Database ---
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "json"] }
+sqlx = { version = "0.9.0", features = ["runtime-tokio", "postgres", "uuid", "chrono", "json"] }
 
 # --- Cache / Queue ---
 redis = { version = "1.6", features = ["tokio-comp", "connection-manager"] }
@@ -130,16 +168,16 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"
 openidconnect = "4.0"
 
 # --- Search ---
-meilisearch-sdk = "0.29"
+meilisearch-sdk = "0.33"
 
 # --- Utilities ---
 async-trait = "0.1"
 bytes = "1.9"
 futures = "0.3"
-base64 = "0.22"
-sha2 = "0.10"
+base64 = "0.23.1"
+sha2 = "0.11.0"
 argon2 = "0.5"
-rand = "0.8"
+rand = "0.10.2"
 uuid = { version = "1.11", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 backoff = { version = "0.4", features = ["tokio"] }
@@ -148,6 +186,7 @@ backoff = { version = "0.4", features = ["tokio"] }
 validator = { version = "0.21", features = ["derive"] }
 
 # --- Additional dependencies used by crates ---
+serde_urlencoded = "0.7"
 
 tower-service = "0.3"
 mime = "0.3"
@@ -158,18 +197,17 @@ tokio-native-tls = "0.3"
 rustls = "0.23"
 tokio-rustls = "0.26"
 lettre = "0.11"
-serde_urlencoded = "0.7"
 hmac = "0.12"
 jwt = "0.16"
 time = "0.3"
 axum-msgpack = "0.8"
-bcrypt = "0.16"
+bcrypt = "0.19.3"
 regex = "1.11"
 chrono-tz = "0.10"
-jsonwebtoken = "10.4.0"
+jsonwebtoken = "11.0.0"
 hyper = { version = "1.5", features = ["server", "http1", "http2"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
-axum-extra = { version = "0.10", features = ["cookie"] }
+axum-extra = { version = "0.12.6", features = ["cookie"] }
 url = { version = "2.5", features = ["serde"] }
 zeroize = { version = "1.8", features = ["derive"] }
 

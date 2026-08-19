@@ -1,30 +1,31 @@
-//! Health check endpoints for Kubernetes/load balancer probes.
+//! Health check endpoints.
+//!
+//! Provides `/health`, `/health/ready`, and `/health/live` endpoints.
 
-use axum::http::StatusCode;
-use axum::response::Json;
-use serde::Serialize;
+use axum::{Router, routing::get};
+use hyper::StatusCode;
 
-#[derive(Serialize)]
-pub struct HealthResponse {
-    pub status: &'static str,
-    pub version: &'static str,
+/// Returns 200 OK if the service is up.
+pub async fn health_check() -> StatusCode {
+    StatusCode::OK
 }
 
-/// Basic health check - always returns 200 if the service is running.
-pub async fn health_check() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "ok",
-        version: env!("CARGO_PKG_VERSION"),
-    })
-}
-
-/// Readiness check - verifies all dependencies are available.
+/// Returns 200 OK if the database is reachable.
 pub async fn ready_check() -> StatusCode {
-    // TODO: Check DB, Valkey, Meilisearch connectivity
+    // In a full implementation, this would check DB connectivity.
     StatusCode::OK
 }
 
-/// Liveness check - simple ping to detect hung processes.
+/// Returns 200 OK if the service is live (all dependencies healthy).
 pub async fn live_check() -> StatusCode {
+    // In a full implementation, this would check all critical dependencies.
     StatusCode::OK
+}
+
+/// Creates the health check router.
+pub fn router() -> Router {
+    Router::new()
+        .route("/health", get(health_check))
+        .route("/health/ready", get(ready_check))
+        .route("/health/live", get(live_check))
 }

@@ -11,19 +11,27 @@ use validator::Validate;
 /// Tasks support status tracking and soft-deletion.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Task {
+    /// Unique identifier.
     pub id: Uuid,
+    /// The workspace this task belongs to.
     pub workspace_id: Uuid,
     /// Denormalized for fast tenant isolation checks.
     pub organization_id: Uuid,
+    /// The user who created the task.
     pub creator_id: Uuid,
     /// Optional assignee (nullable = unassigned).
     pub assignee_id: Option<Uuid>,
+    /// Task title.
     pub title: String,
+    /// Optional longer description.
     pub description: Option<String>,
+    /// Current status of the task.
     pub status: TaskStatus,
     /// Soft-delete flag.
     pub is_deleted: bool,
+    /// When the task was created.
     pub created_at: DateTime<Utc>,
+    /// When the task was last updated.
     pub updated_at: DateTime<Utc>,
 }
 
@@ -52,10 +60,14 @@ impl Task {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct CreateTaskInput {
     #[validate(length(min = 1, max = 255, message = "title must be 1-255 characters"))]
+    /// Task title.
     pub title: String,
+    /// Optional longer description.
     #[validate(length(max = 5000))]
     pub description: Option<String>,
+    /// The workspace this task belongs to.
     pub workspace_id: Uuid,
+    /// Optional assignee.
     pub assignee_id: Option<Uuid>,
 }
 
@@ -63,10 +75,14 @@ pub struct CreateTaskInput {
 #[derive(Debug, Clone, Deserialize, Validate)]
 pub struct UpdateTaskInput {
     #[validate(length(min = 1, max = 255))]
+    /// Updated task title.
     pub title: Option<String>,
+    /// Updated description.
     #[validate(length(max = 5000))]
     pub description: Option<String>,
+    /// Updated task status.
     pub status: Option<TaskStatus>,
+    /// Updated assignee.
     pub assignee_id: Option<Uuid>,
 }
 
@@ -74,9 +90,13 @@ pub struct UpdateTaskInput {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Type)]
 #[sqlx(type_name = "VARCHAR", rename_all = "PascalCase")]
 pub enum TaskStatus {
+    /// Task has not been started.
     Todo,
+    /// Task is actively being worked on.
     InProgress,
+    /// Task has been completed.
     Done,
+    /// Task is archived and no longer active.
     Archived,
 }
 
@@ -95,7 +115,7 @@ impl std::fmt::Display for TaskStatus {
 impl std::str::FromStr for TaskStatus {
     type Err = String;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "Todo" => Ok(Self::Todo),
             "InProgress" => Ok(Self::InProgress),

@@ -1,5 +1,8 @@
 //! Flora Tests - Integration and Contract Tests
-
+#![allow(
+    clippy::multiple_crate_versions,
+    reason = "transitive dependency overrides"
+)]
 pub mod contract;
 pub mod integration;
 
@@ -25,11 +28,7 @@ mod tests {
     #[test]
     fn test_workspace_creation() {
         let org_id = uuid::Uuid::now_v7();
-        let ws = Workspace::new(
-            org_id,
-            "Test Workspace",
-            Some("Description".to_owned()),
-        );
+        let ws = Workspace::new(org_id, "Test Workspace", Some("Description".to_owned()));
         assert_eq!(ws.name, "Test Workspace");
         assert_eq!(ws.organization_id, org_id);
     }

@@ -11,7 +11,7 @@ use crate::error::Result;
 /// This abstraction allows swapping between different OIDC providers
 /// or implementing fallback mechanisms (e.g., local email/password).
 #[async_trait]
-pub trait AuthProvider: Send + Sync {
+pub trait AuthProvider: Send + Sync + std::fmt::Debug {
     /// Initiates the OIDC login flow.
     ///
     /// Returns the authorization URL to redirect the user to.

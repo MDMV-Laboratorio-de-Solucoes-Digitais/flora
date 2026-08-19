@@ -2,6 +2,7 @@
 
 use serde::Deserialize;
 
+/// Configuration for database connections.
 #[derive(Debug, Clone, Deserialize)]
 pub struct DatabaseConfig {
     /// `PostgreSQL` connection string (used in production/cloud).

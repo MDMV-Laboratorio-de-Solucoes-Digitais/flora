@@ -1,5 +1,4 @@
-//! Application state module.
-
+/// Application state module.
 pub mod app_state;
 
 pub use app_state::AppState;

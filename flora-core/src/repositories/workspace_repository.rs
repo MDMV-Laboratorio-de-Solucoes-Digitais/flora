@@ -9,11 +9,13 @@ use crate::models::Workspace;
 use crate::traits::WorkspaceRepository;
 
 /// `PostgreSQL` implementation of the `WorkspaceRepository` trait.
+#[derive(Debug)]
 pub struct PgWorkspaceRepository {
     pool: PgPool,
 }
 
 impl PgWorkspaceRepository {
+    /// Creates a new `PgWorkspaceRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }

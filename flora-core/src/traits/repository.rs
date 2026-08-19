@@ -13,7 +13,7 @@ use crate::models::{
 
 /// Repository trait for User operations.
 #[async_trait]
-pub trait UserRepository: Send + Sync {
+pub trait UserRepository: Send + Sync + std::fmt::Debug {
     /// Find a user by email.
     async fn find_by_email(&self, email: &str) -> crate::Result<Option<User>>;
 
@@ -35,7 +35,7 @@ pub trait UserRepository: Send + Sync {
 
 /// Repository trait for Organization operations.
 #[async_trait]
-pub trait OrganizationRepository: Send + Sync {
+pub trait OrganizationRepository: Send + Sync + std::fmt::Debug {
     /// Find an organization by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Organization>>;
 
@@ -61,7 +61,7 @@ pub trait OrganizationRepository: Send + Sync {
 
 /// Repository trait for Membership operations.
 #[async_trait]
-pub trait MembershipRepository: Send + Sync {
+pub trait MembershipRepository: Send + Sync + std::fmt::Debug {
     /// Find memberships for a user.
     async fn find_by_user_id(&self, user_id: Uuid) -> crate::Result<Vec<Membership>>;
 
@@ -87,7 +87,7 @@ pub trait MembershipRepository: Send + Sync {
 
 /// Repository trait for Role operations.
 #[async_trait]
-pub trait RoleRepository: Send + Sync {
+pub trait RoleRepository: Send + Sync + std::fmt::Debug {
     /// Find a role by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Role>>;
 
@@ -113,13 +113,13 @@ pub trait RoleRepository: Send + Sync {
 
 /// Repository trait for Workspace operations.
 #[async_trait]
-pub trait WorkspaceRepository: Send + Sync {
+pub trait WorkspaceRepository: Send + Sync + std::fmt::Debug {
     /// Find a workspace by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Workspace>>;
 
     /// Find workspaces for an organization.
     async fn find_by_organization_id(&self, organization_id: Uuid)
-        -> crate::Result<Vec<Workspace>>;
+    -> crate::Result<Vec<Workspace>>;
 
     /// Create a new workspace.
     async fn create(&self, workspace: Workspace) -> crate::Result<Workspace>;
@@ -133,7 +133,7 @@ pub trait WorkspaceRepository: Send + Sync {
 
 /// Repository trait for Channel operations.
 #[async_trait]
-pub trait ChannelRepository: Send + Sync {
+pub trait ChannelRepository: Send + Sync + std::fmt::Debug {
     /// Find a channel by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Channel>>;
 
@@ -152,7 +152,7 @@ pub trait ChannelRepository: Send + Sync {
 
 /// Repository trait for Message operations.
 #[async_trait]
-pub trait MessageRepository: Send + Sync {
+pub trait MessageRepository: Send + Sync + std::fmt::Debug {
     /// Find a message by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Message>>;
 
@@ -185,7 +185,7 @@ pub trait MessageRepository: Send + Sync {
 
 /// Repository trait for Task operations.
 #[async_trait]
-pub trait TaskRepository: Send + Sync {
+pub trait TaskRepository: Send + Sync + std::fmt::Debug {
     /// Find a task by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Task>>;
 
@@ -220,7 +220,7 @@ pub trait TaskRepository: Send + Sync {
 
 /// Repository trait for File operations.
 #[async_trait]
-pub trait FileRepository: Send + Sync {
+pub trait FileRepository: Send + Sync + std::fmt::Debug {
     /// Find a file by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<File>>;
 
@@ -253,7 +253,7 @@ pub trait FileRepository: Send + Sync {
 
 /// Repository trait for Notification operations.
 #[async_trait]
-pub trait NotificationRepository: Send + Sync {
+pub trait NotificationRepository: Send + Sync + std::fmt::Debug {
     /// Find a notification by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Notification>>;
 
@@ -286,7 +286,7 @@ pub trait NotificationRepository: Send + Sync {
 
 /// Repository trait for Session operations.
 #[async_trait]
-pub trait SessionRepository: Send + Sync {
+pub trait SessionRepository: Send + Sync + std::fmt::Debug {
     /// Find a session by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Session>>;
 

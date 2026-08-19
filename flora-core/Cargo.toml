@@ -21,6 +21,7 @@ name = "flora_core"
 path = "src/lib.rs"
 
 [dependencies]
+dotenv = "0.15"
 # --- Workspace Dependencies ---
 tokio.workspace = true
 serde.workspace = true
@@ -39,6 +40,7 @@ base64.workspace = true
 sha2.workspace = true
 argon2.workspace = true
 rand.workspace = true
+jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
 
 # --- Core-specific dependencies ---
 bcrypt.workspace = true

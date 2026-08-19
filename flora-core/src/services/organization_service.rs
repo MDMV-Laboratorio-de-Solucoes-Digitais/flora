@@ -3,7 +3,11 @@
 use crate::traits::{MembershipRepository, OrganizationRepository, RoleRepository};
 
 /// Organization management service.
-#[expect(dead_code)]
+#[derive(Debug)]
+#[expect(
+    dead_code,
+    reason = "Service is part of the service layer and will be used once the API routes are wired up."
+)]
 pub struct OrganizationService {
     orgs: Box<dyn OrganizationRepository>,
     memberships: Box<dyn MembershipRepository>,
@@ -18,6 +22,10 @@ impl OrganizationService {
         memberships: Box<dyn MembershipRepository>,
         roles: Box<dyn RoleRepository>,
     ) -> Self {
-        Self { orgs, memberships, roles }
+        Self {
+            orgs,
+            memberships,
+            roles,
+        }
     }
 }

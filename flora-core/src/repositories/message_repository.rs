@@ -9,11 +9,13 @@ use crate::models::{Message, Pagination};
 use crate::traits::MessageRepository;
 
 /// `PostgreSQL` implementation of the `MessageRepository` trait.
+#[derive(Debug)]
 pub struct PgMessageRepository {
     pool: PgPool,
 }
 
 impl PgMessageRepository {
+    /// Creates a new `PgMessageRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }

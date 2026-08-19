@@ -12,19 +12,23 @@
 //! ## Multi-Tenancy
 //!
 //! Every tenant-scoped entity MUST include `organization_id` for isolation.
+#![allow(
+    clippy::multiple_crate_versions,
+    reason = "transitive dependency overrides"
+)]
 
-#![forbid(unsafe_code)]
-#![deny(clippy::pedantic)]
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
-#![allow(forbidden_lint_groups)] // Allow macros like async_trait/thiserror to use #[allow(...)] internally
+// Re-export database types for use by dependent crates
+pub use sqlx::PgPool;
 
 pub mod config;
+pub mod database;
 pub mod error;
 pub mod migrations;
 pub mod models;
 pub mod repositories;
 pub mod services;
+pub mod storage;
 pub mod traits;
+pub mod utils;
 
 pub use error::{Error, Result};

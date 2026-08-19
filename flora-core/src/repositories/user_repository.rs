@@ -9,11 +9,13 @@ use crate::models::{UpdateUserInput, User};
 use crate::traits::UserRepository;
 
 /// `PostgreSQL` implementation of the `UserRepository` trait.
+#[derive(Debug)]
 pub struct PgUserRepository {
     pool: PgPool,
 }
 
 impl PgUserRepository {
+    /// Creates a new `PgUserRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }

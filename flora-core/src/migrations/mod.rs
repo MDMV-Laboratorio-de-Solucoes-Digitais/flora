@@ -3,7 +3,7 @@
 //! This module contains the schema definitions and migration logic.
 //! Migrations are applied using sqlx-cli at build/deploy time.
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 /// Applies all pending migrations to the database.
 ///
@@ -12,10 +12,13 @@ use crate::error::Result;
 /// # Errors
 ///
 /// Returns an error if migrations fail to apply.
-pub const fn run_migrations(_pool: &sqlx::PgPool) -> Result<()> {
-    // The actual migration .sql files are applied by sqlx-cli
+pub async fn run_migrations(pool: &sqlx::PgPool) -> Result<()> {
+    // Apply migrations using sqlx::migrate! macro at runtime
     // This function is a placeholder for potential programmatic migrations
-    Ok(())
+    sqlx::migrate!("./src/migrations/sql")
+        .run(pool)
+        .await
+        .map_err(|err| Error::Migration(err.to_string()))
 }
 
 /// Returns the current database schema version.

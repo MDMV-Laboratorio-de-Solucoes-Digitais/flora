@@ -1,39 +1,75 @@
-//! Authentication service.
+//! Authentication service stub implementing the `AuthProvider` trait.
+//!
+//! The real OIDC integration (Zitadel) will be added in a subsequent iteration.
 
-use crate::models::Session;
-use crate::traits::{AuthProvider, SessionRepository, UserRepository};
-use crate::Result;
+use async_trait::async_trait;
 
-/// Authentication service for user login and session management.
-#[expect(dead_code)]
-pub struct AuthService {
-    auth_provider: Box<dyn AuthProvider>,
-    session_repo: Box<dyn SessionRepository>,
-    user_repo: Box<dyn UserRepository>,
-}
+use crate::error::{Error, Result};
+use crate::traits::auth_provider::{AuthProvider, UserInfo};
+
+/// Stub implementation of `AuthProvider`.
+///
+/// Methods currently return `Err(Error::ServiceUnavailable(...))` and are intended to be
+/// replaced with real OIDC logic in a future iteration.
+#[derive(Debug)]
+pub struct AuthService {}
 
 impl AuthService {
-    /// Creates a new `AuthService`.
+    /// Creates a new `AuthService` stub.
     #[must_use]
-    pub fn new(
-        auth_provider: Box<dyn AuthProvider>,
-        session_repo: Box<dyn SessionRepository>,
-        user_repo: Box<dyn UserRepository>,
-    ) -> Self {
-        Self {
-            auth_provider,
-            session_repo,
-            user_repo,
-        }
+    pub const fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for AuthService {
+    /// Creates a new `AuthService` stub via `Default`.
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl AuthProvider for AuthService {
+    async fn initiate_login(&self, _redirect_uri: &str) -> Result<String> {
+        Err(Error::ServiceUnavailable(
+            "initiate_login not implemented".to_string(),
+        ))
     }
 
-    /// Authenticates a user with the given credentials.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if authentication fails.
-    pub async fn login(&self, _email: &str, _password: &str) -> Result<Session> {
-        // TODO: Implementation per T019
-        unimplemented!()
+    async fn handle_callback(&self, _code: &str, _redirect_uri: &str) -> Result<UserInfo> {
+        Err(Error::ServiceUnavailable(
+            "handle_callback not implemented".to_string(),
+        ))
+    }
+
+    async fn validate_token(&self, _access_token: &str) -> Result<UserInfo> {
+        Err(Error::ServiceUnavailable(
+            "validate_token not implemented".to_string(),
+        ))
+    }
+
+    async fn refresh_token(&self, _refresh_token: &str) -> Result<String> {
+        Err(Error::ServiceUnavailable(
+            "refresh_token not implemented".to_string(),
+        ))
+    }
+
+    async fn logout(&self, _access_token: &str) -> Result<()> {
+        Err(Error::ServiceUnavailable(
+            "logout not implemented".to_string(),
+        ))
+    }
+
+    async fn is_available(&self) -> bool {
+        false
+    }
+
+    fn issuer_url(&self) -> &'static str {
+        ""
+    }
+
+    fn client_id(&self) -> &'static str {
+        ""
     }
 }

@@ -2,6 +2,7 @@
 
 use serde::Deserialize;
 
+/// Configuration for Meilisearch-powered full-text search.
 #[derive(Debug, Clone, Deserialize)]
 pub struct SearchConfig {
     /// Meilisearch host URL.

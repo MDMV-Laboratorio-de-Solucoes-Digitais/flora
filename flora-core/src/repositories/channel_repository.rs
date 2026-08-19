@@ -9,11 +9,13 @@ use crate::models::Channel;
 use crate::traits::ChannelRepository;
 
 /// `PostgreSQL` implementation of the `ChannelRepository` trait.
+#[derive(Debug)]
 pub struct PgChannelRepository {
     pool: PgPool,
 }
 
 impl PgChannelRepository {
+    /// Creates a new `PgChannelRepository`.
     #[must_use]
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -59,7 +61,7 @@ impl ChannelRepository for PgChannelRepository {
         .bind(channel.workspace_id)
         .bind(channel.organization_id)
         .bind(&channel.name)
-        .bind(channel.channel_type.to_string())
+        .bind(channel.channel_type)
         .fetch_one(&self.pool)
         .await
         .map_err(Error::from_sqlx)?;
@@ -75,7 +77,7 @@ impl ChannelRepository for PgChannelRepository {
         )
         .bind(id)
         .bind(&channel.name)
-        .bind(channel.channel_type.to_string())
+        .bind(channel.channel_type)
         .fetch_optional(&self.pool)
         .await
         .map_err(Error::from_sqlx)?
