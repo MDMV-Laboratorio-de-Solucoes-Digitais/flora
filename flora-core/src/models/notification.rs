@@ -87,15 +87,15 @@ impl std::str::FromStr for NotificationType {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
-            "Mention" => Ok(NotificationType::Mention),
-            "Assignment" => Ok(NotificationType::Assignment),
-            "Reply" => Ok(NotificationType::Reply),
-            "FileShare" => Ok(NotificationType::FileShare),
-            "ContentUpdate" => Ok(NotificationType::ContentUpdate),
-            "TaskCompleted" => Ok(NotificationType::TaskCompleted),
-            "Invitation" => Ok(NotificationType::Invitation),
-            "RoleChange" => Ok(NotificationType::RoleChange),
-            "WorkspaceActivity" => Ok(NotificationType::WorkspaceActivity),
+            "Mention" => Ok(Self::Mention),
+            "Assignment" => Ok(Self::Assignment),
+            "Reply" => Ok(Self::Reply),
+            "FileShare" => Ok(Self::FileShare),
+            "ContentUpdate" => Ok(Self::ContentUpdate),
+            "TaskCompleted" => Ok(Self::TaskCompleted),
+            "Invitation" => Ok(Self::Invitation),
+            "RoleChange" => Ok(Self::RoleChange),
+            "WorkspaceActivity" => Ok(Self::WorkspaceActivity),
             _ => Err(format!("invalid notification type: {s}")),
         }
     }

@@ -141,7 +141,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 impl Error {
     /// Returns `true` if the error indicates a client mistake (4xx).
     #[must_use]
-    pub fn is_client_error(&self) -> bool {
+    pub const fn is_client_error(&self) -> bool {
         matches!(
             self,
             Self::Unauthorized
@@ -162,7 +162,7 @@ impl Error {
 
     /// Returns `true` if the error indicates a not-found (404).
     #[must_use]
-    pub fn is_not_found(&self) -> bool {
+    pub const fn is_not_found(&self) -> bool {
         matches!(
             self,
             Self::UserNotFound(_)

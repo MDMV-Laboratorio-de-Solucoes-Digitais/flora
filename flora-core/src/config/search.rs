@@ -26,7 +26,7 @@ impl Default for SearchConfig {
             api_key: std::env::var("MEILISEARCH_API_KEY").ok(),
             default_limit: 20,
             max_limit: 100,
-            index_template: "flora_org_{org_id}".to_owned(),
+            index_template: "flora_org_{@@org_id@@}".to_owned(),
             enabled: true,
         }
     }
@@ -55,6 +55,6 @@ impl SearchConfig {
     /// Generates the index name for a given organization.
     #[must_use]
     pub fn index_name(&self, org_id: &str) -> String {
-        self.index_template.replace("{org_id}", org_id)
+        self.index_template.replace("{@@org_id@@}", org_id)
     }
 }

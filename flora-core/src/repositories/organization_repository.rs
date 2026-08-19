@@ -15,7 +15,7 @@ pub struct PgOrganizationRepository {
 
 impl PgOrganizationRepository {
     #[must_use]
-    pub fn new(pool: PgPool) -> Self {
+    pub const fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }

@@ -38,7 +38,7 @@ impl Config {
     pub fn load() -> figment::Result<Self> {
         let figment = Figment::new().merge(figment::providers::Env::prefixed("FLORA_"));
 
-        figment.extract::<Config>()
+        figment.extract::<Self>()
     }
 
     /// Validate all configuration values.

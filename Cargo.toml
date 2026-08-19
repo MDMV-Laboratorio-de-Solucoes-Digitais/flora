@@ -7,17 +7,21 @@
 [package]
 name = "flora"
 version = "0.1.0"
-edition = "2024"
-authors = ["Flora Workspace Team"]
 description = "Flora Workspace - Self-hostable corporate collaboration platform"
+repository.workspace = true
 license.workspace = true
-repository = "https://github.com/mdmv/flora"
+authors.workspace = true
 rust-version.workspace = true
+edition.workspace = true
 
 [workspace]
 resolver = "3"
 package.rust-version = "1.97"
+package.edition = "2024"
 package.license = "AGPL-3.0-or-later"
+package.authors = ["Flora Workspace  - MDMV Laboratório de Soluções Digitais"]
+package.repository = "https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/MDMV"
+
 members = [
     "flora-core",
     "flora-api",
@@ -40,12 +44,13 @@ unused_imports = "warn"
 unused_variables = "warn"
 dead_code = "warn"
 
-[lints.clippy]
-pedantic = "deny"
+[workspace.lints.clippy]
+pedantic = { level = "forbid", priority = -1 }
+allow_attributes = "deny"
 unwrap_used = "deny"
 expect_used = "deny"
 fallible_impl_from = "deny"
-nursery = {level = "warn", priority = -1}
+nursery = { level = "warn", priority = -1 }
 
 # =========================================================================
 # Build Profiles

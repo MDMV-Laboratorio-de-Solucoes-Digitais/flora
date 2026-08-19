@@ -23,7 +23,7 @@ impl Default for MessagingConfig {
         Self {
             valkey_url: std::env::var("VALKEY_URL")
                 .unwrap_or_else(|_| "redis://localhost:6379".to_owned()),
-            topic_template: "org:{org_id}:channel:{channel_id}".to_owned(),
+            topic_template: "org:{@@org_id@@}:channel:{@@channel_id@@}".to_owned(),
             max_fanout: 50,
             message_ttl_secs: 3600,
             circuit_breaker_threshold: 5,
@@ -56,7 +56,7 @@ impl MessagingConfig {
     #[must_use]
     pub fn channel_topic(&self, org_id: &str, channel_id: &str) -> String {
         self.topic_template
-            .replace("{org_id}", org_id)
-            .replace("{channel_id}", channel_id)
+            .replace("{@@org_id@@}", org_id)
+            .replace("{@@channel_id@@}", channel_id)
     }
 }

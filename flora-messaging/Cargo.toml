@@ -6,10 +6,15 @@
 [package]
 name = "flora-messaging"
 version = "0.1.0"
-edition = "2024"
 description = "Real-time messaging module with Valkey Pub/Sub"
+repository.workspace = true
 license.workspace = true
+authors.workspace = true
 rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
 
 [lib]
 name = "flora_messaging"

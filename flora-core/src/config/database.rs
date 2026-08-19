@@ -60,7 +60,7 @@ impl DatabaseConfig {
 
     /// Returns true if `SQLite` mode is enabled (development/local).
     #[must_use]
-    pub fn is_sqlite(&self) -> bool {
+    pub const fn is_sqlite(&self) -> bool {
         self.sqlite_path.is_some()
     }
 }

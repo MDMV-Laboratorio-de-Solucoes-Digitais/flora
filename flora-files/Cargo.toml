@@ -6,10 +6,15 @@
 [package]
 name = "flora-files"
 version = "0.1.0"
-edition = "2024"
 description = "File storage module with RustFS abstraction"
+repository.workspace = true
 license.workspace = true
+authors.workspace = true
 rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
 
 [lib]
 name = "flora_files"

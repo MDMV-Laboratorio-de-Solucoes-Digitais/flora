@@ -13,11 +13,11 @@
 //!
 //! Every tenant-scoped entity MUST include `organization_id` for isolation.
 
-#![forbid(clippy::allow_attributes)]
 #![forbid(unsafe_code)]
 #![deny(clippy::pedantic)]
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
+#![allow(forbidden_lint_groups)] // Allow macros like async_trait/thiserror to use #[allow(...)] internally
 
 pub mod config;
 pub mod error;

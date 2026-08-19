@@ -97,10 +97,10 @@ impl std::str::FromStr for TaskStatus {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
-            "Todo" => Ok(TaskStatus::Todo),
-            "InProgress" => Ok(TaskStatus::InProgress),
-            "Done" => Ok(TaskStatus::Done),
-            "Archived" => Ok(TaskStatus::Archived),
+            "Todo" => Ok(Self::Todo),
+            "InProgress" => Ok(Self::InProgress),
+            "Done" => Ok(Self::Done),
+            "Archived" => Ok(Self::Archived),
             _ => Err(format!("invalid task status: {s}")),
         }
     }

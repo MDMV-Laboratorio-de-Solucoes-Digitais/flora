@@ -67,7 +67,7 @@ impl StorageProvider for LocalStorage {
 /// File service for managing files with database and storage.
 pub struct FileService {
     db: PgPool,
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     storage: Arc<dyn StorageProvider>,
 }
 

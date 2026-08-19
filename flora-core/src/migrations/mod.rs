@@ -12,7 +12,7 @@ use crate::error::Result;
 /// # Errors
 ///
 /// Returns an error if migrations fail to apply.
-pub fn run_migrations(_pool: &sqlx::PgPool) -> Result<()> {
+pub const fn run_migrations(_pool: &sqlx::PgPool) -> Result<()> {
     // The actual migration .sql files are applied by sqlx-cli
     // This function is a placeholder for potential programmatic migrations
     Ok(())

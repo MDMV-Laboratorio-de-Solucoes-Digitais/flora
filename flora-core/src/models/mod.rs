@@ -83,7 +83,7 @@ pub struct Page<T> {
 
 impl<T> Page<T> {
     #[must_use]
-    pub fn new(data: Vec<T>, next_cursor: Option<Uuid>) -> Self {
+    pub const fn new(data: Vec<T>, next_cursor: Option<Uuid>) -> Self {
         Self {
             data,
             next_cursor,
@@ -92,7 +92,7 @@ impl<T> Page<T> {
     }
 
     #[must_use]
-    pub fn with_total(data: Vec<T>, next_cursor: Option<Uuid>, total: i64) -> Self {
+    pub const fn with_total(data: Vec<T>, next_cursor: Option<Uuid>, total: i64) -> Self {
         Self {
             data,
             next_cursor,

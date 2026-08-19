@@ -6,10 +6,15 @@
 [package]
 name = "flora-core"
 version = "0.1.0"
-edition = "2024"
 description = "Core traits, models, and shared functionality for Flora Workspace"
+repository.workspace = true
 license.workspace = true
+authors.workspace = true
 rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
 
 [lib]
 name = "flora_core"
