@@ -1,7 +1,7 @@
-//! Flora Files - File Storage with RustFS Abstraction
+//! Flora Files - File Storage with `RustFS` Abstraction
 //!
 //! Note: Using `sqlx::query` (runtime) instead of `query!` (compile-time)
-//! because this crate is compiled without DATABASE_URL in CI.
+//! because this crate is compiled without `DATABASE_URL` in CI.
 
 use flora_core::{Error, Result};
 use sqlx::PgPool;
@@ -67,6 +67,7 @@ impl StorageProvider for LocalStorage {
 /// File service for managing files with database and storage.
 pub struct FileService {
     db: PgPool,
+    #[allow(dead_code)]
     storage: Arc<dyn StorageProvider>,
 }
 
@@ -77,13 +78,17 @@ impl FileService {
     }
 
     /// Creates a new file record in the database.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database insert fails or a storage error occurs.
     pub async fn create(&self, file: flora_core::models::File) -> Result<flora_core::models::File> {
         sqlx::query(
-            r#"
+            r"
             INSERT INTO files (id, organization_id, owner_id, file_type, name, size_bytes,
                               storage_path, checksum, metadata, is_deleted, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            "#,
+            ",
         )
         .bind(file.id)
         .bind(file.organization_id)
