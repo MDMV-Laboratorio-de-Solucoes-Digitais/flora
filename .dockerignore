@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+
+# Rust build artifacts
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof
+*.profraw
+*.d
+*.o
+*.a
+
+# Cargo
+Cargo.lock
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+*.cert
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Docs
+README.md
+
+# Spec artifacts (generated)
+.specify/
+*.md

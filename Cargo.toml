@@ -1,44 +1,178 @@
 # =========================================================================
 # FLORA WORKSPACE - ROOT CARGO.TOML
+# A modular monolith using Cargo Workspaces + Vertical Slices
+# AGPL-3.0-or-later - Self-hostable, open-source corporate platform
 # =========================================================================
 
 [package]
 name = "flora"
 version = "0.1.0"
 edition = "2024"
+authors = ["Flora Workspace Team"]
+description = "Flora Workspace - Self-hostable corporate collaboration platform"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/mdmv/flora"
+rust-version = "1.97"
 
-[dependencies]
+[workspace]
+resolver = "3"
+members = [
+    "flora-core",
+    "flora-api",
+    "flora-messaging",
+    "flora-tasks",
+    "flora-files",
+    "flora-search",
+    "flora-notifications",
+    "flora-tests",
+]
+exclude = ["docker-compose.yml"]
+
+# =========================================================================
+# Workspace Lint Configuration
+# =========================================================================
 
 [lints.rust]
 unsafe_code = "forbid"
 unused_imports = "warn"
 unused_variables = "warn"
+dead_code = "warn"
 
 [lints.clippy]
 pedantic = "deny"
-nursery = "warn"
+nursery = {level = "warn", priority = -1}
+unwrap_used = "deny"
+expect_used = "deny"
+fallible_impl_from = "deny"
 
 # =========================================================================
 # Build Profiles
 # =========================================================================
 
-# Dev profile: fast compilation, slow runtime (acceptable for dev)
 [profile.dev]
 opt-level = 0
 incremental = true
 
-# CI Profile: Fast builds for PR validation (inherits from dev)
-# Used by nextest and GitHub Actions
 [profile.ci]
 inherits = "dev"
-debug = 1          # Only line tables for best backtraces on panic
-opt-level = 0      # No optimizations (fastest compile)
-incremental = true # Enable incremental compilation
+debug = 1
+opt-level = 0
+incremental = true
 
-# Release Profile: Optimized for production binaries (Coolify / Desktop)
 [profile.release]
-strip = true       # Strip symbols from binary (reduces size)
-lto = "thin"       # Thin Link-Time Optimization (balances speed and size)
-codegen-units = 1  # Single codegen unit for better optimization
-opt-level = 3      # Maximum optimization for speed
-panic = "abort"    # Abort on panic (removes unwinding bloat)
+strip = true
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+
+# =========================================================================
+# Workspace Dependencies (available to all crates)
+# =========================================================================
+
+[workspace.dependencies]
+# --- Async Runtime ---
+tokio = { version = "1.43", features = ["full"] }
+
+# --- Web Framework ---
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+
+# --- Serialization ---
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# --- Database ---
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "json"] }
+
+# --- Cache / Queue ---
+redis = { version = "1.6", features = ["tokio-comp", "connection-manager"] }
+
+# --- Error Handling ---
+thiserror = "2.0"
+anyhow = "1.0"
+eyre = "0.9"
+
+# --- Logging & Tracing ---
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
+tracing-appender = "0.2"
+opentelemetry = "0.28"
+tracing-opentelemetry = "0.29"
+opentelemetry-otlp = "0.22"
+opentelemetry_sdk = "0.28"
+
+# --- Authentication ---
+openidconnect = "4.0"
+
+# --- Search ---
+meilisearch-sdk = "0.29"
+
+# --- Utilities ---
+uuid = { version = "1.11", features = ["v4", "v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+backoff = { version = "0.4", features = ["tokio"] }
+bytes = "1.9"
+futures = "0.3"
+base64 = "0.22"
+sha2 = "0.10"
+argon2 = "0.5"
+rand = "0.8"
+
+# --- Validation ---
+validator = { version = "0.19", features = ["derive"] }
+
+# --- Additional dependencies used by crates ---
+hyper = { version = "1.5", features = ["server", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+tower-service = "0.3"
+mime = "0.3"
+mime_guess = "2.0"
+multipart = "1.0"
+tempfile = "3.14"
+tokio-native-tls = "0.3"
+rustls = "0.23"
+tokio-rustls = "0.26"
+lettre = "0.11"
+serde_urlencoded = "0.7"
+hmac = "0.12"
+jwt = "0.16"
+time = "0.3"
+axum-extra = { version = "0.10", features = ["cookie"] }
+axum-msgpack = "0.8"
+bcrypt = "0.16"
+regex = "1.11"
+url = { version = "2.5", features = ["serde"] }
+chrono-tz = "0.10"
+jsonwebtoken = "10.4.0"
+zeroize = { version = "1.8", features = ["derive"] }
+
+# --- Testing ---
+mockall = "0.13"
+wiremock = "0.6"
+proptest = "1.5"
+quickcheck = "1.0"
+tokio-test = "0.4"
+
+# --- CLI ---
+clap = { version = "4.5", features = ["derive", "env"] }
+figment = { version = "0.10", features = ["env", "toml", "yaml"] }
+
+# --- Config ---
+config = "0.14"
+
+# =========================================================================
+
+# =========================================================================
+# Workspace Dev Dependencies (available to all crates in dev mode)
+# =========================================================================
+
+[workspace.dev-dependencies]
+mockall = "0.13"
+wiremock = "0.6"
+proptest = "1.5"
+quickcheck = "1.0"
+tokio-test = "0.4"

@@ -8,7 +8,7 @@ jobs:
       - name: Set up Rust
         uses: actions/setup-rust@v3
         with:
-          rust-version: '1.74'
+          rust-version: '1.97'
       - name: Install dependencies
         run: cargo build
       - name: Run tests

@@ -332,7 +332,6 @@ impl EngineHandle {
 
     /// Durably queues a mutation and its optimistic layer, then attempts to
     /// claim the strict queue head while retaining the same engine lock.
-    #[allow(clippy::too_many_arguments)]
     pub async fn enqueue_optimistic_mutation(
         &self,
         origin_op_id: Option<String>,

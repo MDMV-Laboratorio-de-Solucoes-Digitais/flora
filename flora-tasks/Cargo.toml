@@ -1,0 +1,33 @@
+# =========================================================================
+# Flora Tasks - Task Management Vertical Slice
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-tasks"
+version = "0.1.0"
+edition = "2021"
+description = "Task management vertical slice"
+license = "AGPL-3.0-OR-LATER"
+rust-version = "1.97"
+
+[lib]
+name = "flora_tasks"
+path = "src/lib.rs"
+
+[dependencies]
+# --- Workspace dependencies ---
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
+validator.workspace = true
+
+# --- Internal crate ---
+flora-core = { path = "../flora-core" }

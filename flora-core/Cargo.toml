@@ -1,0 +1,57 @@
+# =========================================================================
+# Flora Core - Shared Traits, Models, and Utilities
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core traits, models, and shared functionality for Flora Workspace"
+license = "AGPL-3.0-OR-LATER"
+rust-version = "1.97"
+
+[lib]
+name = "flora_core"
+path = "src/lib.rs"
+
+[dependencies]
+# --- Workspace Dependencies ---
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+redis.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
+validator.workspace = true
+bytes.workspace = true
+futures.workspace = true
+base64.workspace = true
+sha2.workspace = true
+argon2.workspace = true
+rand.workspace = true
+
+# --- Crate-specific dependencies ---
+bcrypt = "0.16"
+regex = "1.11"
+url = { version = "2.5", features = ["serde"] }
+rust-i18n = "3.1"
+chrono-tz = "0.10"
+zeroize = { version = "1.8", features = ["derive"] }
+figment = { version = "0.10", features = ["env", "toml", "yaml"] }
+thiserror = "2.0"
+axum = "0.8"
+
+[dev-dependencies]
+wiremock.workspace = true
+tokio-test.workspace = true
+proptest.workspace = true
+
+[features]
+default = []
+sqlite = ["sqlx/sqlite"]
+test = []

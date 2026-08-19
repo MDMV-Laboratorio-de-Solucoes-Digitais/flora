@@ -1,0 +1,32 @@
+# =========================================================================
+# Flora Search - Meilisearch Integration
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-search"
+version = "0.1.0"
+edition = "2021"
+description = "Global search vertical slice with Meilisearch"
+license = "AGPL-3.0-OR-LATER"
+rust-version = "1.97"
+
+[lib]
+name = "flora_search"
+path = "src/lib.rs"
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+meilisearch-sdk.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
+flora-core = { path = "../flora-core" }
+
+[dev-dependencies]
+wiremock.workspace = true

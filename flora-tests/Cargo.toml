@@ -1,0 +1,29 @@
+# =========================================================================
+# Flora Tests - Integration and Contract Tests
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-tests"
+version = "0.1.0"
+edition = "2021"
+description = "Integration and contract tests for Flora Workspace"
+license = "AGPL-3.0-OR-LATER"
+rust-version = "1.97"
+
+[lib]
+name = "flora_tests"
+path = "src/lib.rs"
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+flora-core = { path = "../flora-core" }
+flora-api = { path = "../flora-api" }
+wiremock.workspace = true
+reqwest = { version = "0.12", features = ["json"] }
+
+[dev-dependencies]
+tokio-test.workspace = true
+uuid.workspace = true

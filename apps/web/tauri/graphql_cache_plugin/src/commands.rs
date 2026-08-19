@@ -14,7 +14,7 @@ use crate::engine::{
     WriteResultWire,
 };
 use crate::{
-    CacheState, InitializedCache, emit_cache_changed, emit_mutation_settled, emit_ops_affected,
+    emit_cache_changed, emit_mutation_settled, emit_ops_affected, CacheState, InitializedCache,
 };
 use cache_core::entity_resolver::EntityResolver;
 use cache_core::link_patch::{OptimisticLinkPatch, QueryRevalidation};
@@ -148,7 +148,6 @@ pub async fn graphql_cache_write<R: Runtime>(
 /// Durably queues an optimistic mutation and attempts to claim the strict
 /// queue head before broadcasting visible changes to every webview.
 #[tauri::command]
-#[allow(clippy::too_many_arguments)]
 pub async fn graphql_cache_enqueue_optimistic_mutation<R: Runtime>(
     app: AppHandle<R>,
     state: State<'_, CacheState>,

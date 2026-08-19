@@ -1,0 +1,34 @@
+# =========================================================================
+# Flora Notifications - Notification System with PGMQ + Valkey Streams
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-notifications"
+version = "0.1.0"
+edition = "2021"
+description = "Notification system with PGMQ + Valkey Streams"
+license = "AGPL-3.0-OR-LATER"
+rust-version = "1.97"
+
+[lib]
+name = "flora_notifications"
+path = "src/lib.rs"
+
+[dependencies]
+# --- Workspace dependencies ---
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+redis.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+
+# --- Internal crate ---
+flora-core = { path = "../flora-core" }

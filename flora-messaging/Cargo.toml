@@ -1,0 +1,30 @@
+# =========================================================================
+# Flora Messaging - Real-time messaging with Valkey Pub/Sub
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-messaging"
+version = "0.1.0"
+edition = "2021"
+description = "Real-time messaging vertical slice with Valkey Pub/Sub"
+license = "AGPL-3.0-OR-LATER"
+rust-version = "1.97"
+
+[lib]
+name = "flora_messaging"
+path = "src/lib.rs"
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+redis.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+flora-core = { path = "../flora-core" }
