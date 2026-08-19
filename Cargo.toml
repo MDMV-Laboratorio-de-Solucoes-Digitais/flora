@@ -140,7 +140,7 @@ chrono = { version = "0.4", features = ["serde"] }
 backoff = { version = "0.4", features = ["tokio"] }
 
 # --- Validation ---
-validator = { version = "0.19", features = ["derive"] }
+validator = { version = "0.21", features = ["derive"] }
 
 # --- Additional dependencies used by crates ---
 
