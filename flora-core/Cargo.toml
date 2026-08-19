@@ -1,0 +1,64 @@
+# =========================================================================
+# Flora Core - Shared Traits, Models, and Utilities
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-core"
+version = "0.1.0"
+description = "Core traits, models, and shared functionality for Flora Workspace"
+repository.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "flora_core"
+path = "src/lib.rs"
+
+[dependencies]
+dotenv = "0.15"
+# --- Workspace Dependencies ---
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+redis.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
+validator.workspace = true
+bytes.workspace = true
+futures.workspace = true
+base64.workspace = true
+sha2.workspace = true
+argon2.workspace = true
+rand.workspace = true
+jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
+
+# --- Core-specific dependencies ---
+bcrypt.workspace = true
+regex.workspace = true
+url.workspace = true
+rust-i18n.workspace = true
+chrono-tz.workspace = true
+zeroize.workspace = true
+figment.workspace = true
+thiserror.workspace = true
+axum.workspace = true
+
+[dev-dependencies]
+wiremock.workspace = true
+tokio-test.workspace = true
+proptest.workspace = true
+
+[features]
+default = []
+sqlite = ["sqlx/sqlite"]
+test = []

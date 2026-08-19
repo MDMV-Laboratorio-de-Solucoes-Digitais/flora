@@ -38,7 +38,7 @@ Strict use of Conventional Commits. CRITICAL: Use `git add <file>` for exactly O
 Before labeling the project "production ready", it must pass the ultimate test: Deploy Flora on a completely fresh, cheap VPS—without AWS, without mandatory proprietary services, and without manual intervention beyond initial config. Command: `docker compose up` or deploy via Coolify. Result: PostgreSQL, PGMQ, Valkey, RustFS, Meilisearch, and Flora must all successfully boot. Operations: Backup, restore, upgrade, and rollback must work flawlessly.
 
 ### VI. Modular Monolith Architecture
-Backend uses Rust (Axum, thiserror, anyhow, debug) with Modular Monolith architecture using Cargo Workspaces to separate Vertical Slices. This balances organizational simplicity with maintainability and clear module boundaries.
+Backend uses Rust (Axum, thiserror, anyhow, debug) with Modular Monolith architecture using Cargo Workspaces to separate modules. This balances organizational simplicity with maintainability and clear module boundaries.
 
 ### VII. Open Source & Self-Hostable by Default
 All core components must be open-source (preferably AGPL) and self-hostable. External SaaS integrations are permitted only when self-hosted alternatives would create undue operational burden, and must be opt-in/configurable.

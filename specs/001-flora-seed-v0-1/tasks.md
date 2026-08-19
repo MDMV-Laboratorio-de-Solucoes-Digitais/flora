@@ -18,13 +18,13 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan in `flora/`
-- [ ] T002 Initialize Rust workspace with Cargo.toml at `flora/Cargo.toml`
-- [ ] T003 [P] Configure linting (clippy, rustfmt) and deny unsafe code in workspace Cargo.toml
-- [ ] T004 [P] Add workspace dependencies: axum, thiserror, anyhow, tracing, sqlx, valkey-rs, meilisearch-sdk, openidconnect, serde, tokio, tower, uuid, chrono, mockall, backoff (for circuit breakers)
-- [ ] T005 [P] Setup gitignore for Rust, IDE, and environment files
-- [ ] T005.1 [P] Configure Meilisearch scoped indices template in `flora-search/src/config/meilisearch_template.json` (e.g., `flora_org_{org_id}`)
-- [ ] T005.2 [P] Configure Valkey pub/sub topic naming convention in `flora-messaging/src/config/valkey_topics.rs` (e.g., `org:{org_id}:channel:{channel_id}`)
+- [X] T001 Create project structure per implementation plan in `flora/`
+- [X] T002 Initialize Rust workspace with Cargo.toml at `flora/Cargo.toml`
+- [X] T003 [P] Configure linting (clippy, rustfmt) and deny unsafe code in workspace Cargo.toml
+- [X] T004 [P] Add workspace dependencies: axum, thiserror, anyhow, tracing, sqlx, valkey-rs, meilisearch-sdk, openidconnect, serde, tokio, tower, uuid, chrono, mockall, backoff (for circuit breakers)
+- [X] T005 [P] Setup gitignore for Rust, IDE, and environment files
+- [X] T005.1 [P] Configure Meilisearch scoped indices template in `flora-search/src/config/meilisearch_template.json` (e.g., `flora_org_{org_id}`)
+- [X] T005.2 [P] Configure Valkey pub/sub topic naming convention in `flora-messaging/src/config/valkey_topics.rs` (e.g., `org:{org_id}:channel:{channel_id}`)
 
 ---
 
@@ -34,19 +34,19 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Setup database schema and migrations framework with `sqlx` in `flora-core/src/migrations/`
-- [ ] T006.1 [P] Add `organization_id` column (non-nullable, indexed) to all tenant-scoped tables (messages, tasks, files, channels, etc.) in `flora-core/src/migrations/`
-- [ ] T007 [P] Implement authentication/authorization framework using `openidconnect` in `flora-core/src/traits/auth_provider.rs`
-- [ ] T008 [P] Create base models for User, Organization, Membership, Role in `flora-core/src/models/`
-- [ ] T008.1 [P] Add `organization_id` field to all tenant-scoped models (e.g., `Message`, `Task`, `File`, `Channel`) in `flora-core/src/models/`
-- [ ] T009 [P] Implement multi-tenancy isolation middleware in `flora-api/src/extractors/auth.rs` (enforce `organization_id` filtering in all queries)
-- [ ] T010 [P] Setup error handling and logging infrastructure using `tracing` and `thiserror` in `flora-core/src/error.rs`
-- [ ] T011 Configure environment management with `.env` and `config` crate
-- [ ] T012 [P] Implement circuit breakers for external services (Zitadel, Meilisearch, Valkey) in `flora-core/src/utils/circuit_breaker.rs`
-- [ ] T012.1 [P] Configure fallback behavior for Zitadel outages (local email/password for existing users) in `flora-core/src/services/auth_service.rs`
-- [ ] T013 [P] Setup health check endpoints for all vertical slices in `flora-api/src/routes/health.rs`
-- [ ] T014 [P] Implement connection pooling for PostgreSQL and Valkey
-- [ ] T015 [P] Create RustFS trait and local filesystem implementation in `flora-core/src/traits/storage_provider.rs` and `flora-core/src/storage/local.rs`
+- [X] T006 Setup database schema and migrations framework with `sqlx` in `flora-core/src/migrations/`
+- [X] T006.1 [P] Add `organization_id` column (non-nullable, indexed) to all tenant-scoped tables (messages, tasks, files, channels, etc.) in `flora-core/src/migrations/`
+- [X] T007 [P] Implement authentication/authorization framework using `openidconnect` in `flora-core/src/traits/auth_provider.rs`
+- [X] T008 [P] Create base models for User, Organization, Membership, Role in `flora-core/src/models/`
+- [X] T008.1 [P] Add `organization_id` field to all tenant-scoped models (e.g., `Message`, `Task`, `File`, `Channel`) in `flora-core/src/models/`
+- [X] T009 [P] Implement multi-tenancy isolation middleware in `flora-api/src/extractors/auth.rs` (enforce `organization_id` filtering in all queries)
+- [X] T010 [P] Setup error handling and logging infrastructure using `tracing` and `thiserror` in `flora-core/src/error.rs`
+- [X] T011 Configure environment management with `.env` and `config` crate
+- [X] T012 [P] Implement circuit breakers for external services (Zitadel, Meilisearch, Valkey) in `flora-core/src/utils/circuit_breaker.rs`
+- [X] T012.1 [P] Configure fallback behavior for Zitadel outages (local email/password for existing users) in `flora-core/src/services/auth_service.rs`
+- [X] T013 [P] Setup health check endpoints for all modules in `flora-api/src/routes/health.rs`
+- [X] T014 [P] Implement connection pooling for PostgreSQL and Valkey
+- [X] T015 [P] Create RustFS trait and local filesystem implementation in `flora-core/src/traits/storage_provider.rs` and `flora-core/src/storage/local.rs`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

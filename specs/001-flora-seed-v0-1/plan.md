@@ -18,7 +18,7 @@ Flora Seed v0.1 is a lightweight, open-source (AGPL) self-hostable collaboration
 
 **Storage**: PostgreSQL (Cloud/Production canonical) with SQLite fallback (Local/Desktop/Offline) using sqlx with connection pooling and `.sql` migration files; Core relational tables with JSONB for flexible metadata; Valkey for caching, pub/sub, and streams with a failover strategy for high availability; RustFS as production object storage with S3-compatible and LocalFileSystem backends; Meilisearch for full-text search with a document-based schema and multi-tenant isolation via `organization_id` indexing
 
-**Testing**: cargo test (unit/integration), mockall for trait mocking, cargo nextest (optional), sqlx::testing or testcontainers for DB integration tests, valkey mock/meilisearch test doubles
+**Testing**: cargo test (unit/integration), mockall for trait mocking, cargo nextest, sqlx::testing or testcontainers for DB integration tests, valkey mock/meilisearch test doubles
 
 **Target Platform**: Linux server (x86_64/arm64), deployable via Docker or bare metal; compatible with cheap VPS (low memory footprint)
 
@@ -75,31 +75,31 @@ flora/
 │   │   │   └── notification.rs
 │   │   └── error.rs
 │   └── Cargo.toml
-├── flora-organization/        # Organization vertical slice
+├── flora-organization/        # Organization module
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml
-├── flora-messaging/           # Messaging vertical slice
+├── flora-messaging/           # Messaging module
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml
-├── flora-tasks/               # Tasks vertical slice
+├── flora-tasks/               # Tasks module
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml
-├── flora-files/               # Files vertical slice
+├── flora-files/               # Files module
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml
-├── flora-search/              # Search vertical slice
+├── flora-search/              # Search module
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml
-├── flora-notifications/       # Notifications vertical slice
+├── flora-notifications/       # Notifications module
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml
-├── flora-api/                 # Axum API layer integrating vertical slices
+├── flora-api/                 # Axum API layer integrating modules
 │   ├── src/
 │   │   ├── main.rs
 │   │   ├── routes/
@@ -121,7 +121,7 @@ flora/
 └── docker-compose.yml         # Seed topology deployment
 ```
 
-**Structure Decision**: Modular monolith using Cargo workspace with separate crates for each vertical slice (organization, messaging, tasks, files, search, notifications) plus a core crate containing shared traits and models, and an API crate that wires everything together. This matches the "Vertical Slices" approach and enables independent development and testing.
+**Structure Decision**: Modular monolith using Cargo workspace with separate crates for each module (organization, messaging, tasks, files, search, notifications) plus a core crate containing shared traits and models, and an API crate that wires everything together. This matches the "Vertical Slices" approach and enables independent development and testing.
 
 ## Complexity Tracking
 

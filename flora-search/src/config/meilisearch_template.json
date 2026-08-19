@@ -1,0 +1,8 @@
+{
+  "index_name": "flora_org_${organization_id}",
+  "settings": {
+    "searchableAttributes": ["*"],
+    "filterableAttributes": ["organization_id"],
+    "distinctAttribute": "id"
+  }
+}

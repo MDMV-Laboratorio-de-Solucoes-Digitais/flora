@@ -1,44 +1,228 @@
 # =========================================================================
 # FLORA WORKSPACE - ROOT CARGO.TOML
+# A modular monolith using Cargo Workspaces + Modules
+# AGPL-3.0-or-later - Self-hostable, open-source corporate platform
 # =========================================================================
 
 [package]
 name = "flora"
 version = "0.1.0"
-edition = "2024"
+description = "Flora Workspace - Self-hostable corporate collaboration platform"
+repository.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+edition.workspace = true
 
-[dependencies]
+[workspace]
+resolver = "3"
+package.rust-version = "1.97"
+package.edition = "2024"
+package.license = "AGPL-3.0-or-later"
+package.authors = ["Flora Workspace  - MDMV Laboratório de Soluções Digitais"]
+package.repository = "https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/MDMV"
 
-[lints.rust]
-unsafe_code = "forbid"
-unused_imports = "warn"
-unused_variables = "warn"
+members = [
+    "flora-core",
+    "flora-api",
+    "flora-messaging",
+    "flora-tasks",
+    "flora-files",
+    "flora-search",
+    "flora-notifications",
+    "flora-tests",
+]
+exclude = ["docker-compose.yml"]
 
-[lints.clippy]
-pedantic = "deny"
-nursery = "warn"
+# =========================================================================
+# Workspace Lint Configuration
+# =========================================================================
+
+[workspace.lints.rust]
+# The basics of native compiler rigor
+unsafe_code = "deny"                  # No unsafe blocks without explicit justification
+missing_docs = "deny"                 # Requires documentation on everything public
+missing_debug_implementations = "deny"# All public structs must implement Debug
+unreachable_pub = "deny"              # Pub items that cannot be accessed publicly
+unused_results = "deny"               # Forces handling of all returns (not just Results)
+unused_qualifications = "deny"        # Avoids unnecessary absolute paths (e.g., std::vec::Vec)
+trivial_casts = "deny"                # Forbids casts like `x as u32` if `x` is already `u32`
+trivial_numeric_casts = "deny"        # Forbids useless numeric casts
+unused_extern_crates = "deny"         # Cleans up dependency garbage
+
+[workspace.lints.clippy]
+# Level 1: The Main Groups
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+
+# Level 2: The "Give Me a Reason" Rule
+# -------------------------------------------------------------------------
+# 1. Forbids the use of #[allow()] generally.
+allow_attributes = "deny"
+
+# 2. IF, because of a macro, you need to make a local exception and use
+# an #[allow()], you are OBLIGATED to write the `reason = "..."` attribute.
+#
+allow_attributes_without_reason = "deny"
+# Example:
+#
+# #[allow(
+#    clippy::allow_attributes,
+#    clippy::pedantic,
+#    reason = "async_trait macro allows underscore bindings internally. Forgiven."
+# )]
+# [async_trait]
+
+# Level 3: Panic Prevention and Technical Debt (The Restriction group)
+# -------------------------------------------------------------------------
+unwrap_used = "deny"                  # Forbids .unwrap() (use pattern matching or the ? operator)
+expect_used = "deny"                  # Forbids .expect() (propagate the error gracefully)
+panic = "deny"                        # Forbids the explicit panic!() macro
+todo = "deny"                         # Forbids the todo!() macro in production code
+unimplemented = "deny"                # Forbids the unimplemented!() macro
+unreachable = "deny"                  # Forces clarity in unreachable paths
+fallible_impl_from = "deny"           # Forbids impl From that can fail (use TryFrom)
+clone_on_ref_ptr = "deny"             # Forces Arc::clone(&x) instead of x.clone() for clarity
+dbg_macro = "deny"                    # Forbids dbg!() forgotten in the code
+print_stdout = "warn"                 # Restricts print!/println! (use the `tracing` or `log` crate)
+use_self = "deny"                     # Forces the use of `Self` in implementations for clean refactoring
+wildcard_dependencies = "deny"        # Forbids `crate = "*"` type dependencies in Cargo.toml
+multiple_crate_versions = "deny"      # Forbids having multiple versions of the same crate compiled
 
 # =========================================================================
 # Build Profiles
 # =========================================================================
 
-# Dev profile: fast compilation, slow runtime (acceptable for dev)
 [profile.dev]
 opt-level = 0
 incremental = true
 
-# CI Profile: Fast builds for PR validation (inherits from dev)
-# Used by nextest and GitHub Actions
 [profile.ci]
 inherits = "dev"
-debug = 1          # Only line tables for best backtraces on panic
-opt-level = 0      # No optimizations (fastest compile)
-incremental = true # Enable incremental compilation
+debug = 1
+opt-level = 0
+incremental = true
 
-# Release Profile: Optimized for production binaries (Coolify / Desktop)
 [profile.release]
-strip = true       # Strip symbols from binary (reduces size)
-lto = "thin"       # Thin Link-Time Optimization (balances speed and size)
-codegen-units = 1  # Single codegen unit for better optimization
-opt-level = 3      # Maximum optimization for speed
-panic = "abort"    # Abort on panic (removes unwinding bloat)
+strip = true
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+
+# =========================================================================
+# Workspace Dependencies (available to all crates)
+# =========================================================================
+[workspace.dependencies]
+# --- Internal crates ---
+flora-api = { path = "flora-api"}
+flora-core = { path = "flora-core" }
+flora-files = { path = "flora-files" }
+flora-messaging = { path = "flora-messaging" }
+flora-notifications = { path = "flora-notifications" }
+flora-search = { path = "flora-search" }
+flora-tasks = { path = "flora-tasks" }
+flora-tests = { path = "flora-tests" }
+
+# --- flora-core dependencies ---
+rust-i18n = "4.2.1"
+
+# --- flora-tests dependencies ---
+reqwest = { version = "0.13.4", features = ["json"] }
+
+# --- Async Runtime ---
+tokio = { version = "1.43", features = ["full"] }
+
+# --- Web Framework ---
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.7.0", features = ["cors", "trace"] }
+
+# --- Serialization ---
+serde_json = "1.0"
+serde_yaml = "0.9"
+serde = { version = "1.0", features = ["derive"] }
+
+# --- Database ---
+sqlx = { version = "0.9.0", features = ["runtime-tokio", "postgres", "uuid", "chrono", "json"] }
+
+# --- Cache / Queue ---
+redis = { version = "1.6", features = ["tokio-comp", "connection-manager"] }
+
+# --- Error Handling ---
+thiserror = "2.0"
+anyhow = "1.0"
+eyre = "0.9"
+
+# --- Logging & Tracing ---
+tracing = "0.1"
+tracing-appender = "0.2"
+opentelemetry = "0.28"
+tracing-opentelemetry = "0.29"
+opentelemetry-otlp = "0.22"
+opentelemetry_sdk = "0.28"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
+
+# --- Authentication ---
+openidconnect = "4.0"
+
+# --- Search ---
+meilisearch-sdk = "0.33"
+
+# --- Utilities ---
+async-trait = "0.1"
+bytes = "1.9"
+futures = "0.3"
+base64 = "0.23.1"
+sha2 = "0.11.0"
+argon2 = "0.5"
+rand = "0.10.2"
+uuid = { version = "1.11", features = ["v4", "v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+backoff = { version = "0.4", features = ["tokio"] }
+
+# --- Validation ---
+validator = { version = "0.21", features = ["derive"] }
+
+# --- Additional dependencies used by crates ---
+serde_urlencoded = "0.7"
+
+tower-service = "0.3"
+mime = "0.3"
+mime_guess = "2.0"
+multipart = "1.0"
+tempfile = "3.14"
+tokio-native-tls = "0.3"
+rustls = "0.23"
+tokio-rustls = "0.26"
+lettre = "0.11"
+hmac = "0.12"
+jwt = "0.16"
+time = "0.3"
+axum-msgpack = "0.8"
+bcrypt = "0.19.3"
+regex = "1.11"
+chrono-tz = "0.10"
+jsonwebtoken = "11.0.0"
+hyper = { version = "1.5", features = ["server", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+axum-extra = { version = "0.12.6", features = ["cookie"] }
+url = { version = "2.5", features = ["serde"] }
+zeroize = { version = "1.8", features = ["derive"] }
+
+# --- Testing ---
+mockall = "0.13"
+wiremock = "0.6"
+proptest = "1.5"
+quickcheck = "1.0"
+tokio-test = "0.4"
+
+# --- CLI ---
+clap = { version = "4.5", features = ["derive", "env"] }
+figment = { version = "0.10", features = ["env", "toml", "yaml"] }
+
+# --- Config ---
+config = "0.14"
+
+# =========================================================================
