@@ -165,14 +165,3 @@ figment = { version = "0.10", features = ["env", "toml", "yaml"] }
 config = "0.14"
 
 # =========================================================================
-
-# =========================================================================
-# Workspace Dev Dependencies (available to all crates in dev mode)
-# =========================================================================
-
-[workspace.dev-dependencies]
-mockall = "0.13"
-wiremock = "0.6"
-proptest = "1.5"
-quickcheck = "1.0"
-tokio-test = "0.4"

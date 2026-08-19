@@ -5,6 +5,7 @@ use crate::traits::{AuthProvider, SessionRepository, UserRepository};
 use crate::Result;
 
 /// Authentication service for user login and session management.
+#[expect(dead_code)]
 pub struct AuthService {
     auth_provider: Box<dyn AuthProvider>,
     session_repo: Box<dyn SessionRepository>,

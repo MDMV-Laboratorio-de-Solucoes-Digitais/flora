@@ -3,6 +3,7 @@
 use crate::traits::FileRepository;
 
 /// File management service.
+#[expect(dead_code)]
 pub struct FileService {
     file_repo: Box<dyn FileRepository>,
 }

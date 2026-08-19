@@ -12,7 +12,11 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// Creates a new AppState by connecting to PostgreSQL and Valkey.
+    /// Creates a new `AppState` by connecting to `PostgreSQL` and Valkey.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database or Redis connection fails.
     pub async fn new(config: flora_core::config::Config) -> Result<Self> {
         let db_pool = sqlx::PgPool::connect(&config.database.postgres_url)
             .await

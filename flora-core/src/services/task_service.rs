@@ -3,6 +3,7 @@
 use crate::traits::TaskRepository;
 
 /// Task management service.
+#[expect(dead_code)]
 pub struct TaskService {
     task_repo: Box<dyn TaskRepository>,
 }

@@ -3,6 +3,7 @@
 use crate::traits::MessageRepository;
 
 /// Message service for channel messages.
+#[expect(dead_code)]
 pub struct MessageService {
     message_repo: Box<dyn MessageRepository>,
 }

@@ -14,7 +14,13 @@ pub mod tasks;
 pub mod workspace;
 
 /// Creates the main application router with all routes registered.
-#[must_use]
+///
+/// # Examples
+///
+/// ```ignore
+/// let router = create_router();
+/// ```
+#[must_use = "Router must be applied to the application"]
 pub fn create_router() -> Router {
     Router::new()
         .route("/health", get(health::health_check))

@@ -3,6 +3,7 @@
 use crate::traits::NotificationRepository;
 
 /// Notification management service.
+#[expect(dead_code)]
 pub struct NotificationService {
     notification_repo: Box<dyn NotificationRepository>,
 }

@@ -34,6 +34,7 @@ impl Config {
     /// # Errors
     ///
     /// Returns an error if configuration values are missing or invalid.
+    #[expect(clippy::result_large_err)]
     pub fn load() -> figment::Result<Self> {
         let figment = Figment::new().merge(figment::providers::Env::prefixed("FLORA_"));
 

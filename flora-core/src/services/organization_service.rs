@@ -3,6 +3,7 @@
 use crate::traits::{MembershipRepository, OrganizationRepository, RoleRepository};
 
 /// Organization management service.
+#[expect(dead_code)]
 pub struct OrganizationService {
     orgs: Box<dyn OrganizationRepository>,
     memberships: Box<dyn MembershipRepository>,

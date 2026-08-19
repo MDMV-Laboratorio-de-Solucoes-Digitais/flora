@@ -7,10 +7,14 @@ use axum::{
 };
 
 /// Simple in-memory rate limiter (placeholder - Valkey-based implementation per T014).
+///
+/// # Errors
+///
+/// Returns an error if rate limiting is enforced. Currently always succeeds.
 pub async fn rate_limit_middleware(
-    _req: Request<Body>,
+    req: Request<Body>,
     next: Next,
 ) -> Result<Response<Body>, StatusCode> {
     // TODO: Implement per T014 using Valkey
-    Ok(next.run(_req).await)
+    Ok(next.run(req).await)
 }

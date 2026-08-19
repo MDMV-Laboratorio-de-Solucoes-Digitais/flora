@@ -3,6 +3,7 @@
 use crate::traits::WorkspaceRepository;
 
 /// Workspace management service.
+#[expect(dead_code)]
 pub struct WorkspaceService {
     workspace_repo: Box<dyn WorkspaceRepository>,
 }
