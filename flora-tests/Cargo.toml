@@ -6,10 +6,10 @@
 [package]
 name = "flora-tests"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Integration and contract tests for Flora Workspace"
-license = "AGPL-3.0-OR-LATER"
-rust-version = "1.97"
+license.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "flora_tests"
@@ -22,7 +22,7 @@ serde_json.workspace = true
 flora-core = { path = "../flora-core" }
 flora-api = { path = "../flora-api" }
 wiremock.workspace = true
-reqwest = { version = "0.12", features = ["json"] }
+reqwest.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true

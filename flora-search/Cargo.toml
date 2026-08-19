@@ -6,16 +6,19 @@
 [package]
 name = "flora-search"
 version = "0.1.0"
-edition = "2021"
-description = "Global search vertical slice with Meilisearch"
-license = "AGPL-3.0-OR-LATER"
-rust-version = "1.97"
+edition = "2024"
+description = "Global search module with Meilisearch"
+license.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "flora_search"
 path = "src/lib.rs"
 
 [dependencies]
+# --- Internal crates ---
+flora-core.workspace = true
+
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -26,7 +29,6 @@ tracing.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 async-trait.workspace = true
-flora-core = { path = "../flora-core" }
 
 [dev-dependencies]
 wiremock.workspace = true

@@ -44,7 +44,7 @@
 - [ ] T011 Configure environment management with `.env` and `config` crate
 - [ ] T012 [P] Implement circuit breakers for external services (Zitadel, Meilisearch, Valkey) in `flora-core/src/utils/circuit_breaker.rs`
 - [ ] T012.1 [P] Configure fallback behavior for Zitadel outages (local email/password for existing users) in `flora-core/src/services/auth_service.rs`
-- [ ] T013 [P] Setup health check endpoints for all vertical slices in `flora-api/src/routes/health.rs`
+- [ ] T013 [P] Setup health check endpoints for all modules in `flora-api/src/routes/health.rs`
 - [ ] T014 [P] Implement connection pooling for PostgreSQL and Valkey
 - [ ] T015 [P] Create RustFS trait and local filesystem implementation in `flora-core/src/traits/storage_provider.rs` and `flora-core/src/storage/local.rs`
 

@@ -33,7 +33,7 @@
 - **Alternatives considered**: Pure Postgres-only approach (higher latency for real-time), pure Redis-only approach (lower durability for critical tasks).
 
 ### 7. Observability: Monitoring & Health Checks
-- **Decision**: Use `tracing` for application logging and `OpenTelemetry` (OTLP) for metrics and distributed tracing. Health checks will be implemented via dedicated `/health` endpoints for each vertical slice.
+- **Decision**: Use `tracing` for application logging and `OpenTelemetry` (OTLP) for metrics and distributed tracing. Health checks will be implemented via dedicated `/health` endpoints for each module.
 - **Rationale**: This provides a standardized, vendor-agnostic observability stack that can be easily integrated with VictoriaMetrics/Grafana.
 
 ### 8. File Uploads: Chunking & Reliability

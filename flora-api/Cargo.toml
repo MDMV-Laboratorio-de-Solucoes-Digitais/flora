@@ -6,10 +6,10 @@
 [package]
 name = "flora-api"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Flora Workspace HTTP API Server"
-license = "AGPL-3.0-OR-LATER"
-rust-version = "1.97"
+license.workspace = true
+rust-version.workspace = true
 
 [[bin]]
 name = "flora-api"
@@ -21,7 +21,7 @@ path = "src/lib.rs"
 
 [dependencies]
 # --- Internal crates ---
-flora-core = { path = "../flora-core" }
+flora-core.workspace = true
 
 # --- Workspace dependencies ---
 tokio.workspace = true

@@ -1,4 +1,4 @@
-//! Flora Tasks - Task Management Vertical Slice
+//! Flora Tasks - Task Management Module
 //!
 //! Note: Using `sqlx::query` (runtime) instead of `query!` (compile-time)
 //! because this crate is compiled without DATABASE_URL in CI.

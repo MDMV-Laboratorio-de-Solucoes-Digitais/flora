@@ -6,16 +6,19 @@
 [package]
 name = "flora-files"
 version = "0.1.0"
-edition = "2021"
-description = "File storage vertical slice with RustFS abstraction"
-license = "AGPL-3.0-OR-LATER"
-rust-version = "1.97"
+edition = "2024"
+description = "File storage module with RustFS abstraction"
+license.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "flora_files"
 path = "src/lib.rs"
 
 [dependencies]
+# --- Internal crates ---
+flora-core.workspace = true
+
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -28,7 +31,6 @@ chrono.workspace = true
 async-trait.workspace = true
 futures.workspace = true
 bytes.workspace = true
-flora-core = { path = "../flora-core" }
 sha2.workspace = true
 validator.workspace = true
 

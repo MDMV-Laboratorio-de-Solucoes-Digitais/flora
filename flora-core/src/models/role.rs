@@ -45,10 +45,10 @@ impl Role {
     /// Adds a permission to the role.
     pub fn add_permission(&mut self, permission: Permission) {
         let perm_str = permission.to_string();
-        if let Some(arr) = self.permissions.as_array_mut() {
-            if !arr.iter().any(|v| v.as_str() == Some(&perm_str)) {
-                arr.push(serde_json::json!(perm_str));
-            }
+        if let Some(arr) = self.permissions.as_array_mut()
+            && !arr.iter().any(|v| v.as_str() == Some(&perm_str))
+        {
+            arr.push(serde_json::json!(perm_str));
         }
         self.updated_at = Utc::now();
     }

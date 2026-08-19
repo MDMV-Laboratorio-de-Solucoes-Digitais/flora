@@ -44,4 +44,4 @@ API versions are prefixed with `/api/v{major}/`. Breaking changes increment the 
 
 ## Internal Contracts
 
-Trait boundaries between vertical slices and the core are defined as Rust traits in `flora-core`. These are not exposed externally but constitute internal contracts for swapability and testing.
+Trait boundaries between modules and the core are defined as Rust traits in `flora-core`. These are not exposed externally but constitute internal contracts for swapability and testing.
