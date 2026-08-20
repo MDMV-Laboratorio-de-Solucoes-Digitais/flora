@@ -85,6 +85,21 @@ impl RbacService {
         Ok(role.permissions.contains(&permission.to_string()))
     }
 
+    /// Checks if a user has a specific permission in a workspace.
+    ///
+    /// This method checks the user's organization-level role permissions for the given permission.
+    /// It assumes the workspace belongs to the specified organization.
+    pub async fn has_permission_in_workspace(
+        &self,
+        user: &User,
+        organization_id: Uuid,
+        permission: &str,
+    ) -> Result<bool> {
+        // Delegate to the organization-level permission check since workspace permissions
+        // are derived from the user's role in the organization.
+        self.has_permission(user, organization_id, permission).await
+    }
+
     /// Checks if a user is an admin or owner of an organization.
     pub async fn is_admin(&self, user: &User, organization_id: Uuid) -> Result<bool> {
         let membership = self
