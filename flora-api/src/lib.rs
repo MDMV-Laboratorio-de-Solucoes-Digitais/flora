@@ -10,5 +10,7 @@ pub mod routes;
 ///
 /// This module contains the application state structure and related functionality.
 pub mod state;
+/// WebSocket handling for real-time messaging.
+pub mod websocket;
 
 pub use state::AppState;
