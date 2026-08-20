@@ -10,6 +10,7 @@ pub mod notifications;
 pub mod org;
 pub mod search;
 pub mod tasks;
+pub mod websocket;
 pub mod workspace;
 
 use crate::AppState;
@@ -37,6 +38,8 @@ pub fn create_router(app_state: AppState) -> Router {
             "/api/v1/notifications",
             notifications::create_notifications_router(),
         )
+        // WebSocket for real-time messaging
+        .route("/ws", get(websocket::websocket_handler))
         // Wire shared application state to all routes
         .with_state(app_state)
 }

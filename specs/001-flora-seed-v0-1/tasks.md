@@ -68,19 +68,19 @@
 
 ### Implementation for User Story 1
 
-- [ ] T019 [P] [US1] Implement OIDC login flow with multi-org support in `flora-api/src/routes/auth.rs`
-- [ ] T019.1 [P] [US1] Add session scoping to a single organization at a time in `flora-api/src/state.rs`
-- [ ] T020 [P] [US1] Create Organization model and repository in `flora-core/src/models/organization.rs` and `flora-core/src/repositories/organization_repository.rs`
-- [ ] T021 [P] [US1] Create User repository in `flora-core/src/repositories/user_repository.rs`
-- [ ] T022 [P] [US1] Implement Membership model and repository in `flora-core/src/models/membership.rs` and `flora-core/src/repositories/membership_repository.rs`
-- [ ] T023 [US1] Implement session management with configurable grace period in `flora-core/src/services/session_service.rs`
-- [ ] T023.1 [US1] Add immediate session termination for security-sensitive actions (e.g., role revocation) in `flora-core/src/services/session_service.rs`
-- [ ] T024 [US1] Add organization creation endpoint in `flora-api/src/routes/org.rs`
-- [ ] T025 [US1] Implement role-based access control for organization owners in `flora-core/src/services/rbac_service.rs`
-- [ ] T025.1 [US1] Add org/workspace-level scope to RBAC (FR-005) in `flora-core/src/services/rbac_service.rs`
-- [ ] T026 [US1] Add validation for email format and password complexity
-- [ ] T027 [US1] Implement error handling for duplicate emails and invalid inputs
-- [ ] T028 [US1] Add logging for registration and login events
+- [X] T019 [P] [US1] Implement OIDC login flow with multi-org support in `flora-api/src/routes/auth.rs`
+- [X] T019.1 [P] [US1] Add session scoping to a single organization at a time in `flora-api/src/state.rs`
+- [X] T020 [P] [US1] Create Organization model and repository in `flora-core/src/models/organization.rs` and `flora-core/src/repositories/organization_repository.rs`
+- [X] T021 [P] [US1] Create User repository in `flora-core/src/repositories/user_repository.rs`
+- [X] T022 [P] [US1] Implement Membership model and repository in `flora-core/src/models/membership.rs` and `flora-core/src/repositories/membership_repository.rs`
+- [X] T023 [US1] Implement session management with configurable grace period in `flora-core/src/services/session_service.rs`
+- [X] T023.1 [US1] Add immediate session termination for security-sensitive actions (e.g., role revocation) in `flora-core/src/services/session_service.rs`
+- [X] T024 [US1] Add organization creation endpoint in `flora-api/src/routes/org.rs`
+- [X] T025 [US1] Implement role-based access control for organization owners in `flora-core/src/services/rbac_service.rs`
+- [X] T025.1 [US1] Add org/workspace-level scope to RBAC (FR-005) in `flora-core/src/services/rbac_service.rs`
+- [X] T026 [US1] Add validation for email format and password complexity
+- [X] T027 [US1] Implement error handling for duplicate emails and invalid inputs
+- [X] T028 [US1] Add logging for registration and login events
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -100,17 +100,17 @@
 
 ### Implementation for User Story 4
 
-- [ ] T032 [P] [US4] Create Channel model and repository in `flora-core/src/models/channel.rs` and `flora-core/src/repositories/channel_repository.rs`
-- [ ] T033 [P] [US4] Create Message model and repository in `flora-core/src/models/message.rs` and `flora-core/src/repositories/message_repository.rs`
-- [ ] T034 [P] [US4] Implement real-time pub/sub using Valkey with organization-scoped topics in `flora-messaging/src/lib.rs`
-- [ ] T034.1 [P] [US4] Add `organization_id` validation on WebSocket connection and message publishing in `flora-api/src/websocket/mod.rs`
-- [ ] T035 [US4] Implement channel creation endpoint in `flora-api/src/routes/messaging.rs`
-- [ ] T036 [US4] Implement message posting, editing, and deletion endpoints in `flora-api/src/routes/messaging.rs`
+- [X] T032 [P] [US4] Create Channel model and repository in `flora-core/src/models/channel.rs` and `flora-core/src/repositories/channel_repository.rs`
+- [X] T033 [P] [US4] Create Message model and repository in `flora-core/src/models/message.rs` and `flora-core/src/repositories/message_repository.rs`
+- [X] T034 [P] [US4] Implement real-time pub/sub using Valkey with organization-scoped topics in `flora-messaging/src/lib.rs`
+- [X] T034.1 [P] [US4] Add `organization_id` validation on WebSocket connection and message publishing in `flora-api/src/websocket/mod.rs`
+- [X] T035 [US4] Implement channel creation endpoint in `flora-api/src/routes/messaging.rs`
+- [X] T036 [US4] Implement message posting, editing, and deletion endpoints in `flora-api/src/routes/messaging.rs`
 - [ ] T036.1 [US4] Add performance targets for real-time messaging (WebSocket < 500ms, fan-out < 500ms) in `flora-messaging/src/lib.rs`
-- [ ] T037 [US4] Add threading support for message replies
-- [ ] T038 [US4] Implement soft-delete for messages with retention policy (30–365 days, default 90)
-- [ ] T039 [US4] Add validation for message content and channel permissions
-- [ ] T040 [US4] Add logging for messaging operations
+- [X] T037 [US4] Add threading support for message replies
+- [X] T038 [US4] Implement soft-delete for messages with retention policy (30–365 days, default 90)
+- [X] T039 [US4] Add validation for message content and channel permissions
+- [X] T040 [US4] Add logging for messaging operations
 
 **Checkpoint**: At this point, User Stories 1 AND 4 should both work independently
 
