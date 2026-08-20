@@ -62,7 +62,7 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T016 [P] [US1] Contract test for `/auth/login` in `flora-tests/src/contract/auth.rs`
+- [X] T016 [P] [US1] Contract test for `/auth/login` in `flora-tests/src/contract/auth.rs`
 - [ ] T017 [P] [US1] Integration test for registration flow in `flora-tests/src/integration/registration.rs`
 - [ ] T018 [P] [US1] Unit test for User model validation in `flora-core/tests/models/user.rs`
 
