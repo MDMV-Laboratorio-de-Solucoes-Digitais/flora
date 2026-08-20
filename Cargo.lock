@@ -1173,13 +1173,19 @@ dependencies = [
 name = "flora-tests"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "axum",
  "flora-api",
  "flora-core",
+ "http",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
+ "sqlx",
  "tokio",
  "tokio-test",
+ "tower",
+ "url",
  "uuid",
  "wiremock",
 ]
