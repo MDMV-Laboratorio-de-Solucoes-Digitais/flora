@@ -124,9 +124,9 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T041 [P] [US2] Contract test for `/workspaces` in `flora-tests/src/contract/workspace.rs`
-- [ ] T042 [P] [US2] Integration test for workspace management in `flora-tests/src/integration/workspace.rs`
-- [ ] T043 [P] [US2] Unit test for Workspace model validation in `flora-core/tests/models/workspace.rs`
+- [x] T041 [P] [US2] Contract test for `/workspaces` in `flora-tests/src/contract/workspace.rs`
+- [x] T042 [P] [US2] Integration test for workspace management in `flora-tests/src/integration/workspace.rs`
+- [x] T043 [P] [US2] Unit test for Workspace model validation in `flora-core/tests/models/workspace.rs`
 
 ### Implementation for User Story 2
 
