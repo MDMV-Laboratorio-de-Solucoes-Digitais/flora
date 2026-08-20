@@ -111,6 +111,9 @@ codegen-units = 1
 opt-level = 3
 panic = "abort"
 
+[dependencies]
+axum = "0.8.9"
+
 # =========================================================================
 # Workspace Dependencies (available to all crates)
 # =========================================================================
