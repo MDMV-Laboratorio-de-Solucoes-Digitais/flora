@@ -15,6 +15,6 @@
       "invoke_separator": "-"
     }
   },
-  "integration": "opencode",
-  "default_integration": "opencode"
+  "integration": "zed",
+  "default_integration": "zed"
 }
