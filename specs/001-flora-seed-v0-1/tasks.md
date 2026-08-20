@@ -63,8 +63,8 @@
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
 - [X] T016 [P] [US1] Contract test for `/auth/login` in `flora-tests/src/contract/auth.rs`
-- [ ] T017 [P] [US1] Integration test for registration flow in `flora-tests/src/integration/registration.rs`
-- [ ] T018 [P] [US1] Unit test for User model validation in `flora-core/tests/models/user.rs`
+- [X] T017 [P] [US1] Integration test for registration flow in `flora-tests/src/integration/registration.rs`
+- [X] T018 [P] [US1] Unit test for User model validation in `flora-core/tests/models/user.rs`
 
 ### Implementation for User Story 1
 
@@ -94,9 +94,9 @@
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T029 [P] [US4] Contract test for `/channels/{channel_id}/messages` in `flora-tests/src/contract/messaging.rs`
-- [ ] T030 [P] [US4] Integration test for messaging flow in `flora-tests/src/integration/messaging.rs`
-- [ ] T031 [P] [US4] Unit test for Message model validation in `flora-core/tests/models/message.rs`
+- [X] T029 [P] [US4] Contract test for `/channels/{channel_id}/messages` in `flora-tests/src/contract/messaging.rs`
+- [X] T030 [P] [US4] Integration test for messaging flow in `flora-tests/src/integration/messaging.rs`
+- [X] T031 [P] [US4] Unit test for Message model validation in `flora-core/tests/models/message.rs`
 
 ### Implementation for User Story 4
 
