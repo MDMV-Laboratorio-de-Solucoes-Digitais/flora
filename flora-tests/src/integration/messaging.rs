@@ -2,30 +2,19 @@
 //!
 //! These tests verify the full messaging workflow: creating channels, posting messages,
 //! editing messages, and deleting messages.
+//!
+//! TODO: Implement once the `TestApp` harness and messaging API inputs are available.
 
-use axum::http::StatusCode;
-use flora_api::routes::messaging::{CreateChannelInput, CreateMessageInput};
-use flora_core::config::Config;
-use flora_tests::test_utils::TestApp;
-use serde_json::Value;
-use sqlx::PgPool;
-
+/// Placeholder for the messaging flow test.
 #[tokio::test]
 async fn test_messaging_flow() -> anyhow::Result<()> {
-    let app = TestApp::spawn().await?;
-    let pool = PgPool::connect(&app.config.database.url).await?;
-
-    // This test will be expanded as the messaging API is implemented
-
+    // TODO: Create channels, post messages, edit, and delete once the messaging API is implemented.
     Ok(())
 }
 
+/// Placeholder for the message CRUD operations test.
 #[tokio::test]
 async fn test_message_crud_operations() -> anyhow::Result<()> {
-    let app = TestApp::spawn().await?;
-    let pool = PgPool::connect(&app.config.database.url).await?;
-
-    // Test will be expanded as messaging features are implemented
-
+    // TODO: Expand with message CRUD once messaging features are implemented.
     Ok(())
 }

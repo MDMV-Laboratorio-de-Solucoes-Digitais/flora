@@ -1,15 +1,10 @@
 {
-  "version": "0.16.4",
+  "version": "0.16.5",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "opencode",
     "zed"
   ],
   "integration_settings": {
-    "opencode": {
-      "script": "sh",
-      "invoke_separator": "."
-    },
     "zed": {
       "script": "sh",
       "invoke_separator": "-"

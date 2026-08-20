@@ -31,7 +31,7 @@ fn test_create_message_input_validation() {
 
     // Empty content should fail
     let input = CreateMessageInput {
-        content: "".to_string(),
+        content: String::new(),
         thread_id: None,
     };
     assert!(input.validate().is_err());
@@ -63,7 +63,7 @@ fn test_update_message_input_validation() {
 
     // Empty content should fail
     let input = UpdateMessageInput {
-        content: "".to_string(),
+        content: String::new(),
     };
     assert!(input.validate().is_err());
 
@@ -77,9 +77,9 @@ fn test_update_message_input_validation() {
 
 #[test]
 fn test_message_threading() {
-    let channel_id = uuid::Uuid::now_v7();
-    let organization_id = uuid::Uuid::now_v7();
-    let sender_id = uuid::Uuid::now_v7();
+    let _channel_id = uuid::Uuid::now_v7();
+    let _organization_id = uuid::Uuid::now_v7();
+    let _sender_id = uuid::Uuid::now_v7();
     let parent_message_id = uuid::Uuid::now_v7();
 
     // Create a reply message (thread)

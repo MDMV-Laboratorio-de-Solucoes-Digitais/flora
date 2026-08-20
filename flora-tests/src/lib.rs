@@ -7,6 +7,8 @@
 pub mod contract {
     /// Authentication contract tests.
     pub mod auth;
+    /// Workspace management contract tests.
+    pub mod workspace;
 }
 pub mod integration;
 
