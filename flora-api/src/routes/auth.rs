@@ -89,6 +89,8 @@ async fn login(
         encoded_redirect
     );
 
+    tracing::info!(redirect_uri = %redirect_uri, "OIDC login initiated");
+
     Ok(Json(serde_json::json!({
         "authorization_url": auth_url,
         "next_step": "redirect_user_to_authorization_url"
@@ -162,11 +164,14 @@ async fn callback(
     // Create or update user in the database
     let user_repo = PgUserRepository::new((*state.db_pool).clone());
     let user = if let Some(existing) = user_repo.find_by_email(email).await? {
+        tracing::info!(user_id = %existing.id, email = %email, "Existing user logged in via OIDC");
         existing
     } else {
         let mut new_user = flora_core::models::User::new(email, name);
         new_user.oidc_subject = Some(sub.to_string());
-        user_repo.create(new_user).await?
+        let created_user = user_repo.create(new_user).await?;
+        tracing::info!(user_id = %created_user.id, email = %email, oidc_subject = %sub, "New user registered via OIDC");
+        created_user
     };
 
     // Create a session record
