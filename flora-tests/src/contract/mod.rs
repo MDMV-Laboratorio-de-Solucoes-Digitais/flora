@@ -3,3 +3,4 @@
 //! These will compile only when .specify/contracts/ has content.
 
 pub mod auth;
+pub mod workspace;
