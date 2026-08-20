@@ -3,7 +3,11 @@
     clippy::multiple_crate_versions,
     reason = "transitive dependency overrides"
 )]
-pub mod contract;
+/// Contract tests module - tests the API contract.
+pub mod contract {
+    /// Authentication contract tests.
+    pub mod auth;
+}
 pub mod integration;
 
 #[cfg(test)]
