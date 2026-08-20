@@ -8,7 +8,7 @@ fn test_user_creation() {
     let user = User::new("test@example.com", "Test User");
     assert_eq!(user.email, "test@example.com");
     assert_eq!(user.display_name, "Test User");
-    assert!(user.id.to_string().len() > 0);
+    assert!(!user.id.to_string().is_empty());
     assert!(user.is_active);
 }
 
@@ -47,7 +47,7 @@ fn test_create_user_input_validation() {
     // Empty display name
     let input = CreateUserInput {
         email: "test@example.com".to_string(),
-        display_name: "".to_string(),
+        display_name: String::new(),
     };
     assert!(input.validate().is_err());
 }
@@ -63,7 +63,7 @@ fn test_update_user_input_validation() {
 
     // Empty display name
     let input = UpdateUserInput {
-        display_name: Some("".to_string()),
+        display_name: Some(String::new()),
         avatar_url: None,
     };
     assert!(input.validate().is_err());
