@@ -43,6 +43,8 @@ pub struct AppState {
     pub notification_service: Arc<NotificationService>,
     /// Search service.
     pub search_service: Arc<flora_search::SearchService>,
+    /// Real-time messaging service backed by Valkey Pub/Sub.
+    pub messaging_service: Option<Arc<flora_messaging::MessagingService>>,
 }
 
 impl AppState {
@@ -119,6 +121,20 @@ impl AppState {
             .map_err(|e| anyhow::anyhow!("Search service init failed: {e}"))?,
         );
 
+        let messaging_service = match redis::Client::open(config.messaging.valkey_url.as_str()) {
+            Ok(client) => match client.get_connection_manager().await {
+                Ok(manager) => Some(Arc::new(flora_messaging::MessagingService::new(manager))),
+                Err(e) => {
+                    tracing::warn!("Failed to create Valkey connection manager: {e}");
+                    None
+                }
+            },
+            Err(e) => {
+                tracing::warn!("Failed to create Valkey client: {e}");
+                None
+            }
+        };
+
         Ok(Self {
             db_pool: Arc::new(db_pool),
             config: Arc::new(config),
@@ -133,6 +149,7 @@ impl AppState {
             file_service,
             notification_service,
             search_service,
+            messaging_service,
         })
     }
 }
