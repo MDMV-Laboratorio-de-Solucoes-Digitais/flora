@@ -1,9 +1,9 @@
 //! Meilisearch configuration.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for Meilisearch-powered full-text search.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SearchConfig {
     /// Meilisearch host URL.
     pub url: String,
