@@ -4,3 +4,8 @@
 
 pub mod auth;
 pub mod workspace;
+pub mod tasks;
+pub mod rbac;
+pub mod files;
+pub mod search;
+pub mod notifications;
