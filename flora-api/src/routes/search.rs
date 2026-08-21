@@ -53,10 +53,16 @@ pub fn create_search_router() -> Router<AppState> {
 /// `GET /api/v1/search` — Global search across messages, tasks, and files.
 /// Per T079, T080, T080.1.
 async fn search(
-    State(_state): State<AppState>,
-    _headers: axum::http::HeaderMap,
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<SearchQuery>,
 ) -> Result<Json<SearchResponse>> {
+    let org_id = headers
+        .get("x-organization-id")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| uuid::Uuid::parse_str(v).ok())
+        .ok_or(flora_core::error::Error::OrganizationContextRequired)?;
+
     if params.q.trim().is_empty() {
         return Ok(Json(SearchResponse {
             query: params.q,
@@ -64,18 +70,25 @@ async fn search(
         }));
     }
 
-    let _limit = params.limit.unwrap_or(20).min(50);
+    let limit = params.limit.unwrap_or(20).min(50);
+    
+    let types = params.types.map(|t| {
+        t.split(',')
+            .map(|s| s.trim().to_string())
+            .collect::<Vec<_>>()
+    });
 
-    // TODO: T079 — Integrate Meilisearch indexing here.
-    // Currently returns empty results as a stub.
-    // Real implementation will:
-    // 1. Build org-scoped index name: flora_org_{org_id}
-    // 2. Filter all search by organization_id (T079.1)
-    // 3. Apply performance targets (T080.1): past week <5s, past month <10s
+    let results = state.search_service.search(&org_id, &params.q, types.as_deref(), limit).await?;
 
-    tracing::debug!(query = %params.q, "Search executed (Meilisearch stub)");
+    let api_results = results.into_iter().map(|r| SearchResult {
+        result_type: r.item_type,
+        id: r.id,
+        snippet: r.snippet,
+    }).collect();
+
+    tracing::debug!(query = %params.q, org_id = %org_id, "Search executed");
     Ok(Json(SearchResponse {
         query: params.q,
-        results: vec![],
+        results: api_results,
     }))
 }
