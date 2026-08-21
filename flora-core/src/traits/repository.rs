@@ -216,6 +216,9 @@ pub trait TaskRepository: Send + Sync + std::fmt::Debug {
 
     /// Restore a soft-deleted task.
     async fn restore(&self, id: Uuid) -> crate::Result<()>;
+
+    /// Purge soft-deleted tasks older than the given date.
+    async fn purge_old(&self, older_than: DateTime<Utc>) -> crate::Result<usize>;
 }
 
 /// Repository trait for File operations.
@@ -249,6 +252,9 @@ pub trait FileRepository: Send + Sync + std::fmt::Debug {
 
     /// Restore a soft-deleted file.
     async fn restore(&self, id: Uuid) -> crate::Result<()>;
+
+    /// Purge soft-deleted files older than the given date.
+    async fn purge_old(&self, older_than: DateTime<Utc>) -> crate::Result<usize>;
 }
 
 /// Repository trait for Notification operations.
