@@ -28,6 +28,7 @@ path = "src/lib.rs"
 # --- Internal crates ---
 flora-core.workspace = true
 flora-messaging.workspace = true
+flora-search.workspace = true
 
 # --- Workspace dependencies ---
 tokio.workspace = true
