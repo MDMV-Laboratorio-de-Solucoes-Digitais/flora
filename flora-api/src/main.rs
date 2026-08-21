@@ -2,7 +2,6 @@
 
 #![allow(
     clippy::allow_attributes,
-    clippy::allow_attributes_without_reason,
     clippy::multiple_crate_versions,
     reason = "Transitive dependency conflicts are unfixable in code."
 )]

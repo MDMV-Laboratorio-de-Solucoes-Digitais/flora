@@ -1,21 +1,10 @@
 //! Contract tests for workspace management endpoints.
-//
-//! These tests define the expected behavior of the workspace API.
-//
+//!
+//! These tests define the expected behavior of the workspace API:
 //! - `test_list_workspaces` will validate that listing workspaces for an org works correctly.
 //! - `test_create_workspace` will validate that creating a workspace works correctly.
 //! - `test_update_workspace` will validate that updating a workspace works correctly.
-//
-//! These tests will be used to shape the API contract and ensure implementation
-//! correctness.
 
-// use axum::http::StatusCode;
-// use sqlx::PgPool;
-
-/// Test strategy:
-/// 1. GET `orgs/{org_id}/workspaces` - List workspaces in an organization
-/// 2. POST `orgs/{org_id}/workspaces` - Create a new workspace
-/// 3. PATCH `workspaces/{ws_id}` - Update a workspace
 /// Test listing workspaces in an organization.
 #[tokio::test]
 async fn test_list_workspaces() -> anyhow::Result<()> {

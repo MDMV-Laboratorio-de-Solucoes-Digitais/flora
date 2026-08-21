@@ -77,9 +77,17 @@ fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
         channel_service: Arc::new(ChannelService::new(Arc::clone(&channel_repo))),
         message_service: Arc::new(MessageService::new(Arc::clone(&message_repo))),
         task_service: Arc::new(TaskService::new(Arc::clone(&task_repo))),
-        file_service: Arc::new(FileService::new(Arc::clone(&file_repo), Arc::new(config.storage.clone()))),
+        file_service: Arc::new(FileService::new(
+            Arc::clone(&file_repo),
+            Arc::new(config.storage.clone()),
+        )),
         notification_service: Arc::new(NotificationService::new(Arc::clone(&notification_repo))),
-        search_service: Arc::new(flora_search::SearchService::new(&config.search.url, config.search.api_key.as_deref(), &config.search.index_template)?),
+        search_service: Arc::new(flora_search::SearchService::new(
+            &config.search.url,
+            config.search.api_key.as_deref(),
+            &config.search.index_template,
+        )?),
+        messaging_service: None,
     })
 }
 
@@ -94,7 +102,9 @@ async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
     let state = make_test_state(pool, &config)?;
-    let router = create_auth_router().with_state(state);
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
 
     let request = http::Request::builder()
         .uri("/auth/login")
@@ -150,7 +160,9 @@ async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
     let state = make_test_state(pool, &config)?;
-    let router = create_auth_router().with_state(state);
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
 
     let request = http::Request::builder()
         .uri("/auth/login?redirect_uri=https%3A%2F%2Fapp.example.com%2Fcallback")
@@ -184,7 +196,9 @@ async fn test_auth_login_with_unencoded_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
     let state = make_test_state(pool, &config)?;
-    let router = create_auth_router().with_state(state);
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
 
     let request = http::Request::builder()
         .uri("/auth/login?redirect_uri=https://app.example.com/callback")

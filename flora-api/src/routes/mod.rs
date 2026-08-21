@@ -35,7 +35,10 @@ pub fn create_router(app_state: AppState) -> Router {
         .nest("/api/v1/tasks", tasks::create_tasks_router())
         .nest("/api/v1/files", files::create_files_router())
         .nest("/api/v1/search", search::create_search_router())
-        .nest("/api/v1/roles", rbac::create_rbac_router().with_state(app_state.clone()))
+        .nest(
+            "/api/v1/roles",
+            rbac::create_rbac_router().with_state(app_state.clone()),
+        )
         .nest(
             "/api/v1/notifications",
             notifications::create_notifications_router(),

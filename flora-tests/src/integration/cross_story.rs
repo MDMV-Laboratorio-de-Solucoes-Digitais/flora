@@ -10,7 +10,10 @@ async fn test_permission_propagation_performance() -> anyhow::Result<()> {
     // Simulate complex permission propagation
     tokio::time::sleep(Duration::from_millis(50)).await;
     let elapsed = start.elapsed();
-    assert!(elapsed < Duration::from_secs(1), "Permission propagation took longer than 1s");
+    assert!(
+        elapsed < Duration::from_secs(1),
+        "Permission propagation took longer than 1s"
+    );
     Ok(())
 }
 
@@ -20,11 +23,14 @@ async fn test_retention_bounds_validation() -> anyhow::Result<()> {
     // flora_core::services::TaskRetentionPolicy uses this.
     // We'll mock the boundary check or test the domain struct if it's accessible.
     let valid_days = 90;
-    assert!((30..=365).contains(&valid_days), "Retention bounds should allow 90 days");
-    
+    assert!(
+        (30..=365).contains(&valid_days),
+        "Retention bounds should allow 90 days"
+    );
+
     let clamped_min = 10_u32.clamp(30, 365);
     assert_eq!(clamped_min, 30);
-    
+
     let clamped_max = 500_u32.clamp(30, 365);
     assert_eq!(clamped_max, 365);
 

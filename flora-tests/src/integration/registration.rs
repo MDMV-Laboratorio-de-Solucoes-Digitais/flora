@@ -3,7 +3,6 @@
 //! These tests verify the full OIDC-based registration and organization creation flow.
 use uuid::Uuid;
 
-
 /// Placeholder for the registration flow test.
 ///
 /// Verifies the full OIDC-based registration and organization creation flow once

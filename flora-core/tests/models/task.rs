@@ -9,9 +9,9 @@ fn test_task_creation() {
     let workspace_id = Uuid::now_v7();
     let org_id = Uuid::now_v7();
     let creator_id = Uuid::now_v7();
-    
+
     let task = Task::new(workspace_id, org_id, creator_id, "Test Task");
-    
+
     assert_eq!(task.title, "Test Task");
     assert_eq!(task.workspace_id, workspace_id);
     assert_eq!(task.organization_id, org_id);
@@ -49,7 +49,7 @@ fn test_create_task_input_validation() {
         assignee_id: None,
     };
     assert!(empty_title.validate().is_err());
-    
+
     let long_title = CreateTaskInput {
         title: "a".repeat(256),
         description: None,

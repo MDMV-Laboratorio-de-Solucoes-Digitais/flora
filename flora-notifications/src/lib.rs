@@ -6,7 +6,11 @@
     clippy::multiple_crate_versions,
     reason = "transitive dependency overrides"
 )]
-use flora_core::{Result, error::Error, models::{Notification, NotificationType}};
+use flora_core::{
+    Result,
+    error::Error,
+    models::{Notification, NotificationType},
+};
 use redis::aio::ConnectionManager;
 use sqlx::PgPool;
 use std::fmt;

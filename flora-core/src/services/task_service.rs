@@ -73,7 +73,12 @@ impl TaskService {
     ) -> Result<Task> {
         input.validate().map_err(Error::from)?;
 
-        let mut task = Task::new(input.workspace_id, organization_id, creator_id, &input.title);
+        let mut task = Task::new(
+            input.workspace_id,
+            organization_id,
+            creator_id,
+            &input.title,
+        );
         task.description = input.description;
         task.assignee_id = input.assignee_id;
 
@@ -117,9 +122,9 @@ impl TaskService {
         input.validate().map_err(Error::from)?;
 
         let task = self.get_task(task_id).await?;
-        
+
         let status = input.status.unwrap_or(task.status);
-        
+
         let updated = Task {
             title: input.title.unwrap_or(task.title),
             description: input.description.or(task.description),
@@ -183,10 +188,15 @@ impl TaskService {
     /// # Errors
     /// Returns an error if the database query fails.
     pub async fn purge_tasks(&self) -> Result<usize> {
-        let threshold = chrono::Utc::now() - chrono::Duration::days(i64::from(self.retention_policy.days_to_keep));
+        let threshold = chrono::Utc::now()
+            - chrono::Duration::days(i64::from(self.retention_policy.days_to_keep));
         let purged = self.task_repo.purge_old(threshold).await?;
         if purged > 0 {
-            tracing::info!(purged_count = purged, days = self.retention_policy.days_to_keep, "Purged old soft-deleted tasks");
+            tracing::info!(
+                purged_count = purged,
+                days = self.retention_policy.days_to_keep,
+                "Purged old soft-deleted tasks"
+            );
         }
         Ok(purged)
     }

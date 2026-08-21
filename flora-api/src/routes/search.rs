@@ -71,20 +71,26 @@ async fn search(
     }
 
     let limit = params.limit.unwrap_or(20).min(50);
-    
+
     let types = params.types.map(|t| {
         t.split(',')
             .map(|s| s.trim().to_string())
             .collect::<Vec<_>>()
     });
 
-    let results = state.search_service.search(&org_id, &params.q, types.as_deref(), limit).await?;
+    let results = state
+        .search_service
+        .search(&org_id, &params.q, types.as_deref(), limit)
+        .await?;
 
-    let api_results = results.into_iter().map(|r| SearchResult {
-        result_type: r.item_type,
-        id: r.id,
-        snippet: r.snippet,
-    }).collect();
+    let api_results = results
+        .into_iter()
+        .map(|r| SearchResult {
+            result_type: r.item_type,
+            id: r.id,
+            snippet: r.snippet,
+        })
+        .collect();
 
     tracing::debug!(query = %params.q, org_id = %org_id, "Search executed");
     Ok(Json(SearchResponse {

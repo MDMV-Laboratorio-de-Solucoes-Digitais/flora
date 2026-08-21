@@ -1,10 +1,10 @@
 //! Auto-save for drafts (messages, tasks) before session termination.
 
+use crate::error::Result;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use crate::error::Result;
 
 /// A draft saved by a user.
 #[derive(Debug, Clone)]

@@ -15,7 +15,7 @@ mod role;
 #[path = "models/file.rs"]
 mod file;
 
-#[path = "models/task.rs"]
-mod task;
 #[path = "models/notification.rs"]
 mod notification;
+#[path = "models/task.rs"]
+mod task;

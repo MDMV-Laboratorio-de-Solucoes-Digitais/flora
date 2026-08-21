@@ -150,6 +150,6 @@ async fn delete_file(
     }
 
     state.file_service.delete_file(file_id).await?;
-    
+
     Ok(StatusCode::NO_CONTENT)
 }
