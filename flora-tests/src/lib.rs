@@ -1,15 +1,12 @@
-//! Flora Tests - Integration and Contract Tests
+//! Flora test suite.
+//!
+//! Integration and contract tests for the workspace.
 #![allow(
     clippy::multiple_crate_versions,
     reason = "transitive dependency overrides"
 )]
 /// Contract tests module - tests the API contract.
-pub mod contract {
-    /// Authentication contract tests.
-    pub mod auth;
-    /// Workspace management contract tests.
-    pub mod workspace;
-}
+pub mod contract;
 pub mod integration;
 
 #[cfg(test)]
