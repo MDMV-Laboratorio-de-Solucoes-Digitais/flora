@@ -1,10 +1,9 @@
 //! Request extractors for authentication and organization context.
 
 use axum::{
-    extract::FromRequestParts,
+    extract::{FromRef, FromRequestParts},
     http::{StatusCode, request::Parts},
 };
-use std::ops::Deref;
 use uuid::Uuid;
 
 /// Organization context extracted from the session.
@@ -26,21 +25,44 @@ pub struct UserContext {
 }
 
 /// Extracts user context from the request's Authorization header.
-/// TODO: Full implementation with JWT validation per T009.
 impl<S> FromRequestParts<S> for UserContext
 where
     S: Clone + Send + Sync + 'static,
-    S: Deref<Target = AppState>,
+    AppState: FromRef<S>,
 {
     type Rejection = (StatusCode, String);
 
-    async fn from_request_parts(_parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        // TODO: Implement proper JWT validation
-        // For now, return an error to indicate unimplemented functionality
-        Err((
-            StatusCode::UNAUTHORIZED,
-            "Authentication not implemented".to_string(),
-        ))
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        
+        let auth_header = parts
+            .headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|val| val.to_str().ok())
+            .ok_or_else(|| (
+                StatusCode::UNAUTHORIZED,
+                "Missing or invalid Authorization header".to_string(),
+            ))?;
+
+        if !auth_header.starts_with("Bearer ") {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Authorization header must start with Bearer".to_string(),
+            ));
+        }
+
+        let token = &auth_header["Bearer ".len()..];
+        let claims = flora_core::utils::jwt::decode_token(token, &app_state.config.app.jwt_secret)
+            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {e}")))?;
+
+        let user_id = Uuid::parse_str(&claims.sub).map_err(|_| {
+            (StatusCode::UNAUTHORIZED, "Invalid user ID in token".to_string())
+        })?;
+
+        Ok(Self {
+            user_id,
+            email: claims.email,
+        })
     }
 }
 
@@ -48,17 +70,47 @@ where
 impl<S> FromRequestParts<S> for OrgContext
 where
     S: Clone + Send + Sync + 'static,
-    S: Deref<Target = AppState>,
+    AppState: FromRef<S>,
 {
     type Rejection = (StatusCode, String);
 
-    async fn from_request_parts(_parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        // TODO: Implement proper JWT validation
-        // For now, return an error to indicate unimplemented functionality
-        Err((
-            StatusCode::UNAUTHORIZED,
-            "Organization context not implemented".to_string(),
-        ))
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        
+        let auth_header = parts
+            .headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|val| val.to_str().ok())
+            .ok_or_else(|| (
+                StatusCode::UNAUTHORIZED,
+                "Missing or invalid Authorization header".to_string(),
+            ))?;
+
+        if !auth_header.starts_with("Bearer ") {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Authorization header must start with Bearer".to_string(),
+            ));
+        }
+
+        let token = &auth_header["Bearer ".len()..];
+        let claims = flora_core::utils::jwt::decode_token(token, &app_state.config.app.jwt_secret)
+            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {e}")))?;
+
+        let organization_id = Uuid::parse_str(&claims.organization_id).map_err(|_| {
+            (StatusCode::UNAUTHORIZED, "Invalid organization ID in token".to_string())
+        })?;
+
+        let workspace_id = parts
+            .headers
+            .get("x-workspace-id")
+            .and_then(|val| val.to_str().ok())
+            .and_then(|val| Uuid::parse_str(val).ok());
+
+        Ok(Self {
+            organization_id,
+            workspace_id,
+        })
     }
 }
 
