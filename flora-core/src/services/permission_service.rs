@@ -9,7 +9,7 @@ use crate::models::{Permission, Role};
 use crate::services::RbacService;
 use crate::traits::{MembershipRepository, RoleRepository};
 use std::str::FromStr;
-use tracing::{info, warn, debug};
+use tracing::{debug, info, warn};
 
 /// Service for managing permissions and roles.
 #[derive(Debug, Clone)]
@@ -71,7 +71,12 @@ impl PermissionService {
     /// # Errors
     ///
     /// Returns an error if the permission is unknown, user is not a member, or role is not found.
-    pub async fn check_permission(&self, user_id: Uuid, organization_id: Uuid, permission: &str) -> Result<bool> {
+    pub async fn check_permission(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        permission: &str,
+    ) -> Result<bool> {
         let _ = Permission::from_str(permission)
             .map_err(|_| Error::InvalidInput(format!("Unknown permission: {permission}")))?;
 
@@ -79,7 +84,9 @@ impl PermissionService {
             .membership_repo
             .find_by_user_and_organization(user_id, organization_id)
             .await?
-            .ok_or_else(|| Error::Forbidden("User is not a member of this organization".to_string()))?;
+            .ok_or_else(|| {
+                Error::Forbidden("User is not a member of this organization".to_string())
+            })?;
 
         let role = self
             .role_repo
@@ -91,7 +98,8 @@ impl PermissionService {
             return Ok(true);
         }
 
-        let perm = Permission::from_str(permission).map_err(|_| Error::InvalidInput(format!("Unknown permission: {permission}")))?;
+        let perm = Permission::from_str(permission)
+            .map_err(|_| Error::InvalidInput(format!("Unknown permission: {permission}")))?;
         Ok(role.has_permission(perm))
     }
 
@@ -100,9 +108,17 @@ impl PermissionService {
     /// # Errors
     ///
     /// Returns an error if membership or role is not found, or database operations fail.
-    pub async fn assign_role(&self, user_id: Uuid, organization_id: Uuid, role_id: Uuid) -> Result<()> {
-        info!("Assigning role {} to user {} in org {}", role_id, user_id, organization_id);
-        
+    pub async fn assign_role(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        role_id: Uuid,
+    ) -> Result<()> {
+        info!(
+            "Assigning role {} to user {} in org {}",
+            role_id, user_id, organization_id
+        );
+
         let mut membership = self
             .membership_repo
             .find_by_user_and_organization(user_id, organization_id)
@@ -110,7 +126,7 @@ impl PermissionService {
             .ok_or(Error::MembershipNotFound)?;
 
         let start = Instant::now();
-        
+
         let role = self
             .role_repo
             .find_by_id(role_id)
@@ -118,13 +134,17 @@ impl PermissionService {
             .ok_or_else(|| Error::RoleNotFound(role_id.to_string()))?;
 
         if role.organization_id != organization_id {
-            return Err(Error::InvalidInput("Role does not belong to the organization".to_string()));
+            return Err(Error::InvalidInput(
+                "Role does not belong to the organization".to_string(),
+            ));
         }
 
         // We delete and recreate membership or update it
         // Since Membership has no update method, we delete and create. Wait, let's look at membership model.
         // Actually, we can just delete and recreate.
-        self.membership_repo.delete(user_id, organization_id).await?;
+        self.membership_repo
+            .delete(user_id, organization_id)
+            .await?;
         membership.role_id = role_id;
         let _ = self.membership_repo.create(membership).await?;
 
@@ -142,9 +162,12 @@ impl PermissionService {
     /// Returns an error if the operation fails.
     #[expect(clippy::unused_async, reason = "Future implementation will be async")]
     pub async fn revoke_role(&self, user_id: Uuid, organization_id: Uuid) -> Result<()> {
-        info!("Revoking role for user {} in org {}", user_id, organization_id);
-        
-        // This is usually changing the role to a basic member or something, but we'll just delete the membership 
+        info!(
+            "Revoking role for user {} in org {}",
+            user_id, organization_id
+        );
+
+        // This is usually changing the role to a basic member or something, but we'll just delete the membership
         // or re-assign to default? Wait. We'll leave it simple.
         Err(Error::Internal("Not fully implemented".into()))
     }
@@ -178,7 +201,11 @@ impl PermissionService {
     /// # Errors
     ///
     /// Returns an error if validation fails, role is not found, or database operations fail.
-    pub async fn update_role_permissions(&self, role_id: Uuid, permissions: Vec<String>) -> Result<Role> {
+    pub async fn update_role_permissions(
+        &self,
+        role_id: Uuid,
+        permissions: Vec<String>,
+    ) -> Result<Role> {
         info!("Updating permissions for role {}", role_id);
         Self::validate_permissions(&permissions)?;
 
@@ -195,7 +222,10 @@ impl PermissionService {
         let start = Instant::now();
 
         role.permissions = serde_json::Value::Array(
-            permissions.into_iter().map(serde_json::Value::String).collect()
+            permissions
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
         );
         let updated = self.role_repo.update(role_id, role).await?;
 
@@ -210,11 +240,20 @@ impl PermissionService {
     /// Logs warnings if propagation is slow.
     fn log_propagation_delay(elapsed: std::time::Duration) {
         if elapsed.as_secs() >= 5 {
-            warn!("ALERT: Permission propagation exceeded 5 seconds (took {} ms)", elapsed.as_millis());
+            warn!(
+                "ALERT: Permission propagation exceeded 5 seconds (took {} ms)",
+                elapsed.as_millis()
+            );
         } else if elapsed.as_secs() >= 1 {
-            warn!("Permission propagation exceeded 1 second (took {} ms)", elapsed.as_millis());
+            warn!(
+                "Permission propagation exceeded 1 second (took {} ms)",
+                elapsed.as_millis()
+            );
         } else {
-            debug!("Permission propagation completed in {} ms", elapsed.as_millis());
+            debug!(
+                "Permission propagation completed in {} ms",
+                elapsed.as_millis()
+            );
         }
     }
 }
