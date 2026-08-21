@@ -65,6 +65,19 @@ impl From<Workspace> for WorkspaceResponse {
     }
 }
 
+/// Response body for a workspace switch operation.
+#[derive(Debug, Serialize)]
+pub struct WorkspaceSwitchResponse {
+    /// The workspace ID that was switched to.
+    pub workspace_id: String,
+    /// The organization ID of the workspace.
+    pub organization_id: String,
+    /// The workspace name.
+    pub name: String,
+    /// Message confirming the switch.
+    pub message: String,
+}
+
 /// Creates the workspace router.
 pub fn create_workspace_router() -> Router<AppState> {
     Router::new()
@@ -73,6 +86,7 @@ pub fn create_workspace_router() -> Router<AppState> {
         .route("/:workspace_id", get(get_workspace))
         .route("/:workspace_id", patch(update_workspace))
         .route("/:workspace_id", delete(delete_workspace))
+        .route("/:workspace_id/switch", post(switch_workspace))
 }
 
 /// Extracts the organization ID from the X-Organization-ID header.
@@ -242,4 +256,48 @@ async fn delete_workspace(
 
     tracing::info!(workspace_id = %workspace_id, org_id = %org_id, user_id = %user_id, "Workspace deleted");
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// `POST /api/v1/workspaces/{workspace_id}/switch` — Switch the current workspace context.
+///
+/// Verifies the workspace belongs to the user's current organization and
+/// returns the workspace context for subsequent requests.
+async fn switch_workspace(
+    State(state): State<AppState>,
+    Path(workspace_id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<WorkspaceSwitchResponse>> {
+    let org_id = extract_org_id_from_header(&headers)?;
+    let user_id = extract_user_id_from_header(&headers)?;
+
+    // Verify user is a member of the organization
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let _ = membership_repo
+        .find_by_user_and_organization(user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+
+    // Fetch workspace and verify it belongs to the user's organization
+    let workspace = state.workspace_service.get_workspace(workspace_id).await?;
+
+    if workspace.organization_id != org_id {
+        return Err(Error::Forbidden(
+            "Workspace belongs to a different organization".to_string(),
+        ));
+    }
+
+    tracing::info!(
+        workspace_id = %workspace_id,
+        workspace_name = %workspace.name,
+        org_id = %org_id,
+        user_id = %user_id,
+        "Workspace switched"
+    );
+
+    Ok(Json(WorkspaceSwitchResponse {
+        workspace_id: workspace.id.to_string(),
+        organization_id: workspace.organization_id.to_string(),
+        name: workspace.name,
+        message: "Workspace context switched successfully".to_string(),
+    }))
 }

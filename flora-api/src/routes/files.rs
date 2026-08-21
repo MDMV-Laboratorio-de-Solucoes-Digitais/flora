@@ -11,8 +11,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::repositories::{PgFileRepository, PgMembershipRepository};
-use flora_core::traits::FileRepository;
 
 use crate::AppState;
 
@@ -71,7 +69,7 @@ fn require_org_context(headers: &axum::http::HeaderMap) -> Result<(Uuid, Uuid)> 
 }
 
 /// `POST /api/v1/files` — Record a file upload.
-/// Full multipart upload with chunking is implemented via T072 (TODO).
+/// Delegates to `FileService` for quota checking, MIME validation, and storage.
 async fn upload_file(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
@@ -79,39 +77,18 @@ async fn upload_file(
 ) -> Result<(StatusCode, Json<FileResponse>)> {
     let (user_id, org_id) = require_org_context(&headers)?;
 
-    let _membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
-    let file_repo = PgFileRepository::new((*state.db_pool).clone());
-
-    // TODO: T072.1 — Check quota (10GB/org, 2GB/workspace)
-    let max_bytes = state.config.app.max_upload_bytes;
-    if req.size_bytes > max_bytes {
-        return Err(Error::FileTooLarge {
-            size: req.size_bytes,
-            max: max_bytes,
-        });
-    }
-
-    let file_id = Uuid::now_v7();
-    let storage_path = format!("orgs/{org_id}/files/{file_id}");
-
-    let file = flora_core::models::File {
-        id: file_id,
-        organization_id: org_id,
-        owner_id: user_id,
+    let input = flora_core::models::CreateFileInput {
         name: req.name,
         file_type: req.file_type,
-        size_bytes: req.size_bytes.cast_signed(),
-        storage_path,
-        checksum: None,
-        metadata: serde_json::json!({}),
-        is_deleted: false,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
+        workspace_id: req.workspace_id,
+        metadata: None,
     };
 
-    let created = file_repo.create(file).await?;
+    let created = state
+        .file_service
+        .create_file(org_id, input, user_id, req.size_bytes)
+        .await?;
 
-    tracing::info!(file_id = %created.id, user_id = %user_id, size_bytes = %req.size_bytes, "File upload recorded");
     Ok((
         StatusCode::CREATED,
         Json(FileResponse {
@@ -133,11 +110,7 @@ async fn get_file(
 ) -> Result<Json<FileResponse>> {
     let (_user_id, org_id) = require_org_context(&headers)?;
 
-    let file_repo = PgFileRepository::new((*state.db_pool).clone());
-    let file = file_repo
-        .find_by_id(file_id)
-        .await?
-        .ok_or_else(|| Error::FileNotFound(file_id.to_string()))?;
+    let file = state.file_service.get_file(file_id).await?;
 
     if file.organization_id != org_id {
         return Err(Error::Forbidden(
@@ -163,11 +136,7 @@ async fn delete_file(
 ) -> Result<StatusCode> {
     let (user_id, org_id) = require_org_context(&headers)?;
 
-    let file_repo = PgFileRepository::new((*state.db_pool).clone());
-    let file = file_repo
-        .find_by_id(file_id)
-        .await?
-        .ok_or_else(|| Error::FileNotFound(file_id.to_string()))?;
+    let file = state.file_service.get_file(file_id).await?;
 
     if file.organization_id != org_id {
         return Err(Error::Forbidden(
@@ -180,7 +149,7 @@ async fn delete_file(
         ));
     }
 
-    file_repo.soft_delete(file_id).await?;
-    tracing::info!(file_id = %file_id, user_id = %user_id, "File soft-deleted");
+    state.file_service.delete_file(file_id).await?;
+    
     Ok(StatusCode::NO_CONTENT)
 }

@@ -8,3 +8,14 @@ mod user;
 
 #[path = "models/workspace.rs"]
 mod workspace;
+
+#[path = "models/role.rs"]
+mod role;
+
+#[path = "models/file.rs"]
+mod file;
+
+#[path = "models/task.rs"]
+mod task;
+#[path = "models/notification.rs"]
+mod notification;

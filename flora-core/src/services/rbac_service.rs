@@ -184,4 +184,10 @@ impl RbacService {
 
         Ok(role)
     }
+
+    /// Invalidates the cached role.
+    pub async fn invalidate_role_cache(&self, role_id: Uuid) {
+        let mut cache = self.role_cache.write().await;
+        let _ = cache.remove(&role_id);
+    }
 }

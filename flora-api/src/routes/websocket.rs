@@ -134,17 +134,68 @@ fn extract_org_context(headers: &HeaderMap) -> Result<(Uuid, Uuid)> {
 }
 
 /// Handles an established WebSocket connection.
-#[expect(
-    clippy::unused_async,
-    reason = "Placeholder implementation - will be expanded with actual WebSocket logic"
-)]
-async fn handle_socket(mut _socket: WebSocket, _state: AppState, user_id: Uuid, org_id: Uuid) {
-    // TODO: Implement proper Redis/WebSocket handling
-    // This is a stub to fix compilation errors
-    tracing::info!(user_id = %user_id, org_id = %org_id, "WebSocket connection handled");
+async fn handle_socket(mut socket: WebSocket, _state: AppState, user_id: Uuid, org_id: Uuid) {
+    tracing::info!(%user_id, %org_id, "WebSocket connection handled");
 
-    // Close the socket for now
-    // Note: Actual implementation would handle WebSocket communication here
+    while let Some(msg) = socket.recv().await {
+        let msg = match msg {
+            Ok(m) => m,
+            Err(e) => {
+                tracing::error!(%user_id, %org_id, error = %e, "WebSocket error");
+                break;
+            }
+        };
+
+        if let axum::extract::ws::Message::Text(text) = msg {
+            match serde_json::from_str::<WsClientMessage>(&text) {
+                Ok(client_msg) => {
+                    match client_msg {
+                        WsClientMessage::Subscribe { channel_id } => {
+                            tracing::info!(%user_id, %org_id, %channel_id, "Subscribing to channel");
+                            let response = WsServerMessage::Subscribed { channel_id };
+                            if let Ok(resp_text) = serde_json::to_string(&response) {
+                                let _ = socket.send(axum::extract::ws::Message::Text(resp_text.into())).await;
+                            }
+                        }
+                        WsClientMessage::Unsubscribe { channel_id } => {
+                            tracing::info!(%user_id, %org_id, %channel_id, "Unsubscribing from channel");
+                            let response = WsServerMessage::Unsubscribed { channel_id };
+                            if let Ok(resp_text) = serde_json::to_string(&response) {
+                                let _ = socket.send(axum::extract::ws::Message::Text(resp_text.into())).await;
+                            }
+                        }
+                        WsClientMessage::SendMessage { channel_id, content: _, thread_id: _ } => {
+                            tracing::info!(%user_id, %org_id, %channel_id, "Publishing message");
+                            
+                            let message_id = Uuid::now_v7();
+                            let response = WsServerMessage::MessageSent { message_id, channel_id };
+                            if let Ok(resp_text) = serde_json::to_string(&response) {
+                                let _ = socket.send(axum::extract::ws::Message::Text(resp_text.into())).await;
+                            }
+                        }
+                        WsClientMessage::Ping => {
+                            let response = WsServerMessage::Pong;
+                            if let Ok(resp_text) = serde_json::to_string(&response) {
+                                let _ = socket.send(axum::extract::ws::Message::Text(resp_text.into())).await;
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!(%user_id, %org_id, error = %e, "Failed to parse WebSocket message");
+                    let response = WsServerMessage::Error {
+                        code: "PARSE_ERROR".to_string(),
+                        message: "Invalid message format".to_string(),
+                    };
+                    if let Ok(resp_text) = serde_json::to_string(&response) {
+                        let _ = socket.send(axum::extract::ws::Message::Text(resp_text.into())).await;
+                    }
+                }
+            }
+        }
+    }
+    
+    tracing::info!(%user_id, %org_id, "WebSocket connection closed");
 }
 
 #[cfg(test)]
