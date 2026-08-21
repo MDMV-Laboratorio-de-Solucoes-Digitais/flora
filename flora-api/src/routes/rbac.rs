@@ -3,9 +3,9 @@
 //! Per T055: RBAC role assignment and permission management.
 
 use axum::{
+    Json, Router,
     extract::{Path, State},
     routing::{get, post},
-    Json, Router,
 };
 use uuid::Uuid;
 
@@ -22,40 +22,27 @@ pub fn create_rbac_router() -> Router<AppState> {
 }
 
 /// `GET /api/v1/roles` — List roles in the organization.
-async fn list_roles(
-    State(_state): State<AppState>,
-) -> Result<Json<Vec<String>>> {
+async fn list_roles(State(_state): State<AppState>) -> Result<Json<Vec<String>>> {
     // Placeholder — will be expanded with actual RBAC queries
     Ok(Json(vec![]))
 }
 
 /// `POST /api/v1/roles` — Create a custom role.
-async fn create_role(
-    State(_state): State<AppState>,
-) -> Result<Json<String>> {
+async fn create_role(State(_state): State<AppState>) -> Result<Json<String>> {
     Ok(Json("created".to_string()))
 }
 
 /// `GET /api/v1/roles/{id}` — Get a role by ID.
-async fn get_role(
-    Path(id): Path<Uuid>,
-    State(_state): State<AppState>,
-) -> Result<Json<String>> {
+async fn get_role(Path(id): Path<Uuid>, State(_state): State<AppState>) -> Result<Json<String>> {
     Ok(Json(id.to_string()))
 }
 
 /// `POST /api/v1/roles/{id}/assign` — Assign a role to a user.
-async fn assign_role(
-    Path(id): Path<Uuid>,
-    State(_state): State<AppState>,
-) -> Result<Json<String>> {
+async fn assign_role(Path(id): Path<Uuid>, State(_state): State<AppState>) -> Result<Json<String>> {
     Ok(Json(id.to_string()))
 }
 
 /// `POST /api/v1/roles/{id}/revoke` — Revoke a role from a user.
-async fn revoke_role(
-    Path(id): Path<Uuid>,
-    State(_state): State<AppState>,
-) -> Result<Json<String>> {
+async fn revoke_role(Path(id): Path<Uuid>, State(_state): State<AppState>) -> Result<Json<String>> {
     Ok(Json(id.to_string()))
 }
