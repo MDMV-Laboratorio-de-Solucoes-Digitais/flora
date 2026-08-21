@@ -1,9 +1,9 @@
 //! Valkey (Redis-compatible) configuration for messaging and caching.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for Valkey (Redis-compatible) messaging and caching.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct MessagingConfig {
     /// Valkey connection URL.
     pub valkey_url: String,
