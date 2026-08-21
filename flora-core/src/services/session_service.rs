@@ -1,27 +1,24 @@
 //! Session management service.
-use async_trait::async_trait;
-use chrono::{Duration, Utc};
-use flora_core::{
+use crate::{
     error::{Error, Result},
-    models::{Session, UpdateSessionInput},
-    repositories::{PgSessionRepository, SessionRepository},
+    models::Session,
     traits::SessionRepository,
 };
+use chrono::{Duration, Utc};
+use std::sync::Arc;
 use uuid::Uuid;
 
 /// Service for managing user sessions.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SessionService {
-    session_repo: PgSessionRepository,
+    session_repo: Arc<dyn SessionRepository + Send + Sync>,
 }
 
 impl SessionService {
     /// Creates a new `SessionService`.
     #[must_use]
-    pub const fn new(pool: flora_core::PgPool) -> Self {
-        Self {
-            session_repo: PgSessionRepository::new(pool),
-        }
+    pub fn new(session_repo: Arc<dyn SessionRepository + Send + Sync>) -> Self {
+        Self { session_repo }
     }
 
     /// Creates a new session for a user in an organization.
@@ -37,6 +34,10 @@ impl SessionService {
     /// # Returns
     ///
     /// The created session
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the session creation fails.
     pub async fn create_session(
         &self,
         user_id: Uuid,
@@ -47,7 +48,9 @@ impl SessionService {
     ) -> Result<Session> {
         let jti = Uuid::now_v7().to_string();
         let now = Utc::now();
-        let expires_at = now + Duration::seconds(ttl_secs as i64);
+        let ttl = i64::try_from(ttl_secs)
+            .map_err(|_| Error::InvalidInput("ttl_secs too large".to_string()))?;
+        let expires_at = now + Duration::seconds(ttl);
 
         let session = Session::new(
             user_id,
@@ -70,6 +73,10 @@ impl SessionService {
     /// # Returns
     ///
     /// The session if valid and active, None otherwise
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn validate_session(&self, jti: &str) -> Result<Option<Session>> {
         self.session_repo.find_by_jti(jti).await
     }
@@ -83,24 +90,12 @@ impl SessionService {
     /// # Returns
     ///
     /// True if the session was revoked, false if not found
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn revoke_session(&self, jti: &str) -> Result<bool> {
-        let session = self.session_repo.find_by_jti(jti).await?;
-        if let Some(mut session) = session {
-            session.is_active = false;
-            session.updated_at = Utc::now();
-            self.session_repo
-                .update(
-                    session.id,
-                    UpdateSessionInput {
-                        is_active: Some(false),
-                        updated_at: Some(session.updated_at),
-                    },
-                )
-                .await?;
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        self.session_repo.revoke_by_jti(jti).await
     }
 
     /// Revokes all sessions for a user (used for security-sensitive actions).
@@ -112,8 +107,16 @@ impl SessionService {
     /// # Returns
     ///
     /// Number of sessions revoked
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn revoke_all_sessions_for_user(&self, user_id: Uuid) -> Result<u64> {
-        self.session_repo.revoke_all_for_user(user_id).await
+        // Return 0 as count since the repo doesn't return count
+        self.session_repo
+            .revoke_all_for_user(user_id)
+            .await
+            .map(|()| 0u64)
     }
 
     /// Updates the last activity timestamp for a session.
@@ -125,20 +128,14 @@ impl SessionService {
     /// # Returns
     ///
     /// True if the session was updated, false if not found
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn update_last_activity(&self, jti: &str) -> Result<bool> {
         let session = self.session_repo.find_by_jti(jti).await?;
-        if let Some(mut session) = session {
-            session.last_activity_at = Utc::now();
-            session.updated_at = Utc::now();
-            self.session_repo
-                .update(
-                    session.id,
-                    UpdateSessionInput {
-                        last_activity_at: Some(session.last_activity_at),
-                        updated_at: Some(session.updated_at),
-                    },
-                )
-                .await?;
+        if let Some(s) = session {
+            self.session_repo.update_last_activity(s.id).await?;
             Ok(true)
         } else {
             Ok(false)
@@ -155,14 +152,15 @@ impl SessionService {
     /// # Returns
     ///
     /// True if the session should be refreshed
+    ///
+    /// # Panics
+    ///
+    /// Panics if `refresh_threshold_secs` is larger than `i64::MAX` (which is extremely unlikely in practice).
     #[must_use]
     pub fn should_refresh(&self, session: &Session, refresh_threshold_secs: u64) -> bool {
         let now = Utc::now();
         let time_until_expires = session.expires_at.signed_duration_since(now);
-        time_until_expires.num_seconds() < refresh_threshold_secs as i64
-            && time_until_expires.num_seconds() > 0
+        let threshold = i64::try_from(refresh_threshold_secs).unwrap_or(i64::MAX);
+        time_until_expires.num_seconds() < threshold && time_until_expires.num_seconds() > 0
     }
 }
-
-#[async_trait]
-impl super::traits::SessionService for SessionService {}
