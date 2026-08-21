@@ -4,7 +4,6 @@
 //! listing workspaces, switching between workspaces, and updating workspaces.
 use uuid::Uuid;
 
-
 /// Placeholder for the workspace management flow test.
 #[tokio::test]
 async fn test_workspace_management_flow() -> anyhow::Result<()> {
