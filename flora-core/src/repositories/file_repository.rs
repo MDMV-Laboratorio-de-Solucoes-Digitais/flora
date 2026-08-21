@@ -152,4 +152,13 @@ impl FileRepository for PgFileRepository {
         }
         Ok(())
     }
+
+    async fn purge_old(&self, older_than: chrono::DateTime<chrono::Utc>) -> Result<usize> {
+        let result = sqlx::query("DELETE FROM files WHERE is_deleted = true AND updated_at < $1")
+            .bind(older_than)
+            .execute(&self.pool)
+            .await
+            .map_err(Error::from_sqlx)?;
+        Ok(usize::try_from(result.rows_affected()).unwrap_or(0))
+    }
 }
