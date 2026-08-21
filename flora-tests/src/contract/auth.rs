@@ -9,11 +9,77 @@ use flora_api::state::AppState;
 #[cfg(test)]
 use flora_core::config::Config;
 #[cfg(test)]
+use flora_core::repositories::{
+    PgChannelRepository, PgFileRepository, PgMembershipRepository, PgMessageRepository,
+    PgNotificationRepository, PgOrganizationRepository, PgRoleRepository, PgSessionRepository,
+    PgTaskRepository, PgUserRepository, PgWorkspaceRepository,
+};
+#[cfg(test)]
+use flora_core::services::{
+    AuthService, ChannelService, FileService, MessageService, NotificationService,
+    OrganizationService, RbacService, SessionService, TaskService, WorkspaceService,
+};
+#[cfg(test)]
+use flora_core::traits::{
+    ChannelRepository, FileRepository, MembershipRepository, MessageRepository,
+    NotificationRepository, OrganizationRepository, RoleRepository, SessionRepository,
+    TaskRepository, WorkspaceRepository,
+};
+#[cfg(test)]
 use sqlx::PgPool;
 #[cfg(test)]
 use std::sync::Arc;
 #[cfg(test)]
 use tower::ServiceExt;
+
+#[cfg(test)]
+fn make_test_state(pool: PgPool, config: Config) -> AppState {
+    let user_repo: Arc<dyn flora_core::traits::UserRepository + Send + Sync> =
+        Arc::new(PgUserRepository::new(pool.clone()));
+    let _user_repo = user_repo; // suppress unused warning
+    let org_repo: Arc<dyn OrganizationRepository + Send + Sync> =
+        Arc::new(PgOrganizationRepository::new(pool.clone()));
+    let membership_repo: Arc<dyn MembershipRepository + Send + Sync> =
+        Arc::new(PgMembershipRepository::new(pool.clone()));
+    let role_repo: Arc<dyn RoleRepository + Send + Sync> =
+        Arc::new(PgRoleRepository::new(pool.clone()));
+    let session_repo: Arc<dyn SessionRepository + Send + Sync> =
+        Arc::new(PgSessionRepository::new(pool.clone()));
+    let workspace_repo: Arc<dyn WorkspaceRepository + Send + Sync> =
+        Arc::new(PgWorkspaceRepository::new(pool.clone()));
+    let channel_repo: Arc<dyn ChannelRepository + Send + Sync> =
+        Arc::new(PgChannelRepository::new(pool.clone()));
+    let message_repo: Arc<dyn MessageRepository + Send + Sync> =
+        Arc::new(PgMessageRepository::new(pool.clone()));
+    let task_repo: Arc<dyn TaskRepository + Send + Sync> =
+        Arc::new(PgTaskRepository::new(pool.clone()));
+    let file_repo: Arc<dyn FileRepository + Send + Sync> =
+        Arc::new(PgFileRepository::new(pool.clone()));
+    let notification_repo: Arc<dyn NotificationRepository + Send + Sync> =
+        Arc::new(PgNotificationRepository::new(pool.clone()));
+
+    AppState {
+        db_pool: Arc::new(pool),
+        config: Arc::new(config),
+        auth_service: Arc::new(AuthService::new()),
+        rbac_service: Arc::new(RbacService::new(
+            Arc::clone(&role_repo),
+            Arc::clone(&membership_repo),
+        )),
+        session_service: Arc::new(SessionService::new(Arc::clone(&session_repo))),
+        organization_service: Arc::new(OrganizationService::new(
+            Arc::clone(&org_repo),
+            Arc::clone(&membership_repo),
+            Arc::clone(&role_repo),
+        )),
+        workspace_service: Arc::new(WorkspaceService::new(Arc::clone(&workspace_repo))),
+        channel_service: Arc::new(ChannelService::new(Arc::clone(&channel_repo))),
+        message_service: Arc::new(MessageService::new(Arc::clone(&message_repo))),
+        task_service: Arc::new(TaskService::new(Arc::clone(&task_repo))),
+        file_service: Arc::new(FileService::new(Arc::clone(&file_repo))),
+        notification_service: Arc::new(NotificationService::new(Arc::clone(&notification_repo))),
+    }
+}
 
 /// Contract test for `GET /auth/login`.
 ///
@@ -25,10 +91,7 @@ use tower::ServiceExt;
 async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = AppState {
-        db_pool: Arc::new(pool),
-        config: Arc::new(config),
-    };
+    let state = make_test_state(pool, config);
     let router = create_auth_router().with_state(state);
 
     let request = http::Request::builder()
@@ -84,10 +147,7 @@ async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
 async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = AppState {
-        db_pool: Arc::new(pool),
-        config: Arc::new(config),
-    };
+    let state = make_test_state(pool, config);
     let router = create_auth_router().with_state(state);
 
     let request = http::Request::builder()
@@ -121,10 +181,7 @@ async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
 async fn test_auth_login_with_unencoded_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = AppState {
-        db_pool: Arc::new(pool),
-        config: Arc::new(config),
-    };
+    let state = make_test_state(pool, config);
     let router = create_auth_router().with_state(state);
 
     let request = http::Request::builder()

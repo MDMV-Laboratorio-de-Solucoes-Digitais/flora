@@ -6,14 +6,13 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::error::{Error, Result};
-use crate::models::{Membership, Organization, Role, User};
-use crate::repositories::{PgMembershipRepository, PgRoleRepository};
+use crate::models::{Permission, Role, User};
 use crate::traits::{MembershipRepository, RoleRepository};
+use std::str::FromStr;
 
 /// Default role name for organization owners.
 const DEFAULT_OWNER_ROLE: &str = "Owner";
@@ -43,25 +42,58 @@ impl RbacService {
     }
 
     /// Initializes the RBAC service with default roles for a new organization.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the role creation fails.
     pub async fn initialize_organization(&self, organization_id: Uuid) -> Result<()> {
         // Create default roles for the organization
-        let owner_role = Role::new(
-            organization_id,
-            DEFAULT_OWNER_ROLE.to_string(),
-            vec![
-                "org:read".to_string(),
-                "org:write".to_string(),
-                "org:delete".to_string(),
-                "org:manage_members".to_string(),
-                "org:manage_workspaces".to_string(),
-                "org:manage_roles".to_string(),
-            ],
-        );
-        self.role_repo.create(owner_role).await?;
+        let mut owner_role = Role::new(organization_id, DEFAULT_OWNER_ROLE);
+        owner_role.is_builtin = true;
+        owner_role.description = Some("Full access to all resources".to_string());
+
+        // Add all permissions to owner
+        for perm in &[
+            Permission::OrgRead,
+            Permission::OrgWrite,
+            Permission::OrgAdmin,
+            Permission::WorkspaceRead,
+            Permission::WorkspaceWrite,
+            Permission::WorkspaceAdmin,
+            Permission::ChannelRead,
+            Permission::ChannelWrite,
+            Permission::ChannelDelete,
+            Permission::MessageRead,
+            Permission::MessageWrite,
+            Permission::MessageEdit,
+            Permission::MessageDelete,
+            Permission::TaskRead,
+            Permission::TaskWrite,
+            Permission::TaskAssign,
+            Permission::TaskDelete,
+            Permission::FileRead,
+            Permission::FileWrite,
+            Permission::FileDelete,
+            Permission::SearchGlobal,
+            Permission::NotificationRead,
+            Permission::RoleRead,
+            Permission::RoleWrite,
+            Permission::MemberRead,
+            Permission::MemberInvite,
+            Permission::MemberRemove,
+        ] {
+            owner_role.add_permission(*perm);
+        }
+        let _ = self.role_repo.create(owner_role).await?;
         Ok(())
     }
 
     /// Checks if a user has a specific permission in an organization.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the user is not a member of the organization,
+    /// if the role cannot be found, or if the permission string is invalid.
     pub async fn has_permission(
         &self,
         user: &User,
@@ -78,17 +110,25 @@ impl RbacService {
             .find_by_user_and_organization(user.id, organization_id)
             .await?
             .ok_or_else(|| {
-                Error::PermissionDenied("User is not a member of this organization".to_string())
+                Error::Forbidden("User is not a member of this organization".to_string())
             })?;
 
         let role = self.get_role(membership.role_id).await?;
-        Ok(role.permissions.contains(&permission.to_string()))
+        // Convert string permission to Permission enum
+        let perm = Permission::from_str(permission)
+            .map_err(|_| Error::InvalidInput(format!("Unknown permission: {permission}")))?;
+        Ok(role.has_permission(perm))
     }
 
     /// Checks if a user has a specific permission in a workspace.
     ///
     /// This method checks the user's organization-level role permissions for the given permission.
     /// It assumes the workspace belongs to the specified organization.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the user is not a member of the organization,
+    /// if the role cannot be found, or if the permission string is invalid.
     pub async fn has_permission_in_workspace(
         &self,
         user: &User,
@@ -101,13 +141,18 @@ impl RbacService {
     }
 
     /// Checks if a user is an admin or owner of an organization.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the user is not a member of the organization
+    /// or if the role cannot be found.
     pub async fn is_admin(&self, user: &User, organization_id: Uuid) -> Result<bool> {
         let membership = self
             .membership_repo
             .find_by_user_and_organization(user.id, organization_id)
             .await?
             .ok_or_else(|| {
-                Error::PermissionDenied("User is not a member of this organization".to_string())
+                Error::Forbidden("User is not a member of this organization".to_string())
             })?;
 
         let role = self.get_role(membership.role_id).await?;
@@ -134,79 +179,9 @@ impl RbacService {
         // Update cache
         {
             let mut cache = self.role_cache.write().await;
-            cache.insert(role_id, role.clone());
+            let _ = cache.insert(role_id, role.clone());
         }
 
         Ok(role)
-    }
-}
-
-/// Role model — customizable RBAC within an organization.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct Role {
-    /// Unique identifier.
-    pub id: Uuid,
-    /// The organization this role belongs to.
-    pub organization_id: Uuid,
-    /// Role name (e.g., "Admin", "Member").
-    pub name: String,
-    /// List of permissions (e.g., ["org:read", "org:write"]).
-    pub permissions: Vec<String>,
-}
-
-impl Role {
-    /// Creates a new role with a generated UUID.
-    pub fn new(organization_id: Uuid, name: String, permissions: Vec<String>) -> Self {
-        Self {
-            id: Uuid::now_v7(),
-            organization_id,
-            name,
-            permissions,
-        }
-    }
-}
-
-#[async_trait]
-impl RoleRepository for PgRoleRepository {
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<Role>> {
-        let role = sqlx::query_as::<_, Role>(
-            "SELECT id, organization_id, name, permissions
-             FROM roles
-             WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(Error::from_sqlx)?;
-        Ok(role)
-    }
-
-    async fn find_by_organization_id(&self, organization_id: Uuid) -> Result<Vec<Role>> {
-        let roles = sqlx::query_as::<_, Role>(
-            "SELECT id, organization_id, name, permissions
-             FROM roles
-             WHERE organization_id = $1",
-        )
-        .bind(organization_id)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(Error::from_sqlx)?;
-        Ok(roles)
-    }
-
-    async fn create(&self, role: Role) -> Result<Role> {
-        let created = sqlx::query_as::<_, Role>(
-            "INSERT INTO roles (id, organization_id, name, permissions)
-             VALUES ($1, $2, $3, $4)
-             RETURNING id, organization_id, name, permissions",
-        )
-        .bind(role.id)
-        .bind(role.organization_id)
-        .bind(&role.name)
-        .bind(&role.permissions)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(Error::from_sqlx)?;
-        Ok(created)
     }
 }

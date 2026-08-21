@@ -114,6 +114,15 @@ impl SessionRepository for PgSessionRepository {
         Ok(())
     }
 
+    async fn revoke_by_jti(&self, jti: &str) -> Result<bool> {
+        let result = sqlx::query("UPDATE sessions SET is_active = false WHERE jti = $1")
+            .bind(jti)
+            .execute(&self.pool)
+            .await
+            .map_err(Error::from_sqlx)?;
+        Ok(result.rows_affected() > 0)
+    }
+
     async fn revoke_all_for_user(&self, user_id: Uuid) -> Result<()> {
         let _ = sqlx::query("UPDATE sessions SET is_active = false WHERE user_id = $1")
             .bind(user_id)
