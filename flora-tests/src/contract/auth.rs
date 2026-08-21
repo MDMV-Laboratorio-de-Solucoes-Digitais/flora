@@ -33,7 +33,8 @@ use std::sync::Arc;
 use tower::ServiceExt;
 
 #[cfg(test)]
-fn make_test_state(pool: PgPool, config: Config) -> AppState {
+#[cfg(test)]
+fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
     let user_repo: Arc<dyn flora_core::traits::UserRepository + Send + Sync> =
         Arc::new(PgUserRepository::new(pool.clone()));
     let _user_repo = user_repo; // suppress unused warning
@@ -58,9 +59,9 @@ fn make_test_state(pool: PgPool, config: Config) -> AppState {
     let notification_repo: Arc<dyn NotificationRepository + Send + Sync> =
         Arc::new(PgNotificationRepository::new(pool.clone()));
 
-    AppState {
+    Ok(AppState {
         db_pool: Arc::new(pool),
-        config: Arc::new(config),
+        config: Arc::new(config.clone()),
         auth_service: Arc::new(AuthService::new()),
         rbac_service: Arc::new(RbacService::new(
             Arc::clone(&role_repo),
@@ -76,9 +77,10 @@ fn make_test_state(pool: PgPool, config: Config) -> AppState {
         channel_service: Arc::new(ChannelService::new(Arc::clone(&channel_repo))),
         message_service: Arc::new(MessageService::new(Arc::clone(&message_repo))),
         task_service: Arc::new(TaskService::new(Arc::clone(&task_repo))),
-        file_service: Arc::new(FileService::new(Arc::clone(&file_repo))),
+        file_service: Arc::new(FileService::new(Arc::clone(&file_repo), Arc::new(config.storage.clone()))),
         notification_service: Arc::new(NotificationService::new(Arc::clone(&notification_repo))),
-    }
+        search_service: Arc::new(flora_search::SearchService::new(&config.search.url, config.search.api_key.as_deref(), &config.search.index_template)?),
+    })
 }
 
 /// Contract test for `GET /auth/login`.
@@ -91,7 +93,7 @@ fn make_test_state(pool: PgPool, config: Config) -> AppState {
 async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, config);
+    let state = make_test_state(pool, &config)?;
     let router = create_auth_router().with_state(state);
 
     let request = http::Request::builder()
@@ -147,7 +149,7 @@ async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
 async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, config);
+    let state = make_test_state(pool, &config)?;
     let router = create_auth_router().with_state(state);
 
     let request = http::Request::builder()
@@ -181,7 +183,7 @@ async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
 async fn test_auth_login_with_unencoded_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, config);
+    let state = make_test_state(pool, &config)?;
     let router = create_auth_router().with_state(state);
 
     let request = http::Request::builder()
