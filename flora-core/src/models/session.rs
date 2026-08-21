@@ -5,6 +5,27 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// Input for updating a session.
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateSessionInput {
+    /// Updated last activity timestamp.
+    pub last_activity_at: Option<DateTime<Utc>>,
+    /// Updated active status.
+    pub is_active: Option<bool>,
+    /// Updated expiration time.
+    pub expires_at: Option<DateTime<Utc>>,
+    /// Updated refresh token ID.
+    pub refresh_token_id: Option<String>,
+    /// Updated client IP.
+    pub client_ip: Option<String>,
+    /// Updated user agent.
+    pub user_agent: Option<String>,
+    /// Updated organization context.
+    pub organization_id: Option<Uuid>,
+    /// Updated timestamp (for auditing).
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
 /// A user session in Flora.
 ///
 /// Sessions are short-lived and tied to a specific organization context.

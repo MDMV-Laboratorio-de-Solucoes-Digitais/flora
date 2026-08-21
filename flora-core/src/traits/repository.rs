@@ -305,6 +305,9 @@ pub trait SessionRepository: Send + Sync + std::fmt::Debug {
     /// Revoke a session.
     async fn revoke(&self, id: Uuid) -> crate::Result<()>;
 
+    /// Revoke a session by JTI.
+    async fn revoke_by_jti(&self, jti: &str) -> crate::Result<bool>;
+
     /// Revoke all sessions for a user.
     async fn revoke_all_for_user(&self, user_id: Uuid) -> crate::Result<()>;
 
