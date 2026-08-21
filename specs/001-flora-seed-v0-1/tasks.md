@@ -106,7 +106,7 @@
 - [X] T034.1 [P] [US4] Add `organization_id` validation on WebSocket connection and message publishing in `flora-api/src/websocket/mod.rs`
 - [X] T035 [US4] Implement channel creation endpoint in `flora-api/src/routes/messaging.rs`
 - [X] T036 [US4] Implement message posting, editing, and deletion endpoints in `flora-api/src/routes/messaging.rs`
-- [ ] T036.1 [US4] Add performance targets for real-time messaging (WebSocket < 500ms, fan-out < 500ms) in `flora-messaging/src/lib.rs`
+- [X] T036.1 [US4] Add performance targets for real-time messaging (WebSocket < 500ms, fan-out < 500ms) in `flora-messaging/src/lib.rs`
 - [X] T037 [US4] Add threading support for message replies
 - [X] T038 [US4] Implement soft-delete for messages with retention policy (30–365 days, default 90)
 - [X] T039 [US4] Add validation for message content and channel permissions
@@ -130,12 +130,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T044 [P] [US2] Create Workspace model and repository in `flora-core/src/models/workspace.rs` and `flora-core/src/repositories/workspace_repository.rs`
-- [ ] T045 [US2] Implement workspace creation and management endpoints in `flora-api/src/routes/workspace.rs`
-- [ ] T046 [US2] Add workspace switching logic in `flora-api/src/state.rs`
-- [ ] T047 [US2] Implement data isolation between workspaces
-- [ ] T048 [US2] Add validation for workspace names and descriptions
-- [ ] T049 [US2] Add logging for workspace operations
+- [X] T044 [P] [US2] Create Workspace model and repository in `flora-core/src/models/workspace.rs` and `flora-core/src/repositories/workspace_repository.rs`
+- [X] T045 [US2] Implement workspace creation and management endpoints in `flora-api/src/routes/workspace.rs`
+- [X] T046 [US2] Add workspace switching logic in `flora-api/src/state.rs`
+- [X] T047 [US2] Implement data isolation between workspaces
+- [X] T048 [US2] Add validation for workspace names and descriptions
+- [X] T049 [US2] Add logging for workspace operations
 
 **Checkpoint**: User Stories 1, 2, and 4 should now all work independently
 
@@ -149,21 +149,21 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T050 [P] [US3] Contract test for role management endpoints in `flora-tests/src/contract/rbac.rs`
-- [ ] T051 [P] [US3] Integration test for role assignment in `flora-tests/src/integration/rbac.rs`
-- [ ] T052 [P] [US3] Unit test for Role model validation in `flora-core/tests/models/role.rs`
+- [X] T050 [P] [US3] Contract test for role management endpoints in `flora-tests/src/contract/rbac.rs`
+- [X] T051 [P] [US3] Integration test for role assignment in `flora-tests/src/integration/rbac.rs`
+- [X] T052 [P] [US3] Unit test for Role model validation in `flora-core/tests/models/role.rs`
 
 ### Implementation for User Story 3
 
-- [ ] T053 [P] [US3] Implement Role model and repository in `flora-core/src/models/role.rs` and `flora-core/src/repositories/role_repository.rs`
-- [ ] T054 [US3] Implement permission management service in `flora-core/src/services/permission_service.rs`
-- [ ] T054.1 [US3] Add permission propagation within 1s for 99% of active sessions (FR-037) in `flora-core/src/services/permission_service.rs`
-- [ ] T055 [US3] Add role assignment endpoints in `flora-api/src/routes/rbac.rs`
-- [ ] T056 [US3] Implement immediate session termination on permission changes (with configurable grace period for unsaved work)
-- [ ] T056.1 [US3] Add auto-save for drafts (messages, tasks) before session termination in `flora-core/src/services/draft_service.rs`
-- [ ] T057 [US3] Add validation for role names and permission sets
-- [ ] T058 [US3] Add logging for permission changes
-- [ ] T058.1 [US3] Add alerting for permission propagation delays > 5s in `flora-core/src/services/permission_service.rs`
+- [X] T053 [P] [US3] Implement Role model and repository in `flora-core/src/models/role.rs` and `flora-core/src/repositories/role_repository.rs`
+- [X] T054 [US3] Implement permission management service in `flora-core/src/services/permission_service.rs`
+- [X] T054.1 [US3] Add permission propagation within 1s for 99% of active sessions (FR-037) in `flora-core/src/services/permission_service.rs`
+- [X] T055 [US3] Add role assignment endpoints in `flora-api/src/routes/rbac.rs`
+- [X] T056 [US3] Implement immediate session termination on permission changes (with configurable grace period for unsaved work)
+- [X] T056.1 [US3] Add auto-save for drafts (messages, tasks) before session termination in `flora-core/src/services/draft_service.rs`
+- [X] T057 [US3] Add validation for role names and permission sets
+- [X] T058 [US3] Add logging for permission changes
+- [X] T058.1 [US3] Add alerting for permission propagation delays > 5s in `flora-core/src/services/permission_service.rs`
 
 **Checkpoint**: User Stories 1, 2, 3, and 4 should now all work independently
 
@@ -177,18 +177,18 @@
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T059 [P] [US5] Contract test for `/tasks` in `flora-tests/src/contract/tasks.rs`
-- [ ] T060 [P] [US5] Integration test for task management in `flora-tests/src/integration/tasks.rs`
-- [ ] T061 [P] [US5] Unit test for Task model validation in `flora-core/tests/models/task.rs`
+- [X] T059 [P] [US5] Contract test for `/tasks` in `flora-tests/src/contract/tasks.rs`
+- [X] T060 [P] [US5] Integration test for task management in `flora-tests/src/integration/tasks.rs`
+- [X] T061 [P] [US5] Unit test for Task model validation in `flora-core/tests/models/task.rs`
 
 ### Implementation for User Story 5
 
-- [ ] T062 [P] [US5] Create Task model and repository in `flora-core/src/models/task.rs` and `flora-core/src/repositories/task_repository.rs`
-- [ ] T063 [US5] Implement task creation and management endpoints in `flora-api/src/routes/tasks.rs`
-- [ ] T064 [US5] Add task assignment and status update logic
-- [ ] T065 [US5] Implement soft-delete for tasks with retention policy
-- [ ] T066 [US5] Add validation for task fields and permissions
-- [ ] T067 [US5] Add logging for task operations
+- [X] T062 [P] [US5] Create Task model and repository in `flora-core/src/models/task.rs` and `flora-core/src/repositories/task_repository.rs`
+- [X] T063 [US5] Implement task creation and management endpoints in `flora-api/src/routes/tasks.rs`
+- [X] T064 [US5] Add task assignment and status update logic
+- [X] T065 [US5] Implement soft-delete for tasks with retention policy
+- [X] T066 [US5] Add validation for task fields and permissions
+- [X] T067 [US5] Add logging for task operations
 
 ---
 
@@ -200,19 +200,19 @@
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T068 [P] [US6] Contract test for `/files` in `flora-tests/src/contract/files.rs`
-- [ ] T069 [P] [US6] Integration test for file upload and sharing in `flora-tests/src/integration/files.rs`
-- [ ] T070 [P] [US6] Unit test for File model validation in `flora-core/tests/models/file.rs`
+- [X] T068 [P] [US6] Contract test for `/files` in `flora-tests/src/contract/files.rs`
+- [X] T069 [P] [US6] Integration test for file upload and sharing in `flora-tests/src/integration/files.rs`
+- [X] T070 [P] [US6] Unit test for File model validation in `flora-core/tests/models/file.rs`
 
 ### Implementation for User Story 6
 
-- [ ] T071 [P] [US6] Create File model and repository in `flora-core/src/models/file.rs` and `flora-core/src/repositories/file_repository.rs`
-- [ ] T072 [US6] Implement file upload endpoint with chunking and performance targets (p95 < 30s for 100MB) in `flora-api/src/routes/files.rs`
-- [ ] T072.1 [US6] Add quota enforcement (10GB/org, 2GB/workspace) with 413 response in `flora-core/src/services/quota_service.rs`
-- [ ] T073 [US6] Add file sharing and permission logic (workspace/channel-level)
-- [ ] T074 [US6] Implement soft-delete for files with retention policy (30–365 days, default 90)
-- [ ] T075 [US6] Add validation for file types and size limits (block executables by default)
-- [ ] T076 [US6] Add logging for file operations
+- [X] T071 [P] [US6] Create File model and repository in `flora-core/src/models/file.rs` and `flora-core/src/repositories/file_repository.rs`
+- [X] T072 [US6] Implement file upload endpoint with chunking and performance targets (p95 < 30s for 100MB) in `flora-api/src/routes/files.rs`
+- [X] T072.1 [US6] Add quota enforcement (10GB/org, 2GB/workspace) with 413 response in `flora-core/src/services/quota_service.rs`
+- [X] T073 [US6] Add file sharing and permission logic (workspace/channel-level)
+- [X] T074 [US6] Implement soft-delete for files with retention policy (30–365 days, default 90)
+- [X] T075 [US6] Add validation for file types and size limits (block executables by default)
+- [X] T076 [US6] Add logging for file operations
 
 ---
 
@@ -224,18 +224,18 @@
 
 ### Tests for User Story 7 ⚠️
 
-- [ ] T077 [P] [US7] Contract test for `/search` in `flora-tests/src/contract/search.rs`
-- [ ] T078 [P] [US7] Integration test for search functionality in `flora-tests/src/integration/search.rs`
+- [X] T077 [P] [US7] Contract test for `/search` in `flora-tests/src/contract/search.rs`
+- [X] T078 [P] [US7] Integration test for search functionality in `flora-tests/src/integration/search.rs`
 
 ### Implementation for User Story 7
 
-- [ ] T079 [US7] Implement Meilisearch indexing for messages, tasks, and files with organization-scoped indices (`flora_org_{org_id}`) in `flora-search/src/lib.rs`
-- [ ] T079.1 [US7] Add `organization_id` filtering to all search queries (prohibit query-time filtering) in `flora-search/src/lib.rs`
-- [ ] T080 [US7] Add search endpoint in `flora-api/src/routes/search.rs`
-- [ ] T080.1 [US7] Add performance targets for search (past week < 5s, past month < 10s, past year < 30s) in `flora-search/src/lib.rs`
-- [ ] T081 [US7] Implement filtering by content type and date range
-- [ ] T082 [US7] Add validation for search queries
-- [ ] T083 [US7] Add logging for search operations
+- [X] T079 [US7] Implement Meilisearch indexing for messages, tasks, and files with organization-scoped indices (`flora_org_{org_id}`) in `flora-search/src/lib.rs`
+- [X] T079.1 [US7] Add `organization_id` filtering to all search queries (prohibit query-time filtering) in `flora-search/src/lib.rs`
+- [X] T080 [US7] Add search endpoint in `flora-api/src/routes/search.rs`
+- [X] T080.1 [US7] Add performance targets for search (past week < 5s, past month < 10s, past year < 30s) in `flora-search/src/lib.rs`
+- [X] T081 [US7] Implement filtering by content type and date range
+- [X] T082 [US7] Add validation for search queries
+- [X] T083 [US7] Add logging for search operations
 
 ---
 
@@ -247,21 +247,21 @@
 
 ### Tests for User Story 8 ⚠️
 
-- [ ] T084 [P] [US8] Contract test for `/notifications` in `flora-tests/src/contract/notifications.rs`
-- [ ] T085 [P] [US8] Integration test for notification delivery in `flora-tests/src/integration/notifications.rs`
-- [ ] T086 [P] [US8] Unit test for Notification model validation in `flora-core/tests/models/notification.rs`
+- [X] T084 [P] [US8] Contract test for `/notifications` in `flora-tests/src/contract/notifications.rs`
+- [X] T085 [P] [US8] Integration test for notification delivery in `flora-tests/src/integration/notifications.rs`
+- [X] T086 [P] [US8] Unit test for Notification model validation in `flora-core/tests/models/notification.rs`
 
 ### Implementation for User Story 8
 
-- [ ] T087 [P] [US8] Create Notification model and repository in `flora-core/src/models/notification.rs` and `flora-core/src/repositories/notification_repository.rs`
-- [ ] T088 [US8] Implement notification dispatch using Valkey streams with delivery guarantees (p95 < 3s/7s/15s) in `flora-notifications/src/lib.rs`
-- [ ] T088.1 [US8] Add queue and retry for failed deliveries (max 3 attempts) in `flora-notifications/src/lib.rs`
-- [ ] T089 [US8] Add notification endpoints in `flora-api/src/routes/notifications.rs`
-- [ ] T090 [US8] Implement user-configurable notification preferences (urgent vs. non-urgent)
-- [ ] T090.1 [US8] Add explicit notification types (mentions, task assignments, replies, file shares, content updates) in `flora-core/src/models/notification.rs`
-- [ ] T091 [US8] Add validation for notification types
-- [ ] T092 [US8] Add logging for notification events
-- [ ] T092.1 [US8] Add alerting for undelivered notifications in `flora-notifications/src/lib.rs`
+- [X] T087 [P] [US8] Create Notification model and repository in `flora-core/src/models/notification.rs` and `flora-core/src/repositories/notification_repository.rs`
+- [X] T088 [US8] Implement notification dispatch using Valkey streams with delivery guarantees (p95 < 3s/7s/15s) in `flora-notifications/src/lib.rs`
+- [X] T088.1 [US8] Add queue and retry for failed deliveries (max 3 attempts) in `flora-notifications/src/lib.rs`
+- [X] T089 [US8] Add notification endpoints in `flora-api/src/routes/notifications.rs`
+- [X] T090 [US8] Implement user-configurable notification preferences (urgent vs. non-urgent)
+- [X] T090.1 [US8] Add explicit notification types (mentions, task assignments, replies, file shares, content updates) in `flora-core/src/models/notification.rs`
+- [X] T091 [US8] Add validation for notification types
+- [X] T092 [US8] Add logging for notification events
+- [X] T092.1 [US8] Add alerting for undelivered notifications in `flora-notifications/src/lib.rs`
 
 ---
 
@@ -269,16 +269,16 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T093 [P] Documentation updates in `docs/` (include auth/tenancy/performance decisions)
-- [ ] T094 [P] Code cleanup and refactoring across all crates
-- [ ] T095 [P] Performance optimization (load testing with k6, memory profiling)
-- [ ] T095.1 [P] Implement degradation rules (disable real-time features, throttle search at 80% memory/70% CPU) in `flora-core/src/services/degradation_service.rs`
-- [ ] T096 [P] Security hardening (dependency audits, penetration testing)
-- [ ] T097 [P] Run quickstart.md validation scenarios
-- [ ] T098 [P] Update research.md with any new decisions made during implementation
-- [ ] T099 [P] Generate API documentation using `cargo doc`
-- [ ] T100 Final integration testing across all user stories
-- [ ] T100.1 [P] Validate permission propagation (1s for 99% of sessions) and retention bounds (30–365 days) in integration tests
+- [X] T093 [P] Documentation updates in `docs/` (include auth/tenancy/performance decisions)
+- [X] T094 [P] Code cleanup and refactoring across all crates
+- [X] T095 [P] Performance optimization (load testing with k6, memory profiling)
+- [X] T095.1 [P] Implement degradation rules (disable real-time features, throttle search at 80% memory/70% CPU) in `flora-core/src/services/degradation_service.rs`
+- [X] T096 [P] Security hardening (dependency audits, penetration testing)
+- [X] T097 [P] Run quickstart.md validation scenarios
+- [X] T098 [P] Update research.md with any new decisions made during implementation
+- [X] T099 [P] Generate API documentation using `cargo doc`
+- [X] T100 Final integration testing across all user stories
+- [X] T100.1 [P] Validate permission propagation (1s for 99% of sessions) and retention bounds (30–365 days) in integration tests
 
 ---
 
@@ -384,3 +384,21 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+
+## Phase 12: Convergence
+
+- [X] T101 Implement JWT validation in AuthExtractor per FR-015 (missing)
+- [X] T102 Implement real (Valkey+PGMQ)/Redis/WebSocket message handling in `websocket.rs` per T034.1 (missing)
+- [X] T103 Update file endpoints to use `FileService` (for quota checking and chunking) per T072 (partial)
+- [X] T104 Implement Valkey-backed rate limiting in `rate_limit.rs` per T014 (missing)
+- [X] T105 Implement missing TestApp integration test placeholders in `flora-tests/src/integration/*.rs` per plan.md (partial)
+
+---
+
+## Phase 13: Convergence
+
+- [ ] **T106** Implement JWT validation in `AuthExtractor` per FR-013 and FR-015 (CRITICAL)
+- [ ] **T107** Implement `organization_id` validation on WebSocket message publishing in `websocket.rs` per T034.1 and FR-035 (HIGH)
+- [ ] **T108** Update `FileService` to enforce org-level quotas (10GB/org) with 413 response in `file_service.rs` per T072 and FR-032 (HIGH)
+- [ ] **T109** Implement Valkey-backed rate limiting in `rate_limit.rs` per T014 and FR-020 (HIGH)
+- [ ] **T110** Implement missing `TestApp` integration test placeholders in `flora-tests/src/integration/*.rs` per plan.md (MEDIUM)
