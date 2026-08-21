@@ -12,10 +12,10 @@ pub mod search;
 pub mod storage;
 
 use figment::Figment;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Root configuration for Flora.
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct Config {
     /// Application-level settings.
     pub app: app::AppConfig,
@@ -44,7 +44,9 @@ impl Config {
         reason = "Config loading is a top-level initialization; returning a large error enum is appropriate here."
     )]
     pub fn load() -> figment::Result<Self> {
-        let figment = Figment::new().merge(figment::providers::Env::prefixed("FLORA_"));
+        let figment = Figment::new()
+            .merge(figment::providers::Serialized::defaults(Self::default()))
+            .merge(figment::providers::Env::prefixed("FLORA_").split("__"));
 
         figment.extract::<Self>()
     }

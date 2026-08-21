@@ -1,9 +1,9 @@
 //! Notifications configuration (PGMQ + Valkey Streams).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for notification delivery via PGMQ and Valkey Streams.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NotificationsConfig {
     /// Whether notifications are enabled (default: true).
     pub enabled: bool,
@@ -18,7 +18,7 @@ pub struct NotificationsConfig {
 }
 
 /// Delivery latency targets for different notification types.
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct DeliveryTargets {
     /// Real-time push (default: 3s).
     pub realtime: u64,
