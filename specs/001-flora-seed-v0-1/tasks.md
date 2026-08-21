@@ -397,8 +397,16 @@ With multiple developers:
 
 ## Phase 13: Convergence
 
-- [ ] **T106** Implement JWT validation in `AuthExtractor` per FR-013 and FR-015 (CRITICAL)
-- [ ] **T107** Implement `organization_id` validation on WebSocket message publishing in `websocket.rs` per T034.1 and FR-035 (HIGH)
-- [ ] **T108** Update `FileService` to enforce org-level quotas (10GB/org) with 413 response in `file_service.rs` per T072 and FR-032 (HIGH)
-- [ ] **T109** Implement Valkey-backed rate limiting in `rate_limit.rs` per T014 and FR-020 (HIGH)
-- [ ] **T110** Implement missing `TestApp` integration test placeholders in `flora-tests/src/integration/*.rs` per plan.md (MEDIUM)
+- [X] **T106** Implement JWT validation in `AuthExtractor` per FR-013 and FR-015 (CRITICAL)
+- [X] **T107** Implement `organization_id` validation on WebSocket message publishing in `websocket.rs` per T034.1 and FR-035 (HIGH)
+- [X] **T108** Update `FileService` to enforce org-level quotas (10GB/org) with 413 response in `file_service.rs` per T072 and FR-032 (HIGH)
+- [X] **T109** Implement Valkey-backed rate limiting in `rate_limit.rs` per T014 and FR-020 (HIGH)
+- [X] **T110** Implement missing `TestApp` integration test placeholders in `flora-tests/src/integration/*.rs` per plan.md (MEDIUM)
+
+## Phase 14: Convergence
+
+- [X] T111 Implement JWT validation in `AuthExtractor` per FR-013, FR-015 (CRITICAL) (missing)
+- [X] T112 Implement `organization_id` validation and Valkey pub/sub on WebSocket message publishing in `websocket.rs` per FR-035 (HIGH) (partial)
+- [X] T113 Update `FileService` to enforce org-level quotas (10GB/org) with 413 response in `file_service.rs` per FR-032 (HIGH) (partial)
+- [X] T114 Implement Valkey-backed rate limiting in `rate_limit.rs` per FR-020 (HIGH) (missing)
+- [X] T115 Implement missing `TestApp` integration test placeholders in `flora-tests/src/integration/*.rs` per plan.md (MEDIUM) (missing)
