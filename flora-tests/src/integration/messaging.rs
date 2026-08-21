@@ -4,7 +4,6 @@
 //! editing messages, and deleting messages.
 use uuid::Uuid;
 
-
 /// Placeholder for the messaging flow test.
 #[tokio::test]
 async fn test_messaging_flow() -> anyhow::Result<()> {
