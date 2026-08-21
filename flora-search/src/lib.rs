@@ -7,8 +7,8 @@ use flora_core::{Error, Result};
 use meilisearch_sdk::{client::Client, search::SearchResults};
 use serde_json::Value;
 use std::fmt::{self, Write};
-use uuid::Uuid;
 use tracing::{debug, instrument};
+use uuid::Uuid;
 
 /// Search service for global search across entities in an organization.
 pub struct SearchService {
@@ -49,7 +49,6 @@ impl SearchService {
     /// for `str::replace`, not a format argument.
     #[allow(
         clippy::allow_attributes,
-        clippy::allow_attributes_without_reason,
         clippy::literal_string_with_formatting_args,
         reason = "The '{org_id}' argument is a literal search-and-replace pattern for str::replace(), \
 not a formatting argument. This is a false positive from the nursery lint."
@@ -105,11 +104,7 @@ not a formatting argument. This is a false positive from the nursery lint."
     /// # Errors
     /// Returns an error if the meilisearch client fails to add the document.
     #[instrument(skip(self, task))]
-    pub async fn index_task(
-        &self,
-        org_id: &Uuid,
-        task: &flora_core::models::Task,
-    ) -> Result<()> {
+    pub async fn index_task(&self, org_id: &Uuid, task: &flora_core::models::Task) -> Result<()> {
         debug!("Indexing task {}", task.id);
         let index = self.client.index(self.index_name(org_id));
         let doc = serde_json::json!({
@@ -133,11 +128,7 @@ not a formatting argument. This is a false positive from the nursery lint."
     /// # Errors
     /// Returns an error if the meilisearch client fails to add the document.
     #[instrument(skip(self, file))]
-    pub async fn index_file(
-        &self,
-        org_id: &Uuid,
-        file: &flora_core::models::File,
-    ) -> Result<()> {
+    pub async fn index_file(&self, org_id: &Uuid, file: &flora_core::models::File) -> Result<()> {
         debug!("Indexing file {}", file.id);
         let index = self.client.index(self.index_name(org_id));
         let doc = serde_json::json!({
@@ -184,13 +175,17 @@ not a formatting argument. This is a false positive from the nursery lint."
     ) -> Result<Vec<SearchResult>> {
         debug!("Searching in org {}: query={}", org_id, query);
         let index = self.client.index(self.index_name(org_id));
-        
+
         let mut search_query = index.search();
         let _ = search_query.with_query(query).with_limit(limit);
 
         let mut filter = String::new();
         if let Some(types) = types.filter(|t| !t.is_empty()) {
-            let types_str = types.iter().map(|t| format!("'{t}'")).collect::<Vec<_>>().join(", ");
+            let types_str = types
+                .iter()
+                .map(|t| format!("'{t}'"))
+                .collect::<Vec<_>>()
+                .join(", ");
             let _ = write!(filter, "type IN [{types_str}]");
         }
 
@@ -221,7 +216,11 @@ not a formatting argument. This is a false positive from the nursery lint."
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_owned();
-            out.push(SearchResult { id, item_type: doc_type, snippet });
+            out.push(SearchResult {
+                id,
+                item_type: doc_type,
+                snippet,
+            });
         }
         Ok(out)
     }
