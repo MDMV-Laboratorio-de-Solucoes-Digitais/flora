@@ -34,7 +34,8 @@ sqlx.workspace = true
 tower = { version = "0.5", features = ["util"] }
 http = "1.0"
 url = "2.5"
+flora-search = { version = "0.1.0", path = "../flora-search" }
+uuid.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true
-uuid.workspace = true
