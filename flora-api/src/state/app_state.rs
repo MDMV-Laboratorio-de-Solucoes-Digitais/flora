@@ -41,6 +41,8 @@ pub struct AppState {
     pub file_service: Arc<FileService>,
     /// Notification service.
     pub notification_service: Arc<NotificationService>,
+    /// Search service.
+    pub search_service: Arc<flora_search::SearchService>,
 }
 
 impl AppState {
@@ -100,10 +102,22 @@ impl AppState {
 
         let task_service = Arc::new(TaskService::new(Arc::clone(&task_repo)));
 
-        let file_service = Arc::new(FileService::new(Arc::clone(&file_repo)));
+        let file_service = Arc::new(FileService::new(
+            Arc::clone(&file_repo),
+            Arc::new(config.storage.clone()),
+        ));
 
         let notification_service =
             Arc::new(NotificationService::new(Arc::clone(&notification_repo)));
+
+        let search_service = Arc::new(
+            flora_search::SearchService::new(
+                &config.search.url,
+                config.search.api_key.as_deref(),
+                &config.search.index_template,
+            )
+            .map_err(|e| anyhow::anyhow!("Search service init failed: {e}"))?,
+        );
 
         Ok(Self {
             db_pool: Arc::new(db_pool),
@@ -118,6 +132,7 @@ impl AppState {
             task_service,
             file_service,
             notification_service,
+            search_service,
         })
     }
 }
