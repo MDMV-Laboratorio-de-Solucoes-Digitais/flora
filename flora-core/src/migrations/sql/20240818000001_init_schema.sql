@@ -1,12 +1,9 @@
 -- Flora Workspace Database Schema v0.1.0
 -- Multi-tenant organization-centric schema with organization_id denormalization for performance
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Core identity tables
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     email VARCHAR(255) UNIQUE NOT NULL,
     oidc_subject VARCHAR(255),
     display_name VARCHAR(255) NOT NULL,
@@ -18,7 +15,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE organizations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(100) UNIQUE NOT NULL,
     settings JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -38,7 +35,7 @@ CREATE TABLE memberships (
 );
 
 CREATE TABLE roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     permissions JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -50,7 +47,7 @@ CREATE TABLE roles (
 
 -- Collaboration tables
 CREATE TABLE workspaces (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -59,7 +56,7 @@ CREATE TABLE workspaces (
 );
 
 CREATE TABLE channels (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     organization_id UUID NOT NULL, -- Denormalized for isolation performance
     name VARCHAR(255) NOT NULL,
@@ -69,7 +66,7 @@ CREATE TABLE channels (
 );
 
 CREATE TABLE messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
     organization_id UUID NOT NULL, -- Denormalized for isolation performance
     sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -82,7 +79,7 @@ CREATE TABLE messages (
 );
 
 CREATE TABLE tasks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     organization_id UUID NOT NULL, -- Denormalized for isolation performance
     creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -96,7 +93,7 @@ CREATE TABLE tasks (
 );
 
 CREATE TABLE files (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     organization_id UUID NOT NULL, -- Denormalized for isolation performance
     owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     file_type VARCHAR(100) NOT NULL,
@@ -111,7 +108,7 @@ CREATE TABLE files (
 );
 
 CREATE TABLE notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     event_type VARCHAR(50) NOT NULL CHECK (event_type IN (
@@ -126,7 +123,7 @@ CREATE TABLE notifications (
 );
 
 CREATE TABLE sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     jti VARCHAR(255) NOT NULL UNIQUE,

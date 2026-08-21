@@ -1,9 +1,9 @@
 //! Application-level configuration.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for application-level settings.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppConfig {
     /// Application name (default: "Flora Workspace")
     pub name: String,

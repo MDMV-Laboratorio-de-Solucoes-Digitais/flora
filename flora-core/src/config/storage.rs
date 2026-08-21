@@ -1,9 +1,9 @@
 //! Storage configuration (`RustFS` abstraction — Local or S3-compatible).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for file storage (local or S3-compatible).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct StorageConfig {
     /// Storage backend: "local" or "s3".
     pub backend: String,

@@ -1,9 +1,9 @@
 //! OIDC / Zitadel configuration.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for OIDC / Zitadel authentication.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OidcConfig {
     /// Zitadel issuer URL (e.g., <https://zitadel.example.com>).
     pub issuer_url: String,

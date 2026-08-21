@@ -1,9 +1,9 @@
 //! Database configuration (`PostgreSQL` primary, `SQLite` fallback).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for database connections.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DatabaseConfig {
     /// `PostgreSQL` connection string (used in production/cloud).
     pub postgres_url: String,

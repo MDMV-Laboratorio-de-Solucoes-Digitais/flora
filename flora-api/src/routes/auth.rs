@@ -58,10 +58,10 @@ pub struct ErrorResponse {
 /// Creates the `/auth` sub-router.
 pub fn create_auth_router() -> Router<AppState> {
     Router::new()
-        .route("/auth/login", get(login))
-        .route("/auth/callback", get(callback))
-        .route("/auth/logout", post(logout))
-        .route("/auth/refresh", post(refresh))
+        .route("/login", get(login))
+        .route("/callback", get(callback))
+        .route("/logout", post(logout))
+        .route("/refresh", post(refresh))
 }
 
 /// `GET /auth/login` — Returns the OIDC authorization URL for redirect.
