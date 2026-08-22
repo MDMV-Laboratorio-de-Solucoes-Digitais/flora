@@ -44,3 +44,9 @@ README.md
 # Spec artifacts (generated)
 .specify/
 *.md
+# Frontend
+node_modules/
+coverage/
+build/
+.svelte-kit/
+dist/

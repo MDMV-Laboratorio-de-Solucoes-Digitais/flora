@@ -96,7 +96,7 @@ As a workspace user, I need to upload, organize, and retrieve files within chann
 - **FR-001**: System MUST provide OIDC-based authentication and token management via Zitadel.
 - **FR-002**: System MUST allow creation and management of Organizations, Workspaces, Users, and Roles.
 - **FR-003**: System MUST support real-time text channels, direct messages, and threaded conversations.
-- **FR-004**: System MUST deliver real-time notifications via Valkey pub/sub and PGMQ.
+- **FR-004**: System MUST deliver real-time notifications via Valkey pub/sub and PGMQ (Frontend connects exclusively to Valkey WS; backend bridges PGMQ events).
 - **FR-005**: System MUST allow users to create, assign, and track the status of Tasks.
 - **FR-006**: System MUST support file uploads and downloads integrated with RustFS.
 - **FR-007**: Frontend codebase MUST be written in Svelte 5 (Runes Mode) and TypeScript.
@@ -125,11 +125,9 @@ As a workspace user, I need to upload, organize, and retrieve files within chann
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of the Svelte 5 frontend builds pass `svelte-check` with zero warnings in CI pipelines.
-- **SC-002**: 100% of asynchronous operations and Promises in the frontend have explicit error handling logic.
-- **SC-003**: Users can successfully authenticate, create a workspace, and send a real-time message without page refreshes.
-- **SC-004**: The application boots successfully on a fresh VPS environment utilizing only PostgreSQL, Valkey, RustFS, and Meilisearch (no proprietary SaaS).
-- **SC-005**: 0 instances of `console.log` exist in the production frontend bundle.
+- **SC-001**: Users can successfully authenticate, create a workspace, and send a real-time message without page refreshes.
+- **SC-002**: The application boots successfully on a fresh VPS environment utilizing only PostgreSQL, Valkey, RustFS, and Meilisearch (no proprietary SaaS).
+- **SC-003**: Code Quality Gates: 100% `svelte-check` pass rate, zero `console.log` instances, and 100% explicit Promise handling in production builds.
 
 ## Assumptions
 

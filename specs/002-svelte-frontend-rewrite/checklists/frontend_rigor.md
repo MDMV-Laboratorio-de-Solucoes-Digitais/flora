@@ -10,28 +10,28 @@
 
 ## TypeScript & Linting Rigor
 
-- [ ] CHK001 - Are specific rule sets defined to enforce the required "clippy::pedantic" equivalence in ESLint? [Clarity, Spec §FR-010]
-- [ ] CHK002 - Is the configuration mechanism for completely banning `any` types (e.g., `no-explicit-any: error` and `noImplicitAny`) clearly documented? [Completeness]
-- [ ] CHK003 - Are the `svelte-check` CI gate thresholds (zero warnings) unambiguously defined? [Clarity, Spec §FR-008]
+- [x] CHK001 - Are specific rule sets defined to enforce the required "clippy::pedantic" equivalence in ESLint? [Clarity, Spec §FR-010]
+- [x] CHK002 - Is the configuration mechanism for completely banning `any` types (e.g., `no-explicit-any: error` and `noImplicitAny`) clearly documented? [Completeness]
+- [x] CHK003 - Are the `svelte-check` CI gate thresholds (zero warnings) unambiguously defined? [Clarity, Spec §FR-008]
 
 ## Svelte 5 Architecture & State Management
 
-- [ ] CHK004 - Are the specific Runes (`$state`, `$derived`, `$effect`) authorized for use explicitly detailed in the state management requirements? [Completeness, Plan §Architecture Details]
-- [ ] CHK005 - Is the context injection pattern (`setContext`/`getContext`) clearly mandated for global state over alternative patterns? [Consistency, Plan §Architecture Details]
-- [ ] CHK006 - Are deduplication requirements for merging REST fallback sync events into Runes objectively verifiable? [Measurability, Plan §Architecture Details]
+- [x] CHK004 - Are the specific Runes (`$state`, `$derived`, `$effect`) authorized for use explicitly detailed in the state management requirements? [Completeness, Plan §Architecture Details]
+- [x] CHK005 - Is the context injection pattern (`setContext`/`getContext`) clearly mandated for global state over alternative patterns? [Consistency, Plan §Architecture Details]
+- [x] CHK006 - Are deduplication requirements for merging REST fallback sync events into Runes objectively verifiable? [Measurability, Plan §Architecture Details]
 
 ## API & Error Handling Constraints
 
-- [ ] CHK007 - Are the requirements for explicit Promise catching (no unhandled rejections) consistently documented across all API calls? [Consistency, Spec §FR-011]
-- [ ] CHK008 - Is the 5-minute grace period behavior for session expiration explicitly defined (e.g., timer logic, UI overlay behavior)? [Clarity, Plan §Architecture Details]
-- [ ] CHK009 - Are rollback or failure states specified when the batch POST logger fails to reach the Rust backend? [Coverage, Edge Case, Gap]
-- [ ] CHK010 - Are the client-side pre-flight file size validation rules (e.g., exact byte limits) clearly specified? [Completeness, Spec §FR-014]
+- [x] CHK007 - Are the requirements for explicit Promise catching (no unhandled rejections) consistently documented across all API calls? [Consistency, Spec §FR-011]
+- [x] CHK008 - Is the 5-minute grace period behavior for session expiration explicitly defined (e.g., timer logic, UI overlay behavior)? [Clarity, Plan §Architecture Details]
+- [x] CHK009 - Are rollback or failure states specified when the batch POST logger fails to reach the Rust backend? [Coverage, Edge Case, Gap]
+- [x] CHK010 - Are the client-side pre-flight file size validation rules (e.g., exact byte limits) clearly specified? [Completeness, Spec §FR-014]
 
 ## Real-Time Engine Requirements
 
-- [ ] CHK011 - Are the requirements for pausing UI rendering during WebSocket reconnection clearly testable without implementation details? [Measurability]
-- [ ] CHK012 - Is the fallback sync pagination cursor (`last_known_message_id`) format defined? [Completeness]
-- [ ] CHK013 - Are requirements specified for handling multiple simultaneous WebSocket disconnects/reconnects? [Coverage, Exception Flow, Gap]
+- [x] CHK011 - Are the requirements for pausing UI rendering during WebSocket reconnection clearly testable without implementation details? [Measurability]
+- [x] CHK012 - Is the fallback sync pagination cursor (`last_known_message_id`) format defined? [Completeness]
+- [x] CHK013 - Are requirements specified for handling multiple simultaneous WebSocket disconnects/reconnects? [Coverage, Exception Flow, Gap]
 
 ## Notes
 
