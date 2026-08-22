@@ -18,14 +18,14 @@
 
 		if (code) {
 			try {
+				const redirectUri = encodeURIComponent(`${window.location.origin}/callback`);
 				const response = await ApiClient.request<{
-					token: string;
-					user: import('$lib/types/models').User;
-				}>('/api/v1/auth/callback', {
-					method: 'POST',
-					body: JSON.stringify({ code })
+					session_token: string;
+					user_id: string;
+				}>(`/api/v1/auth/callback?code=${code}&redirect_uri=${redirectUri}`, {
+					method: 'GET'
 				});
-				authState.login(response.token, response.user as unknown as Record<string, unknown>);
+				authState.login(response.session_token, { id: response.user_id });
 				await goto('/channels');
 			} catch (error_) {
 				logger.error('auth', 'Failed to exchange code', undefined, error_ as Error);
