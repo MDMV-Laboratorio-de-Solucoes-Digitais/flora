@@ -83,10 +83,10 @@ pub fn create_workspace_router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_workspaces))
         .route("/", post(create_workspace))
-        .route("/:workspace_id", get(get_workspace))
-        .route("/:workspace_id", patch(update_workspace))
-        .route("/:workspace_id", delete(delete_workspace))
-        .route("/:workspace_id/switch", post(switch_workspace))
+        .route("/{workspace_id}", get(get_workspace))
+        .route("/{workspace_id}", patch(update_workspace))
+        .route("/{workspace_id}", delete(delete_workspace))
+        .route("/{workspace_id}/switch", post(switch_workspace))
 }
 
 /// Extracts the organization ID from the X-Organization-ID header.

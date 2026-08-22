@@ -23,6 +23,9 @@ CREATE TABLE organizations (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Placeholder organization for initial login sessions
+INSERT INTO organizations (id, name, slug) VALUES ('00000000-0000-0000-0000-000000000000', 'System', 'system');
+
 -- Membership (User-Organization mapping with roles)
 CREATE TABLE memberships (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

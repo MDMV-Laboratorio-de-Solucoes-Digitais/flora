@@ -24,7 +24,7 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/health/ready", get(health::ready_check))
         .route("/health/live", get(health::live_check))
         // Auth routes (no auth required for login/callback; auth required for logout/refresh)
-        .nest("/auth", auth::create_auth_router())
+        .nest("/api/v1/auth", auth::create_auth_router())
         // Protected API routes (require auth + X-Organization-ID)
         .nest("/api/v1/organizations", org::create_org_router())
         .nest(
@@ -53,5 +53,6 @@ pub fn create_router(app_state: AppState) -> Router {
             crate::middleware::rate_limit::RateLimiterState::default(),
         )))
         // Wire shared application state to all routes
+        .layer(crate::middleware::cors::cors_layer())
         .with_state(app_state)
 }

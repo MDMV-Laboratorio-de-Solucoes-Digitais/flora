@@ -74,10 +74,11 @@ async fn login(
 ) -> Result<Json<serde_json::Value>> {
     let issuer = &state.config.oidc.issuer_url;
     let client_id = &state.config.oidc.client_id;
+    let default_redirect = format!("{}/api/v1/auth/callback", state.config.app.base_url);
     let redirect_uri = params
         .redirect_uri
         .as_deref()
-        .unwrap_or(&state.config.app.base_url);
+        .unwrap_or(&default_redirect);
 
     let encoded_redirect = form_urlencoded::Serializer::new(String::new())
         .append_pair("redirect_uri", redirect_uri)
@@ -117,11 +118,12 @@ async fn callback(
     );
 
     let client = reqwest::Client::new();
-    let redirect_uri = &state.config.app.base_url;
+    let default_redirect = format!("{}/api/v1/auth/callback", state.config.app.base_url);
+    let redirect_uri = params.redirect_uri.clone().unwrap_or(default_redirect);
     let form_data = serde_urlencoded::to_string([
         ("grant_type", "authorization_code"),
         ("code", code),
-        ("redirect_uri", redirect_uri),
+        ("redirect_uri", redirect_uri.as_str()),
         ("client_id", &state.config.oidc.client_id),
         ("client_secret", &state.config.oidc.client_secret),
     ])
@@ -272,6 +274,8 @@ pub struct OidcCallbackParams {
     pub code: Option<String>,
     /// The state parameter for CSRF protection.
     pub state: Option<String>,
+    /// The original redirect URI used for authorization.
+    pub redirect_uri: Option<String>,
 }
 
 /// Parses an ID token's payload (base64 JSON) without signature verification.
