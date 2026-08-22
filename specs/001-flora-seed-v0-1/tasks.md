@@ -410,3 +410,7 @@ With multiple developers:
 - [X] T113 Update `FileService` to enforce org-level quotas (10GB/org) with 413 response in `file_service.rs` per FR-032 (HIGH) (partial)
 - [X] T114 Implement Valkey-backed rate limiting in `rate_limit.rs` per FR-020 (HIGH) (missing)
 - [X] T115 Implement missing `TestApp` integration test placeholders in `flora-tests/src/integration/*.rs` per plan.md (MEDIUM) (missing)
+
+## Phase 15: Future Improvements
+
+- [ ] T116 Refactor OIDC authentication flow to support PKCE (Proof Key for Code Exchange) per security best practices. Requires updating `flora-api/src/routes/auth.rs` to generate and persist `code_challenge` and verify with `code_verifier`.
