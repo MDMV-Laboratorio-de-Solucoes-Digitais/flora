@@ -16,7 +16,7 @@ edition.workspace = true
 
 [workspace]
 resolver = "3"
-package.rust-version = "1.97"
+package.rust-version = "1.98"
 package.edition = "2024"
 package.license = "AGPL-3.0-or-later"
 package.authors = ["Flora Workspace  - MDMV Laboratório de Soluções Digitais"]
