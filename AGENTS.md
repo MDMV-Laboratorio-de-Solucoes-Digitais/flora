@@ -36,3 +36,13 @@ These instructions address knowledge gaps that agents might miss without explici
 - First: `cargo audit` + `cargo clippy`
 - For new features: Start with `feature/ XYZ` branch
 - When debugging: Check `target/debug/logs/` for application traces
+
+## Agent skills
+
+### Issue tracker
+
+Issues for this repository are tracked in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Domain documentation uses a multi-context layout with a root `CONTEXT-MAP.md`. See `docs/agents/domain.md`.
