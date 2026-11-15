@@ -161,3 +161,6 @@ $RECYCLE.BIN/
 .clean-room/
 .commandcode.inactive-*/
 supply-chain/
+
+# Archify diagram artifacts
+.archify/
