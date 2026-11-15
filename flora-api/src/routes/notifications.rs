@@ -15,6 +15,7 @@ use flora_core::repositories::PgNotificationRepository;
 use flora_core::traits::NotificationRepository;
 
 use crate::AppState;
+use crate::extractors::AuthExtractor;
 
 /// Query parameters for listing notifications.
 #[derive(Debug, Deserialize)]
@@ -47,22 +48,13 @@ pub fn create_notifications_router() -> Router<AppState> {
         .route("/{id}/read", post(mark_as_read))
 }
 
-fn require_user_context(headers: &axum::http::HeaderMap) -> Result<Uuid> {
-    let user_id = headers
-        .get("x-user-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::Unauthorized)?;
-    Ok(user_id)
-}
-
 /// `GET /api/v1/notifications` — List notifications for the authenticated user.
 async fn list_notifications(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
     Query(params): Query<ListNotificationsQuery>,
 ) -> Result<Json<Vec<NotificationResponse>>> {
-    let user_id = require_user_context(&headers)?;
+    let user_id = auth.user_id;
     let limit = usize::try_from(params.limit.unwrap_or(20).min(100)).unwrap_or(20);
 
     let notif_repo = PgNotificationRepository::new((*state.db_pool).clone());
@@ -94,10 +86,10 @@ async fn list_notifications(
 /// `POST /api/v1/notifications/{id}/read` — Mark a notification as read.
 async fn mark_as_read(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(notif_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<StatusCode> {
-    let user_id = require_user_context(&headers)?;
+    let user_id = auth.user_id;
 
     let notif_repo = PgNotificationRepository::new((*state.db_pool).clone());
     let notif = notif_repo

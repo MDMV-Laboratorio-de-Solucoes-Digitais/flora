@@ -1,68 +1,73 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-15  
-**Fonte de verdade operacional:** código, `Cargo.toml`, workflows em `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-003`, `.specify/assessments/003-004`.  
-**Nota:** `README.md` contém visão/roadmap histórico; este arquivo consolida o estado real observado + prioridades atuais. Itens marcados como “verificado” exigem evidência executada (ver `OBJETIVO.md`).
+**Atualizado em:** 2026-11-15 (ciclo 005)  
+**Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
+**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-005`, `.specify/assessments/003-005`, `OBJETIVO.md`.  
+Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 ## 1) Visão e horizonte
 
-- **Produto:** suíte corporativa/colaborativa self-hostable (AGPL-3.0), Rust + PostgreSQL, frontend canônico SvelteKit/Svelte 5, evolução para Tauri.
-- **Crescimento por implantação:** **Seed** (mínimo, VPS única) → **Sprout** → **Grove** → **Forest** (distribuído/HA).
-- **Princípio 80/20:** entregar fatias verticais utilizáveis e verificáveis do núcleo Seed antes de ampliar escopo, integrações pesadas ou paridade com stacks complexas.
+- **Produto:** workspace colaborativo self-hostable (AGPL-3.0), núcleo Rust+Postgres, UI Svelte 5, evolução para Tauri.
+- **Perfis de implantação:** **Seed** (VPS barata, mínimo viável) → **Sprout** → **Grove** → **Forest**.
+- **Estratégia:** monólito modular, Postgres-first, componentes opcionais, fatias verticais verificáveis; evitar paridade/complexidade do Macro no curto prazo.
 
-## 2) Onde estamos (2026-11-15)
+## 2) Estado consolidado (2026-11-15)
 
 | Trilha | Estado | Evidência resumida |
 |---|---|---|
-| Governança/SpecKit | **Em andamento (maduro em artefatos)** | Constituição v1.2.0; specs 001-003; assessments 003 (go) e 004 (go, este ciclo); bug flow não utilizado |
-| Baseline Rust (local) | **Parcialmente verificado** | `cargo check -p flora-api -p flora-core`, `cargo fmt --all -- --check`, `cargo test --workspace --no-run`, `cargo test -p flora-core --lib` (8), `cargo test -p flora-tests --lib` (54) OK em 2026-11-15; baseline 003 registrou clippy/test workspace verdes no ambiente de baseline |
-| Baseline frontend canônico (`apps/frontend`) | **Parcialmente verificado** | Baseline 003: install/check/build OK; lint pós-formatação e testes unitários browser/Playwright inconclusivos por ambiente (ENOSPC). CI definida em `.github/workflows/ci.yml` |
-| API/runtime (`flora-api` + `flora-core`) | **Implementação parcial e heterogênea** | Bootstrap, rotas e serviços/repositórios existem; auth/OIDC (PKCE) presente; integrações (WS fanout, indexação busca, eventos→notificações, binário de arquivos, RBAC/consistência auth) incompletas ou desalinhadas em pontos críticos |
-| Reprodutibilidade local do Seed | **Gap** | Sem `docker-compose` de dependências no checkout; `dev-seed.sql` existe; setup ponta a ponta depende de serviços externos manuais |
-| Integração/contrato com serviços (Postgres/Valkey/Meilisearch/OIDC) | **Não verificado ponta a ponta neste ambiente** | Requer stack de dependências e, para auth real, provedor OIDC configurado/mockado |
+| Governança/SpecKit | Em andamento (maduro) | Constituição v1.2.0; specs 001-005; assessments 003-005 (go); bug flow pontual registrado |
+| Direção estratégica | Atualizada (ciclo 005) | Norte “alternativa ao Macro para PMEs em VPS barata”, MVP 80/20 e debloat documentados |
+| Baseline determinística Rust (local) | Parcialmente verificada | `cargo check -p flora-api -p flora-core`, `fmt --check`, `test --workspace --no-run`, `test -p flora-core --lib` (8), `test -p flora-tests --lib` (54) ok; compose config ok |
+| Runtime e2e (Postgres/Valkey/Meilisearch/OIDC) | NV/incompleto | Requer execução integrada com serviços; smoke ponta a ponta não evidenciado neste ambiente |
+| Frontend canônico (`apps/frontend`) | Scaffold parcial | Svelte 5 presente; contrato com backend e fluxos núcleo desalinhados/incompletos |
+| Núcleo de produto (auth/tenancy, chat, tarefas, arquivos, busca, notificações, realtime) | Parcial e heterogêneo | Rotas/serviços/modelos existem; P0s em segurança de contexto, wiring e completude de fluxos |
 
-## 3) Marcos concluídos / parcialmente concluídos
+## 3) Marcos concluídos / em andamento
 
-- [x/~] Estrutura de workspace Rust e crates de domínio/serviço definidas (`flora-core`, `flora-api`, `flora-messaging`, `flora-tasks`, `flora-files`, `flora-search`, `flora-notifications`, `flora-tests`).
-- [x/~] Especificações 001 (Seed backend) e 002 (rewrite Svelte 5) produzidas com tarefas amplamente marcadas (drift vs verificação real reconhecido).
-- [x] Ciclo 003 (assessment + decisão go): baseline registrado, correções de formatação, alinhamentos CI/docs canônicos em partes e implementação de PKCE (T116) com evidência parcial de testes.
-- [~] Frontend canônico identificado (`apps/frontend`); `apps/web` ainda presente como não-canônico.
-- [x] **Ciclo 004 (este ciclo, 80/20):** consolidação de `OBJETIVO.md`/`ROADMAP.md`, pesquisa documentada e assessment/decisão para baseline local reproduzível do Seed (ver seção 4).
+- [x/~] Workspace Rust e crates de domínio/serviço estabelecidos; `flora-api` como entrypoint real.
+- [x/~] Specs 001-003 com implementação parcial e drift reconhecido; ciclo 003 (PKCE/baseline) e ciclo 004 (compose dev + consolidação docs) concluídos.
+- [x] Ciclo 005: reframe estratégico (Macro-alternative MVP para PMEs/VPS barata), assessment/spec/plan/tasks e pesquisa consolidada.
+- [x] Correção de CI Rust para compatibilidade Forgejo (rustup no workflow) mergeada em `dev`/espelhada; GitHub canônico para CI, Forgejo como mirror (conforme decisão operacional atual).
+- [~] Frontend Svelte 5 canônico iniciado; `apps/web` não-canônico ainda presente.
 
-## 4) Próximos passos priorizados (80/20)
+## 4) Backlog priorizado (80/20)
 
-### P0 — Agora (ciclo 004 → execução seguinte)
-1. **Baseline local reproduzível (Seed dev):** fornecer composição de dependências (Postgres, Valkey/Redis, Meilisearch; OIDC mock/Zitadel como perfil opcional/documentado), `.env`/exemplos e passos determinísticos para `migrate + run + seed` locais.
-   - *Resultado esperado:* “subir stack + rodar `flora-api` + aplicar seed” documentado e reproduzível.
-2. **Smoke path verificável:** health/readiness com checagens reais (ou plano explícito), script/checklist de smoke manual para auth stub/dev ou fluxo mínimo viável.
-3. **Evidência:** registrar comandos executados e limitações (CI local/ambiente) nos artefatos do ciclo.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 006 candidato)
+1. **Auth/contexto/tenancy consistente:** validar JWT/sessão/org nas rotas críticas; reduzir confiança em headers crus; fechar lacunas PKCE/OIDC prioritárias com testes/evidência.
+2. **Fatia vertical e2e mínima:** `workspace → canal → mensagem` (e/ou tarefa) com persistência, leitura e realtime mínimo verificáveis em dev.
+3. **Contrato frontend↔backend (caminho feliz):** alinhar endpoints/protocolo/contexto para o fluxo núcleo ou prover smoke API reproduzível.
+4. **Arquivos básicos reais:** upload/download binário e contrato/quotas coerentes para o escopo Seed.
+5. **Wiring essencial:** indexação de busca e eventos→notificações para mutações core do fluxo escolhido.
 
-### P1 — Desbloqueio do núcleo utilizável (fatias verticais)
-4. **Consistência de auth/contexto:** unificar validação JWT/sessão/org nas rotas críticas (ou definir contrato claro de headers apenas para dev) e fechar lacunas PKCE (teste de sucesso com mock de token/JWKS, casos de estado).
-5. **Fluxo comunicação mínimo end-to-end:** persistir e entregar mensagens em tempo real de forma verificável (assinaturas/fanout WS ou alternativa documentada) para um canal/org.
-6. **Busca e notificações integradas ao domínio:** ganchos de indexação em mutações principais e criação/entrega mínima de notificações para eventos core.
-7. **Arquivos:** alinhar contrato de upload/download (metadados vs binário/multipart) e contabilidade de quota coerente com requisitos.
+### P1 — Consolidação do Seed
+6. **Postgres-first opcionalidade:** FTS/jobs/realtime simples onde viável; tornar Valkey/Meilisearch/OIDC realmente opcionais por perfil.
+7. **Qualidade/integração:** testes de integração/contrato com serviços, estabilização frontend (lint/tests) e gates CI relevantes.
+8. **Operabilidade:** health/readiness reais, limites básicos, observabilidade mínima, backup/restore documentado/testável.
+9. **Higiene:** reconciliar README/spec tasks com realidade; definir destino de `apps/web`.
 
-### P2 — Qualidade, produto e operação
-8. **Testes de integração/contrato executáveis em ambiente provisionado** (DB/serviços) e estabilização de suíte frontend (lint/test browser) em CI.
-9. **Hardening Seed:** observabilidade básica, limites/rate limit efetivos, políticas de retenção, backups/restore documentados.
-10. **Redução de drift documental:** reconciliar README/tasks/specs com estado real; deprecar/migrar claramente `apps/web` se permanecer fora do caminho canônico.
+### P2 — Produto (pós-Seed estável)
+10. Docs/notas markdown leves, permissões/compartilhamento mais finos, import/export, digest/email opcional.
+11. Ajustes de UX Svelte 5 para produtividade PME (sem replicar complexidade Macro).
 
-### P3 — Expansão (pós-Seed estável)
-11. Sprout/Grove: PGMQ/RustFS e componentes opcionais conforme necessidade real.
-12. Forest: replicação, workers distribuídos, múltiplos nós, HA/observabilidade avançada.
-13. Roadmap funcional futuro (fases): documentos, e-mail, integrações, feature flags de IA, Tauri — somente após núcleo Seed confiável.
+### P3 — Expansão controlada (demanda comprovada)
+12. Sprout/Grove/Forest: PGMQ/RustFS/Meilisearch/Valkey/OIDC avançado, réplicas, workers, HA/observabilidade — somente com necessidade e medição.
+13. Integrações/funcionalidades pesadas (email sync completo, calls, CRM/databases, agents avançados, Tauri) apenas como módulos opcionais e após núcleo confiável.
 
-## 5) Backlog de não-objetivos (manter fora até decisão explícita)
+## 5) Debloat: mapa keep/replace/defer (resumo)
 
-- Paridade total com Macro; integrações SaaS amplas; CRDT-everywhere; chamadas A/V, CRM, calendário, e-mail completo, MCP/agents como escopo Seed.
-- Dependências de stack pesada para Seed (Kafka/OpenSearch/FusionAuth/DO/agent-harness como requisito).
-- REA/Craft-Anything como componentes core/dependências do produto.
-- Engenharia reversa não autorizada/proprietária ou reuso incompatível com AGPL.
-- Deploy/infra de produção, merges/releases ou mudanças com risco/autorizações fora do ciclo sem aprovação explícita.
+- **Keep/build (core):** org/workspace/usuários, canais/mensagens, tarefas leves, arquivos básicos, busca simples, notificações in-app, auth/RBAC básico.
+- **Replace/simplify:** OpenSearch→Postgres FTS (default), Kafka/filas complexas→Postgres/jobs simples, FusionAuth pesado→auth embutida/OIDC opcional, storage cloud-shaped→local default/S3 opcional, microsserviços→monólito modular.
+- **Defer/drop (Seed):** email cliente completo, calls/transcrição, CRM/databases genéricas, canvas, agentes/memória/rotinas, integrações profundas, paridade Macro.
 
-## 6) Critérios para avançar de fase
+## 6) Critérios para avançar
 
-- **Seed “utilizável”:** stack local reproduzível + auth e fluxo núcleo (org/workspace + canal/mensagem ou tarefa) exercitáveis com evidência; verificações determinísticas rastreadas.
-- **Sprout/Grove:** somente após Seed estável e necessidade comprovada de mensageria/armazenamento/busca/identidade ampliados.
-- **Forest:** somente após requisitos de escala/resiliência e operação validados.
+- **Seed utilizável (MVP P0):** auth/tenancy consistente + fluxo núcleo e2e verificável (mensagem ou tarefa) em ambiente dev reprodutível, com evidência e verificações determinísticas rastreadas; perfil operável em VPS modesta.
+- **Sprout/Grove:** após Seed estável e necessidade comprovada de componentes adicionais/performance.
+- **Forest:** após requisitos claros de escala/resiliência e capacidade operacional.
+
+## 7) Fora de escopo até decisão explícita
+
+- Paridade com Macro; superfícies/integrações P2–P3 como requisito do Seed.
+- Dependências proprietárias obrigatórias ou stack pesada para VPS barata.
+- Reuso de código incompatível com AGPL ou engenharia reversa não autorizada.
+- Deploy/produção, merges/releases, segredos ou serviços pagos sem autorização.

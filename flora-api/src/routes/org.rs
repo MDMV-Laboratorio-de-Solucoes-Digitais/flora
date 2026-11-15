@@ -19,6 +19,8 @@ use flora_core::repositories::{
 };
 use flora_core::traits::{MembershipRepository, OrganizationRepository, RoleRepository};
 
+use crate::extractors::AuthExtractor;
+
 use super::AppState;
 
 /// Request body for creating an organization.
@@ -85,9 +87,9 @@ pub fn create_org_router() -> Router<AppState> {
 /// `GET /api/orgs` — List organizations the authenticated user belongs to.
 async fn list_user_orgs(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
 ) -> Result<Json<Vec<OrgListItem>>> {
-    let user_id = extract_user_id_from_header(&headers, &state.config.app.jwt_secret)?;
+    let user_id = auth.user_id;
 
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
     let org_repo = PgOrganizationRepository::new((*state.db_pool).clone());
@@ -121,10 +123,10 @@ async fn list_user_orgs(
 /// The authenticated user is automatically added as the owner.
 async fn create_org(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
     Json(req): Json<CreateOrgRequest>,
 ) -> Result<(StatusCode, Json<OrgResponse>)> {
-    let user_id = extract_user_id_from_header(&headers, &state.config.app.jwt_secret)?;
+    let user_id = auth.user_id;
 
     // Create organization
     let org = Organization::new(&req.name, &req.slug);
@@ -176,10 +178,10 @@ async fn create_org(
 /// `GET /api/orgs/{id}` — Get a specific organization.
 async fn get_org(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(org_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<Json<OrgResponse>> {
-    let user_id = extract_user_id_from_header(&headers, &state.config.app.jwt_secret)?;
+    let user_id = auth.user_id;
 
     // Verify user has membership in the org
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
@@ -199,18 +201,4 @@ async fn get_org(
         .ok_or_else(|| Error::OrganizationNotFound(org_id.to_string()))?;
 
     Ok(Json(OrgResponse::from(org)))
-}
-
-/// Extracts the user ID from the Authorization: Bearer <token> header.
-fn extract_user_id_from_header(headers: &axum::http::HeaderMap, jwt_secret: &str) -> Result<Uuid> {
-    let auth_header = headers
-        .get("authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "))
-        .ok_or(Error::Unauthorized)?;
-
-    let claims = flora_core::utils::jwt::decode_token(auth_header, jwt_secret)
-        .map_err(|_| Error::Unauthorized)?;
-
-    Ok(claims.user_id())
 }

@@ -17,6 +17,8 @@ use flora_core::models::{CreateWorkspaceInput, UpdateWorkspaceInput, Workspace};
 use flora_core::repositories::{PgMembershipRepository, PgRoleRepository};
 use flora_core::traits::{MembershipRepository, RoleRepository};
 
+use crate::extractors::AuthExtractor;
+
 use super::AppState;
 
 /// Query parameters for listing workspaces.
@@ -89,30 +91,21 @@ pub fn create_workspace_router() -> Router<AppState> {
         .route("/{workspace_id}/switch", post(switch_workspace))
 }
 
-/// Extracts the organization ID from the X-Organization-ID header.
-fn extract_org_id_from_header(headers: &axum::http::HeaderMap) -> Result<Uuid> {
-    headers
-        .get("x-organization-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::OrganizationContextRequired)
-}
-
-/// Extracts the user ID from the X-User-ID header.
-fn extract_user_id_from_header(headers: &axum::http::HeaderMap) -> Result<Uuid> {
-    headers
-        .get("x-user-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::Unauthorized)
-}
-
 /// `GET /api/v1/workspaces` — List workspaces in an organization.
 async fn list_workspaces(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
 ) -> Result<Json<Vec<WorkspaceResponse>>> {
-    let org_id = extract_org_id_from_header(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let _ = membership_repo
+        .find_by_user_and_organization(auth.user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
 
     let workspaces = state.workspace_service.list_workspaces(org_id).await?;
 
@@ -127,11 +120,14 @@ async fn list_workspaces(
 /// `POST /api/v1/workspaces` — Create a new workspace.
 async fn create_workspace(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
     Json(req): Json<CreateWorkspaceRequest>,
 ) -> Result<(StatusCode, Json<WorkspaceResponse>)> {
-    let org_id = extract_org_id_from_header(&headers)?;
-    let user_id = extract_user_id_from_header(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     // Verify user has permission to create workspaces in this org
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
@@ -160,20 +156,14 @@ async fn create_workspace(
 /// `GET /api/v1/workspaces/{workspace_id}` — Get a workspace by ID.
 async fn get_workspace(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(workspace_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<Json<WorkspaceResponse>> {
-    let org_id = extract_org_id_from_header(&headers)?;
-    let user_id = extract_user_id_from_header(&headers)?;
-
-    // Verify user has access to this workspace
-    let workspace = state.workspace_service.get_workspace(workspace_id).await?;
-
-    if workspace.organization_id != org_id {
-        return Err(Error::Forbidden(
-            "Workspace belongs to a different organization".to_string(),
-        ));
-    }
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     // Verify user is a member of the organization
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
@@ -182,18 +172,38 @@ async fn get_workspace(
         .await?
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
 
+    // Verify workspace belongs to this organization
+    let workspace = state.workspace_service.get_workspace(workspace_id).await?;
+
+    if workspace.organization_id != org_id {
+        return Err(Error::Forbidden(
+            "Workspace belongs to a different organization".to_string(),
+        ));
+    }
+
     Ok(Json(WorkspaceResponse::from(workspace)))
 }
 
 /// `PATCH /api/v1/workspaces/{workspace_id}` — Update a workspace.
 async fn update_workspace(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(workspace_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateWorkspaceInput>,
 ) -> Result<Json<WorkspaceResponse>> {
-    let org_id = extract_org_id_from_header(&headers)?;
-    let user_id = extract_user_id_from_header(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
+
+    // Verify workspace belongs to this organization
+    let existing = state.workspace_service.get_workspace(workspace_id).await?;
+    if existing.organization_id != org_id {
+        return Err(Error::Forbidden(
+            "Workspace belongs to a different organization".to_string(),
+        ));
+    }
 
     // Verify user has permission to update workspaces in this org
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
@@ -226,11 +236,22 @@ async fn update_workspace(
 /// `DELETE /api/v1/workspaces/{workspace_id}` — Delete a workspace.
 async fn delete_workspace(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(workspace_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<StatusCode> {
-    let org_id = extract_org_id_from_header(&headers)?;
-    let user_id = extract_user_id_from_header(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
+
+    // Verify workspace belongs to this organization
+    let existing = state.workspace_service.get_workspace(workspace_id).await?;
+    if existing.organization_id != org_id {
+        return Err(Error::Forbidden(
+            "Workspace belongs to a different organization".to_string(),
+        ));
+    }
 
     // Verify user has permission to delete workspaces in this org
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
@@ -264,11 +285,14 @@ async fn delete_workspace(
 /// returns the workspace context for subsequent requests.
 async fn switch_workspace(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(workspace_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<Json<WorkspaceSwitchResponse>> {
-    let org_id = extract_org_id_from_header(&headers)?;
-    let user_id = extract_user_id_from_header(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     // Verify user is a member of the organization
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());

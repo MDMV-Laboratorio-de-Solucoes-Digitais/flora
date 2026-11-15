@@ -119,28 +119,25 @@ pub async fn websocket_handler(
     ws.on_upgrade(move |socket| handle_socket(socket, state, user_id, org_id))
 }
 
-/// Extracts user and organization context from headers.
+/// Extracts user and organization context from a verified Bearer JWT.
 fn extract_org_context(headers: &HeaderMap, jwt_secret: &str) -> Result<(Uuid, Uuid)> {
-    // First try extracting directly from custom headers
-    if let (Some(u), Some(o)) = (headers.get("x-user-id"), headers.get("x-organization-id"))
-        && let (Ok(u_str), Ok(o_str)) = (u.to_str(), o.to_str())
-        && let (Ok(user_id), Ok(org_id)) = (Uuid::parse_str(u_str), Uuid::parse_str(o_str))
-    {
-        return Ok((user_id, org_id));
+    let auth_header = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .ok_or(Error::Unauthorized)?;
+
+    let claims = flora_core::utils::jwt::decode_token(auth_header, jwt_secret)
+        .map_err(|_| Error::Unauthorized)?;
+    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| Error::Unauthorized)?;
+    let org_id =
+        Uuid::parse_str(&claims.organization_id).map_err(|_| Error::OrganizationContextRequired)?;
+
+    if org_id.is_nil() {
+        return Err(Error::OrganizationContextRequired);
     }
 
-    // Fallback: extract and decode Bearer token
-    if let Some(auth_header) = headers.get(axum::http::header::AUTHORIZATION)
-        && let Ok(auth_str) = auth_header.to_str()
-        && let Some(token) = auth_str.strip_prefix("Bearer ")
-        && let Ok(claims) = flora_core::utils::jwt::decode_token(token, jwt_secret)
-        && let Ok(user_id) = Uuid::parse_str(&claims.sub)
-        && let Ok(org_id) = Uuid::parse_str(&claims.organization_id)
-    {
-        return Ok((user_id, org_id));
-    }
-
-    Err(Error::Unauthorized)
+    Ok((user_id, org_id))
 }
 
 /// Helper function to send a WebSocket message to the client.

@@ -13,10 +13,11 @@ use uuid::Uuid;
 use flora_core::error::{Error, Result};
 use flora_core::models::{Task, TaskStatus};
 use flora_core::repositories::{PgMembershipRepository, PgTaskRepository};
-use flora_core::traits::TaskRepository;
+use flora_core::traits::{MembershipRepository, TaskRepository};
 use std::str::FromStr;
 
 use crate::AppState;
+use crate::extractors::AuthExtractor;
 
 /// Request body for creating a task.
 #[derive(Debug, Deserialize)]
@@ -90,30 +91,23 @@ impl From<Task> for TaskResponse {
     }
 }
 
-fn require_org_context(headers: &axum::http::HeaderMap) -> Result<(Uuid, Uuid)> {
-    let user_id = headers
-        .get("x-user-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::Unauthorized)?;
-
-    let org_id = headers
-        .get("x-organization-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::OrganizationContextRequired)?;
-
-    Ok((user_id, org_id))
-}
-
 /// `GET /api/v1/tasks` — List tasks.
 async fn list_tasks(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
 ) -> Result<Json<Vec<TaskResponse>>> {
-    let (user_id, _org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
-    let _membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let _ = membership_repo
+        .find_by_user_and_organization(user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
 
     let page = task_repo
@@ -129,7 +123,7 @@ async fn list_tasks(
     let tasks: Vec<TaskResponse> = page
         .items
         .into_iter()
-        .filter(|t| !t.is_deleted)
+        .filter(|t| !t.is_deleted && t.organization_id == org_id)
         .map(TaskResponse::from)
         .collect();
 
@@ -139,14 +133,22 @@ async fn list_tasks(
 /// `POST /api/v1/tasks` — Create a task.
 async fn create_task(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
     Json(req): Json<CreateTaskRequest>,
 ) -> Result<(StatusCode, Json<TaskResponse>)> {
-    let (user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
-    let _membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let _ = membership_repo
+        .find_by_user_and_organization(user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
-
     let task = Task::new(req.workspace_id, org_id, user_id, &req.title);
 
     let created = task_repo.create(task).await?;
@@ -158,10 +160,13 @@ async fn create_task(
 /// `GET /api/v1/tasks/{id}` — Get a task.
 async fn get_task(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(task_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<Json<TaskResponse>> {
-    let (_user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
 
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
     let task = task_repo
@@ -181,11 +186,14 @@ async fn get_task(
 /// `PATCH /api/v1/tasks/{id}` — Update a task.
 async fn update_task(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(task_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateTaskRequest>,
 ) -> Result<Json<TaskResponse>> {
-    let (_user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
 
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
     let existing = task_repo
@@ -213,17 +221,20 @@ async fn update_task(
         updated_at: chrono::Utc::now(),
         ..existing
     };
-    let result = task_repo.update(task_id, updated.clone()).await?;
+    let result = task_repo.update(task_id, updated).await?;
     Ok(Json(TaskResponse::from(result)))
 }
 
 /// `DELETE /api/v1/tasks/{id}` — Soft-delete a task.
 async fn delete_task(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(task_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<StatusCode> {
-    let (_user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
 
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
     let existing = task_repo

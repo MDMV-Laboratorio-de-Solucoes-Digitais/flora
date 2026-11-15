@@ -14,10 +14,15 @@ use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
 use flora_core::models::{Channel, Message};
-use flora_core::repositories::{PgChannelRepository, PgMembershipRepository, PgMessageRepository};
-use flora_core::traits::{ChannelRepository, MembershipRepository, MessageRepository};
+use flora_core::repositories::{
+    PgChannelRepository, PgMembershipRepository, PgMessageRepository, PgWorkspaceRepository,
+};
+use flora_core::traits::{
+    ChannelRepository, MembershipRepository, MessageRepository, WorkspaceRepository,
+};
 
 use crate::AppState;
+use crate::extractors::AuthExtractor;
 
 /// Query params for listing messages.
 #[derive(Debug, Deserialize)]
@@ -130,35 +135,37 @@ pub fn create_channels_router() -> Router<AppState> {
         .route("/{channel_id}/messages/{msg_id}", delete(delete_message))
 }
 
-fn require_org_context(headers: &axum::http::HeaderMap) -> Result<(Uuid, Uuid)> {
-    let user_id = headers
-        .get("x-user-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::Unauthorized)?;
-
-    let org_id = headers
-        .get("x-organization-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::OrganizationContextRequired)?;
-
-    Ok((user_id, org_id))
-}
-
 /// `POST /api/v1/channels` — Create a channel in a workspace.
 async fn create_channel(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
     Json(req): Json<CreateChannelRequest>,
 ) -> Result<(StatusCode, Json<ChannelResponse>)> {
-    let (user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
-    let _membership = membership_repo
+    let _ = membership_repo
         .find_by_user_and_organization(user_id, org_id)
         .await?
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+
+    let workspace_repo = PgWorkspaceRepository::new((*state.db_pool).clone());
+    let workspace = workspace_repo
+        .find_by_id(req.workspace_id)
+        .await?
+        .ok_or_else(|| Error::Validation {
+            field: "workspace_id".to_string(),
+            message: "workspace not found".to_string(),
+        })?;
+    if workspace.organization_id != org_id {
+        return Err(Error::Forbidden(
+            "Workspace belongs to a different organization".to_string(),
+        ));
+    }
 
     let channel_type =
         req.channel_type
@@ -187,11 +194,14 @@ async fn create_channel(
 /// `GET /api/v1/channels/{channel_id}/messages` — List messages in a channel.
 async fn list_messages(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(channel_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
     Query(params): Query<ListMessagesQuery>,
 ) -> Result<Json<Vec<MessageResponse>>> {
-    let (_user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
 
     let channel_repo = PgChannelRepository::new((*state.db_pool).clone());
     let channel = channel_repo
@@ -225,11 +235,15 @@ async fn list_messages(
 /// `POST /api/v1/channels/{channel_id}/messages` — Post a message.
 async fn post_message(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(channel_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
     Json(req): Json<CreateMessageRequest>,
 ) -> Result<(StatusCode, Json<MessageResponse>)> {
-    let (user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     let channel_repo = PgChannelRepository::new((*state.db_pool).clone());
     let channel = channel_repo
@@ -259,11 +273,15 @@ async fn post_message(
 /// `PATCH /api/v1/channels/{channel_id}/messages/{msg_id}` — Edit a message.
 async fn edit_message(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path((_channel_id, msg_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
     Json(req): Json<EditMessageRequest>,
 ) -> Result<Json<MessageResponse>> {
-    let (user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
     let msg = msg_repo
@@ -288,17 +306,21 @@ async fn edit_message(
         updated_at: chrono::Utc::now(),
         ..msg
     };
-    let result = msg_repo.update(msg_id, updated.clone()).await?;
+    let result = msg_repo.update(msg_id, updated).await?;
     Ok(Json(MessageResponse::from(result)))
 }
 
 /// `DELETE /api/v1/channels/{channel_id}/messages/{msg_id}` — Soft-delete a message.
 async fn delete_message(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path((_channel_id, msg_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
 ) -> Result<StatusCode> {
-    let (user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
     let msg = msg_repo

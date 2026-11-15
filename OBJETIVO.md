@@ -1,80 +1,82 @@
-# OBJETIVO — Flora (Seed v0.1)
+# OBJETIVO — Flora
 
-**Data da consolidação:** 2026-11-15  
-**Escopo:** repositório `flora` (`/home/luis/development/MDMV/projetos/Arquivados/flora`, branch `dev`, workspace Rust modular monolith + apps frontend).  
-**Base desta versão:** inspeção local do repositório e artefatos SpecKit (`README.md`, `AGENTS.md`, `.specify/memory/constitution.md`, `specs/001-003`, `.specify/assessments/003-flora-80-20-cycle`), verificações locais executadas em 2026-11-15, e pesquisa externa atualizada (fontes primárias/oficiais e guias reputados; ver `docs/research/2026-11-15-flora-seed-80-20-research.md`).
+**Data da consolidação:** 2026-11-15 (atualizado no ciclo 005)  
+**Escopo:** repositório `flora` (workspace Rust modular monolith + `apps/frontend` Svelte 5).  
+**Fontes:** inspeção do código/artefatos locais, `.specify/memory/constitution.md`, `specs/001-005`, `.specify/assessments/003-005`, verificações locais executadas em 2026-11-15, e pesquisa consolidada em `docs/research/2026-11-15-flora-seed-80-20-research.md` e `docs/research/2026-11-15-macro-alternative-80-20-research.md`.
 
-## 1) Objetivo do produto (o que a Flora quer ser)
+## 1) Norte estratégico (o que a Flora quer ser)
 
-Construir uma **suíte corporativa/colaborativa self-hostable, modular e open-source (AGPL-3.0)** em **Rust**, com foco em controle de dados/infraestrutura por organizações e implantação viável em VPS barata, evoluindo de instalação mínima até topologia distribuída sem trocar o ecossistema tecnológico.
+Construir uma **alternativa viável, performática e self-hosted ao [Macro](https://github.com/macro-inc/macro)** para **pequenas e médias empresas (PMEs)**, operável em **VPS barata** (com limites realistas), como suíte colaborativa open-source (**AGPL-3.0**) em **Rust + PostgreSQL**, com UI em **Svelte 5** (e empacotamento **Tauri** para desktop/mobile em fases posteriores).
 
-- **Visão (README/constituição):** “Each installation is a seed. Each module is a tree. Each deployment makes the ecosystem more fertile.”
-- **Stack/arquitetura alvo:** monólito modular Rust (Axum, SQLx, PostgreSQL; Valkey/PGMQ/Redis conforme capacidades; Meilisearch opcional; OIDC/Zitadel; storage local/S3-compatível), frontend canônico **SvelteKit/Svelte 5** (`apps/frontend`, spec 002), Tauri em fases futuras.
-- **Níveis de implantação previstos:** Seed (mínimo) → Sprout → Grove → Forest.
+Princípios diretores:
+- **Debloat:** remover/substituir dependências proprietárias e pesadas; evitar replicar a complexidade operacional do Macro “as-is”.
+- **Postgres-first / componentes opcionais:** núcleo simples (monólito modular), adicionando Valkey/Meilisearch/RustFS/OIDC avançado etc. apenas por perfil/necessidade comprovada.
+- **Fatias verticais verificáveis:** entregar fluxos núcleo utilizáveis com evidência antes de ampliar escopo.
+- **VPS test:** viabilidade prática em host modesto (alvo recomendado: ~2 vCPU / 4 GB RAM; perfis menores com tuning/limites).
 
-## 2) Função prática pretendida (Seed v0.1)
+> O Macro (AGPL) é referência de produto/escopo (email, chat, docs, tarefas, calls, agents/IA, CRM, databases, calendar, storage, PRs), mas sua implementação é ampla e pesada para VPS barata; a Flora busca o **subconjunto 80/20 de maior valor para PMEs** com operação enxuta.
 
-Entregar, de forma utilizável para uma organização pequena/PME piloto, o núcleo:
-- organizações/workspaces e identidade (OIDC) com isolamento multi-tenant e RBAC;
-- canais, mensagens e threads (comunicação interna básica);
-- tarefas;
-- arquivos (upload/compartilhamento/quota, conforme evolução);
-- busca global (mensagens/tarefas/arquivos, quando indexação integrada);
-- notificações in-app.
+## 2) MVP 80/20 (Seed “Macro-like” enxuto)
 
-## 3) Quanto do caminho já percorremos (estado consolidado em 2026-11-15)
+### P0 — Núcleo a tornar utilizável e seguro
+- **Identidade/tenancy:** auth e contexto (usuário/org/workspace) consistentes, sessões/JWT confiáveis, RBAC básico e isolamento multi-tenant.
+- **Comunicação:** workspaces/canais (e DMs básicos quando viável), mensagens persistidas e realtime mínimo confiável.
+- **Execução:** tarefas leves (criar/listar/atualizar/status/atribuição básica) vinculadas ao contexto.
+- **Arquivos básicos:** upload/download real, metadados/permissões mínimas, quotas coerentes, storage local por padrão.
+- **Busca básica:** Postgres FTS integrada aos objetos núcleo; motores externos opcionais.
+- **Notificações in-app mínimas:** eventos core gerando sinalização/consulta básica.
+- **Operabilidade:** setup dev reprodutível (compose), migrações, health/readiness úteis, backup/restore documentado.
 
-### 3.1 Artefatos, especificação e governança (evidência documental)
-- **Constituição:** `.specify/memory/constitution.md` v1.2.0 (ratificada 2026-08-17, emendada 2026-08-22) — princípios, stack, roadmap e governança definidos.
-- **Specs:**
-  - `specs/001-flora-seed-v0-1`: spec/plan/tasks abrangentes (muitas tarefas marcadas `[X]`; `T116` PKCE ainda `[ ]` no tasks.md, mas tratada no ciclo 003 — drift documental).
-  - `specs/002-svelte-frontend-rewrite`: spec/plan/tasks/checklists com fases/tarefas marcadas concluídas (convergência documentada; requer revalidação fresca).
-  - `specs/003-flora-80-20-baseline` (2026-11-15, **go**): baseline, PKCE, alinhamento frontend/CI/docs e guardrails de escopo; parcialmente concluído com itens `[~]`.
-- **Assessment 003:** `.specify/assessments/003-flora-80-20-cycle/{intake,research,decision,baseline}.md` presentes (go restrito). **Assessment 004** iniciado neste ciclo para o próximo passo 80/20 (ver `.specify/assessments/004-seed-runnable-baseline/`).
-- **Bug flow SpecKit:** não utilizado no repositório (`.specify/bugs/` ausente; sem artefatos `bug.assess/fix/test`).
+### P1 — Consolidação
+- Notas/docs markdown leves (sem CRDT pesado), permissões/compartilhamento mais finos, import/export, digest/email opcional, observabilidade básica.
 
-### 3.2 Implementação real observada no código (evidência de inspeção)
-- **Entrypoint real:** `flora-api` carrega config, cria pool Postgres, executa migrações, monta `AppState` e serve router Axum; `src/main.rs` da raiz é placeholder.
-- **Domínio/infra base:** `flora-core` concentra config, DB/migrations, modelos, repositórios, serviços, traits e storage; rotas em `flora-api/src/routes/*`.
-- **Capacidades presentes (parciais/heterogêneas):** health endpoints (placeholders), fluxo auth/OIDC com PKCE/armazenamento de transação e emissão/refresh/revogação de JWT (com limitações), CRUD/rotas básicas para orgs/workspaces/canais/mensagens/tarefas, registros de arquivos (metadados/quota parcial) e consulta de busca/notificações; websocket com persistência/publicação parcial (sem fanout completo de assinaturas para clientes).
-- **Integrações:** Postgres obrigatório no bootstrap/migrações; Valkey/Redis e Meilisearch configuráveis (Meilisearch inicializado no estado conforme config; Valkey opcional em partes do fluxo); OIDC depende de provedor configurado.
+### P2 — Adiar (até Seed estável e demanda comprovada)
+- Cliente de email/sync multi-conta completo, calls/gravação/transcrição, CRM e databases genéricas, canvas, agentes/IA com memória/rotinas/sandbox avançados, integrações profundas (calendar/PR/WhatsApp), paridade de UX/superfície do Macro.
 
-### 3.3 O que funciona de forma verificada (não inferido) — verificação local 2026-11-15
-Executado no workspace (sem serviços externos provisionados neste ambiente):
-- `cargo check -p flora-api -p flora-core` — **sucesso**.
-- `cargo fmt --all -- --check` — **sucesso**.
-- `cargo test --workspace --no-run` — **sucesso** (compilação dos alvos de teste).
+## 3) Estado atual (consolidado em 2026-11-15)
+
+### 3.1 Governança e artefatos
+- Constituição v1.2.0; specs 001-004 (e 005 neste ciclo); assessments 003-004 (go) e 005 (go, reframe estratégico). Bug flow SpecKit usado pontualmente para correção de CI (registro em `.specify/bugs/`).
+- Documentação de direção consolidada em `OBJETIVO.md`, `ROADMAP.md` e pesquisas em `docs/research/`.
+
+### 3.2 Implementação observada
+- **Backend:** `flora-api` (Axum) como entrypoint real (config/pool/migrations/AppState/router). `flora-core` concentra domínio/infra (config, DB, modelos, repos, serviços, storage). Crates de feature (`flora-messaging/search/files/notifications/tasks`) existem com implementações parciais/duplicação em relação ao core.
+- **Capacidades presentes (heterogêneas):** health, auth/OIDC com PKCE e emissão de JWT/sessão (lacunas), rotas de org/workspace/canais/mensagens/tarefas/arquivos (metadados)/busca/notificações, WebSocket com persistência/publicação parcial.
+- **Frontend:** `apps/frontend` (Svelte 5, scaffold/UI parcial) é o alvo canônico; `apps/web` legado/importado permanece não-canônico.
+- **Dev/infra:** `docker-compose.yml` para Postgres/Valkey/Meilisearch (ciclo 004); workflows CI Rust e frontend em `.github/workflows/`.
+
+### 3.3 Verificado localmente (evidência executada, 2026-11-15)
+- `cargo check -p flora-api -p flora-core` — **ok**.
+- `cargo fmt --all -- --check` — **ok**.
+- `cargo test --workspace --no-run` — **ok**.
 - `cargo test -p flora-core --lib` — **8 passed, 0 failed**.
 - `cargo test -p flora-tests --lib` — **54 passed, 0 failed**.
+- `docker compose config -q` — **ok** (compose dev).
 
-Baseline 003 (registrado em `.specify/assessments/003-flora-80-20-cycle/baseline.md`, 2026-11-15): `cargo clippy --workspace --all-targets -- -D warnings` e `cargo test --workspace` reportados como passando no ambiente de baseline (90 passed, 0 failed, 1 ignored doctest); `apps/frontend` `install/check/build` passando, com lint pós-formatação/testes de unidade (browser/Playwright) parcialmente inconclusivos por limitações de ambiente (ENOSPC/instalação Playwright). **CI de frontend** (`.github/workflows/ci.yml`) e **CI Rust** (`.github/workflows/rust.yml`) existem e definem os comandos esperados, mas a execução remota/CI verde completa não foi revalidada nesta sessão.
+**NV/não exercitado neste ambiente:** runtime ponta a ponta com Postgres/Valkey/Meilisearch/OIDC, migrações em execução integrada, testes de integração/contrato com serviços, smoke de API com dependências ativas, e execução remota completa de CI/Forgejo Actions pós-correções além do registrado em artefatos.
 
-### 3.4 O que deveria funcionar / está incompleto ou desalinhado (gaps prioritários)
-- **Runtime end-to-end não verificado localmente:** fluxos que dependem de Postgres/Valkey/Meilisearch/OIDC, migrações em ambiente real e testes de integração/contrato com serviços.
-- **Baseline de execução local “seed”:** ausência de `docker-compose`/stack dev reproduzível no checkout para subir dependências rapidamente (há `dev-seed.sql`, mas não composição de serviços).
-- **Auth/OIDC:** PKCE implementado no código (ciclo 003), porém faltam coberturas de sucesso completo com provedor mockado/JWKS e alguns cenários (estado expirado explícito em teste), verificação de assinatura JWKS do ID token permanece limitada conforme baseline; armazenamento de transação em memória é fallback process-local.
-- **Consistência de autenticação/autorização na API:** mistura de extração JWT e headers `x-user-id`/`x-organization-id` em rotas; RBAC/gerenciamento de papéis exposto parcialmente (endpoints de roles placeholders em partes).
-- **Realtime/mensageria/notificações:** publish/persistência existem em pontos, mas falta fanout/assinatura efetiva para clientes WS e integração completa de eventos→notificação/indexação.
-- **Busca:** endpoint de consulta existe; integração de indexação em create/update/delete e filtros completos (ex.: intervalo de data) não estão plenamente evidenciados/integrados.
-- **Arquivos:** foco em metadados/validação/quota parcial; upload/download binário e contratos frontend↔backend apresentam desalinhamentos conhecidos.
-- **Higiene documental:** README roadmap/checklists e marcações de tasks em specs apresentam drift vs estado verificado; `apps/web` permanece no repositório como não-canônico.
+### 3.4 Gaps prioritários (o que falta para o MVP P0)
+- **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável.
+- **Fluxos e2e núcleo:** alinhar contrato frontend↔backend e viabilizar caminho feliz verificável (workspace→canal→mensagem e/ou tarefa).
+- **Realtime:** fanout/assinatura efetiva para clientes WS (além de persistência/publicação pontual).
+- **Arquivos:** suportar binário/upload/download real e alinhar quota/escopo.
+- **Busca/notificações:** wiring de indexação e eventos→notificações para mutações core.
+- **Opcionalidade/debloat:** tornar componentes não essenciais realmente opcionais (Postgres-first) e simplificar operação para perfil Seed/VPS barata.
+- **Drift/higiene:** reconciliar README/spec tasks com estado real; tratar `apps/web` não-canônico.
 
-### 3.5 O que ainda não está implementado (além dos gaps acima)
-- Itens do **roadmap Seed v0.1** ainda não comprovados como concluídos ponta a ponta (README com checkboxes em aberto).
-- Fases futuras (Documentos, Email, Integrações, AI feature flags, Tauri, etc.) e capacidades avançadas de colaboração/escala (Forest, HA completa, etc.).
-- Fluxo de bugs do SpecKit (`.specify/bugs`) e artefatos formais de análise/convergência em todos os pontos esperados.
+## 4) Não-objetivos e guardrails
 
-### 3.6 O que o projeto NÃO faz (não-objetivos / limites)
-- **Fora do Seed v0.1 (spec 001):** integrações de IA, CRM, calendário, chamadas áudio/vídeo, MCP/agents, cliente de e-mail, “clone do GitHub”, etc.
-- **Guardrails (spec 003/assessment 003):** sem paridade total com Macro; sem stack pesada para Seed (Kafka/OpenSearch/FusionAuth/DO/agent-harness como requisito); sem CRDT-everywhere; sem adotar REA/Craft-Anything como dependências/core do produto; sem engenharia reversa não autorizada/proprietária e sem reuso incompatível com AGPL.
-- **Processo:** não declarar “verde” sem evidência executada; não realizar deploy/infra de produção, merges/releases, manuseio de segredos ou adição de serviços pagos/proprietários sem autorização explícita.
+- Sem paridade com Macro e sem superfícies P2 como requisito do Seed.
+- Sem dependências proprietárias obrigatórias; IA/integrações externas apenas opcionais/plugáveis.
+- Sem stack pesada desnecessária para VPS barata; evitar microsserviços/infra complexa prematura.
+- Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
+- Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 4) Direção 80/20 (próximo ciclo)
+## 5) Próximo 80/20 (ciclo 006 recomendado)
 
-**Próximo ciclo selecionado (004):** estabelecer uma **baseline local reproduzível do “Seed”** (composição de dependências de desenvolvimento, configuração e instruções verificáveis) para destravar validação prática ponta a ponta, reduzir atrito de onboarding e permitir ciclos seguintes focados em corrigir integrações críticas com evidência. Detalhes e decisão em `.specify/assessments/004-seed-runnable-baseline/` e `specs/004-seed-runnable-baseline/`.
+Entregar uma **fatia vertical mínima segura e verificável** do MVP Seed:
+1. Consistência de auth/contexto/tenant nas rotas núcleo.
+2. Fluxo ponta a ponta reproduzível em dev: **workspace → canal → mensagem** (ou tarefa) com persistência e leitura/entrega mínima comprovadas.
+3. Contrato frontend↔backend alinhado para o caminho feliz (ou smoke API documentado) e evidência registrada (comandos/resultados; NV quando bloqueado por ambiente).
 
-## 5) Critérios de sucesso (horizonte imediato)
-
-1. Um desenvolvedor consegue subir dependências locais e iniciar a API com passos documentados e reproduzíveis.
-2. Baselines determinísticas (fmt/clippy/check/tests aplicáveis) permanecem rastreáveis e reproduzíveis.
-3. Próximas entregas focam em **fatias verticais finas** do fluxo núcleo (auth→org/workspace→mensagem/tarefa) com evidência de execução, antes de ampliar escopo/paridade.
+Detalhes em `specs/005-macro-alternative-mvp/{spec,plan,tasks}.md` e `ROADMAP.md`.
