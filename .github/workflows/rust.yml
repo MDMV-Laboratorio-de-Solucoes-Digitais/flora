@@ -8,10 +8,8 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: '1.97.1'
-      - name: Install dependencies
-        run: cargo build
-      - name: Run tests
-        run: cargo test
+          toolchain: '1.98.0'
       - name: Build
-        run: cargo build --release
+        run: cargo build
+      - name: Test
+        run: cargo test
