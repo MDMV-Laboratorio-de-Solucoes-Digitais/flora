@@ -16,5 +16,9 @@ jobs:
         run: bun install
       - name: Svelte check
         run: bun run check
+      - name: Lint
+        run: bun run lint
+      - name: Unit tests (server)
+        run: bun run test:unit -- --run --project server
       - name: Build
         run: bun run build
