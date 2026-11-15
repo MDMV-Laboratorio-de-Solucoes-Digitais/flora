@@ -350,3 +350,61 @@ async fn test_auth_callback_rejects_reused_state() -> anyhow::Result<()> {
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     Ok(())
 }
+
+/// `POST /auth/select-organization` without Bearer token must be rejected.
+#[cfg(test)]
+#[tokio::test]
+async fn test_select_organization_rejects_missing_auth() -> anyhow::Result<()> {
+    let config = Config::default();
+    let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
+    let state = make_test_state(pool, &config)?;
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
+
+    let request = http::Request::builder()
+        .method("POST")
+        .uri("/auth/select-organization")
+        .header("content-type", "application/json")
+        .body(axum::body::Body::from(
+            r#"{"organization_id":"11111111-1111-1111-1111-111111111111"}"#,
+        ))?;
+
+    let response = ServiceExt::oneshot(router, request).await?;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    Ok(())
+}
+
+/// `POST /auth/select-organization` with nil organization must be rejected before DB access.
+#[cfg(test)]
+#[tokio::test]
+async fn test_select_organization_rejects_nil_org() -> anyhow::Result<()> {
+    let config = Config::default();
+    let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
+    let state = make_test_state(pool, &config)?;
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
+
+    let claims = flora_core::utils::jwt::FloraClaims::new(
+        uuid::Uuid::new_v4(),
+        uuid::Uuid::new_v4().to_string(),
+        uuid::Uuid::nil(),
+        "user@example.test",
+        3600,
+    );
+    let token = flora_core::utils::jwt::encode_token(&claims, &config.app.jwt_secret);
+
+    let request = http::Request::builder()
+        .method("POST")
+        .uri("/auth/select-organization")
+        .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {token}"))
+        .body(axum::body::Body::from(
+            r#"{"organization_id":"00000000-0000-0000-0000-000000000000"}"#,
+        ))?;
+
+    let response = ServiceExt::oneshot(router, request).await?;
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    Ok(())
+}

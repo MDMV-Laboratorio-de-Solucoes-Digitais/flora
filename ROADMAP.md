@@ -25,10 +25,11 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 ## 3) Marcos concluídos / em andamento
 
 - [x/~] Workspace Rust e crates de domínio/serviço estabelecidos; `flora-api` como entrypoint real.
-- [x/~] Specs 001-003 com implementação parcial e drift reconhecido; ciclo 003 (PKCE/baseline) e ciclo 004 (compose dev + consolidação docs) concluídos.
+- [x/~] Specs 001-003 com implementação parcial e drift reconhecido; ciclos 003-004 (PKCE/baseline, compose dev + consolidação docs) concluídos.
 - [x] Ciclo 005: reframe estratégico (Macro-alternative MVP para PMEs/VPS barata), assessment/spec/plan/tasks e pesquisa consolidada.
-- [x] Correção de CI Rust para compatibilidade Forgejo (rustup no workflow) mergeada em `dev`/espelhada; GitHub canônico para CI, Forgejo como mirror (conforme decisão operacional atual).
-- [~] Frontend Svelte 5 canônico iniciado; `apps/web` não-canônico ainda presente.
+- [x] Ciclos 006-007: hardening JWT/tenant em rotas núcleo, `POST /api/v1/auth/select-organization` (membership + rotação de sessão/jti) e `test-flora.sh` Bearer/JWT (PRs #204-#210, CI verde, mergeados em `dev`).
+- [~] Ciclo 008 (este incremento): testes de contrato CI-safe para `select-organization` e caminho de smoke dev reproduzível sem OIDC (`scripts/dev-smoke-session.sql`, `docs/dev-smoke.md`); casos DB-backed em CI e execução integrada real **NV**.
+- [~] Frontend Svelte 5 canônico iniciado/desalinhado com contratos auth/tenant atuais; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 

@@ -72,11 +72,11 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 006 recomendado)
+## 5) Próximo 80/20 (ciclo 009 recomendado)
 
-Entregar uma **fatia vertical mínima segura e verificável** do MVP Seed:
-1. Consistência de auth/contexto/tenant nas rotas núcleo.
-2. Fluxo ponta a ponta reproduzível em dev: **workspace → canal → mensagem** (ou tarefa) com persistência e leitura/entrega mínima comprovadas.
-3. Contrato frontend↔backend alinhado para o caminho feliz (ou smoke API documentado) e evidência registrada (comandos/resultados; NV quando bloqueado por ambiente).
+Avançar o MVP Seed com verificabilidade e caminho feliz mais próximos do integrado:
+1. **Cobertura DB de `select-organization`:** testes automatizados env-gated/`#[ignore]` ou job CI com Postgres para sucesso, membership negada e sessão inválida/inativa/inexistente.
+2. **Smoke integrado reproduzível:** executar `docs/dev-smoke.md` (`select org → workspace → task`) em ambiente com serviços e registrar evidência (ou NV detalhado).
+3. **Fatia mínima frontend↔backend:** alinhar callback `state`, seleção de organização/troca de token e slice `workspace → tarefa` no `apps/frontend` (ou smoke API oficial), mantendo segurança/tenancy.
 
-Detalhes em `specs/005-macro-alternative-mvp/{spec,plan,tasks}.md` e `ROADMAP.md`.
+Detalhes: `specs/008-select-org-tests-and-dev-smoke/{spec,plan,tasks}.md`, `.specify/assessments/008-select-org-tests-and-dev-smoke/`, `ROADMAP.md`.
