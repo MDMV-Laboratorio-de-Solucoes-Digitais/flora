@@ -18,14 +18,14 @@
 
 	async function handleLogin() {
 		try {
-			const redirectUri = encodeURIComponent(`${window.location.origin}/callback`);
-			const res = await fetch(`${API_BASE_URL}/api/v1/auth/login?redirect_uri=${redirectUri}`);
-			const data = await res.json();
+			const redirectUri = encodeURIComponent(`${location.origin}/callback`);
+			const response = await fetch(`${API_BASE_URL}/api/v1/auth/login?redirect_uri=${redirectUri}`);
+			const data = await response.json();
 			if (data.authorization_url) {
 				location.assign(data.authorization_url);
 			}
-		} catch (err) {
-			console.error('Failed to start login flow', err);
+		} catch (error) {
+			globalThis.console?.error('Failed to start login flow', error);
 		}
 	}
 

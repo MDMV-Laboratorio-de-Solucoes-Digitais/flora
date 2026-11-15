@@ -3,7 +3,6 @@
 	import { ApiClient } from '$lib/api/client';
 	import { logger } from '$lib/utils/logger';
 	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
 	import ThreadReply from './thread/ThreadReply.svelte';
 	import FileUpload from '../files/FileUpload.svelte';
 	import FilePreview from '../files/FilePreview.svelte';
@@ -69,7 +68,7 @@
 						<div
 							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-secondary font-bold text-secondary-foreground"
 						>
-							{message.authorId.substring(0, 1).toUpperCase()}
+							{(message.authorId.at(0) ?? '').toUpperCase()}
 						</div>
 
 						<!-- Message Content -->
@@ -108,14 +107,14 @@
 							{/if}
 
 							<!-- Thread Replies -->
-							{#if messageStore.messages.filter((m) => m.threadId === message.id).length > 0}
+							{#if messageStore.messages.some((m) => m.threadId === message.id)}
 								<div class="mt-3 space-y-3 border-l-2 border-primary/20 pl-2">
 									{#each messageStore.messages.filter((m) => m.threadId === message.id) as reply (reply.id)}
 										<div class="flex gap-3">
 											<div
 												class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold"
 											>
-												{reply.authorId.substring(0, 1).toUpperCase()}
+												{(reply.authorId.at(0) ?? '').toUpperCase()}
 											</div>
 											<div class="flex-1">
 												<div class="flex items-baseline space-x-2">
@@ -174,11 +173,10 @@
 				bind:value={newMessage}
 				placeholder="Message #general..."
 				class="min-h-[60px] w-full resize-none scrollbar-thin bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none"
-				onkeydown={(e) => {
-					if (e.key === 'Enter' && !e.shiftKey) {
-						e.preventDefault();
-						sendMessage();
-					}
+				onkeydown={(event) => {
+					if (event.key !== 'Enter' || event.shiftKey) return;
+					event.preventDefault();
+					sendMessage();
 				}}
 				disabled={isSending}></textarea>
 
