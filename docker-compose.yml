@@ -5,7 +5,8 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
+    # PostgreSQL 18+ required: init migration uses uuidv7() defaults (native in PG18)
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -14,7 +15,8 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - flora_postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18+ image expects a mount at /var/lib/postgresql (stores data in versioned subdir)
+      - flora_postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d flora"]
       interval: 5s

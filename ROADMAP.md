@@ -19,22 +19,23 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 | Direção estratégica | Atualizada | Norte “alternativa ao Macro para PMEs em VPS barata”, MVP 80/20 e debloat documentados |
 | Baseline determinística Rust (local) | Parcialmente verificada | `cargo fmt --check`, `cargo check -p flora-api -p flora-core -p flora-tests`, `test -p flora-core --lib` (8), `test -p flora-tests --lib` (56 pass, 5 ignored) ok |
 | Select-org DB-backed (local/CI config) | Parcialmente verificado | 5 testes `#[ignore]` passaram localmente em Postgres 18; job `db-tests` adicionado em `.github/workflows/rust.yml` (execução remota PR: NV) |
-| Smoke integrado dev (`select org → workspace → task`) | Evidenciado (alternativo) / NV compose-documentado | rc=0 em stack efêmera alt-port (pg18:15432, valkey:16379, meili:17700); bloqueio compose por 5432 ocupado e migração `uuidv7()` incompatível com pg16 do compose |
-| Frontend canônico (`apps/frontend`) | Scaffold + fatia mínima | Callback `state`, select-org/token rotation, guard org, workspace→task via API (ciclo 009); verificação determinística completa NV |
+| Smoke integrado dev (`select org → workspace → task`) | Evidenciado (PG18, ciclo 010) | rc=0 em stack PG18 isolada (alt-port por conflito externo em 5432; mesmo fluxo migrate/seed/bootstrap/test-flora.sh); compose/docs alinhados para `uuidv7` nativo |
+| Frontend canônico (`apps/frontend`) | Scaffold + fatia mínima (checks verdes, 010) | Fluxo auth→org→workspace→task (009) + verificação determinística local `check/lint/test:unit(server)/build` ok (010); paridade/contratos ampliados NV |
 | Núcleo de produto (auth/tenancy, chat, tarefas, arquivos, busca, notificações, realtime) | Parcial e heterogêneo | Rotas/serviços/modelos existem; P0s em segurança/tenancy consistente, compatibilidade dev, wiring e completude de fluxos |
 
 ## 3) Marcos concluídos / em andamento
 
 - [x/~] Workspace Rust e crates de domínio/serviço estabelecidos; `flora-api` como entrypoint real.
 - [x] Ciclos 003-008: PKCE/baseline, compose dev, hardening JWT/tenant, `select-organization` + rotação jti, testes contrato CI-safe e bootstrap de smoke dev (PRs #204–#211, CI verde, mergeados em `dev`).
-- [~] Ciclo 009 (este incremento): testes DB-backed env-gated/`#[ignore]` para `select-organization` (sucesso/rotação, não-membro, sessão ausente/inativa/mismatch), job CI `db-tests` (Postgres), smoke integrado executado com evidência (rc=0, alt-port/pg18) e fatia mínima frontend (state/callback, select-org/token rotation, workspace→task). **Pendente:** PR/CI remoto/merge/sync; NV compose pg16/`uuidv7` e verificação frontend completa.
+- [x/~] Ciclo 009: testes DB-backed env-gated/`#[ignore]` para `select-organization`, job CI `db-tests` (Postgres), smoke integrado evidenciado (rc=0, alt-port/pg18) e fatia mínima frontend (PR #212, mergeado).
+- [~] Ciclo 010 (este incremento): compose/docs reconciliados para PostgreSQL 18 (`uuidv7` nativo, sem editar migração aplicada), `docs/dev-smoke.md` corrigido (token bootstrap), smoke integrado rc=0 em stack PG18 equivalente (alt-port por conflito externo), checks determinísticos frontend ok (`check/lint/test:unit server/build`) e artefatos SDD/validação/release criados. **Pendente:** PR/CI remoto/merge/sync.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 010 candidato)
-1. **Compatibilidade dev/compose e smoke documentado:** reconciliar `docker-compose.yml`/migração para `uuidv7` no Postgres alvo e evidenciar `docs/dev-smoke.md` via caminho documentado.
-2. **CI/evidência remota:** confirmar job `db-tests` verde no PR/`dev`; ampliar cobertura DB de contratos críticos conforme risco.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 011 candidato)
+1. **CI/evidência remota:** confirmar jobs (`build`, `db-tests`, frontend CI) verdes no PR/`dev`; ampliar cobertura DB de contratos críticos conforme risco.
+2. **Compatibilidade dev/compose operacional (follow-up 010):** validar caminho documentado em host sem conflito de porta padrão e reforçar orientações de reset de volume PG16→18 quando aplicável.
 3. **Auth/contexto/tenancy consistente:** session authority no extrator/fluxos, reduzir confiança em headers crus, alinhar contratos frontend↔backend no caminho feliz.
 4. **Fatia vertical e2e mínima:** `workspace → canal → mensagem` e/ou tarefa com persistência, leitura e realtime mínimo verificáveis em dev.
 5. **Arquivos básicos reais e wiring essencial:** upload/download binário, quotas coerentes, indexação de busca e eventos→notificações para mutações core.
