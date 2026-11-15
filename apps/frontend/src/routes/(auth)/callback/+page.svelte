@@ -18,7 +18,7 @@
 
 		if (code) {
 			try {
-				const redirectUri = encodeURIComponent(`${window.location.origin}/callback`);
+				const redirectUri = encodeURIComponent(`${location.origin}/callback`);
 				const response = await ApiClient.request<{
 					session_token: string;
 					user_id: string;
