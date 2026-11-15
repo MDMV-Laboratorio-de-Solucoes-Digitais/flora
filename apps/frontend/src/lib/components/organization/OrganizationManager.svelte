@@ -31,7 +31,7 @@
 <div class="space-y-4 rounded-lg border p-6 shadow-sm">
 	<div class="space-y-2">
 		<h2 class="text-2xl font-bold tracking-tight">Create Organization</h2>
-		<p class="text-muted-foreground text-sm">Set up a new organization.</p>
+		<p class="text-sm text-muted-foreground">Set up a new organization.</p>
 	</div>
 
 	{#if successMessage}
