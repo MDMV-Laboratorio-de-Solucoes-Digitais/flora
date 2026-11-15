@@ -1,13 +1,6 @@
 <script lang="ts">
-	import {
-		Card,
-		CardContent,
-		CardHeader,
-		CardTitle,
-		CardDescription
-	} from '$lib/components/ui/card';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Avatar, AvatarFallback } from '$lib/components/ui/avatar';
 
 	// Basic Kanban state
 	let columns = $state([
@@ -55,10 +48,16 @@
 		}
 	]);
 
-	let draggedItem = $state<any>(null);
+	let draggedItem = $state<{ id: string; title: string; desc: string; tags: string[] } | null>(
+		null
+	);
 	let draggedFromCol = $state<string | null>(null);
 
-	function handleDragStart(event: DragEvent, task: any, colId: string) {
+	function handleDragStart(
+		event: DragEvent,
+		task: { id: string; title: string; desc: string; tags: string[] },
+		colId: string
+	) {
 		draggedItem = task;
 		draggedFromCol = colId;
 		if (event.dataTransfer) {
@@ -77,16 +76,18 @@
 
 	function handleDrop(event: DragEvent, targetColId: string) {
 		event.preventDefault();
-		if (!draggedItem || !draggedFromCol) return;
-		if (draggedFromCol === targetColId) return;
+		const item = draggedItem;
+		const fromColId = draggedFromCol;
+		if (!item || !fromColId) return;
+		if (fromColId === targetColId) return;
 
 		// Move item between columns
 		columns = columns.map((col) => {
-			if (col.id === draggedFromCol) {
-				return { ...col, tasks: col.tasks.filter((t) => t.id !== draggedItem.id) };
+			if (col.id === fromColId) {
+				return { ...col, tasks: col.tasks.filter((t) => t.id !== item.id) };
 			}
 			if (col.id === targetColId) {
-				return { ...col, tasks: [...col.tasks, draggedItem] };
+				return { ...col, tasks: [...col.tasks, item] };
 			}
 			return col;
 		});
@@ -97,11 +98,11 @@
 </script>
 
 <div class="flex h-full w-full scrollbar-thin gap-4 overflow-x-auto p-4">
-	{#each columns as col}
+	{#each columns as col (col.id)}
 		<div
 			class="flex h-full w-80 shrink-0 flex-col rounded-xl bg-muted/40 p-3"
 			ondragover={handleDragOver}
-			ondrop={(e) => handleDrop(e, col.id)}
+			ondrop={(event) => handleDrop(event, col.id)}
 			role="region"
 			aria-label="{col.title} column"
 		>
@@ -113,12 +114,12 @@
 			</div>
 
 			<div class="flex min-h-[150px] flex-1 flex-col gap-2 overflow-y-auto">
-				{#each col.tasks as task}
+				{#each col.tasks as task (task.id)}
 					<div
 						role="button"
 						tabindex="0"
 						draggable="true"
-						ondragstart={(e) => handleDragStart(e, task, col.id)}
+						ondragstart={(event) => handleDragStart(event, task, col.id)}
 						class="cursor-grab rounded-lg transition-all hover:ring-2 hover:ring-primary/50 active:cursor-grabbing"
 					>
 						<Card class="shadow-sm">
@@ -129,7 +130,7 @@
 								<p class="mb-3 text-xs text-muted-foreground">{task.desc}</p>
 								<div class="mt-auto flex items-center justify-between">
 									<div class="flex flex-wrap gap-1">
-										{#each task.tags as tag}
+										{#each task.tags as tag (tag)}
 											<Badge variant="secondary" class="h-4 px-1 py-0 text-[10px]">{tag}</Badge>
 										{/each}
 									</div>

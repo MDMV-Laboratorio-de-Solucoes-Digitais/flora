@@ -57,17 +57,14 @@ A self-hostable, modular corporate platform built in Rust, aimed at providing or
 7. **PR-driven**: Merges to `main` require 100% CI approval.
 8. **Automated Deploy**: Merges to `main` trigger deployment to Coolify via GitHub Actions.
 
+## 🖥️ Frontend apps
+
+- **`apps/frontend`**: canonical Flora frontend (SvelteKit + Svelte 5 rewrite, spec 002 / constitution). CI runs in `apps/frontend` (`bun install`, `check`, `lint`, `test:unit`, `build`).
+- **`apps/web`**: separate imported `@coparse/web` (SolidJS/Macro-style) codebase present in this checkout; **not** the canonical Svelte 5 target. Treat as legacy/reference unless explicitly reconciled.
+
 ## ⚙️ Local Development (CI)
 
-We use `lefthook` for local CI on commit:
-- `cocogitto` (Conventional commits)
-- `cargo fmt --fix`
-- `cargo deny`
-- `cargo audit`
-- `cargo vet`
-- `cargo check`
-- `cargo clippy`
-- `cargo nextest run`
+Current repo state (prefer executable config over this list): Rust CI runs `cargo build/test/release` (`.github/workflows/rust.yml`), frontend CI targets `apps/frontend` (`.github/workflows/ci.yml`). `lefthook`, `cargo-deny`, `cargo-vet`, and `cargo-nextest` configs may not be present in this checkout despite earlier plans; use `cargo fmt --all`, `cargo clippy --workspace --all-targets -- -D warnings`, and crate/app-specific test commands as documented in `AGENTS.md` and `specs/`.
 
 ## ⚖️ License
 
