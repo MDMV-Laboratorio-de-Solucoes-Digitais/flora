@@ -69,6 +69,7 @@ NEW_TASK=$(curl -fsS -X POST "$BASE_URL/api/v1/tasks" \
 echo "$NEW_TASK" | jq '{id,title,status}'
 
 echo "\n== List tasks (after create) =="
+echo "(note: GET /tasks is assignee-scoped in org; created task may omit assignee and not appear here)"
 curl -fsS "${AUTH[@]}" "$BASE_URL/api/v1/tasks" | jq '[.[] | {id,title,status}]'
 
 echo "\nSmoke completed."
