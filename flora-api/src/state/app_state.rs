@@ -14,6 +14,8 @@ use flora_core::services::{
 };
 use flora_core::{PgPool, config::Config};
 
+use super::oidc_transactions::OidcTransactionStore;
+
 /// Application state shared across all requests.
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -45,6 +47,10 @@ pub struct AppState {
     pub search_service: Arc<flora_search::SearchService>,
     /// Real-time messaging service backed by Valkey Pub/Sub.
     pub messaging_service: Option<Arc<flora_messaging::MessagingService>>,
+    /// Valkey/Redis connection manager (shared, optional).
+    pub valkey: Option<redis::aio::ConnectionManager>,
+    /// Transient store for OIDC auth transactions (PKCE state/verifier).
+    pub oidc_transactions: OidcTransactionStore,
 }
 
 impl AppState {
@@ -121,9 +127,9 @@ impl AppState {
             .map_err(|e| anyhow::anyhow!("Search service init failed: {e}"))?,
         );
 
-        let messaging_service = match redis::Client::open(config.messaging.valkey_url.as_str()) {
+        let valkey = match redis::Client::open(config.messaging.valkey_url.as_str()) {
             Ok(client) => match client.get_connection_manager().await {
-                Ok(manager) => Some(Arc::new(flora_messaging::MessagingService::new(manager))),
+                Ok(manager) => Some(manager),
                 Err(e) => {
                     tracing::warn!("Failed to create Valkey connection manager: {e}");
                     None
@@ -134,6 +140,11 @@ impl AppState {
                 None
             }
         };
+
+        let messaging_service = valkey
+            .as_ref()
+            .map(|manager| Arc::new(flora_messaging::MessagingService::new(manager.clone())));
+        let oidc_transactions = OidcTransactionStore::new(valkey.clone());
 
         Ok(Self {
             db_pool: Arc::new(db_pool),
@@ -150,6 +161,8 @@ impl AppState {
             notification_service,
             search_service,
             messaging_service,
+            valkey,
+            oidc_transactions,
         })
     }
 }
@@ -160,6 +173,10 @@ where
 {
     type Rejection = (axum::http::StatusCode, String);
 
+    #[expect(
+        clippy::unused_async_trait_impl,
+        reason = "axum::extract::FromRequestParts requires async fn"
+    )]
     async fn from_request_parts(_parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         // The AppState is typically injected via `.with_state()` in the router,
         // so this extractor is rarely needed directly.

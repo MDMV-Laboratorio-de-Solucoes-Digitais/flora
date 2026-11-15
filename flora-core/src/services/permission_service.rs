@@ -160,7 +160,14 @@ impl PermissionService {
     /// # Errors
     ///
     /// Returns an error if the operation fails.
-    #[expect(clippy::unused_async, reason = "Future implementation will be async")]
+    #[expect(
+        clippy::unused_async_trait_impl,
+        reason = "Method kept async for future implementation and API consistency"
+    )]
+    #[expect(
+        clippy::unused_async,
+        reason = "Method kept async for future implementation and API consistency"
+    )]
     pub async fn revoke_role(&self, user_id: Uuid, organization_id: Uuid) -> Result<()> {
         info!(
             "Revoking role for user {} in org {}",

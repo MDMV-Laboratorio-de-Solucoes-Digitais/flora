@@ -287,7 +287,7 @@ impl From<validator::ValidationErrors> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        let (_status, body) = match &self {
+        let (status, body) = match &self {
             Self::Unauthorized => (
                 axum::http::StatusCode::UNAUTHORIZED,
                 serde_json::json!({ "error": "unauthorized", "message": "Authentication credentials are required" }),
@@ -369,6 +369,6 @@ impl IntoResponse for Error {
                 serde_json::json!({ "error": "internal", "message": self.to_string() }),
             ),
         };
-        Json(body).into_response()
+        (status, Json(body)).into_response()
     }
 }

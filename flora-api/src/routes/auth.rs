@@ -1,6 +1,6 @@
 //! Authentication routes — OIDC login, logout, token refresh, and callback.
 //!
-//! Per T019 and T023.
+//! Per T019, T023, and T116 (PKCE).
 
 use axum::{
     Router,
@@ -9,8 +9,9 @@ use axum::{
     response::Json,
     routing::{get, post},
 };
+use base64::Engine;
 use serde::{Deserialize, Serialize};
-use url::form_urlencoded;
+use url::Url;
 use uuid::Uuid;
 
 use flora_core::error::Result;
@@ -18,6 +19,9 @@ use flora_core::models::Session;
 use flora_core::repositories::{PgSessionRepository, PgUserRepository};
 use flora_core::traits::{SessionRepository, UserRepository};
 use flora_core::utils::jwt::{FloraClaims, encode_token};
+use flora_core::utils::pkce::{derive_s256_challenge, generate_code_verifier, generate_state};
+
+use crate::state::oidc_transactions::OidcTransaction;
 
 use super::AppState;
 
@@ -66,42 +70,75 @@ pub fn create_auth_router() -> Router<AppState> {
 
 /// `GET /auth/login` — Returns the OIDC authorization URL for redirect.
 ///
-/// The frontend handles the actual browser redirect to Zitadel.
-/// This endpoint returns the URL to redirect to.
+/// Generates a PKCE verifier/challenge and state, persists the transaction
+/// server-side, and returns an authorize URL including `state`,
+/// `code_challenge`, and `code_challenge_method`.
 async fn login(
     State(state): State<AppState>,
     Query(params): Query<AuthQuery>,
 ) -> Result<Json<serde_json::Value>> {
-    let issuer = &state.config.oidc.issuer_url;
+    if !state
+        .config
+        .oidc
+        .code_challenge_method
+        .eq_ignore_ascii_case("S256")
+    {
+        return Err(flora_core::Error::Configuration(
+            "oidc.code_challenge_method must be S256".to_owned(),
+        ));
+    }
+
+    let issuer = state.config.oidc.issuer_url.trim_end_matches('/');
     let client_id = &state.config.oidc.client_id;
     let default_redirect = format!("{}/api/v1/auth/callback", state.config.app.base_url);
-    let redirect_uri = params
-        .redirect_uri
-        .as_deref()
-        .unwrap_or(&default_redirect);
+    let redirect_uri = params.redirect_uri.unwrap_or(default_redirect);
 
-    let encoded_redirect = form_urlencoded::Serializer::new(String::new())
-        .append_pair("redirect_uri", redirect_uri)
-        .finish();
-    let auth_url = format!(
-        "{}/oauth/v2/authorize?client_id={}&response_type=code&scope=openid+profile+email&{}",
-        issuer.trim_end_matches('/'),
-        client_id,
-        encoded_redirect
-    );
+    let oauth_state = generate_state();
+    let code_verifier = generate_code_verifier();
+    let code_challenge = derive_s256_challenge(&code_verifier);
 
-    tracing::info!(redirect_uri = %redirect_uri, "OIDC login initiated");
+    state
+        .oidc_transactions
+        .store(
+            &oauth_state,
+            OidcTransaction {
+                code_verifier,
+                redirect_uri: redirect_uri.clone(),
+            },
+        )
+        .await?;
+
+    let scope = state.config.oidc.scopes.join(" ");
+    let mut auth_url = Url::parse(&format!("{issuer}/oauth/v2/authorize"))
+        .map_err(|e| flora_core::Error::Configuration(format!("invalid oidc issuer_url: {e}")))?;
+    let _ = auth_url
+        .query_pairs_mut()
+        .append_pair("client_id", client_id)
+        .append_pair("response_type", "code")
+        .append_pair("scope", &scope)
+        .append_pair("redirect_uri", &redirect_uri)
+        .append_pair("state", &oauth_state)
+        .append_pair("code_challenge", &code_challenge)
+        .append_pair("code_challenge_method", "S256");
+
+    tracing::info!(redirect_uri = %redirect_uri, "OIDC login initiated with PKCE");
 
     Ok(Json(serde_json::json!({
-        "authorization_url": auth_url,
+        "authorization_url": auth_url.as_str(),
+        "state": oauth_state,
         "next_step": "redirect_user_to_authorization_url"
     })))
 }
 
 /// `GET /auth/callback` — Handles the OIDC callback from Zitadel.
 ///
-/// Exchanges the authorization code for tokens, creates or finds the user,
-/// and issues a Flora session JWT.
+/// Validates and consumes the stored PKCE/state transaction, exchanges the
+/// authorization code for tokens with `code_verifier`, creates or finds the
+/// user, and issues a Flora session JWT.
+#[expect(
+    clippy::too_many_lines,
+    reason = "callback performs state validation, token exchange, user provisioning, and session issuance in one cohesive flow"
+)]
 async fn callback(
     State(state): State<AppState>,
     Query(params): Query<OidcCallbackParams>,
@@ -110,22 +147,31 @@ async fn callback(
         .code
         .as_deref()
         .ok_or(flora_core::Error::Unauthorized)?;
+    let oauth_state = params
+        .state
+        .as_deref()
+        .ok_or(flora_core::Error::Unauthorized)?;
 
-    // Exchange code for tokens via Zitadel token endpoint
+    let transaction = state
+        .oidc_transactions
+        .consume(oauth_state)
+        .await?
+        .ok_or(flora_core::Error::Unauthorized)?;
+
+    // Exchange code for tokens via Zitadel token endpoint.
     let token_url = format!(
         "{}/oauth/v2/token",
         state.config.oidc.issuer_url.trim_end_matches('/')
     );
 
     let client = reqwest::Client::new();
-    let default_redirect = format!("{}/api/v1/auth/callback", state.config.app.base_url);
-    let redirect_uri = params.redirect_uri.clone().unwrap_or(default_redirect);
     let form_data = serde_urlencoded::to_string([
         ("grant_type", "authorization_code"),
         ("code", code),
-        ("redirect_uri", redirect_uri.as_str()),
-        ("client_id", &state.config.oidc.client_id),
-        ("client_secret", &state.config.oidc.client_secret),
+        ("redirect_uri", transaction.redirect_uri.as_str()),
+        ("client_id", state.config.oidc.client_id.as_str()),
+        ("client_secret", state.config.oidc.client_secret.as_str()),
+        ("code_verifier", transaction.code_verifier.as_str()),
     ])
     .map_err(|e| flora_core::Error::OidcProvider(e.to_string()))?;
 
@@ -153,17 +199,23 @@ async fn callback(
         .as_str()
         .ok_or_else(|| flora_core::Error::OidcProvider("missing id_token".to_string()))?;
 
-    // Decode the ID token (unverified — Zitadel signed it; we trust the issuer)
+    // Decode the ID token (unverified — Zitadel signed it; we trust the issuer).
     // In production, verify the signature against Zitadel's JWKS.
     let claims = decode_id_token_claims(id_token)?;
-    let email = claims.get("email").and_then(|v| v.as_str()).unwrap_or("");
+    let email = claims
+        .get("email")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
     let name = claims
         .get("name")
-        .and_then(|v| v.as_str())
+        .and_then(serde_json::Value::as_str)
         .unwrap_or("User");
-    let sub = claims.get("sub").and_then(|v| v.as_str()).unwrap_or("");
+    let sub = claims
+        .get("sub")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
 
-    // Create or update user in the database
+    // Create or update user in the database.
     let user_repo = PgUserRepository::new((*state.db_pool).clone());
     let user = if let Some(existing) = user_repo.find_by_email(email).await? {
         tracing::info!(user_id = %existing.id, email = %email, "Existing user logged in via OIDC");
@@ -176,7 +228,7 @@ async fn callback(
         created_user
     };
 
-    // Create a session record
+    // Create a session record.
     let session_repo = PgSessionRepository::new((*state.db_pool).clone());
     let jti = Uuid::now_v7().to_string();
     let ttl = state.config.app.session_ttl_secs;
@@ -222,7 +274,7 @@ async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<Sta
     {
         let session_repo = PgSessionRepository::new((*state.db_pool).clone());
         let _ = session_repo.find_by_jti(&claims.jti).await?;
-        // Revoke all sessions for this user (security-sensitive action)
+        // Revoke all sessions for this user (security-sensitive action).
         session_repo.revoke_all_for_user(claims.user_id()).await?;
         tracing::info!(user_id = %claims.user_id(), "User session revoked");
     }
@@ -238,7 +290,7 @@ async fn refresh(
         flora_core::utils::jwt::decode_token(&req.session_token, &state.config.app.jwt_secret)
             .map_err(|_| flora_core::Error::SessionExpired)?;
 
-    // Verify session is still active in DB
+    // Verify session is still active in DB.
     let session_repo = PgSessionRepository::new((*state.db_pool).clone());
     let session = session_repo
         .find_by_jti(&claims.jti)
@@ -249,7 +301,7 @@ async fn refresh(
         return Err(flora_core::Error::SessionExpired);
     }
 
-    // Issue a new token with same session
+    // Issue a new token with same session.
     let ttl = state.config.app.session_ttl_secs;
     let new_claims = FloraClaims::new(
         session.user_id,
@@ -272,9 +324,9 @@ async fn refresh(
 pub struct OidcCallbackParams {
     /// The authorization code from the OIDC provider.
     pub code: Option<String>,
-    /// The state parameter for CSRF protection.
+    /// The state parameter for CSRF/PKCE transaction binding.
     pub state: Option<String>,
-    /// The original redirect URI used for authorization.
+    /// The original redirect URI used for authorization (validated against stored transaction).
     pub redirect_uri: Option<String>,
 }
 
@@ -290,19 +342,10 @@ fn decode_id_token_claims(token: &str) -> Result<serde_json::Value> {
     }
 
     let payload = parts[1];
-    let padded = if payload.len().is_multiple_of(4) {
-        payload.to_string()
-    } else {
-        format!(
-            "{}{}",
-            payload,
-            "==".chars().take(4 - payload.len() % 4).collect::<String>()
-        )
-    };
-
-    let decoded =
-        base64::Engine::decode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, &padded)
-            .map_err(|e| flora_core::Error::OidcProvider(e.to_string()))?;
+    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload.trim_end_matches('='))
+        .or_else(|_| base64::engine::general_purpose::URL_SAFE.decode(payload))
+        .map_err(|e| flora_core::Error::OidcProvider(e.to_string()))?;
 
     serde_json::from_slice(&decoded).map_err(|e| flora_core::Error::OidcProvider(e.to_string()))
 }

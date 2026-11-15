@@ -32,6 +32,10 @@ where
 {
     type Rejection = (StatusCode, String);
 
+    #[expect(
+        clippy::unused_async_trait_impl,
+        reason = "axum::extract::FromRequestParts requires async fn"
+    )]
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
 
@@ -79,6 +83,10 @@ where
 {
     type Rejection = (StatusCode, String);
 
+    #[expect(
+        clippy::unused_async_trait_impl,
+        reason = "axum::extract::FromRequestParts requires async fn"
+    )]
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
 
@@ -149,6 +157,10 @@ where
 {
     type Rejection = (StatusCode, String);
 
+    #[expect(
+        clippy::unused_async_trait_impl,
+        reason = "axum::extract::FromRequestParts requires async fn"
+    )]
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
 
@@ -307,6 +319,8 @@ mod tests {
                 .unwrap_or_else(|_| panic!("search")),
             ),
             messaging_service: None,
+            valkey: None,
+            oidc_transactions: crate::state::oidc_transactions::OidcTransactionStore::new(None),
         }
     }
 

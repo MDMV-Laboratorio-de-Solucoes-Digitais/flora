@@ -8,7 +8,7 @@ fn test_user_creation() {
     let user = User::new("test@example.com", "Test User");
     assert_eq!(user.email, "test@example.com");
     assert_eq!(user.display_name, "Test User");
-    assert!(!user.id.to_string().is_empty());
+    assert_ne!(user.id.to_string(), "");
     assert!(user.is_active);
 }
 

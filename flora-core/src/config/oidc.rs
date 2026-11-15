@@ -44,11 +44,6 @@ impl OidcConfig {
     /// # Errors
     ///
     /// Returns an error if the configuration is invalid.
-    /// Validates the OIDC configuration.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the configuration is invalid.
     pub fn validate(&self) -> Result<(), crate::Error> {
         if self.issuer_url.is_empty() {
             return Err(crate::Error::Configuration(
@@ -63,6 +58,11 @@ impl OidcConfig {
         if self.scopes.is_empty() {
             return Err(crate::Error::Configuration(
                 "at least one OIDC scope is required".to_owned(),
+            ));
+        }
+        if !self.code_challenge_method.eq_ignore_ascii_case("S256") {
+            return Err(crate::Error::Configuration(
+                "oidc.code_challenge_method must be S256".to_owned(),
             ));
         }
         Ok(())

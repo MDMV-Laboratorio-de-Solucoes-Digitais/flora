@@ -7,6 +7,8 @@ use flora_api::routes::auth::create_auth_router;
 #[cfg(test)]
 use flora_api::state::AppState;
 #[cfg(test)]
+use flora_api::state::oidc_transactions::OidcTransactionStore;
+#[cfg(test)]
 use flora_core::config::Config;
 #[cfg(test)]
 use flora_core::repositories::{
@@ -88,6 +90,8 @@ fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
             &config.search.index_template,
         )?),
         messaging_service: None,
+        valkey: None,
+        oidc_transactions: OidcTransactionStore::new(None),
     })
 }
 
@@ -95,7 +99,8 @@ fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
 ///
 /// Verifies the endpoint returns a 200 OK with a JSON body containing:
 /// - `authorization_url`: a valid OIDC authorize URL with correct issuer,
-///   `client_id`, `response_type`, scope, and `redirect_uri` parameters.
+///   `client_id`, `response_type`, scope, `redirect_uri`, and PKCE parameters.
+/// - `state`: the generated OAuth state bound to a stored transaction.
 /// - `next_step`: the string `"redirect_user_to_authorization_url"`.
 #[tokio::test]
 async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
@@ -120,31 +125,41 @@ async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
         .get("authorization_url")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("missing authorization_url in response"))?;
-
+    let state_param = body
+        .get("state")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow::anyhow!("missing state in response"))?;
     let next_step = body
         .get("next_step")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("missing next_step in response"))?;
 
-    assert!(
-        auth_url.starts_with("http://localhost:8080/oauth/v2/authorize"),
-        "authorization_url must start with issuer + authorize path, got: {auth_url}"
+    let parsed = url::Url::parse(auth_url)?;
+    let pairs: std::collections::HashMap<String, String> =
+        parsed.query_pairs().into_owned().collect();
+
+    assert_eq!(parsed.path(), "/oauth/v2/authorize");
+    assert_eq!(
+        pairs.get("client_id").map(String::as_str),
+        Some("flora@localhost")
     );
-    assert!(
-        auth_url.contains("client_id="),
-        "authorization_url must contain client_id, got: {auth_url}"
+    assert_eq!(pairs.get("response_type").map(String::as_str), Some("code"));
+    assert_eq!(
+        pairs.get("scope").map(String::as_str),
+        Some("openid profile email")
     );
-    assert!(
-        auth_url.contains("response_type=code"),
-        "authorization_url must contain response_type=code, got: {auth_url}"
+    assert_eq!(
+        pairs.get("redirect_uri").map(String::as_str),
+        Some("http://localhost:3000/api/v1/auth/callback")
     );
+    assert_eq!(pairs.get("state").map(String::as_str), Some(state_param));
     assert!(
-        auth_url.contains("scope=openid"),
-        "authorization_url must contain openid scope, got: {auth_url}"
+        pairs.contains_key("code_challenge"),
+        "missing code_challenge"
     );
-    assert!(
-        auth_url.contains("redirect_uri"),
-        "authorization_url must contain redirect_uri, got: {auth_url}"
+    assert_eq!(
+        pairs.get("code_challenge_method").map(String::as_str),
+        Some("S256")
     );
     assert_eq!(next_step, "redirect_user_to_authorization_url");
 
@@ -154,7 +169,7 @@ async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
 /// Contract test for `GET /auth/login` with custom `redirect_uri` query parameter.
 ///
 /// Verifies that when a `redirect_uri` is provided, it is reflected in the
-/// returned authorization URL.
+/// returned authorization URL and PKCE parameters are present.
 #[tokio::test]
 async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
@@ -178,10 +193,19 @@ async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
         .get("authorization_url")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("missing authorization_url in response"))?;
+    let parsed = url::Url::parse(auth_url)?;
+    let pairs: std::collections::HashMap<String, String> =
+        parsed.query_pairs().into_owned().collect();
 
-    assert!(
-        auth_url.contains("redirect_uri=https%3A%2F%2Fapp.example.com%2Fcallback"),
-        "authorization_url must contain custom redirect_uri, got: {auth_url}"
+    assert_eq!(
+        pairs.get("redirect_uri").map(String::as_str),
+        Some("https://app.example.com/callback")
+    );
+    assert!(pairs.contains_key("state"));
+    assert!(pairs.contains_key("code_challenge"));
+    assert_eq!(
+        pairs.get("code_challenge_method").map(String::as_str),
+        Some("S256")
     );
 
     Ok(())
@@ -214,16 +238,115 @@ async fn test_auth_login_with_unencoded_redirect_uri() -> anyhow::Result<()> {
         .get("authorization_url")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("missing authorization_url in response"))?;
+    let parsed = url::Url::parse(auth_url)?;
+    let pairs: std::collections::HashMap<String, String> =
+        parsed.query_pairs().into_owned().collect();
 
-    // The redirect_uri should be URL-encoded in the final URL
-    assert!(
-        auth_url.contains("redirect_uri="),
-        "authorization_url must contain redirect_uri, got: {auth_url}"
+    assert_eq!(
+        pairs.get("redirect_uri").map(String::as_str),
+        Some("https://app.example.com/callback")
     );
-    assert!(
-        auth_url.contains("app.example.com"),
-        "authorization_url must contain the custom domain, got: {auth_url}"
+    assert!(pairs.contains_key("state"));
+    assert!(pairs.contains_key("code_challenge"));
+    assert_eq!(
+        pairs.get("code_challenge_method").map(String::as_str),
+        Some("S256")
     );
 
+    Ok(())
+}
+
+/// Callback without authorization code must be rejected.
+#[tokio::test]
+async fn test_auth_callback_rejects_missing_code() -> anyhow::Result<()> {
+    let config = Config::default();
+    let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
+    let state = make_test_state(pool, &config)?;
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
+
+    let request = http::Request::builder()
+        .uri("/auth/callback?state=test-state")
+        .body(axum::body::Body::empty())?;
+
+    let response = ServiceExt::oneshot(router, request).await?;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    Ok(())
+}
+
+/// Callback without state must be rejected.
+#[tokio::test]
+async fn test_auth_callback_rejects_missing_state() -> anyhow::Result<()> {
+    let config = Config::default();
+    let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
+    let state = make_test_state(pool, &config)?;
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
+
+    let request = http::Request::builder()
+        .uri("/auth/callback?code=test-code")
+        .body(axum::body::Body::empty())?;
+
+    let response = ServiceExt::oneshot(router, request).await?;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    Ok(())
+}
+
+/// Callback with unknown/invalid state must be rejected.
+#[tokio::test]
+async fn test_auth_callback_rejects_invalid_state() -> anyhow::Result<()> {
+    let config = Config::default();
+    let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
+    let state = make_test_state(pool, &config)?;
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
+
+    let request = http::Request::builder()
+        .uri("/auth/callback?code=test-code&state=does-not-exist")
+        .body(axum::body::Body::empty())?;
+
+    let response = ServiceExt::oneshot(router, request).await?;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    Ok(())
+}
+
+/// Callback with reused state must be rejected (single-use transaction).
+#[tokio::test]
+async fn test_auth_callback_rejects_reused_state() -> anyhow::Result<()> {
+    let config = Config::default();
+    let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
+    let state = make_test_state(pool, &config)?;
+    let oauth_state = "reused-state-test";
+    state
+        .oidc_transactions
+        .store(
+            oauth_state,
+            flora_api::state::oidc_transactions::OidcTransaction {
+                code_verifier: "verifier".to_string(),
+                redirect_uri: "http://localhost:3000/api/v1/auth/callback".to_string(),
+            },
+        )
+        .await?;
+
+    // Simulate first use consuming the transaction.
+    let first = state.oidc_transactions.consume(oauth_state).await?;
+    assert!(
+        first.is_some(),
+        "stored transaction should be consumable once"
+    );
+
+    let router = axum::Router::new()
+        .nest("/auth", create_auth_router())
+        .with_state(state);
+
+    let request = http::Request::builder()
+        .uri(format!("/auth/callback?code=test-code&state={oauth_state}"))
+        .body(axum::body::Body::empty())?;
+
+    let response = ServiceExt::oneshot(router, request).await?;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     Ok(())
 }
