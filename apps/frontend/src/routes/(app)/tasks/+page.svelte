@@ -113,7 +113,9 @@
 	</div>
 
 	{#if error}
-		<div class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+		<div
+			class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+		>
 			{error}
 		</div>
 	{/if}

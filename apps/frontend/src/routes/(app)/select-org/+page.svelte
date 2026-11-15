@@ -110,7 +110,9 @@
 	</div>
 
 	{#if error}
-		<div class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+		<div
+			class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+		>
 			{error}
 		</div>
 	{/if}
@@ -127,7 +129,9 @@
 					<div class="flex items-center justify-between rounded-md border p-3">
 						<div>
 							<div class="font-medium">{org.name}</div>
-							<div class="text-xs text-muted-foreground">{org.slug}{org.role ? ` · ${org.role}` : ''}</div>
+							<div class="text-xs text-muted-foreground">
+								{org.slug}{org.role ? ` · ${org.role}` : ''}
+							</div>
 						</div>
 						<Button disabled={submitting} onclick={() => selectOrganization(org.id)}>Select</Button>
 					</div>
@@ -146,7 +150,10 @@
 			<Label for="org-slug">Slug</Label>
 			<Input id="org-slug" bind:value={createSlug} placeholder="acme-corp" />
 		</div>
-		<Button disabled={submitting || !createName.trim() || !createSlug.trim()} onclick={createAndSelect}>
+		<Button
+			disabled={submitting || !createName.trim() || !createSlug.trim()}
+			onclick={createAndSelect}
+		>
 			Create and select
 		</Button>
 	</div>
