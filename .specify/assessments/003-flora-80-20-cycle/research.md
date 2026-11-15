@@ -1,0 +1,29 @@
+# Research: Flora 80/20 Cycle (Macro alternative, REA/Craft-Anything fit)
+
+**Date:** 2026-11-15  
+**Scope:** extensive multilingual web research delegated to background subagents + local repo/spec inspection (flora, mdmv-dark-factory). Sources are primary where fetched (GitHub/raw docs/manifests), with confidence noted.
+
+## 1) Macro (`macro-inc/macro`) — what to learn from it
+- **Product:** open-source (AGPL-3.0) unified workspace: email/inbox, messages/channels, docs (CRDT/collab claims), tasks, calls, agents, CRM, databases, calendar, files, PR/integrations, shared team memory/links (`github.com/macro-inc/macro`, README, macro.com). **High confidence** from repo/site.
+- **Stack/ops reality:** very large multi-runtime monorepo (Rust workspace + TypeScript/Bun/SolidJS, Cloudflare workers/Durable Objects for sync, many services/crates), heavy infra (Nix, Pulumi, AWS-leaning stacks, OpenSearch/Kafka/Redis/Postgres/FusionAuth/Stripe/observability, local emulators). Local/prod self-host is operationally complex, not “one cheap VPS” as-is. **High confidence** repo manifests/docs; **medium** on private hosted topology.
+- **Hotspots to avoid for Flora’s VPS goal:** service sprawl, Kafka/OpenSearch/FusionAuth/DO-based collab, broad provider integrations (email/calendar/WhatsApp/calls), agent/computer orchestration, cloud-coupled ops. **Implication:** adopt product primitives (linked workspace objects, org-scoped collab, shared context) but re-architect as modular monolith on Rust+Postgres(+Svelte5/Tauri), incremental realtime/search/AI, optional integrations.
+
+## 2) Lightweight/self-hosted patterns relevant to Flora
+- Closest stack references: **EchoCell** (Rust+Axum+Postgres+sqlx+Svelte5), **RongNote** (Rust+Axum+SQLx/Postgres+SvelteKit single-binary ops), **TensorChat** (layering, efficient WS fanout, time-sortable/cursor IDs, tx/membership checks), **Bramblekeep** (projection discipline, consistent backups), **Sideporch/Trestle** (cheap-VPS ops simplicity). **Medium confidence** (repo/docs sampled).
+- **80/20 patterns to keep:** Postgres system-of-record, migrations/startup discipline, modular monolith + traits, cursor/time-sortable IDs, simple WS hub + idempotent fanout, durable async side-effects (jobs) over sync sprawl, storage/auth adapters, projection/search behind traits, Compose-grade single-node seed.
+- **Avoid for Seed:** Mongo/replica-heavy defaults, mandatory external IdP/SMTP gates, microservices/K8s/multi-broker stacks, CRDT-everywhere/local-first sync, Electron/heavy clients, provider-coupled code.
+
+## 3) REA (`morluto/rea`, `rea-agents`) — fit for Flora
+- **What it is:** MIT-licensed MCP/CLI reverse-engineering toolkit for artifacts/runtime behavior (native binaries, JS/Electron, .NET/APK/firmware/captures/web/network traces etc.) with evidence/coverage/limitations model; requires Node+npm and often external engines (Ghidra/IDA/Hopper/JADX/tshark/adb…). Active/fast-moving, young project; runs with host permissions, not a sandbox; outputs can be incomplete. **High confidence** from README/docs/licenses.
+- **Assessment for Flora:** **Possible** technically in narrow cases, but **low validity/viability/desirability as primary method** to understand/reimplement Macro because Macro is **open-source AGPL-3.0** (source/docs/APIs/behavior are the authoritative, cleaner path). Main risks: legal/ToS/authorization/clean-room contamination if misused, security of toolchain/targets, correctness/effort overhead.
+- **Recommendation:** **Do not adopt as core strategy.** Use only tactically, if ever, for legally authorized analysis of **opaque/non-source artifacts** (third-party binaries/clients/captures) or QA of Flora’s own shipped artifacts. Prefer: study Macro source/docs under AGPL compliance + derive independent requirements/contracts for Rust+Postgres+Svelte5/Tauri.
+
+## 4) Craft-Anything (`storytold/craft-anything`) — fit for Flora
+- **What it is:** MIT OR Apache-2.0 Rust “reverse-engineering + rebuild” workbench (desktop/CLI/MCP, egui), Study→Build→Check→Ready with coding-agent-driven rebuilds, clean-room/deep modes, broad RE tooling; **early alpha**, agent-dependent for builds, not a collab/SaaS framework (no Postgres/Svelte/Tauri backend stack). Brand assets restricted. **High confidence** from repo docs/status/roadmap.
+- **Assessment:** **Poor product/stack fit** for Flora’s core platform; **low viability/desirability** as dependency. Possible/interesting only as **external R&D/reference**: clean-room competitive UX capture evidence, throwaway prototype inspiration, or design ideas (headless CLI+MCP parity, evidence records) — never as core runtime/build dependency.
+
+## 5) Flora current-state signals (local)
+- Archived seed workspace with substantial specified/claimed implementation: Rust crates (`flora-core/api/messaging/tasks/files/search/notifications/tests`), Axum routes, migrations/config, contract+integration test scaffolding, `apps/frontend` (Svelte5/SvelteKit strict tooling) and `apps/web` coexist; `dev-seed.sql` + `test-flora.sh` for manual smoke. **But runtime verification not evidenced in this pass**, OIDC PKCE follow-up **T116 open** (`specs/001-flora-seed-v0-1/tasks.md`), frontend canonical path/CI alignment ambiguous, and README/spec/checklist/task claims show drift. (Sources: local `README.md`, `AGENTS.md`, `Cargo.toml`, `specs/*`, routes/tests, `.specify/memory/constitution.md`.)
+
+## Decision inputs (80/20)
+- Highest leverage now: **prove baseline (fmt/clippy/test/build, frontend checks), close PKCE (T116), reconcile canonical frontend/CI/docs**, then implement thin SME-valuable slices informed by Macro’s AGPL source/docs (not RE). This is low-risk, autonomous, and prerequisite to trustworthy feature work.
