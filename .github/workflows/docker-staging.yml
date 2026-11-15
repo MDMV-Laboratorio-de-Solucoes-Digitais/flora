@@ -1,0 +1,46 @@
+name: Build & Deploy Flora Staging (GHCR -> Coolify)
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'Dockerfile'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'flora-*/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push linux/arm64 image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:staging
+            ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:${{ github.sha }}
+
+      - name: Trigger Coolify Staging Deploy
+        if: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK != '' }}
+        run: |
+          curl -fsS -X POST "${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
