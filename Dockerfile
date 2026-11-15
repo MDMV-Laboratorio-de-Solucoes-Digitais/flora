@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends pkg-config libs
 COPY . .
 RUN cargo build --release -p flora-api
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/flora-api /usr/local/bin/flora-api
 EXPOSE 3000
