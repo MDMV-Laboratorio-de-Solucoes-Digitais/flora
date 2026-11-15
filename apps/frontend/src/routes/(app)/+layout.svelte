@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { authState } from '$lib/state/AuthState.svelte';
 	import {
 		Search,
@@ -10,7 +13,6 @@
 		User,
 		LogOut,
 		ChevronLeft,
-		ChevronRight,
 		PanelRightClose,
 		PanelRightOpen,
 		Sparkles
@@ -24,6 +26,30 @@
 	// App state
 	let isSidebarOpen = $state(true);
 	let isRightPanelOpen = $state(false);
+
+	function enforceAuth() {
+		if (globalThis.window === undefined) return;
+		if (!authState.isAuthenticated || !authState.token) {
+			void goto('/');
+			return;
+		}
+		const path = page.url.pathname;
+		if (path !== '/select-org' && !authState.organizationId) {
+			void goto('/select-org');
+		}
+	}
+
+	onMount(() => {
+		enforceAuth();
+	});
+
+	$effect(() => {
+		void page.url.pathname;
+		void authState.isAuthenticated;
+		void authState.token;
+		void authState.organizationId;
+		enforceAuth();
+	});
 </script>
 
 <div class="flex h-screen w-full overflow-hidden bg-background">
@@ -42,183 +68,196 @@
 					>
 						F
 					</div>
-					<span>Flora Workspace</span>
+					<span>Flora</span>
 				</div>
-			{:else}
-				<div
-					class="mx-auto flex h-6 w-6 items-center justify-center rounded-md bg-primary font-bold text-primary-foreground"
-				>
-					F
+			{/if}
+			<Button
+				variant="ghost"
+				size="icon"
+				class="h-8 w-8 shrink-0"
+				onclick={() => (isSidebarOpen = !isSidebarOpen)}
+			>
+				{#if isSidebarOpen}
+					<ChevronLeft class="h-4 w-4" />
+				{:else}
+					<Menu class="h-4 w-4" />
+				{/if}
+			</Button>
+		</div>
+
+		<!-- Sidebar Content -->
+		<div class="flex-1 space-y-4 overflow-y-auto py-4">
+			<div class="px-3">
+				<div class="space-y-1">
+					<Button
+						variant="ghost"
+						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
+						href="/channels"
+					>
+						<Hash class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
+						{#if isSidebarOpen}<span>Channels</span>{/if}
+					</Button>
+					<Button
+						variant="ghost"
+						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
+						href="/dms"
+					>
+						<MessageSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
+						{#if isSidebarOpen}<span>DMs</span>{/if}
+					</Button>
+					<Button
+						variant="ghost"
+						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
+						href="/tasks"
+					>
+						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
+						{#if isSidebarOpen}<span>Tasks</span>{/if}
+					</Button>
+				</div>
+			</div>
+
+			{#if isSidebarOpen}
+				<div class="px-3">
+					<h3
+						class="mb-2 px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+					>
+						Recent Channels
+					</h3>
+					<div class="space-y-1">
+						<Button variant="ghost" class="h-8 w-full justify-start px-3 text-sm font-normal">
+							# general
+						</Button>
+						<Button variant="ghost" class="h-8 w-full justify-start px-3 text-sm font-normal">
+							# development
+						</Button>
+						<Button variant="ghost" class="h-8 w-full justify-start px-3 text-sm font-normal">
+							# design
+						</Button>
+					</div>
 				</div>
 			{/if}
 		</div>
 
-		<!-- Navigation -->
-		<nav class="flex-1 scrollbar-thin overflow-y-auto py-4">
-			<ul class="space-y-1 px-2">
-				<li>
-					<a
-						href="/channels"
-						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isSidebarOpen
-							? 'justify-start'
-							: 'justify-center'}"
-					>
-						<Hash class="h-4 w-4 {isSidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
-						{#if isSidebarOpen}<span>Channels</span>{/if}
-					</a>
-				</li>
-				<li>
-					<a
-						href="/dms"
-						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isSidebarOpen
-							? 'justify-start'
-							: 'justify-center'}"
-					>
-						<MessageSquare class="h-4 w-4 {isSidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
-						{#if isSidebarOpen}<span>Direct Messages</span>{/if}
-					</a>
-				</li>
-				<li>
-					<a
-						href="/tasks"
-						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isSidebarOpen
-							? 'justify-start'
-							: 'justify-center'}"
-					>
-						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
-						{#if isSidebarOpen}<span>Tasks</span>{/if}
-					</a>
-				</li>
-			</ul>
-		</nav>
-
 		<!-- Sidebar Footer -->
-		<div class="border-t p-2">
-			<Button
-				variant="ghost"
-				class="w-full {isSidebarOpen ? 'justify-between' : 'justify-center'} px-3"
-				onclick={() => (isSidebarOpen = !isSidebarOpen)}
-			>
-				{#if isSidebarOpen}
-					<span class="text-sm">Collapse</span>
-					<ChevronLeft class="h-4 w-4" />
-				{:else}
-					<ChevronRight class="h-4 w-4" />
-				{/if}
-			</Button>
+		<div class="mt-auto border-t p-3">
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							class="w-full justify-start {isSidebarOpen ? 'px-2' : 'justify-center px-0'}"
+						>
+							<div
+								class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+							>
+								<User class="h-4 w-4" />
+							</div>
+							{#if isSidebarOpen}
+								<div class="ml-2 flex flex-col items-start overflow-hidden text-sm">
+									<span class="w-full truncate font-medium">User Name</span>
+									<span class="w-full truncate text-xs text-muted-foreground">user@flora.app</span>
+								</div>
+							{/if}
+						</Button>
+					{/snippet}
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content align="end" class="w-56">
+					<DropdownMenu.Label>My Account</DropdownMenu.Label>
+					<DropdownMenu.Separator />
+					<DropdownMenu.Item>
+						{#snippet child({ props })}
+							<a href="/settings" {...props}>
+								<Settings class="mr-2 h-4 w-4" />
+								<span>Settings</span>
+							</a>
+						{/snippet}
+					</DropdownMenu.Item>
+					<DropdownMenu.Item
+						onclick={() => {
+							authState.logout();
+							void goto('/');
+						}}
+					>
+						<LogOut class="mr-2 h-4 w-4" />
+						<span>Log out</span>
+					</DropdownMenu.Item>
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
 		</div>
 	</aside>
 
-	<!-- Main Content Area -->
-	<div class="relative flex flex-1 flex-col overflow-hidden">
+	<!-- Main Content Wrapper -->
+	<div class="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
 		<!-- Header -->
-		<header class="z-10 flex h-14 shrink-0 items-center gap-4 border-b bg-background px-4 lg:px-6">
-			<!-- Mobile sidebar toggle -->
-			<Button
-				variant="ghost"
-				size="icon"
-				class="md:hidden"
-				onclick={() => (isSidebarOpen = !isSidebarOpen)}
-			>
-				<Menu class="h-5 w-5" />
-				<span class="sr-only">Toggle Sidebar</span>
-			</Button>
-
-			<!-- Context Title -->
-			<div class="flex items-center gap-2 font-semibold">
-				<Hash class="h-4 w-4 text-muted-foreground" />
-				<span>general</span>
-			</div>
-
-			<!-- Global Search -->
-			<div class="mx-auto flex max-w-2xl flex-1 justify-center px-4">
-				<div class="relative hidden w-full max-w-md md:block">
+		<header
+			class="z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background px-4"
+		>
+			<div class="flex flex-1 items-center gap-4">
+				<div class="relative w-full max-w-md">
 					<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
 					<Input
 						type="search"
-						placeholder="Search across workspace..."
-						class="h-9 w-full rounded-full bg-muted/50 pr-4 pl-9 focus-visible:ring-primary"
+						placeholder="Search messages, tasks, files..."
+						class="w-full bg-muted/50 pl-9 focus-visible:bg-background"
 					/>
 				</div>
 			</div>
 
-			<!-- Right Actions -->
-			<div class="flex items-center gap-2">
-				<!-- Right Panel Toggle -->
+			<div class="ml-4 flex items-center gap-2">
 				<Button
 					variant="ghost"
 					size="icon"
 					onclick={() => (isRightPanelOpen = !isRightPanelOpen)}
-					class="hidden text-muted-foreground hover:text-foreground sm:flex"
+					title={isRightPanelOpen ? 'Close AI Panel' : 'Open AI Panel'}
+					class={isRightPanelOpen ? 'bg-muted text-primary' : ''}
 				>
 					{#if isRightPanelOpen}
 						<PanelRightClose class="h-5 w-5" />
 					{:else}
-						<PanelRightOpen class="h-5 w-5" />
+						<Sparkles class="h-5 w-5 text-primary" />
 					{/if}
 				</Button>
-
-				<!-- User Profile / Settings -->
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger>
-						<Button variant="ghost" size="icon" class="overflow-hidden rounded-full border">
-							<User class="h-5 w-5" />
-						</Button>
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content align="end">
-						<DropdownMenu.Label>My Account</DropdownMenu.Label>
-						<DropdownMenu.Separator />
-						<DropdownMenu.Item><Settings class="mr-2 h-4 w-4" /> Settings</DropdownMenu.Item>
-						<DropdownMenu.Separator />
-						<DropdownMenu.Item
-							onclick={() => authState.logout()}
-							class="text-destructive focus:text-destructive"
-							><LogOut class="mr-2 h-4 w-4" /> Logout</DropdownMenu.Item
-						>
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
 			</div>
 		</header>
 
-		<!-- Content + Right Panel wrapper -->
+		<!-- Main Split Area -->
 		<div class="flex flex-1 overflow-hidden">
-			<!-- Main Page Content -->
-			<main class="relative flex flex-1 flex-col overflow-y-auto bg-background">
-				{@render children()}
+			<!-- View Container -->
+			<main class="relative flex-1 overflow-auto">
+				{@render children?.()}
 			</main>
 
-			<!-- Right Panel (Contextual) -->
+			<!-- AI Insight Panel -->
 			{#if isRightPanelOpen}
 				<aside
-					class="animate-in slide-in-from-right-8 hidden w-80 shrink-0 overflow-y-auto border-l bg-background duration-200 sm:block"
+					class="z-10 flex w-80 shrink-0 flex-col overflow-hidden border-l bg-muted/10 shadow-xl"
 				>
-					<div class="flex h-14 items-center justify-between border-b px-4">
-						<h3 class="text-sm font-semibold">Thread Details</h3>
+					<div class="flex h-12 items-center justify-between border-b bg-muted/30 px-4">
+						<div class="flex items-center gap-2 text-sm font-semibold text-primary">
+							<Sparkles class="h-4 w-4" />
+							AI Insight Panel
+						</div>
 						<Button
 							variant="ghost"
 							size="icon"
-							class="h-8 w-8"
+							class="h-6 w-6"
 							onclick={() => (isRightPanelOpen = false)}
 						>
-							<PanelRightClose class="h-4 w-4" />
+							<PanelRightOpen class="h-4 w-4" />
 						</Button>
 					</div>
-					<div class="flex flex-col gap-4 p-4 text-sm">
-						<!-- Placeholder content for context panel -->
-						<div class="rounded-lg border bg-muted/20 p-3">
-							<div class="mb-2 flex items-center gap-2 font-medium text-primary">
-								<Sparkles class="h-4 w-4" />
-								<span>AI Summary</span>
-							</div>
-							<p class="text-xs leading-relaxed text-muted-foreground">
-								This feature uses an external API (Feature Flag: ON). The team discussed the recent
-								VPS performance issues and agreed to migrate the database by next Friday.
-							</p>
+					<div class="flex flex-1 flex-col items-center justify-center p-4 text-center">
+						<div class="mb-4 rounded-full bg-primary/10 p-3">
+							<Sparkles class="h-6 w-6 text-primary" />
 						</div>
-
-						<p class="mt-8 text-center text-muted-foreground">
-							Select a message or task to view details here.
+						<h3 class="mb-1 text-sm font-medium">How can I help you today?</h3>
+						<p class="mb-4 text-xs text-muted-foreground">
+							Ask me to summarize discussions, generate tasks, or find documents.
 						</p>
+						<div class="w-full">
+							<Input placeholder="Ask AI..." class="w-full" />
+						</div>
 					</div>
 				</aside>
 			{/if}
