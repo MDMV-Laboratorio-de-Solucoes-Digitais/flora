@@ -1,8 +1,8 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-15 (ciclo 005)  
+**Atualizado em:** 2026-11-15 (ciclo 009)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
-**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-005`, `.specify/assessments/003-005`, `OBJETIVO.md`.  
+**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-009`, `.specify/assessments/003-009`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 ## 1) Visão e horizonte
@@ -15,44 +15,38 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 | Trilha | Estado | Evidência resumida |
 |---|---|---|
-| Governança/SpecKit | Em andamento (maduro) | Constituição v1.2.0; specs 001-005; assessments 003-005 (go); bug flow pontual registrado |
-| Direção estratégica | Atualizada (ciclo 005) | Norte “alternativa ao Macro para PMEs em VPS barata”, MVP 80/20 e debloat documentados |
-| Baseline determinística Rust (local) | Parcialmente verificada | `cargo check -p flora-api -p flora-core`, `fmt --check`, `test --workspace --no-run`, `test -p flora-core --lib` (8), `test -p flora-tests --lib` (54) ok; compose config ok |
-| Runtime e2e (Postgres/Valkey/Meilisearch/OIDC) | NV/incompleto | Requer execução integrada com serviços; smoke ponta a ponta não evidenciado neste ambiente |
-| Frontend canônico (`apps/frontend`) | Scaffold parcial | Svelte 5 presente; contrato com backend e fluxos núcleo desalinhados/incompletos |
-| Núcleo de produto (auth/tenancy, chat, tarefas, arquivos, busca, notificações, realtime) | Parcial e heterogêneo | Rotas/serviços/modelos existem; P0s em segurança de contexto, wiring e completude de fluxos |
+| Governança/SpecKit | Em andamento (maduro) | Constituição v1.2.0; specs 001-009; assessments 003-009 (go) |
+| Direção estratégica | Atualizada | Norte “alternativa ao Macro para PMEs em VPS barata”, MVP 80/20 e debloat documentados |
+| Baseline determinística Rust (local) | Parcialmente verificada | `cargo fmt --check`, `cargo check -p flora-api -p flora-core -p flora-tests`, `test -p flora-core --lib` (8), `test -p flora-tests --lib` (56 pass, 5 ignored) ok |
+| Select-org DB-backed (local/CI config) | Parcialmente verificado | 5 testes `#[ignore]` passaram localmente em Postgres 18; job `db-tests` adicionado em `.github/workflows/rust.yml` (execução remota PR: NV) |
+| Smoke integrado dev (`select org → workspace → task`) | Evidenciado (alternativo) / NV compose-documentado | rc=0 em stack efêmera alt-port (pg18:15432, valkey:16379, meili:17700); bloqueio compose por 5432 ocupado e migração `uuidv7()` incompatível com pg16 do compose |
+| Frontend canônico (`apps/frontend`) | Scaffold + fatia mínima | Callback `state`, select-org/token rotation, guard org, workspace→task via API (ciclo 009); verificação determinística completa NV |
+| Núcleo de produto (auth/tenancy, chat, tarefas, arquivos, busca, notificações, realtime) | Parcial e heterogêneo | Rotas/serviços/modelos existem; P0s em segurança/tenancy consistente, compatibilidade dev, wiring e completude de fluxos |
 
 ## 3) Marcos concluídos / em andamento
 
 - [x/~] Workspace Rust e crates de domínio/serviço estabelecidos; `flora-api` como entrypoint real.
-- [x/~] Specs 001-003 com implementação parcial e drift reconhecido; ciclos 003-004 (PKCE/baseline, compose dev + consolidação docs) concluídos.
-- [x] Ciclo 005: reframe estratégico (Macro-alternative MVP para PMEs/VPS barata), assessment/spec/plan/tasks e pesquisa consolidada.
-- [x] Ciclos 006-007: hardening JWT/tenant em rotas núcleo, `POST /api/v1/auth/select-organization` (membership + rotação de sessão/jti) e `test-flora.sh` Bearer/JWT (PRs #204-#210, CI verde, mergeados em `dev`).
-- [~] Ciclo 008 (este incremento): testes de contrato CI-safe para `select-organization` e caminho de smoke dev reproduzível sem OIDC (`scripts/dev-smoke-session.sql`, `docs/dev-smoke.md`); casos DB-backed em CI e execução integrada real **NV**.
-- [~] Frontend Svelte 5 canônico iniciado/desalinhado com contratos auth/tenant atuais; `apps/web` não-canônico ainda presente.
+- [x] Ciclos 003-008: PKCE/baseline, compose dev, hardening JWT/tenant, `select-organization` + rotação jti, testes contrato CI-safe e bootstrap de smoke dev (PRs #204–#211, CI verde, mergeados em `dev`).
+- [~] Ciclo 009 (este incremento): testes DB-backed env-gated/`#[ignore]` para `select-organization` (sucesso/rotação, não-membro, sessão ausente/inativa/mismatch), job CI `db-tests` (Postgres), smoke integrado executado com evidência (rc=0, alt-port/pg18) e fatia mínima frontend (state/callback, select-org/token rotation, workspace→task). **Pendente:** PR/CI remoto/merge/sync; NV compose pg16/`uuidv7` e verificação frontend completa.
+- [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 006 candidato)
-1. **Auth/contexto/tenancy consistente:** validar JWT/sessão/org nas rotas críticas; reduzir confiança em headers crus; fechar lacunas PKCE/OIDC prioritárias com testes/evidência.
-2. **Fatia vertical e2e mínima:** `workspace → canal → mensagem` (e/ou tarefa) com persistência, leitura e realtime mínimo verificáveis em dev.
-3. **Contrato frontend↔backend (caminho feliz):** alinhar endpoints/protocolo/contexto para o fluxo núcleo ou prover smoke API reproduzível.
-4. **Arquivos básicos reais:** upload/download binário e contrato/quotas coerentes para o escopo Seed.
-5. **Wiring essencial:** indexação de busca e eventos→notificações para mutações core do fluxo escolhido.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 010 candidato)
+1. **Compatibilidade dev/compose e smoke documentado:** reconciliar `docker-compose.yml`/migração para `uuidv7` no Postgres alvo e evidenciar `docs/dev-smoke.md` via caminho documentado.
+2. **CI/evidência remota:** confirmar job `db-tests` verde no PR/`dev`; ampliar cobertura DB de contratos críticos conforme risco.
+3. **Auth/contexto/tenancy consistente:** session authority no extrator/fluxos, reduzir confiança em headers crus, alinhar contratos frontend↔backend no caminho feliz.
+4. **Fatia vertical e2e mínima:** `workspace → canal → mensagem` e/ou tarefa com persistência, leitura e realtime mínimo verificáveis em dev.
+5. **Arquivos básicos reais e wiring essencial:** upload/download binário, quotas coerentes, indexação de busca e eventos→notificações para mutações core.
 
 ### P1 — Consolidação do Seed
-6. **Postgres-first opcionalidade:** FTS/jobs/realtime simples onde viável; tornar Valkey/Meilisearch/OIDC realmente opcionais por perfil.
-7. **Qualidade/integração:** testes de integração/contrato com serviços, estabilização frontend (lint/tests) e gates CI relevantes.
-8. **Operabilidade:** health/readiness reais, limites básicos, observabilidade mínima, backup/restore documentado/testável.
-9. **Higiene:** reconciliar README/spec tasks com realidade; definir destino de `apps/web`.
+6. **Postgres-first opcionalidade:** FTS/jobs/realtime simples; tornar Valkey/Meilisearch/OIDC realmente opcionais por perfil.
+7. **Qualidade/integração:** estabilização frontend (lint/check/build/tests), testes integração/contrato com serviços e gates CI relevantes.
+8. **Operabilidade e higiene:** health/readiness reais, limites, observabilidade mínima, backup/restore; reconciliar README/spec tasks e destino de `apps/web`.
 
-### P2 — Produto (pós-Seed estável)
-10. Docs/notas markdown leves, permissões/compartilhamento mais finos, import/export, digest/email opcional.
-11. Ajustes de UX Svelte 5 para produtividade PME (sem replicar complexidade Macro).
-
-### P3 — Expansão controlada (demanda comprovada)
-12. Sprout/Grove/Forest: PGMQ/RustFS/Meilisearch/Valkey/OIDC avançado, réplicas, workers, HA/observabilidade — somente com necessidade e medição.
-13. Integrações/funcionalidades pesadas (email sync completo, calls, CRM/databases, agents avançados, Tauri) apenas como módulos opcionais e após núcleo confiável.
+### P2–P3 — Produto e expansão controlada
+9. Docs/notas leves, permissões finas, import/export, digest/email opcional; ajustes UX PME.
+10. Sprout/Grove/Forest e módulos pesados/opcionais apenas com necessidade/demanda comprovada.
 
 ## 5) Debloat: mapa keep/replace/defer (resumo)
 
@@ -62,9 +56,8 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 ## 6) Critérios para avançar
 
-- **Seed utilizável (MVP P0):** auth/tenancy consistente + fluxo núcleo e2e verificável (mensagem ou tarefa) em ambiente dev reprodutível, com evidência e verificações determinísticas rastreadas; perfil operável em VPS modesta.
-- **Sprout/Grove:** após Seed estável e necessidade comprovada de componentes adicionais/performance.
-- **Forest:** após requisitos claros de escala/resiliência e capacidade operacional.
+- **Seed utilizável (MVP P0):** auth/tenancy consistente + fluxo núcleo e2e verificável (mensagem ou tarefa) em ambiente dev reprodutível e compatível com documentação, com evidência rastreada; perfil operável em VPS modesta.
+- **Sprout/Grove/Forest:** após Seed estável e necessidade comprovada de componentes/performance/escala.
 
 ## 7) Fora de escopo até decisão explícita
 

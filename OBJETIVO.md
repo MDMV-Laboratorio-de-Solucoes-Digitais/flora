@@ -1,8 +1,8 @@
 # OBJETIVO — Flora
 
-**Data da consolidação:** 2026-11-15 (atualizado no ciclo 005)  
+**Data da consolidação:** 2026-11-15 (atualizado no ciclo 009)  
 **Escopo:** repositório `flora` (workspace Rust modular monolith + `apps/frontend` Svelte 5).  
-**Fontes:** inspeção do código/artefatos locais, `.specify/memory/constitution.md`, `specs/001-005`, `.specify/assessments/003-005`, verificações locais executadas em 2026-11-15, e pesquisa consolidada em `docs/research/2026-11-15-flora-seed-80-20-research.md` e `docs/research/2026-11-15-macro-alternative-80-20-research.md`.
+**Fontes:** inspeção do código/artefatos locais, `.specify/memory/constitution.md`, `specs/001-009`, `.specify/assessments/003-009`, verificações locais executadas em 2026-11-15, e pesquisa consolidada em `docs/research/2026-11-15-flora-seed-80-20-research.md` e `docs/research/2026-11-15-macro-alternative-80-20-research.md`.
 
 ## 1) Norte estratégico (o que a Flora quer ser)
 
@@ -36,33 +36,32 @@ Princípios diretores:
 ## 3) Estado atual (consolidado em 2026-11-15)
 
 ### 3.1 Governança e artefatos
-- Constituição v1.2.0; specs 001-004 (e 005 neste ciclo); assessments 003-004 (go) e 005 (go, reframe estratégico). Bug flow SpecKit usado pontualmente para correção de CI (registro em `.specify/bugs/`).
-- Documentação de direção consolidada em `OBJETIVO.md`, `ROADMAP.md` e pesquisas em `docs/research/`.
+- Constituição v1.2.0; specs 001-009; assessments 003-009 (go nos ciclos executados). Bug flow SpecKit usado pontualmente. Documentação de direção em `OBJETIVO.md`, `ROADMAP.md` e `docs/research/`.
 
 ### 3.2 Implementação observada
-- **Backend:** `flora-api` (Axum) como entrypoint real (config/pool/migrations/AppState/router). `flora-core` concentra domínio/infra (config, DB, modelos, repos, serviços, storage). Crates de feature (`flora-messaging/search/files/notifications/tasks`) existem com implementações parciais/duplicação em relação ao core.
-- **Capacidades presentes (heterogêneas):** health, auth/OIDC com PKCE e emissão de JWT/sessão (lacunas), rotas de org/workspace/canais/mensagens/tarefas/arquivos (metadados)/busca/notificações, WebSocket com persistência/publicação parcial.
-- **Frontend:** `apps/frontend` (Svelte 5, scaffold/UI parcial) é o alvo canônico; `apps/web` legado/importado permanece não-canônico.
-- **Dev/infra:** `docker-compose.yml` para Postgres/Valkey/Meilisearch (ciclo 004); workflows CI Rust e frontend em `.github/workflows/`.
+- **Backend:** `flora-api` (Axum) como entrypoint real. `flora-core` concentra domínio/infra; crates de feature existem com implementação parcial/duplicação.
+- **Capacidades presentes (heterogêneas):** health, auth/OIDC com PKCE e JWT/sessão, `POST /api/v1/auth/select-organization` (membership + rotação jti/sessão), rotas de org/workspace/canais/mensagens/tarefas/arquivos/busca/notificações, WebSocket com persistência/publicação parcial.
+- **Frontend:** `apps/frontend` (Svelte 5) é o alvo canônico; `apps/web` legado/importado não-canônico. Ciclo 009 adiciona fatia mínima (callback `state`, select-org + rotação de token, guards, workspace→task via API).
+- **Dev/infra:** `docker-compose.yml` (Postgres/Valkey/Meilisearch), workflows CI Rust/frontend; CI Rust inclui job `db-tests` (Postgres) para testes DB-backed `select-organization` (ciclo 009).
 
 ### 3.3 Verificado localmente (evidência executada, 2026-11-15)
-- `cargo check -p flora-api -p flora-core` — **ok**.
+- `cargo check -p flora-api -p flora-core -p flora-tests` — **ok**.
 - `cargo fmt --all -- --check` — **ok**.
-- `cargo test --workspace --no-run` — **ok**.
 - `cargo test -p flora-core --lib` — **8 passed, 0 failed**.
-- `cargo test -p flora-tests --lib` — **54 passed, 0 failed**.
-- `docker compose config -q` — **ok** (compose dev).
+- `cargo test -p flora-tests --lib` — **56 passed, 5 ignored** (DB-backed `select-organization` ignorados por padrão).
+- DB-backed `select-organization` (env-gated/`#[ignore]`): `FLORA_DATABASE__POSTGRES_URL=... cargo test -p flora-tests contract::auth::db_select_organization -- --ignored --test-threads=1` — **5 passed** (Postgres 18, migrações aplicadas).
+- Smoke integrado `docs/dev-smoke.md` (`select org → workspace → task`) — **executado (rc=0)** em stack efêmera com portas alternativas (Postgres 18:15432, Valkey 16379, Meilisearch 17700), seed + `scripts/dev-smoke-session.sql` + `test-flora.sh`: select-org 200/token org-scoped, workspaces listados, task criada.
 
-**NV/não exercitado neste ambiente:** runtime ponta a ponta com Postgres/Valkey/Meilisearch/OIDC, migrações em execução integrada, testes de integração/contrato com serviços, smoke de API com dependências ativas, e execução remota completa de CI/Forgejo Actions pós-correções além do registrado em artefatos.
+**NV/não exercitado ou com nuance neste ambiente:** execução remota do CI/PR (incl. job `db-tests`) e merge; smoke via `docker compose` documentado bloqueado por porta host `5432` ocupada e migração `uuidv7()` incompatível com `postgres:16-alpine` (compose) — evidenciado com Postgres 18; reconciliação compose/imagem/migração pendente; verificação determinística completa do `apps/frontend` (`check/lint/build/tests`) dependente de ambiente/toolchain (bun 1.4.4 presente, execução completa NV); runtime e2e com OIDC/JWKS real permanece NV.
 
 ### 3.4 Gaps prioritários (o que falta para o MVP P0)
-- **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável.
-- **Fluxos e2e núcleo:** alinhar contrato frontend↔backend e viabilizar caminho feliz verificável (workspace→canal→mensagem e/ou tarefa).
+- **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável; session authority consistente no extrator.
+- **Fluxos e2e núcleo:** consolidar caminho feliz verificável (workspace→canal→mensagem e/ou tarefa) com contratos estáveis frontend↔backend e realtime mínimo.
+- **Compatibilidade dev/compose:** reconciliar `docker-compose.yml`/migração para suporte `uuidv7` no Postgres alvo (16 vs 18/extensão/função) e validar smoke pelo caminho documentado.
 - **Realtime:** fanout/assinatura efetiva para clientes WS (além de persistência/publicação pontual).
 - **Arquivos:** suportar binário/upload/download real e alinhar quota/escopo.
 - **Busca/notificações:** wiring de indexação e eventos→notificações para mutações core.
-- **Opcionalidade/debloat:** tornar componentes não essenciais realmente opcionais (Postgres-first) e simplificar operação para perfil Seed/VPS barata.
-- **Drift/higiene:** reconciliar README/spec tasks com estado real; tratar `apps/web` não-canônico.
+- **Opcionalidade/debloat e drift:** Postgres-first real, simplificar operação para Seed/VPS, reconciliar README/spec tasks e destino de `apps/web`.
 
 ## 4) Não-objetivos e guardrails
 
@@ -72,11 +71,11 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 009 recomendado)
+## 5) Próximo 80/20 (ciclo 010 recomendado)
 
-Avançar o MVP Seed com verificabilidade e caminho feliz mais próximos do integrado:
-1. **Cobertura DB de `select-organization`:** testes automatizados env-gated/`#[ignore]` ou job CI com Postgres para sucesso, membership negada e sessão inválida/inativa/inexistente.
-2. **Smoke integrado reproduzível:** executar `docs/dev-smoke.md` (`select org → workspace → task`) em ambiente com serviços e registrar evidência (ou NV detalhado).
-3. **Fatia mínima frontend↔backend:** alinhar callback `state`, seleção de organização/troca de token e slice `workspace → tarefa` no `apps/frontend` (ou smoke API oficial), mantendo segurança/tenancy.
+Consolidar verificabilidade integrada e compatibilidade dev, mantendo segurança/tenancy:
+1. **Reconciliar compose/migração `uuidv7`:** alinhar `docker-compose.yml` e/ou migração para Postgres suportado (ex.: pg18, extensão/função compatível) e evidenciar smoke `docs/dev-smoke.md` pelo caminho documentado.
+2. **CI/evidência remota:** validar job `db-tests` verde no PR e ampliar cobertura DB onde houver maior risco (ex.: sessão expirada por tempo, contratos adjacentes críticos).
+3. **Frontend/API alinhamento mínimo:** estabilizar slice auth→org→workspace→task (tipos/erros/workspace create/list dedicado), executar verificações determinísticas (`check/lint/build/tests`) e reduzir lacunas de tenancy/contrato para o fluxo núcleo.
 
-Detalhes: `specs/008-select-org-tests-and-dev-smoke/{spec,plan,tasks}.md`, `.specify/assessments/008-select-org-tests-and-dev-smoke/`, `ROADMAP.md`.
+Detalhes: `specs/009-db-smoke-frontend-slice/{spec,plan,tasks}.md`, `.specify/assessments/009-db-smoke-frontend-slice/`, `ROADMAP.md`.

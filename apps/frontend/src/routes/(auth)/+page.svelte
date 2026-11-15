@@ -18,11 +18,17 @@
 
 	async function handleLogin() {
 		try {
-			const redirectUri = encodeURIComponent(`${location.origin}/callback`);
-			const response = await fetch(`${API_BASE_URL}/api/v1/auth/login?redirect_uri=${redirectUri}`);
+			const redirectUri = `${location.origin}/callback`;
+			const response = await fetch(
+				`${API_BASE_URL}/api/v1/auth/login?redirect_uri=${encodeURIComponent(redirectUri)}`
+			);
 			const data = await response.json();
 			if (data.authorization_url) {
-				location.assign(data.authorization_url);
+				if (data.state && typeof sessionStorage !== 'undefined') {
+					sessionStorage.setItem('flora.oauth.state', String(data.state));
+					sessionStorage.setItem('flora.oauth.redirect_uri', redirectUri);
+				}
+				location.assign(String(data.authorization_url));
 			}
 		} catch (error) {
 			globalThis.console?.error('Failed to start login flow', error);

@@ -22,3 +22,40 @@ jobs:
         run: cargo build
       - name: Test
         run: cargo test
+
+  db-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      FLORA_DATABASE__POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/flora
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flora
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.0
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          rustup toolchain install 1.98.0 --profile minimal --no-self-update
+          rustup default 1.98.0
+          rustc --version
+          cargo --version
+      - name: Run DB-backed select-organization tests
+        run: cargo test -p flora-tests contract::auth::db_select_organization -- --ignored --test-threads=1

@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { authState } from '$lib/state/AuthState.svelte';
 	import {
 		Search,
@@ -24,6 +27,30 @@
 	// App state
 	let isSidebarOpen = $state(true);
 	let isRightPanelOpen = $state(false);
+
+	function enforceAuth() {
+		if (typeof window === 'undefined') return;
+		if (!authState.isAuthenticated || !authState.token) {
+			void goto('/');
+			return;
+		}
+		const path = page.url.pathname;
+		if (!authState.organizationId && path !== '/select-org') {
+			void goto('/select-org');
+		}
+	}
+
+	onMount(() => {
+		enforceAuth();
+	});
+
+	$effect(() => {
+		page.url.pathname;
+		authState.isAuthenticated;
+		authState.token;
+		authState.organizationId;
+		enforceAuth();
+	});
 </script>
 
 <div class="flex h-screen w-full overflow-hidden bg-background">
