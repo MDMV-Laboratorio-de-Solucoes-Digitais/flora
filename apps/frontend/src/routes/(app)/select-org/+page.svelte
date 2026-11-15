@@ -15,18 +15,18 @@
 	};
 
 	let organizations = $state<Organization[]>([]);
-	let loading = $state(true);
-	let error = $state('');
+	let isLoading = $state(true);
+	let errorMessage = $state('');
 	let createName = $state('');
 	let createSlug = $state('');
-	let submitting = $state(false);
+	let isSubmitting = $state(false);
 
 	function slugify(value: string): string {
 		return value
 			.toLowerCase()
 			.trim()
-			.replace(/[^a-z0-9]+/g, '-')
-			.replace(/(^-|-$)+/g, '');
+			.replaceAll(/[^a-z0-9]+/g, '-')
+			.replaceAll(/(^-|-$)+/g, '');
 	}
 
 	$effect(() => {
@@ -36,20 +36,20 @@
 	});
 
 	async function loadOrganizations() {
-		loading = true;
-		error = '';
+		isLoading = true;
+		errorMessage = '';
 		try {
 			organizations = await ApiClient.request<Organization[]>('/api/v1/organizations');
-		} catch (e) {
-			error = (e as Error).message || 'Failed to load organizations';
+		} catch (error_) {
+			errorMessage = (error_ as Error).message || 'Failed to load organizations';
 		} finally {
-			loading = false;
+			isLoading = false;
 		}
 	}
 
 	async function selectOrganization(organizationId: string) {
-		submitting = true;
-		error = '';
+		isSubmitting = true;
+		errorMessage = '';
 		try {
 			const response = await ApiClient.request<{
 				session_token: string;
@@ -61,17 +61,17 @@
 			});
 			authState.setOrganization(response.session_token, response.organization_id);
 			await goto('/tasks');
-		} catch (e) {
-			error = (e as Error).message || 'Failed to select organization';
+		} catch (error_) {
+			errorMessage = (error_ as Error).message || 'Failed to select organization';
 		} finally {
-			submitting = false;
+			isSubmitting = false;
 		}
 	}
 
 	async function createAndSelect() {
 		if (!createName.trim() || !createSlug.trim()) return;
-		submitting = true;
-		error = '';
+		isSubmitting = true;
+		errorMessage = '';
 		try {
 			const created = await ApiClient.request<{ id: string; name: string; slug: string }>(
 				'/api/v1/organizations',
@@ -81,10 +81,10 @@
 				}
 			);
 			await selectOrganization(created.id);
-		} catch (e) {
-			error = (e as Error).message || 'Failed to create organization';
+		} catch (error_) {
+			errorMessage = (error_ as Error).message || 'Failed to create organization';
 		} finally {
-			submitting = false;
+			isSubmitting = false;
 		}
 	}
 
@@ -109,17 +109,17 @@
 		</p>
 	</div>
 
-	{#if error}
+	{#if errorMessage}
 		<div
 			class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
 		>
-			{error}
+			{errorMessage}
 		</div>
 	{/if}
 
 	<div class="space-y-3 rounded-lg border p-4">
 		<h2 class="font-semibold">Your organizations</h2>
-		{#if loading}
+		{#if isLoading}
 			<p class="text-sm text-muted-foreground">Loading...</p>
 		{:else if organizations.length === 0}
 			<p class="text-sm text-muted-foreground">No organizations found. Create one below.</p>
@@ -133,7 +133,9 @@
 								{org.slug}{org.role ? ` · ${org.role}` : ''}
 							</div>
 						</div>
-						<Button disabled={submitting} onclick={() => selectOrganization(org.id)}>Select</Button>
+						<Button disabled={isSubmitting} onclick={() => selectOrganization(org.id)}
+							>Select</Button
+						>
 					</div>
 				{/each}
 			</div>
@@ -151,7 +153,7 @@
 			<Input id="org-slug" bind:value={createSlug} placeholder="acme-corp" />
 		</div>
 		<Button
-			disabled={submitting || !createName.trim() || !createSlug.trim()}
+			disabled={isSubmitting || !createName.trim() || !createSlug.trim()}
 			onclick={createAndSelect}
 		>
 			Create and select

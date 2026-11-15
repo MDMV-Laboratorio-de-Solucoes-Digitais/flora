@@ -22,11 +22,11 @@
 	let selectedWorkspaceId = $state<string>('');
 	let title = $state('');
 	let description = $state('');
-	let assignToMe = $state(true);
-	let loading = $state(true);
-	let submitting = $state(false);
-	let error = $state('');
-	let success = $state('');
+	let shouldAssignToMe = $state(true);
+	let isLoading = $state(true);
+	let isSubmitting = $state(false);
+	let errorMessage = $state('');
+	let successMessage = $state('');
 
 	function currentUserId(): string | null {
 		const id = authState.user?.id;
@@ -37,7 +37,7 @@
 		workspaces = await ApiClient.request<Workspace[]>('/api/v1/workspaces');
 		if (!selectedWorkspaceId) {
 			const stored = authState.workspaceId;
-			const preferred = workspaces.find((w) => w.id === stored) ?? workspaces[0];
+			const preferred = workspaces.find((workspace) => workspace.id === stored) ?? workspaces[0];
 			if (preferred) {
 				selectedWorkspaceId = preferred.id;
 				authState.setWorkspace(preferred.id);
@@ -50,23 +50,23 @@
 	}
 
 	async function refresh() {
-		loading = true;
-		error = '';
+		isLoading = true;
+		errorMessage = '';
 		try {
 			await loadWorkspaces();
 			await loadTasks();
-		} catch (e) {
-			error = (e as Error).message || 'Failed to load tasks/workspaces';
+		} catch (error_) {
+			errorMessage = (error_ as Error).message || 'Failed to load tasks/workspaces';
 		} finally {
-			loading = false;
+			isLoading = false;
 		}
 	}
 
 	async function createTask() {
-		if (!title.trim() || !selectedWorkspaceId) return;
-		submitting = true;
-		error = '';
-		success = '';
+		if (!selectedWorkspaceId || !title.trim()) return;
+		isSubmitting = true;
+		errorMessage = '';
+		successMessage = '';
 		try {
 			const body: Record<string, unknown> = {
 				title: title.trim(),
@@ -74,19 +74,19 @@
 			};
 			if (description.trim()) body.description = description.trim();
 			const uid = currentUserId();
-			if (assignToMe && uid) body.assignee_id = uid;
+			if (shouldAssignToMe && uid) body.assignee_id = uid;
 			const created = await ApiClient.request<ApiTask>('/api/v1/tasks', {
 				method: 'POST',
 				body: JSON.stringify(body)
 			});
-			success = `Task created: ${created.title}`;
+			successMessage = `Task created: ${created.title}`;
 			title = '';
 			description = '';
 			await loadTasks();
-		} catch (e) {
-			error = (e as Error).message || 'Failed to create task';
+		} catch (error_) {
+			errorMessage = (error_ as Error).message || 'Failed to create task';
 		} finally {
-			submitting = false;
+			isSubmitting = false;
 		}
 	}
 
@@ -109,19 +109,19 @@
 				Minimal happy-path slice: select workspace, create task, list assignee-scoped tasks.
 			</p>
 		</div>
-		<Button variant="outline" onclick={refresh} disabled={loading}>Refresh</Button>
+		<Button variant="outline" onclick={refresh} disabled={isLoading}>Refresh</Button>
 	</div>
 
-	{#if error}
+	{#if errorMessage}
 		<div
 			class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
 		>
-			{error}
+			{errorMessage}
 		</div>
 	{/if}
-	{#if success}
+	{#if successMessage}
 		<div class="rounded-md border border-green-500/30 bg-green-500/5 p-3 text-sm text-green-700">
-			{success}
+			{successMessage}
 		</div>
 	{/if}
 
@@ -135,13 +135,13 @@
 					class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
 					value={selectedWorkspaceId}
 					onchange={onWorkspaceChange}
-					disabled={loading || workspaces.length === 0}
+					disabled={isLoading || workspaces.length === 0}
 				>
 					{#if workspaces.length === 0}
 						<option value="">No workspaces available</option>
 					{:else}
-						{#each workspaces as ws (ws.id)}
-							<option value={ws.id}>{ws.name}</option>
+						{#each workspaces as workspace (workspace.id)}
+							<option value={workspace.id}>{workspace.name}</option>
 						{/each}
 					{/if}
 				</select>
@@ -155,17 +155,17 @@
 				<Input id="desc" bind:value={description} placeholder="Description" />
 			</div>
 			<label class="flex items-center gap-2 text-sm">
-				<input type="checkbox" bind:checked={assignToMe} />
+				<input type="checkbox" bind:checked={shouldAssignToMe} />
 				Assign to me (recommended so it appears in assignee-scoped list)
 			</label>
-			<Button disabled={submitting || !title.trim() || !selectedWorkspaceId} onclick={createTask}>
+			<Button disabled={isSubmitting || !title.trim() || !selectedWorkspaceId} onclick={createTask}>
 				Create task
 			</Button>
 		</div>
 
 		<div class="space-y-3 rounded-lg border p-4">
 			<h2 class="font-semibold">Tasks (assignee-scoped in org)</h2>
-			{#if loading}
+			{#if isLoading}
 				<p class="text-sm text-muted-foreground">Loading...</p>
 			{:else if tasks.length === 0}
 				<p class="text-sm text-muted-foreground">No tasks returned for current assignee/org.</p>

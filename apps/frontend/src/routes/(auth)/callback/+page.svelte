@@ -22,17 +22,19 @@
 			return;
 		}
 
-		const storedState =
-			typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('flora.oauth.state') : null;
-		const storedRedirectUri =
-			typeof sessionStorage !== 'undefined'
-				? sessionStorage.getItem('flora.oauth.redirect_uri')
-				: null;
+		if (typeof sessionStorage === 'undefined') {
+			await goto('/?error=storage_unavailable');
+			return;
+		}
+
+		const storedState = sessionStorage.getItem('flora.oauth.state');
 		if (storedState && storedState !== state) {
 			logger.error('auth', 'OIDC state mismatch');
 			await goto('/?error=state_mismatch');
 			return;
 		}
+
+		const storedRedirectUri = sessionStorage.getItem('flora.oauth.redirect_uri');
 
 		try {
 			const redirectUri = storedRedirectUri ?? `${location.origin}/callback`;
@@ -48,10 +50,8 @@
 			}>(`/api/v1/auth/callback?${query.toString()}`, {
 				method: 'GET'
 			});
-			if (typeof sessionStorage !== 'undefined') {
-				sessionStorage.removeItem('flora.oauth.state');
-				sessionStorage.removeItem('flora.oauth.redirect_uri');
-			}
+			sessionStorage.removeItem('flora.oauth.state');
+			sessionStorage.removeItem('flora.oauth.redirect_uri');
 			authState.login(response.session_token, { id: response.user_id }, null);
 			if (response.next_step === 'select_or_create_organization') {
 				await goto('/select-org');

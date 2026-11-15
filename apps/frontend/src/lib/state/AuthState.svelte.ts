@@ -8,7 +8,7 @@ type StoredAuth = {
 const STORAGE_KEY = 'flora.auth.v1';
 
 function canUseStorage(): boolean {
-	return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+	return globalThis.window !== undefined;
 }
 
 function loadStoredAuth(): StoredAuth {
@@ -16,7 +16,7 @@ function loadStoredAuth(): StoredAuth {
 		return { token: null, user: null, organizationId: null, workspaceId: null };
 	}
 	try {
-		const raw = window.localStorage.getItem(STORAGE_KEY);
+		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) return { token: null, user: null, organizationId: null, workspaceId: null };
 		const parsed = JSON.parse(raw) as Partial<StoredAuth>;
 		return {
@@ -58,7 +58,7 @@ export class AuthState {
 			workspaceId: this.workspaceId
 		};
 		try {
-			window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 		} catch {
 			// ignore storage failures in minimal slice
 		}
@@ -113,7 +113,7 @@ export class AuthState {
 		}
 		if (canUseStorage()) {
 			try {
-				window.localStorage.removeItem(STORAGE_KEY);
+				localStorage.removeItem(STORAGE_KEY);
 			} catch {
 				// ignore
 			}
