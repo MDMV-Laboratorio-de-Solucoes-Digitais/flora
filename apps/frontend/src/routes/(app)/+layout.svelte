@@ -6,7 +6,6 @@
 		MessageSquare,
 		Hash,
 		CheckSquare,
-		FileText,
 		Settings,
 		User,
 		LogOut,
@@ -23,20 +22,20 @@
 	let { children } = $props();
 
 	// App state
-	let sidebarOpen = $state(true);
-	let rightPanelOpen = $state(false);
+	let isSidebarOpen = $state(true);
+	let isRightPanelOpen = $state(false);
 </script>
 
 <div class="flex h-screen w-full overflow-hidden bg-background">
 	<!-- Sidebar -->
 	<aside
-		class="z-20 flex shrink-0 flex-col border-r bg-muted/30 transition-all duration-300 ease-in-out {sidebarOpen
+		class="z-20 flex shrink-0 flex-col border-r bg-muted/30 transition-all duration-300 ease-in-out {isSidebarOpen
 			? 'w-64'
 			: 'w-16'}"
 	>
 		<!-- Sidebar Header -->
 		<div class="flex h-14 items-center justify-between border-b px-4">
-			{#if sidebarOpen}
+			{#if isSidebarOpen}
 				<div class="flex items-center gap-2 truncate font-bold text-primary">
 					<div
 						class="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground"
@@ -60,34 +59,34 @@
 				<li>
 					<a
 						href="/channels"
-						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {sidebarOpen
+						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isSidebarOpen
 							? 'justify-start'
 							: 'justify-center'}"
 					>
-						<Hash class="h-4 w-4 {sidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
-						{#if sidebarOpen}<span>Channels</span>{/if}
+						<Hash class="h-4 w-4 {isSidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
+						{#if isSidebarOpen}<span>Channels</span>{/if}
 					</a>
 				</li>
 				<li>
 					<a
 						href="/dms"
-						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {sidebarOpen
+						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isSidebarOpen
 							? 'justify-start'
 							: 'justify-center'}"
 					>
-						<MessageSquare class="h-4 w-4 {sidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
-						{#if sidebarOpen}<span>Direct Messages</span>{/if}
+						<MessageSquare class="h-4 w-4 {isSidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
+						{#if isSidebarOpen}<span>Direct Messages</span>{/if}
 					</a>
 				</li>
 				<li>
 					<a
 						href="/tasks"
-						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {sidebarOpen
+						class="flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground {isSidebarOpen
 							? 'justify-start'
 							: 'justify-center'}"
 					>
-						<CheckSquare class="h-4 w-4 {sidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
-						{#if sidebarOpen}<span>Tasks</span>{/if}
+						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-3' : ''} text-muted-foreground" />
+						{#if isSidebarOpen}<span>Tasks</span>{/if}
 					</a>
 				</li>
 			</ul>
@@ -97,10 +96,10 @@
 		<div class="border-t p-2">
 			<Button
 				variant="ghost"
-				class="w-full {sidebarOpen ? 'justify-between' : 'justify-center'} px-3"
-				onclick={() => (sidebarOpen = !sidebarOpen)}
+				class="w-full {isSidebarOpen ? 'justify-between' : 'justify-center'} px-3"
+				onclick={() => (isSidebarOpen = !isSidebarOpen)}
 			>
-				{#if sidebarOpen}
+				{#if isSidebarOpen}
 					<span class="text-sm">Collapse</span>
 					<ChevronLeft class="h-4 w-4" />
 				{:else}
@@ -119,7 +118,7 @@
 				variant="ghost"
 				size="icon"
 				class="md:hidden"
-				onclick={() => (sidebarOpen = !sidebarOpen)}
+				onclick={() => (isSidebarOpen = !isSidebarOpen)}
 			>
 				<Menu class="h-5 w-5" />
 				<span class="sr-only">Toggle Sidebar</span>
@@ -149,10 +148,10 @@
 				<Button
 					variant="ghost"
 					size="icon"
-					onclick={() => (rightPanelOpen = !rightPanelOpen)}
+					onclick={() => (isRightPanelOpen = !isRightPanelOpen)}
 					class="hidden text-muted-foreground hover:text-foreground sm:flex"
 				>
-					{#if rightPanelOpen}
+					{#if isRightPanelOpen}
 						<PanelRightClose class="h-5 w-5" />
 					{:else}
 						<PanelRightOpen class="h-5 w-5" />
@@ -189,7 +188,7 @@
 			</main>
 
 			<!-- Right Panel (Contextual) -->
-			{#if rightPanelOpen}
+			{#if isRightPanelOpen}
 				<aside
 					class="animate-in slide-in-from-right-8 hidden w-80 shrink-0 overflow-y-auto border-l bg-background duration-200 sm:block"
 				>
@@ -199,7 +198,7 @@
 							variant="ghost"
 							size="icon"
 							class="h-8 w-8"
-							onclick={() => (rightPanelOpen = false)}
+							onclick={() => (isRightPanelOpen = false)}
 						>
 							<PanelRightClose class="h-4 w-4" />
 						</Button>
