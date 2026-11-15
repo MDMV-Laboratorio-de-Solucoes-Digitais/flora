@@ -1,4 +1,4 @@
-# Flora Dev Smoke (Cycle 008): `select-organization` → workspace → task
+# Flora Dev Smoke (Cycle 008, updated 010): `select-organization` → workspace → task
 
 Reproducible local smoke path without real OIDC, using `docker compose`, `dev-seed.sql`, and a deterministic pre-selection session/JWT bootstrap.
 
@@ -8,12 +8,17 @@ Reproducible local smoke path without real OIDC, using `docker compose`, `dev-se
 - Docker + Docker Compose
 - Rust toolchain (to run `flora-api`) and `psql` client (or `docker compose exec postgres psql ...`)
 - Repo checkout at this revision
+- **PostgreSQL 18+** for the documented compose path: `flora-core/src/migrations/sql/20240818000001_init_schema.sql` uses `DEFAULT uuidv7()` (native in PG18). `docker-compose.yml` uses `postgres:18-alpine`.
+
+> **Existing local volume note:** if you previously initialized `flora_postgres_data` with `postgres:16-alpine`, a PG16 data directory is not compatible with PG18. For a disposable dev reset: `docker compose down -v` (removes named volumes) then `docker compose up -d`. Do not reset non-disposable data without backup/migration.
+>
+> **Port conflict note:** if host `5432/6379/7700` are already in use, run compose with alternative host ports (e.g. an override/temporary mapping) and point `FLORA_DATABASE__POSTGRES_URL`, `FLORA_MESSAGING__VALKEY_URL`, `FLORA_SEARCH__MEILISEARCH_URL`, and `psql` commands to the chosen ports. The API/seed/bootstrap flow is the same.
 
 ## 1) Start dependencies
 ```bash
 docker compose up -d
 ```
-Services: Postgres `127.0.0.1:5432` (user/pass/db `postgres`/`postgres`/`flora`), Valkey `127.0.0.1:6379`, Meilisearch `127.0.0.1:7700` (dev key `flora-dev-master-key`).
+Services (default): Postgres `127.0.0.1:5432` (user/pass/db `postgres`/`postgres`/`flora`), Valkey `127.0.0.1:6379`, Meilisearch `127.0.0.1:7700` (dev master key `dev-meilisearch-master-key`, per compose).
 
 ## 2) Configure environment
 ```bash
@@ -22,7 +27,7 @@ cp .env.example .env
 # FLORA_DATABASE__POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/flora
 # Keep FLORA_JWT_SECRET consistent with the bootstrap token you use (see below).
 ```
-> Note: `AppConfig` default secret in code is `dev-secret-change-in-production` when `FLORA_JWT_SECRET` is unset, while `.env.example` sets `change-me-to-a-random-secret-at-least-32-characters-long`. Use **one** secret consistently for minting/validation.
+> Note: `AppConfig` default secret in code is `dev-secret-change-in-production` when `FLORA_JWT_SECRET` is unset, while `.env.example` sets `change-me-to-a-random-secret-at-least-32-characters-long`. Use **one** secret consistently for minting/validation. If you changed compose host ports, update URLs accordingly.
 
 ## 3) Run API (applies migrations on startup)
 ```bash
@@ -50,7 +55,7 @@ PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d flora -f scripts/dev-smoke-
 Use a matching pre-signed JWT for that session (claims: sub=Alice, jti as above, organization_id=nil, email=alice@acme.test). Pick the token that matches your `FLORA_JWT_SECRET`:
 
 - **If `FLORA_JWT_SECRET=change-me-to-a-random-secret-at-least-32-characters-long` (.env.example):**
-  `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJqdGkiOiIwMThmMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcmdhbml6YXRpb25faWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImFsaWNlQGFjbWUudGVzdCIsImV4cCI6MTc5NDc4NzIwMCwiaWF0IjoxNzYzMjUxMjAwLCJ2ZXIiOjF9.ix0i5Ec3GkxhGdXsCVVfrDHT2yb3gXbslNpKAkwODYo`
+  `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJqdGkiOiIwMThmMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcmdhbml6YXRpb25faWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImFsaWNlQGFjbWUudGVzdCIsImV4cCI6MTc5NDc4NzIwMCwiaWF0IjoxNzYzMjUxMjAwLCJ2ZXIiOjF9.AgxYRUAu7SpJ4N1HPw_dz4tp6f-YWhNZTdDL2DP1Yq4`
 - **If `FLORA_JWT_SECRET=dev-secret-change-in-production` (code default, unset env):**
   `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJqdGkiOiIwMThmMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcmdhbml6YXRpb25faWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImFsaWNlQGFjbWUudGVzdCIsImV4cCI6MTc5NDc4NzIwMCwiaWF0IjoxNzYzMjUxMjAwLCJ2ZXIiOjF9.zPbSy7mxjtwpa6nUH0TMuKoMFEuSPl_srbZz2QVTibQ`
 
