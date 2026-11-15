@@ -32,7 +32,7 @@
 <div class="space-y-4 rounded-lg border p-6 shadow-sm">
 	<div class="space-y-2">
 		<h2 class="text-2xl font-bold tracking-tight">Invite User</h2>
-		<p class="text-muted-foreground text-sm">Invite a new user to your workspace.</p>
+		<p class="text-sm text-muted-foreground">Invite a new user to your workspace.</p>
 	</div>
 
 	{#if successMessage}
@@ -49,7 +49,7 @@
 		<select
 			id="user-role"
 			bind:value={role}
-			class="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+			class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 		>
 			<option value="Admin">Admin</option>
 			<option value="Member">Member</option>

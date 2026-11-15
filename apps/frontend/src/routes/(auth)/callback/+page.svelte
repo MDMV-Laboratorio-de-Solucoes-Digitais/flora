@@ -38,5 +38,5 @@
 </script>
 
 <div class="flex h-screen items-center justify-center">
-	<p class="text-muted-foreground animate-pulse">Authenticating...</p>
+	<p class="animate-pulse text-muted-foreground">Authenticating...</p>
 </div>

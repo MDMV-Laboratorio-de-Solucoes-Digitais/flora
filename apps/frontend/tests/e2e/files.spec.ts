@@ -16,7 +16,9 @@ test.describe('File Upload Flow', () => {
 		});
 
 		// Check that the error message is displayed
-		await expect(page.locator('.error-message')).toContainText('File too large. Maximum size is 50MB.');
+		await expect(page.locator('.error-message')).toContainText(
+			'File too large. Maximum size is 50MB.'
+		);
 	});
 
 	test('handles network errors during upload gracefully', async ({ page }) => {
