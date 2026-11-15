@@ -11,8 +11,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
+use flora_core::repositories::PgMembershipRepository;
+use flora_core::traits::MembershipRepository;
 
 use crate::AppState;
+use crate::extractors::AuthExtractor;
 
 /// Request body for uploading a file.
 #[derive(Debug, Deserialize)]
@@ -52,30 +55,24 @@ pub fn create_files_router() -> Router<AppState> {
         .route("/{id}", delete(delete_file))
 }
 
-fn require_org_context(headers: &axum::http::HeaderMap) -> Result<(Uuid, Uuid)> {
-    let user_id = headers
-        .get("x-user-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::Unauthorized)?;
-
-    let org_id = headers
-        .get("x-organization-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| Uuid::parse_str(v).ok())
-        .ok_or(Error::OrganizationContextRequired)?;
-
-    Ok((user_id, org_id))
-}
-
 /// `POST /api/v1/files` — Record a file upload.
 /// Delegates to `FileService` for quota checking, MIME validation, and storage.
 async fn upload_file(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
     Json(req): Json<UploadFileRequest>,
 ) -> Result<(StatusCode, Json<FileResponse>)> {
-    let (user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
+
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let _ = membership_repo
+        .find_by_user_and_organization(user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
 
     let input = flora_core::models::CreateFileInput {
         name: req.name,
@@ -105,10 +102,13 @@ async fn upload_file(
 /// `GET /api/v1/files/{id}` — Get file metadata.
 async fn get_file(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(file_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<Json<FileResponse>> {
-    let (_user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
 
     let file = state.file_service.get_file(file_id).await?;
 
@@ -131,10 +131,14 @@ async fn get_file(
 /// `DELETE /api/v1/files/{id}` — Soft-delete a file.
 async fn delete_file(
     State(state): State<AppState>,
+    auth: AuthExtractor,
     Path(file_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
 ) -> Result<StatusCode> {
-    let (user_id, org_id) = require_org_context(&headers)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
 
     let file = state.file_service.get_file(file_id).await?;
 

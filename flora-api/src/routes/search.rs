@@ -8,9 +8,12 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use flora_core::error::Result;
+use flora_core::error::{Error, Result};
+use flora_core::repositories::PgMembershipRepository;
+use flora_core::traits::MembershipRepository;
 
 use crate::AppState;
+use crate::extractors::AuthExtractor;
 
 /// Query parameters for search.
 #[derive(Debug, Deserialize)]
@@ -54,14 +57,19 @@ pub fn create_search_router() -> Router<AppState> {
 /// Per T079, T080, T080.1.
 async fn search(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    auth: AuthExtractor,
     Query(params): Query<SearchQuery>,
 ) -> Result<Json<SearchResponse>> {
-    let org_id = headers
-        .get("x-organization-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| uuid::Uuid::parse_str(v).ok())
-        .ok_or(flora_core::error::Error::OrganizationContextRequired)?;
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let _ = membership_repo
+        .find_by_user_and_organization(auth.user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
 
     if params.q.trim().is_empty() {
         return Ok(Json(SearchResponse {

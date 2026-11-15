@@ -150,6 +150,19 @@ pub struct AuthExtractor {
     pub claims: flora_core::utils::jwt::FloraClaims,
 }
 
+impl AuthExtractor {
+    /// Ensures the token is scoped to a concrete organization (not the nil placeholder).
+    pub fn require_org(&self) -> Result<Uuid, (StatusCode, String)> {
+        if self.organization_id.is_nil() {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                "Organization context required; select an organization first".to_string(),
+            ));
+        }
+        Ok(self.organization_id)
+    }
+}
+
 impl<S> FromRequestParts<S> for AuthExtractor
 where
     S: Clone + Send + Sync + 'static,
