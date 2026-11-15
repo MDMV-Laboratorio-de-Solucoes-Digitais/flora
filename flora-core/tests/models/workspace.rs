@@ -11,7 +11,7 @@ fn test_workspace_creation() {
     assert_eq!(workspace.name, "Test Workspace");
     assert_eq!(workspace.description, Some("Description".to_owned()));
     assert_eq!(workspace.organization_id, org_id);
-    assert!(!workspace.id.to_string().is_empty());
+    assert_ne!(workspace.id.to_string(), "");
     assert_eq!(workspace.created_at, workspace.updated_at);
 }
 
@@ -23,7 +23,7 @@ fn test_workspace_creation_without_description() {
     assert_eq!(workspace.name, "Test Workspace");
     assert_eq!(workspace.description, None);
     assert_eq!(workspace.organization_id, org_id);
-    assert!(!workspace.id.to_string().is_empty());
+    assert_ne!(workspace.id.to_string(), "");
 }
 
 #[test]

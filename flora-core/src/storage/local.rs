@@ -53,6 +53,10 @@ impl StorageProvider for LocalFileSystem {
         Ok(tokio::fs::metadata(&full).await.is_ok())
     }
 
+    #[expect(
+        clippy::unused_async_trait_impl,
+        reason = "StorageProvider trait requires async fn; local backend has no async I/O for presigned URLs"
+    )]
     async fn presigned_url(&self, _path: &str, _expiry_secs: u64) -> Result<Option<String>> {
         Ok(None)
     }
