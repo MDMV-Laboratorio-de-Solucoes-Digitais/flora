@@ -14,13 +14,14 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 use uuid::Uuid;
 
-use flora_core::error::Result;
+use flora_core::error::{Error, Result};
 use flora_core::models::Session;
-use flora_core::repositories::{PgSessionRepository, PgUserRepository};
-use flora_core::traits::{SessionRepository, UserRepository};
+use flora_core::repositories::{PgMembershipRepository, PgSessionRepository, PgUserRepository};
+use flora_core::traits::{MembershipRepository, SessionRepository, UserRepository};
 use flora_core::utils::jwt::{FloraClaims, encode_token};
 use flora_core::utils::pkce::{derive_s256_challenge, generate_code_verifier, generate_state};
 
+use crate::extractors::AuthExtractor;
 use crate::state::oidc_transactions::OidcTransaction;
 
 use super::AppState;
@@ -37,6 +38,13 @@ pub struct AuthQuery {
 pub struct RefreshRequest {
     /// The session token to refresh.
     pub session_token: String,
+}
+
+/// Request body for selecting an organization context.
+#[derive(Debug, Deserialize)]
+pub struct SelectOrganizationRequest {
+    /// The organization to scope the session to.
+    pub organization_id: Uuid,
 }
 
 /// Response body for a successful login.
@@ -66,6 +74,7 @@ pub fn create_auth_router() -> Router<AppState> {
         .route("/callback", get(callback))
         .route("/logout", post(logout))
         .route("/refresh", post(refresh))
+        .route("/select-organization", post(select_organization))
 }
 
 /// `GET /auth/login` — Returns the OIDC authorization URL for redirect.
@@ -83,7 +92,7 @@ async fn login(
         .code_challenge_method
         .eq_ignore_ascii_case("S256")
     {
-        return Err(flora_core::Error::Configuration(
+        return Err(Error::Configuration(
             "oidc.code_challenge_method must be S256".to_owned(),
         ));
     }
@@ -110,7 +119,7 @@ async fn login(
 
     let scope = state.config.oidc.scopes.join(" ");
     let mut auth_url = Url::parse(&format!("{issuer}/oauth/v2/authorize"))
-        .map_err(|e| flora_core::Error::Configuration(format!("invalid oidc issuer_url: {e}")))?;
+        .map_err(|e| Error::Configuration(format!("invalid oidc issuer_url: {e}")))?;
     let _ = auth_url
         .query_pairs_mut()
         .append_pair("client_id", client_id)
@@ -143,20 +152,14 @@ async fn callback(
     State(state): State<AppState>,
     Query(params): Query<OidcCallbackParams>,
 ) -> Result<Json<serde_json::Value>> {
-    let code = params
-        .code
-        .as_deref()
-        .ok_or(flora_core::Error::Unauthorized)?;
-    let oauth_state = params
-        .state
-        .as_deref()
-        .ok_or(flora_core::Error::Unauthorized)?;
+    let code = params.code.as_deref().ok_or(Error::Unauthorized)?;
+    let oauth_state = params.state.as_deref().ok_or(Error::Unauthorized)?;
 
     let transaction = state
         .oidc_transactions
         .consume(oauth_state)
         .await?
-        .ok_or(flora_core::Error::Unauthorized)?;
+        .ok_or(Error::Unauthorized)?;
 
     // Exchange code for tokens via Zitadel token endpoint.
     let token_url = format!(
@@ -173,7 +176,7 @@ async fn callback(
         ("client_secret", state.config.oidc.client_secret.as_str()),
         ("code_verifier", transaction.code_verifier.as_str()),
     ])
-    .map_err(|e| flora_core::Error::OidcProvider(e.to_string()))?;
+    .map_err(|e| Error::OidcProvider(e.to_string()))?;
 
     let token_response = client
         .post(&token_url)
@@ -181,10 +184,10 @@ async fn callback(
         .body(form_data)
         .send()
         .await
-        .map_err(|e| flora_core::Error::OidcProvider(e.to_string()))?;
+        .map_err(|e| Error::OidcProvider(e.to_string()))?;
 
     if !token_response.status().is_success() {
-        return Err(flora_core::Error::OidcProvider(format!(
+        return Err(Error::OidcProvider(format!(
             "token exchange failed: {}",
             token_response.status()
         )));
@@ -193,11 +196,11 @@ async fn callback(
     let token_body: serde_json::Value = token_response
         .json()
         .await
-        .map_err(|e| flora_core::Error::OidcProvider(e.to_string()))?;
+        .map_err(|e| Error::OidcProvider(e.to_string()))?;
 
     let id_token = token_body["id_token"]
         .as_str()
-        .ok_or_else(|| flora_core::Error::OidcProvider("missing id_token".to_string()))?;
+        .ok_or_else(|| Error::OidcProvider("missing id_token".to_string()))?;
 
     // Decode the ID token (unverified — Zitadel signed it; we trust the issuer).
     // In production, verify the signature against Zitadel's JWKS.
@@ -288,17 +291,17 @@ async fn refresh(
 ) -> Result<Json<serde_json::Value>> {
     let claims =
         flora_core::utils::jwt::decode_token(&req.session_token, &state.config.app.jwt_secret)
-            .map_err(|_| flora_core::Error::SessionExpired)?;
+            .map_err(|_| Error::SessionExpired)?;
 
     // Verify session is still active in DB.
     let session_repo = PgSessionRepository::new((*state.db_pool).clone());
     let session = session_repo
         .find_by_jti(&claims.jti)
         .await?
-        .ok_or(flora_core::Error::SessionExpired)?;
+        .ok_or(Error::SessionExpired)?;
 
     if !session.is_active {
-        return Err(flora_core::Error::SessionExpired);
+        return Err(Error::SessionExpired);
     }
 
     // Issue a new token with same session.
@@ -319,6 +322,72 @@ async fn refresh(
     })))
 }
 
+/// `POST /auth/select-organization` — Bind the authenticated session to an organization.
+///
+/// Validates membership, revokes the current session, and issues a new
+/// organization-scoped session/JWT (rotated `jti`).
+async fn select_organization(
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+    Json(req): Json<SelectOrganizationRequest>,
+) -> Result<Json<serde_json::Value>> {
+    if req.organization_id.is_nil() {
+        return Err(Error::Validation {
+            field: "organization_id".to_string(),
+            message: "organization_id must not be nil".to_string(),
+        });
+    }
+
+    let session_repo = PgSessionRepository::new((*state.db_pool).clone());
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+
+    let current = session_repo
+        .find_by_jti(&auth.claims.jti)
+        .await?
+        .ok_or(Error::SessionExpired)?;
+    if !current.is_active || current.user_id != auth.user_id {
+        return Err(Error::SessionExpired);
+    }
+
+    let _ = membership_repo
+        .find_by_user_and_organization(auth.user_id, req.organization_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member of this organization".to_string()))?;
+
+    session_repo.revoke(current.id).await?;
+
+    let ttl = state.config.app.session_ttl_secs;
+    let jti = Uuid::now_v7().to_string();
+    let now = chrono::Utc::now();
+    let expires_at = now + chrono::Duration::seconds(ttl.cast_signed());
+    let session = Session {
+        id: Uuid::now_v7(),
+        user_id: auth.user_id,
+        organization_id: req.organization_id,
+        jti: jti.clone(),
+        refresh_token_id: None,
+        client_ip: current.client_ip,
+        user_agent: current.user_agent,
+        expires_at,
+        last_activity_at: now,
+        is_active: true,
+        created_at: now,
+        updated_at: now,
+    };
+    let _session = session_repo.create(session).await?;
+
+    let claims = FloraClaims::new(auth.user_id, jti, req.organization_id, &auth.email, ttl);
+    let token = encode_token(&claims, &state.config.app.jwt_secret);
+
+    tracing::info!(user_id = %auth.user_id, org_id = %req.organization_id, "Organization selected; session rotated");
+    Ok(Json(serde_json::json!({
+        "session_token": token,
+        "expires_in": ttl,
+        "user_id": auth.user_id.to_string(),
+        "organization_id": req.organization_id.to_string()
+    })))
+}
+
 /// Query parameters for the OIDC callback.
 #[derive(Debug, Deserialize)]
 pub struct OidcCallbackParams {
@@ -336,16 +405,14 @@ pub struct OidcCallbackParams {
 fn decode_id_token_claims(token: &str) -> Result<serde_json::Value> {
     let parts: Vec<&str> = token.split('.').collect();
     if parts.len() < 2 {
-        return Err(flora_core::Error::OidcProvider(
-            "malformed id_token".to_string(),
-        ));
+        return Err(Error::OidcProvider("malformed id_token".to_string()));
     }
 
     let payload = parts[1];
     let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
         .decode(payload.trim_end_matches('='))
         .or_else(|_| base64::engine::general_purpose::URL_SAFE.decode(payload))
-        .map_err(|e| flora_core::Error::OidcProvider(e.to_string()))?;
+        .map_err(|e| Error::OidcProvider(e.to_string()))?;
 
-    serde_json::from_slice(&decoded).map_err(|e| flora_core::Error::OidcProvider(e.to_string()))
+    serde_json::from_slice(&decoded).map_err(|e| Error::OidcProvider(e.to_string()))
 }

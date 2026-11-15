@@ -1,68 +1,74 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# Flora Test Script
-# Usage: chmod +x test-flora.sh; ./test-flora.sh
+# Flora API smoke script (updated for JWT/Bearer auth, cycle 007)
+# Usage:
+#   chmod +x test-flora.sh
+#   FLORA_BASE_URL=http://localhost:3000 FLORA_TOKEN=<jwt> ORG_ID=<uuid> ./test-flora.sh
+#
+# Notes:
+# - Tenant-scoped routes require a Bearer JWT with a concrete organization_id.
+# - Obtain an initial token via OIDC: GET $FLORA_BASE_URL/api/v1/auth/login
+#   (complete callback flow) then select org: POST $FLORA_BASE_URL/api/v1/auth/select-organization
+#   with {"organization_id":"<uuid>"} and Authorization: Bearer <initial_token>.
+# - OIDC/DB-integrated end-to-end execution is NV without configured provider and seeded data.
 
-echo "🔄 Iniciando testes do Flora API..."
-echo "https://localhost:3000"
+BASE_URL="${FLORA_BASE_URL:-http://localhost:3000}"
+TOKEN="${FLORA_TOKEN:-}"
+ORG_ID="${ORG_ID:-11111111-1111-1111-1111-111111111111}"
+WORKSPACE_ID="${WORKSPACE_ID:-88888888-8888-8888-8888-888888888888}"
 
-# Exportar IDs fixos do dev-seed.sql
-export ORG_ID="11111111-1111-1111-1111-111111111111"
-export ALICE_ID="22222222-2222-2222-2222-222222222222"
-export BOB_ID="33333333-3333-3333-3333-333333333333"
-export CAROL_ID="44444444-4444-4444-4444-444444444444"
+auth_header=()
+if [[ -n "$TOKEN" ]]; then
+  auth_header=(-H "Authorization: Bearer $TOKEN")
+fi
 
-# Testar Health Checks
-echo -e "\n✅ Health Checks:"
-curl -s http://localhost:3000/health | jq -r '.status? // "ok"'
-curl -s http://localhost:3000/health/ready | jq -r '.status? // "ok"'
-curl -s http://localhost:3000/health/live | jq -r '.status? // "ok"'
+echo "Flora API smoke (base: $BASE_URL)"
 
-# Testar Login OIDC (Alice)
-echo -e "\n✅ Auth Login (Alice):"
-curl -s http://localhost:3000/auth/login -H "Accept: application/json" | jq '.authorization_url'
+echo "\n== Health checks =="
+curl -fsS "$BASE_URL/health" | jq -r '.status? // "ok"'
+curl -fsS "$BASE_URL/health/ready" | jq -r '.status? // "ok"'
+curl -fsS "$BASE_URL/health/live" | jq -r '.status? // "ok"'
 
-# Listar Workspaces (Alice e Bob)
+echo "\n== Auth login (OIDC authorize URL) =="
+curl -fsS "$BASE_URL/api/v1/auth/login" -H "Accept: application/json" | jq '.authorization_url, .next_step'
 
-# Alice (Admin)
-echo -e "\n📁 Workspaces (Alice - Admin):"
-curl -s -H "X-Organization-ID: $ORG_ID" -H "X-User-ID: $ALICE_ID" \
-  http://localhost:3000/api/v1/workspaces | jq '.[].name'
+if [[ -z "$TOKEN" ]]; then
+  echo "\nFLORA_TOKEN not set; skipping tenant-scoped calls."
+  echo "After OIDC callback, select org to get org-scoped token:"
+  echo "  curl -fsS -X POST '$BASE_URL/api/v1/auth/select-organization' \\
+    -H 'Authorization: Bearer <initial_token>' -H 'Content-Type: application/json' \\
+    -d '{\"organization_id\":\"$ORG_ID\"}' | jq"
+  echo "\nDone (partial)."
+  exit 0
+fi
 
-# Bob (Member) - só listagem
-echo -e "\n📁 Workspaces (Bob - Member):"
-curl -s -H "X-Organization-ID: $ORG_ID" -H "X-User-ID: $BOB_ID" \
-  http://localhost:3000/api/v1/workspaces | jq '.[].name'
-
-# Listar Tasks de Bob (assigned)
-
-echo -e "\n✨ Tasks de Bob (assignee):"
-curl -s -H "X-Organization-ID: $ORG_ID" -H "X-User-ID: $BOB_ID" \
-  http://localhost:3000/api/v1/tasks | jq '[.[] | {title, status}]'
-
-# Criar uma task de teste (Bob)
-echo -e "\n📝 Criando task de teste..."
-NEW_TASK=$(curl -s -X POST http://localhost:3000/api/v1/tasks \
+echo "\n== Select organization (rotate to org-scoped session) =="
+SELECT_RESP=$(curl -fsS -X POST "$BASE_URL/api/v1/auth/select-organization" \
   -H "Content-Type: application/json" \
-  -H "X-Organization-ID: $ORG_ID" -H "X-User-ID: $BOB_ID" \
-  -d '{
-    "title": "Teste de API",
-    "description": "Task criada via teste automático",
-    "workspace_id": "88888888-8888-8888-8888-888888888888",
-    "assignee_id": "33333333-3333-3333-3333-333333333333"
-  }' | jq .)
+  -H "Authorization: Bearer $TOKEN" \
+  -d "{\"organization_id\":\"$ORG_ID\"}")
+echo "$SELECT_RESP" | jq '{user_id, organization_id, expires_in}'
+SCOPED_TOKEN=$(echo "$SELECT_RESP" | jq -r '.session_token // empty')
+if [[ -z "$SCOPED_TOKEN" ]]; then
+  echo "Failed to obtain org-scoped token" >&2
+  exit 1
+fi
+AUTH=(-H "Authorization: Bearer $SCOPED_TOKEN")
 
-echo "   Nova task ID: $(echo $NEW_TASK | jq -r '.id')"
-echo "   Título: $(echo $NEW_TASK | jq -r '.title')"
+echo "\n== List workspaces =="
+curl -fsS "${AUTH[@]}" "$BASE_URL/api/v1/workspaces" | jq '.[].name'
 
-# Listar Tasks de novo (inclui a task nova)
-echo -e "\n📋 Tasks atualizadas de Bob:"
-curl -s -H "X-Organization-ID: $ORG_ID" -H "X-User-ID: $BOB_ID" \
-  http://localhost:3000/api/v1/tasks | jq '[.[] | {title, status}]'
+echo "\n== List tasks (assignee-scoped in org) =="
+curl -fsS "${AUTH[@]}" "$BASE_URL/api/v1/tasks" | jq '[.[] | {id,title,status}]'
 
-echo -e "\n✅ Todos os testes concluídos!
-"
-echo "📊 Instância: Acme Corporation (slug: acme-corp)"
-echo "👤 Usuários: Alice (Admin), Bob (Member), Carol (Viewer)"
-echo "🔗 API: http://localhost:3000"
+echo "\n== Create task =="
+NEW_TASK=$(curl -fsS -X POST "$BASE_URL/api/v1/tasks" \
+  -H "Content-Type: application/json" "${AUTH[@]}" \
+  -d "{\"title\":\"Smoke test task\",\"description\":\"Created by test-flora.sh\",\"workspace_id\":\"$WORKSPACE_ID\"}")
+echo "$NEW_TASK" | jq '{id,title,status}'
+
+echo "\n== List tasks (after create) =="
+curl -fsS "${AUTH[@]}" "$BASE_URL/api/v1/tasks" | jq '[.[] | {id,title,status}]'
+
+echo "\nSmoke completed."
