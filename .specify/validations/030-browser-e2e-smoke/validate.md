@@ -22,3 +22,9 @@
 ## NV
 Local Chromium execution not run in this cycle; CI e2e job is informational (`continue-on-error`). Release SBOM,
 CORS allowlist, load/restore, cargo-vet blocking, OTLP remain deferred.
+
+## Merge evidence
+PR #240: all checks green, including the new `e2e-browser` job (4 `build`, 2 `db-tests`, `dependency-review`,
+2 `supply-chain-vet`, 2 `e2e-browser`; GitHub runs 43914284405 / 43914293666); merged as `ab3fc007`.
+CI iterations fixed a missing clippy component, a repo-root path bug, a webServer cwd, a setup timeout and
+an ambiguous "Select" selector.

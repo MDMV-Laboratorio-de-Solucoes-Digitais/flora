@@ -1,7 +1,7 @@
 # Feature Specification: 030 — Browser e2e smoke and Seed doc integrity
 
 **Branch**: `feat/030-browser-e2e-smoke`  
-**Status**: In progress  
+**Status**: Completed (PR #240)  
 **Assessment**: `.specify/assessments/030-next-vertical-slice/decision.md`
 
 ## Goal
