@@ -1,7 +1,7 @@
 # Feature Specification: 031 — Seed release readiness and integrity closure
 
 **Branch**: `feat/031-release-sbom`  
-**Status**: In progress  
+**Status**: Completed (PR #242)  
 **Assessment**: `.specify/assessments/031-next-vertical-slice/decision.md`
 
 ## Goal
