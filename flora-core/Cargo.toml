@@ -5,7 +5,7 @@
 
 [package]
 name = "flora-core"
-version = "0.1.0"
+version.workspace = true
 description = "Core traits, models, and shared functionality for Flora Workspace"
 repository.workspace = true
 license.workspace = true

@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–030 mergeados; 031 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–030 mergeados; 031 em PR/CI; 032 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-019`, `.specify/assessments/003-019`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -48,8 +48,9 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 027 (PR #234, CI verde, mergeado em `dev@044f40c6`): retirada do adapter PGMQ/Valkey não conectado, `TraceLayer` sem custo, drift documental fechado.
 - [x] Ciclo 028 (PR #236, CI verde, mergeado em `dev@4ecf1459`): FASE 0 closure (cargo-vet informativo + dependency-review + OSV), smoke com JWT fresco, drift corrigido.
 - [x] Ciclo 029 (PR #238, CI verde, mergeado em `dev@b8972c0e`): clippy `--all-targets`, ADR-0002, drift 028 e smoke integrado rc=0 (JWT fresco, portas isoladas).
-- [x] Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`): 1 e2e smoke Chromium (`retries: 0`), minter feature-gated, drift documentar corrigido.
-- [ ] Ciclo 031 (candidato): tag/release + SBOM, cargo-vet bloqueante, CORS allowlist, OTLP/load validation.
+- [x] Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`): 1 e2e smoke Chromium (`retries: 0`), minter feature-gated, drift documental corrigido.
+- [~] Ciclo 031 (PR em preparação/CI): versão centralizada + release.yml tag-only/SBOM (sem tag), drift documental fechado.
+- [ ] Ciclo 032 (candidato): CORS allowlist, cargo-vet bloqueante + CODEOWNERS, load/restore, OTLP; tag/release real (autorização explícita).
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)

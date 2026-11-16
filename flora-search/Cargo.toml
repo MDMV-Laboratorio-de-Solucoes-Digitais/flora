@@ -5,7 +5,7 @@
 
 [package]
 name = "flora-search"
-version = "0.1.0"
+version.workspace = true
 description = "Global search module with Meilisearch"
 repository.workspace = true
 license.workspace = true

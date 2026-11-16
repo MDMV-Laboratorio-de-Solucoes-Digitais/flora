@@ -42,7 +42,8 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
    an explicit ADR rather than silent divergence; unverified/live claims are marked `NV`.
 5. **FASE 0.** AGPL-3.0 is the license. Canonical full text (including the appendix) and `NOTICE` are checked in;
    dependency policy lives in `deny.toml`. Cycle 026 enforced `cargo deny check bans licenses sources` in CI
-   (green runs 43875417574 / 43875425127); the 443-exemption `supply-chain/` store was versioned in cycle 028
+   (green runs 43875417574 / 43875425127); the 455-exemption `supply-chain/` store was versioned in cycle 028
+   and extended in cycle 030 for the dev-mint helper crates
    with an informational CI gate (blocking promotion + CODEOWNERS remain NV).
 
 ## Consequences
@@ -54,5 +55,6 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
 - Resolved: FASE 0 CI enforcement (cycle 026), notification transport decision — the unwired PGMQ/Valkey crate
   was retired in cycle 027 per `docs/research/2026-11-16-026-notification-transport-decision.md`; canonical Tauri
   deferral is recorded in ADR-0002 (cycle 029).
-- Remaining Seed follow-ups (NV): cargo-vet blocking + CODEOWNERS, RustSec advisories/SBOM, browser e2e with
-  fresh JWT, OTLP exporter, and 2vCPU/4GB load/restore validation.
+- Resolved in cycle 030: browser e2e with a freshly minted JWT (one Chromium smoke, green twice in CI).
+- Remaining Seed follow-ups (NV): cargo-vet blocking + CODEOWNERS, RustSec advisories/SBOM, OTLP exporter,
+  and 2vCPU/4GB load/restore validation.

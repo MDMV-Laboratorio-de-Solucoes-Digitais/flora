@@ -5,7 +5,7 @@
 
 [package]
 name = "flora-messaging"
-version = "0.1.0"
+version.workspace = true
 description = "Real-time messaging module with Valkey Pub/Sub"
 repository.workspace = true
 license.workspace = true
