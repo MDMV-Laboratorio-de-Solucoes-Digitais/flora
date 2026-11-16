@@ -26,7 +26,7 @@ jobs:
       - name: Format check
         run: cargo fmt --all -- --check
       - name: Clippy (strict, production targets)
-        run: cargo clippy --workspace --lib --bins -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Install cargo-deny
         uses: taiki-e/install-action@cargo-deny
       - name: Supply-chain policy (bans, licenses, sources)

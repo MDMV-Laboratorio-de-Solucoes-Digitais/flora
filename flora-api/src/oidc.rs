@@ -163,6 +163,10 @@ pub async fn fetch_jwks(issuer: &str) -> Result<JwkSet> {
 }
 
 #[cfg(test)]
+#[expect(
+    clippy::expect_used,
+    reason = "test-only JWKS/fixture construction: a failure here is a test bug"
+)]
 mod tests {
     use super::*;
     use base64::Engine;
@@ -181,10 +185,6 @@ mod tests {
         .expect("valid test JWKS")
     }
 
-    #[allow(
-        clippy::too_many_arguments,
-        reason = "test token builder mirrors all claims"
-    )]
     fn token(
         alg: jsonwebtoken::Algorithm,
         kid: &str,

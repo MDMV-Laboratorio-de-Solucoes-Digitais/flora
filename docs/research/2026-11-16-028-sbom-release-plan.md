@@ -1,3 +1,5 @@
+> **Superseded by PR #236/#237 (cycle 028):** this is a pre-implementation snapshot; check committed files for current state.
+
 # 028 — CycloneDX SBOM for Flora releases: minimal plan, with a documented deferral for attestation
 
 **Date:** 2026-11-16  
