@@ -1,6 +1,6 @@
 # OBJETIVO — Flora
 
-**Data da consolidação:** 2026-11-15 (atualizado no ciclo 017)  
+**Data da consolidação:** 2026-11-15 (atualizado no ciclo 018)  
 **Escopo:** repositório `flora` (workspace Rust modular monolith + `apps/frontend` Svelte 5).  
 **Fontes:** inspeção do código/artefatos locais, `.specify/memory/constitution.md`, `specs/001-009`, `.specify/assessments/003-009`, verificações locais executadas em 2026-11-15, e pesquisa consolidada em `docs/research/2026-11-15-flora-seed-80-20-research.md` e `docs/research/2026-11-15-macro-alternative-80-20-research.md`.
 
@@ -54,8 +54,9 @@ Princípios diretores:
 - **Ciclo 015 (PR #218, CI 6/6 verde incl. `db_message_catch_up_after_cursor`, mergeado):** realtime mínimo/catch-up para mensagens persistidas (slice A) — cursor `after` determinístico (ASC, `(created_at,id)`), hub in-process + eventos canônicos pós-commit (REST/WS), assinaturas/fanout WS com isolamento org/canal e convergência idempotente no frontend. `dev@ec0be14e0`.
 - **Ciclo 016 (PR #219, CI 6/6 verde, mergeado):** hardening Seed/VPS (slice C) — pool DB config-driven e init único, `search`/`messaging` opcionais com degradação/config-gating, readiness DB-aware e hints de capacidade, compose com profiles/limites/healthchecks (`core`/`realtime`/`search`), alinhamento `FLORA_*`/docs e notas mínimas de backup/restore. `dev@0989fe00d`.
 - **Ciclo 017 (PR #220, CI verde, mergeado):** arquivos binários seguros (slice B) — migração aditiva `files.workspace_id`, upload multipart em streaming e download em streaming (storage local contido, temp+rename atômico, checksum SHA-256, limites/validação MIME básica), endpoints/contrato FE-compatível e authz/tenant checks no caminho feliz. `dev@12f39f626`.
+- **Ciclo 018 (PR #221, CI verde, mergeado):** hardening do slice de arquivos + contratos DB-gated (slice A1) — validação `workspace_id ∈ org` em upload/metadata, endurecimento de multipart/erros, alinhamento FE, e testes DB-gated (PG descartável + storage temporário) para happy path, isolamento/authz, validações, deleção e legacy. `dev@3efeff127`.
 
-**NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; contratos DB-gated específicos de arquivos (upload/download/authz/quotas/concorrência) e validação e2e browser; DMs UX; wiring busca/notificações para mutações core; lacunas realtime pós-handshake/multi-nó/replay ampliado; OIDC/JWKS; validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`); quota agregada concorrente por org/workspace ainda mínima/NV.
+**NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; quota agregada concorrente/transacional por org/workspace, consistência avançada de purge/cleanup storage↔DB e cobertura DB-gated ampliada de bordas (multipart/quota/cleanup); DMs UX; wiring busca/notificações para mutações core; lacunas realtime pós-handshake/multi-nó/replay ampliado; OIDC/JWKS e e2e browser/multi-cliente; validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`).
 
 ### 3.4 Gaps prioritários (o que falta para o MVP P0)
 - **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável; session authority consistente no extrator.
@@ -74,12 +75,12 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 018 candidato)
+## 5) Próximo 80/20 (ciclo 019 candidato)
 
-Consolidar **confiabilidade e integração do slice de arquivos + wiring essencial do núcleo** (Seed/Postgres-first), com escopo verificável:
-1. **Contratos DB-gated de arquivos (P0):** testes em Postgres 18 descartável para upload/download, authz/tenant/workspace, contenção de path, limites/checksum e semântica de quota/deleção.
-2. **Hardening mínimo do slice 017:** validar membership de workspace no upload/listagem, coerência de quota agregada (ou checagem transacional mínima), e limpeza/erros de storage mais explícitos.
-3. **Wiring essencial (quando viável sem ampliar escopo):** indexação/busca e eventos→notificações para mutações core prioritárias (arquivos/mensagens/tarefas) com contratos determinísticos.
-4. **NVs remanescentes:** e2e browser/multi-cliente, realtime pós-handshake/multi-nó/replay, carga/OOM/restore 2vCPU/4GB, OIDC/JWKS e enforcement real de limites compose.
+Consolidar **wiring essencial de busca/notificações (Seed/Postgres-first)** com escopo mínimo e verificável, mantendo operabilidade em VPS barata:
+1. **Busca Postgres-first (P0):** fallback/caminho de busca baseado em Postgres FTS/`pg_trgm` (inicialmente mensagens, ampliando para tarefas/arquivos se trivial) com contrato estável e degradação explícita quando Meilisearch ausente/desabilitado.
+2. **Notificações in-app mínimas:** emissão determinística de 1 evento de alto valor em mutação core (ex.: reply em thread ou atribuição/conclusão de tarefa) persistido via repositório core e exposto nas rotas existentes, sem novos serviços obrigatórios.
+3. **Verificação determinística:** contratos DB-gated em Postgres 18 descartável para busca/notificação do slice escolhido + regressão dos fluxos afetados; CI verde.
+4. **NVs remanescentes:** quota agregada concorrente/purge↔storage cleanup avançado e cobertura DB-gated ampliada de arquivos; outbox/workers/push delivery, relevância/i18n/benchmark 2vCPU/4GB; realtime pós-handshake/multi-nó/replay; OIDC/JWKS e e2e browser/multi-cliente; enforcement real de limites compose.
 
-Detalhes: `.specify/assessments/017-next-vertical-slice/decision.md`, `specs/017-secure-binary-files/`, `docs/research/2026-11-16-017-*.md`, `ROADMAP.md`.
+Detalhes: `.specify/assessments/018-next-vertical-slice/decision.md`, `specs/018-file-contracts-hardening/`, `docs/research/2026-11-16-018-*.md`, `ROADMAP.md`.
