@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 033 candidato — fronteira de origem e produto)
 
-- **Ciclo 032 (PR em preparação/CI):** allowlist CORS backend com testes determinísticos e drift documental fechado; ADR-0002 #2 permanece NV.
+- **Ciclo 032 (PR #244, CI verde, mergeado em `dev@cecaf686`):** allowlist CORS backend com testes determinísticos e drift documental fechado; ADR-0002 #2 permanece NV.
 
 - **Ciclo 031 (PR #242, CI verde, mergeado em `dev@aaa45536`):** versão centralizada, `release.yml` tag-only com SBOM (sem tag/publicação) e drift documental fechado.
 
