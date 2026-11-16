@@ -780,4 +780,113 @@ mod db_search {
         );
         Ok(())
     }
+
+    /// 023: Postgres FTS is authoritative even when a Meilisearch service is configured.
+    /// The service targets a closed port; `Client::new` is lazy, so no Meili process is needed.
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 023)"]
+    async fn db_search_pg_authoritative_with_meilisearch_configured() -> anyhow::Result<()> {
+        let Some((mut state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let search =
+            flora_search::SearchService::new("http://127.0.0.1:1", None, "flora_org_{org_id}")
+                .map_err(|e| anyhow::anyhow!("failed to build search service: {e}"))?;
+        state.search_service = Some(Arc::new(search));
+
+        let seed = seed_member(&state, &config).await?;
+        let channel_id = insert_channel(&state, seed.workspace.id, seed.org.id, "general").await?;
+        let message_id = insert_message(
+            &state,
+            channel_id,
+            seed.org.id,
+            seed.user.id,
+            "authoritative postgres content xyz023",
+            false,
+        )
+        .await?;
+
+        let app = search_app(state);
+        let (status, body) = authed_get_json(
+            app,
+            "/search?q=xyz023".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "search: {status} {body}");
+        anyhow::ensure!(
+            body["source"] == "postgres",
+            "Postgres must be the authoritative search backend: {body}"
+        );
+        anyhow::ensure!(
+            body["results"]
+                .as_array()
+                .is_some_and(|results| results.iter().any(|r| r["id"] == message_id.to_string())),
+            "Postgres result missing: {body}"
+        );
+        Ok(())
+    }
+
+    /// 023: separator normalization lets hyphenated names match sub-token queries.
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 023)"]
+    async fn db_search_pg_matches_hyphenated_names() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_member(&state, &config).await?;
+        let file_id = insert_file(
+            &state,
+            seed.org.id,
+            seed.user.id,
+            Some(seed.workspace.id),
+            "quarterly-report-xyz023.pdf",
+            "application/pdf",
+            false,
+        )
+        .await?;
+        let task_id = insert_task(
+            &state,
+            seed.workspace.id,
+            seed.org.id,
+            seed.user.id,
+            "status-sync-task-xyz023",
+            None,
+            false,
+        )
+        .await?;
+
+        let app = search_app(state);
+        let (status, body) = authed_get_json(
+            app.clone(),
+            "/search?q=report&type=file".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "file search: {status} {body}");
+        anyhow::ensure!(
+            body["results"]
+                .as_array()
+                .is_some_and(|results| results.iter().any(|r| r["id"] == file_id.to_string())),
+            "hyphenated file name must match sub-token query: {body}"
+        );
+
+        let (status, body) = authed_get_json(
+            app,
+            "/search?q=sync&type=task".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "task search: {status} {body}");
+        anyhow::ensure!(
+            body["results"]
+                .as_array()
+                .is_some_and(|results| results.iter().any(|r| r["id"] == task_id.to_string())),
+            "hyphenated task title must match sub-token query: {body}"
+        );
+        Ok(())
+    }
 }
