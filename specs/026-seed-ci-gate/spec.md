@@ -1,7 +1,7 @@
 # Feature Specification: 026 — Executable Seed verification gate
 
 **Branch**: `feat/026-seed-ci-gate`  
-**Status**: In progress  
+**Status**: Completed (PR #232)  
 **Assessment**: `.specify/assessments/026-next-vertical-slice/decision.md`
 
 ## Goal

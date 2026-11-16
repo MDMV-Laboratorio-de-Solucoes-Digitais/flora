@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Repo reality (read first)
-- Rust modular-monolith workspace (`resolver = "3"`, Rust `1.98`, edition `2024`, AGPL-3.0-or-later) with crates: `flora-core`, `flora-api`, `flora-messaging`, `flora-tasks`, `flora-files`, `flora-search`, `flora-notifications`, `flora-tests`.
+- Rust modular-monolith workspace (`resolver = "3"`, Rust `1.98`, edition `2024`, AGPL-3.0-or-later) with crates: `flora-core`, `flora-api`, `flora-messaging`, `flora-tasks`, `flora-files`, `flora-search`, `flora-tests`.
 - Real API entrypoint is `flora-api` (`flora-api/src/main.rs`, bin `flora-api`, lib `flora_api`): loads config, creates Postgres pool, runs migrations, builds `AppState`, serves Axum router. Root `src/main.rs` is only a placeholder.
 - `flora-core` owns shared config (`src/config/*`), DB pool/migrations (`src/database.rs`, `src/migrations/mod.rs`), models, repositories, services, traits, utils, and storage. Route modules live in `flora-api/src/routes/*`.
 - Frontend/apps exist under `apps/`: `apps/frontend` is the canonical Flora Svelte 5 rewrite target (SvelteKit/Svelte 5). `apps/web` is a separate imported `@coparse/web` (SolidJS/Macro-style) app and is not the canonical target. `.github/workflows/ci.yml` runs in `apps/frontend` (`bun install`, `check`, `lint`, `test:unit -- --run --project server`, `build`); `.github/workflows/rust.yml` runs fmt check, strict clippy (production targets), `cargo deny check bans licenses sources`, `cargo build`/`cargo test` and six DB-gated suites on PostgreSQL 18, with toolchain `1.98.0`.

@@ -29,7 +29,6 @@ members = [
     "flora-tasks",
     "flora-files",
     "flora-search",
-    "flora-notifications",
     "flora-tests",
 ]
 exclude = ["docker-compose.yml"]
@@ -123,7 +122,6 @@ flora-api = { path = "flora-api"}
 flora-core = { path = "flora-core" }
 flora-files = { path = "flora-files" }
 flora-messaging = { path = "flora-messaging" }
-flora-notifications = { path = "flora-notifications" }
 flora-search = { path = "flora-search" }
 flora-tasks = { path = "flora-tasks" }
 flora-tests = { path = "flora-tests" }

@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–026 mergeados; 027 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–026 mergeados; 027 em PR/CI; 028 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-019`, `.specify/assessments/003-019`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -15,7 +15,7 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 | Trilha | Estado | Evidência resumida |
 |---|---|---|
-| Governança/SpecKit | Em andamento (maduro) | Constituição v1.2.0; specs 001-009; assessments 003-009 (go) |
+| Governança/SpecKit | Em andamento (maduro) | Constituição v1.3.0; specs 001-009; assessments 003-009 (go) |
 | Direção estratégica | Atualizada | Norte “alternativa ao Macro para PMEs em VPS barata”, MVP 80/20 e debloat documentados |
 | Baseline determinística Rust (local) | Parcialmente verificada | `cargo fmt --check`, `cargo check -p flora-api -p flora-core -p flora-tests`, `test -p flora-core --lib` (8), `test -p flora-tests --lib` (56 pass, 5 ignored) ok |
 | Select-org DB-backed (local/CI config) | Parcialmente verificado | 5 testes `#[ignore]` passaram localmente em Postgres 18; job `db-tests` adicionado em `.github/workflows/rust.yml` (execução remota PR: NV) |
@@ -45,7 +45,8 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 024 (PR #230, CI verde, mergeado em `dev@bf1766cb`): verificação real do ID token OIDC (JWKS/`iss`/`aud`/`exp`/`nonce`, allowlist de redirect, identidade por `sub`) com contratos determinísticos.
 - [x] Ciclo 025 (PR #231, CI verde, mergeado em `dev@d09d39c1`): ADR-0001 de reconciliação Seed, LICENSE/NOTICE completos, `deny.toml`, README mechanism-neutral.
 - [x] Ciclo 026 (PR #232, CI verde, mergeado em `dev@9a60766f`): gate Seed executável em CI (fmt/clippy/cargo-deny), `deny.toml` com `AGPL-3.0-or-later`, constituição v1.3.0 mechanism-neutral, deps OTel fantasmas removidas.
-- [ ] Ciclo 027 (candidato): retirada do scaffolding PGMQ/Valkey, cargo-vet como gate de nova dependência, e2e browser com JWT fresco.
+- [~] Ciclo 027 (PR em preparação/CI): retirada do adapter PGMQ/Valkey não conectado, `TraceLayer` sem custo, drift documental fechado.
+- [ ] Ciclo 028 (candidato): cargo-vet gate de nova dependência, advisories/SBOM, e2e browser com JWT fresco.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
