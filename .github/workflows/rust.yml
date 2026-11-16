@@ -61,3 +61,5 @@ jobs:
         run: cargo test -p flora-tests contract::auth::db_ -- --ignored --test-threads=1
       - name: Run DB-backed messaging contract tests
         run: cargo test -p flora-tests contract::messaging::db_ -- --ignored --test-threads=1
+      - name: Run DB-backed websocket contract tests
+        run: cargo test -p flora-tests contract::websocket::db_ -- --ignored --test-threads=1

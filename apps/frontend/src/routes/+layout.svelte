@@ -2,17 +2,10 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { authState } from '$lib/state/AuthState.svelte';
-	import { wsClient } from '$lib/api/websocket';
 
 	let { children } = $props();
 
 	$effect(() => {
-		if (authState.isAuthenticated && !wsClient.isConnected) {
-			wsClient.connect();
-		} else if (!authState.isAuthenticated && wsClient.isConnected) {
-			wsClient.disconnect();
-		}
-
 		if (authState.isInvalidated) {
 			// Redirect to login flow
 			location.assign('/');

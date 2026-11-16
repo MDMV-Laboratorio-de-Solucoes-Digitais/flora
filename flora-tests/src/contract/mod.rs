@@ -10,4 +10,5 @@ pub mod notifications;
 pub mod rbac;
 pub mod search;
 pub mod tasks;
+pub mod websocket;
 pub mod workspace;
