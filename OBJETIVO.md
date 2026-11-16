@@ -85,7 +85,9 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 030 candidato — verificação de ponta a ponta)
+## 5) Próximo 80/20 (ciclo 031 candidato — release e hardening)
+
+- **Ciclo 030 (PR em preparação/CI):** 1 e2e smoke Chromium com minter feature-gated (`retries: 0`), CI não-required e integridade documentar corrigida.
 
 - **Ciclo 029 (PR #238, CI verde, mergeado em `dev@b8972c0e`):** clippy estrito `--all-targets`, ADR-0002 (Tauri deferido), drift 028 corrigido e smoke integrado executado com JWT fresco em portas isoladas (**rc=0**).
 
@@ -93,8 +95,8 @@ Princípios diretores:
 
 1. **P0 — E2E browser:** bin `flora-mint-session` feature-gated + Playwright `setup` project + job CI não-required (Chromium); 1 smoke `workspace→canal→mensagem→tarefa`.
 2. **P1 — Release SBOM:** definir trigger de tag/release antes de gerar CycloneDX (hoje bloqueado: sem processo de release).
-3. **P1 — Tauri:** adotar formalmente ADR-0002 (minuta em `docs/research/2026-11-16-028-tauri-smoke-closure.md`).
-4. **P2 — Supply chain:** promover cargo-vet a gate bloqueante + CODEOWNERS após janela de observação; corrigir `expect_used` em código de teste paralelo para permitir clippy `--all-targets`; load/OOM/restore em 2vCPU/4GB.
+3. **P1 — Tauri:** ADR-0002 já adotada (deferral); critérios de reentrada em `docs/adr/0002-tauri-deferral-from-canonical-seed-frontend.md`.
+4. **P2 — Supply chain:** promover cargo-vet a gate bloqueante + CODEOWNERS após janela de observação; load/OOM/restore em 2vCPU/4GB. (Clippy `--all-targets` já é gate verde desde 029.)
 5. **NVs:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; JWKS rotation/real-OP.
 
 Detalhes: `docs/research/2026-11-16-028-*.md`, `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `ROADMAP.md`.

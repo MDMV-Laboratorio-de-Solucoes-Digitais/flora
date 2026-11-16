@@ -1,3 +1,5 @@
+> **Superseded by PR #238/#239 (cycle 029):** this is a pre-implementation snapshot; check committed files for current state.
+
 # 029 — Minimal, self-hosted-friendly release/tag process for Flora (unblocks the CycloneDX SBOM)
 
 **Date:** 2026-11-16  

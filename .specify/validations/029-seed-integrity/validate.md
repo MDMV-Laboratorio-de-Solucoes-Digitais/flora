@@ -27,6 +27,14 @@ This closes the last unexecuted item of the ADR-0001 verification gate. No produ
 no IdP contact (login only builds the authorize URL).
 PR #238: all checks green (4 `build`, 2 `db-tests`, dependency-review, 2 `supply-chain-vet`; GitHub runs 43897995565 / 43897995951 / 43898004560 / 43898004683); merged as `b8972c0e`.
 
+### Smoke evidence provenance (added in cycle 030)
+- Executed at 2026-11-16T16:18Z against `dev@246a18a` (pre-merge code state), isolated project `flora-smoke-alt`.
+- Dev JWT secret fingerprint (first 12 hex of SHA-256): `b9062e8e3b76`; value never recorded.
+- Minted claims decoded locally: `sub=2222…2222`, `jti=018f0000-0000-7000-8000-000000000001`,
+  `organization_id=nil`, `email=alice@acme.test`, `exp=now+3600`, `ver=1`.
+- Redacted transcript checked in at `.specify/validations/029-seed-integrity/smoke-transcript.txt`
+  (OIDC `state`/`code_challenge`/`nonce` and the created task UUID are redacted).
+
 ## Contract coverage
 - ADR-0001 gate: fmt/clippy/deny/vet/advisory + six DB suites + frontend CI + integrated smoke rc=0 — all evidenced.
 - ADR-0002 records Tauri deferral with four conjunctive re-entry criteria.
