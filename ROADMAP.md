@@ -1,8 +1,8 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–032 mergeados; 033 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–032 mergeados; 033 em PR/CI; 034 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
-**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-031`, `.specify/assessments/003-031`, `OBJETIVO.md`.  
+**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-033`, `.specify/assessments/003-033`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 ## 1) Visão e horizonte
@@ -51,12 +51,13 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`): 1 e2e smoke Chromium (`retries: 0`), minter feature-gated, drift documental corrigido.
 - [x] Ciclo 031 (PR #242, CI verde, mergeado em `dev@aaa45536`): versão centralizada + release.yml tag-only/SBOM (sem tag), drift documental fechado.
 - [x] Ciclo 032 (PR #244, CI verde, mergeado em `dev@cecaf686`): allowlist CORS backend + drift documental; ADR-0002 #2 segue NV.
-- [ ] Ciclo 033 (candidato): FE runtime URLs + WS Origin (ADR-0002 #2), wiring da busca morta, FASE 7 Documents; cargo-vet/load/restore/tag dependem de autorização. 
+- [~] Ciclo 033 (PR em preparação/CI): busca no header ligada ao backend verificado + drift documental; ADR-0002 #2 segue NV.
+- [ ] Ciclo 034 (candidato): ADR-0002 #2 (URLs runtime + WS Origin + prova non-browser), FASE 7 Documents; cargo-vet/load/restore/tag dependem de autorização. 
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 022)
+### P0 — Seed utilizável e seguro (concluído e verificado em 2026-11-16)
 1. **Busca/notificações (consolidação):** paridade mínima `task/file` no modo Meilisearch via wiring de indexação/mutações ou contrato explícito de degradação/rebuild/reindex determinístico; endurecer idempotência/dedup e cobertura de concorrência/transições de atribuição com contratos DB-gated.
 2. **Arquivos (residual):** quota agregada concorrente/transacional, consistência avançada de purge/cleanup storage↔DB e ampliação de cobertura DB-gated de bordas.
 3. **Realtime/resiliência complementar:** lacunas remanescentes do slice 015 (revalidação pós-handshake, `/messages/sync`/replay ampliado, multi-cliente/e2e, semântica de deleção/catch-up).

@@ -1,4 +1,5 @@
 import { authState } from '../state/AuthState.svelte';
+import type { SearchResponse } from '../types/models';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Default local Rust backend URL
 
@@ -106,5 +107,13 @@ export const ApiClient = {
 		}
 
 		return (body as T) ?? ({} as T);
+	},
+
+	/** GET /api/v1/search?q=… — authoritative Postgres FTS. */
+	async search(parameters: { q: string; type?: string; limit?: number }): Promise<SearchResponse> {
+		const query = new URLSearchParams({ q: parameters.q });
+		if (parameters.type) query.set('type', parameters.type);
+		if (parameters.limit !== undefined) query.set('limit', String(parameters.limit));
+		return ApiClient.request<SearchResponse>(`/api/v1/search?${query.toString()}`);
 	}
 };

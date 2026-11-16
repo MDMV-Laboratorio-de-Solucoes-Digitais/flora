@@ -1,3 +1,5 @@
+> **Superseded by PR #244/#245 (cycle 032):** pre-implementation snapshot; check committed files for current state.
+
 # 032 — Restore-drill runbook: bounded `pg_dump -Fc` → disposable PG18, with exact commands, artifact placement and go/no-go
 
 **Date:** 2026-11-16 (cycle 032).
