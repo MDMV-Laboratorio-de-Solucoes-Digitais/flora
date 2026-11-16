@@ -1,6 +1,6 @@
 # Feature Specification: 032 — CORS allowlist backend
 
-**Branch**: `feat/032-cors-allowlist` · **Status**: In progress  
+**Branch**: `feat/032-cors-allowlist` · **Status**: Completed (PR #244)  
 **Assessment**: `.specify/assessments/032-next-vertical-slice/decision.md`
 
 ## Goal

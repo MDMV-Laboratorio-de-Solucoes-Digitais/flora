@@ -15,4 +15,4 @@ Allowed preflight returns `Access-Control-Allow-Origin` for the configured origi
 This does **not** satisfy ADR-0002 re-entry #2 (no runtime FE URL config, no live non-browser proof, no WS `Origin` check). Cargo-vet stays informational; no tag/release; no load/restore; OTLP unchanged.
 
 ## CI result
-Recorded after PR merge.
+PR #244: all checks green (4 build, 2 db-tests, dependency-review, 2 supply-chain-vet, 2 e2e-browser; GitHub runs 43955991790 / 43956000665); merged as `cecaf686`.
