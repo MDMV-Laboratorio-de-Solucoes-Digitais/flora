@@ -95,6 +95,13 @@ mod db_websocket {
         }
     }
 
+    /// Builds a fully wired `AppState` over an unconnected pool: no DB, seed or server.
+    fn no_db_state(config: &Config) -> anyhow::Result<AppState> {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgresql://unused@localhost/unused")?;
+        Ok(make_test_state(pool, config))
+    }
+
     async fn db_state() -> anyhow::Result<Option<(AppState, Config)>> {
         let Some(url) = std::env::var("FLORA_DATABASE__POSTGRES_URL")
             .ok()
@@ -200,6 +207,30 @@ mod db_websocket {
             .header("upgrade", "websocket")
             .header("sec-websocket-version", "13")
             .header("sec-websocket-key", "dGhlIHNhbXBsZSBub25jZQ==");
+        if let Some(token) = token {
+            builder = builder.header("authorization", format!("Bearer {token}"));
+        }
+        let request = builder.body(Body::empty())?;
+        let response = ServiceExt::oneshot(router, request).await?;
+        Ok(response.status())
+    }
+
+    async fn handshake_status_with_origin(
+        state: AppState,
+        token: Option<&str>,
+        origin: Option<&str>,
+    ) -> anyhow::Result<StatusCode> {
+        let router = ws_router(state);
+        let mut builder = Request::builder()
+            .method("GET")
+            .uri("/api/v1/ws")
+            .header("connection", "Upgrade")
+            .header("upgrade", "websocket")
+            .header("sec-websocket-version", "13")
+            .header("sec-websocket-key", "dGhlIHNhbXBsZSBub25jZQ==");
+        if let Some(origin) = origin {
+            builder = builder.header("origin", origin);
+        }
         if let Some(token) = token {
             builder = builder.header("authorization", format!("Bearer {token}"));
         }
@@ -404,6 +435,32 @@ mod db_websocket {
         };
 
         let status = handshake_status(state, None).await?;
+        anyhow::ensure!(
+            status == StatusCode::UNAUTHORIZED,
+            "expected 401, got {status}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ws_disallowed_origin_is_403_without_db() -> anyhow::Result<()> {
+        let config = Config::default();
+        let state = no_db_state(&config)?;
+        let status =
+            handshake_status_with_origin(state, None, Some("https://evil.example")).await?;
+        anyhow::ensure!(
+            status == StatusCode::FORBIDDEN,
+            "expected 403, got {status}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ws_allowed_origin_passes_guard_then_fails_auth_without_db() -> anyhow::Result<()> {
+        let mut config = Config::default();
+        config.app.cors_origins.push("tauri://localhost".to_owned());
+        let state = no_db_state(&config)?;
+        let status = handshake_status_with_origin(state, None, Some("tauri://localhost")).await?;
         anyhow::ensure!(
             status == StatusCode::UNAUTHORIZED,
             "expected 401, got {status}"
