@@ -1,6 +1,6 @@
 # Feature Specification: 033 — Wire Seed search UI
 
-**Branch**: `feat/033-search-ui` · **Status**: In progress  
+**Branch**: `feat/033-search-ui` · **Status**: Completed (PR #246)  
 **Assessment**: `.specify/assessments/033-next-vertical-slice/decision.md`
 
 ## Goal
