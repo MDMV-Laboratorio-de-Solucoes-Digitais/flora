@@ -4,7 +4,10 @@
 	import { ApiClient } from '$lib/api/client';
 	import type { FileAttachment } from '$lib/types/models';
 
-	let { onUploadComplete, workspaceId } = $props<{ onUploadComplete?: (file: FileAttachment) => void; workspaceId?: string }>();
+	let { onUploadComplete, workspaceId } = $props<{
+		onUploadComplete?: (file: FileAttachment) => void;
+		workspaceId?: string;
+	}>();
 
 	let errorMessage = $state('');
 
