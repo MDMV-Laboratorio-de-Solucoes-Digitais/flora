@@ -152,6 +152,10 @@ pub struct AuthExtractor {
 
 impl AuthExtractor {
     /// Ensures the token is scoped to a concrete organization (not the nil placeholder).
+    ///
+    /// # Errors
+    ///
+    /// Returns `(400 Bad Request, message)` when the session is not bound to a concrete organization.
     pub fn require_org(&self) -> Result<Uuid, (StatusCode, String)> {
         if self.organization_id.is_nil() {
             return Err((

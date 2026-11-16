@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { ApiClient } from '$lib/api/client';
 	import { authState } from '$lib/state/AuthState.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -97,6 +98,14 @@
 	}
 
 	onMount(async () => {
+		if (!authState.isAuthenticated || !authState.token) {
+			await goto('/');
+			return;
+		}
+		if (!authState.organizationId) {
+			await goto('/select-org');
+			return;
+		}
 		await refresh();
 	});
 </script>

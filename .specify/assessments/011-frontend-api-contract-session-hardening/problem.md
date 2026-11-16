@@ -1,0 +1,7 @@
+# Problem: 011
+
+1. **Contrato frontend↔API frágil no slice núcleo:** `ApiClient` descarta status/corpo estruturado de erros (dificulta tratamento de 400/401/403/422/409), tipos/uso de respostas são parciais (ex. `expires_in` ignorado, campos de task), `tasks` não guarda pré-condição auth/org, e `POST /tasks` no backend ignora `description`/`assignee_id` enviados (quebra expectativa de atribuição/listagem assignee-scoped).
+2. **Inconsistências de estado/qualidade determinística:** `AuthState.setOrganization` não limpa `isInvalidated`; testes frontend relevantes estão desalinhados/insuficientes (ex. `AuthState`/interceptor) reduzindo sinal dos checks.
+3. **Autoridade de sessão/tenancy parcialmente inconsistente:** `AuthExtractor` confia em JWT/claims sem revalidar sessão ativa/revogada no DB nas rotas protegidas (revogação pré-expiração pode não propagar; `select-organization`/`refresh` já fazem checks parciais). Há também pontos de binding/checagem a endurecer, mas mudanças amplas têm risco de comportamento/perf.
+4. **Ergonomia do smoke documentado:** caminho padrão depende de portas livres/ambiente; faltam instruções de override mais concretas para conflito de portas (mantendo NV quando aplicável).
+5. **Cobertura DB/contratos:** suíte DB-backed focada em `select-organization`; lacunas existem no fluxo org→workspace→task, porém expansão deve ser viável/determinística e integrada ao CI sem ampliar escopo.

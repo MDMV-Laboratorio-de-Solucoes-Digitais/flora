@@ -12,7 +12,30 @@ Reproducible local smoke path without real OIDC, using `docker compose`, `dev-se
 
 > **Existing local volume note:** if you previously initialized `flora_postgres_data` with `postgres:16-alpine`, a PG16 data directory is not compatible with PG18. For a disposable dev reset: `docker compose down -v` (removes named volumes) then `docker compose up -d`. Do not reset non-disposable data without backup/migration.
 >
-> **Port conflict note:** if host `5432/6379/7700` are already in use, run compose with alternative host ports (e.g. an override/temporary mapping) and point `FLORA_DATABASE__POSTGRES_URL`, `FLORA_MESSAGING__VALKEY_URL`, `FLORA_SEARCH__MEILISEARCH_URL`, and `psql` commands to the chosen ports. The API/seed/bootstrap flow is the same.
+> **Port conflict note (NV/environmental):** if host `5432/6379/7700` are already in use, run compose with alternative host ports via an override file and point env vars/`psql` to the chosen ports. The migration/seed/bootstrap/API flow remains the same.
+>
+> Example (isolated alt ports):
+> ```yaml
+> # smoke-ports.override.yml
+> services:
+>   postgres:
+>     ports: !override
+>       - "127.0.0.1:15433:5432"
+>   valkey:
+>     ports: !override
+>       - "127.0.0.1:16379:6379"
+>   meilisearch:
+>     ports: !override
+>       - "127.0.0.1:17700:7700"
+> ```
+> ```bash
+> docker compose -f docker-compose.yml -f smoke-ports.override.yml up -d
+> # point config/tools to mapped ports, e.g.:
+> # FLORA_DATABASE__POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:15433/flora
+> # FLORA_MESSAGING__VALKEY_URL=redis://127.0.0.1:16379
+> # FLORA_SEARCH__MEILISEARCH_URL=http://127.0.0.1:17700
+> # PGPASSWORD=postgres psql -h 127.0.0.1 -p 15433 -U postgres -d flora -f dev-seed.sql
+> ```
 
 ## 1) Start dependencies
 ```bash

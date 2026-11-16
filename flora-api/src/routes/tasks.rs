@@ -149,7 +149,9 @@ async fn create_task(
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
 
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
-    let task = Task::new(req.workspace_id, org_id, user_id, &req.title);
+    let mut task = Task::new(req.workspace_id, org_id, user_id, &req.title);
+    task.description = req.description;
+    task.assignee_id = req.assignee_id;
 
     let created = task_repo.create(task).await?;
 
