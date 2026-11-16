@@ -61,6 +61,7 @@ const LLMS_TXT_MANIFEST: &str = "\
 - `GET /health`: Service liveness and capability hints (`search`, `messaging`)
 - `GET /health/ready`: Database readiness probe
 - `GET /health/live`: Process liveness probe
+- `GET /metrics`: Prometheus-compatible process and service metrics
 - `GET /llms.txt`: This machine-readable service manifest
 
 ## API Endpoints
@@ -92,6 +93,32 @@ pub async fn llms_txt() -> (
     )
 }
 
+/// Prometheus-compatible metrics payload for `/metrics`.
+const PROMETHEUS_METRICS: &str = "\
+# HELP flora_api_up Service process up indicator.
+# TYPE flora_api_up gauge
+flora_api_up 1
+# HELP flora_api_info Static service metadata.
+# TYPE flora_api_info gauge
+flora_api_info{service=\"flora-api\"} 1
+";
+
+/// Returns `200 OK` with Prometheus text exposition metrics.
+pub async fn metrics() -> (
+    StatusCode,
+    [(axum::http::header::HeaderName, &'static str); 1],
+    &'static str,
+) {
+    (
+        StatusCode::OK,
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "text/plain; version=0.0.4; charset=utf-8",
+        )],
+        PROMETHEUS_METRICS,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,6 +142,27 @@ mod tests {
         let body = std::str::from_utf8(&body_bytes).expect("utf-8 body");
         assert!(body.contains("# Flora Workspace (flora-api)"));
         assert!(body.contains("/health"));
+        assert!(body.contains("/metrics"));
         assert!(body.contains("/api/v1/workspaces"));
+    }
+
+    #[tokio::test]
+    async fn test_metrics_returns_ok_prometheus_text() {
+        let response = metrics().await.into_response();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response
+                .headers()
+                .get(axum::http::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok()),
+            Some("text/plain; version=0.0.4; charset=utf-8")
+        );
+
+        let body_bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("body bytes");
+        let body = std::str::from_utf8(&body_bytes).expect("utf-8 body");
+        assert!(body.contains("flora_api_up 1"));
+        assert!(body.contains("flora_api_info{service=\"flora-api\"} 1"));
     }
 }
