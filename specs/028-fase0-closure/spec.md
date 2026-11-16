@@ -1,7 +1,7 @@
 # Feature Specification: 028 — FASE 0 closure and Seed verification unblock
 
 **Branch**: `feat/028-fase0-closure`  
-**Status**: In progress  
+**Status**: Completed (PR #236)  
 **Assessment**: `.specify/assessments/028-next-vertical-slice/decision.md`
 
 ## Goal

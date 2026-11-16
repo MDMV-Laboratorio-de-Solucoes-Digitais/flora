@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 029 candidato — verificação de ponta a ponta)
 
-- **Ciclo 028 (PR em preparação/CI):** FASE 0 fechado com store cargo-vet versionado + exceção `multer`, gate informativo, dependency-review e sweep OSV semanal; smoke com JWT fresco; drift residual corrigido.
+- **Ciclo 028 (PR #236, CI verde, mergeado em `dev@4ecf1459`):** FASE 0 fechado com store cargo-vet versionado + exceção `multer`, gate informativo, dependency-review e sweep OSV semanal; smoke com JWT fresco; drift residual corrigido.
 
 1. **P0 — E2E browser:** bin `flora-mint-session` feature-gated + Playwright `setup` project + job CI não-required (Chromium); 1 smoke `workspace→canal→mensagem→tarefa`.
 2. **P1 — Release SBOM:** definir trigger de tag/release antes de gerar CycloneDX (hoje bloqueado: sem processo de release).
