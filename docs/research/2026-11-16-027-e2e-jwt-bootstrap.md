@@ -1,3 +1,5 @@
+> **Current status (cycle 028):** historical research snapshot; see cycle 028 docs/artifacts for what was actually implemented.
+
 # 027 — Deterministic Flora session-JWT bootstrap for browser e2e (no live OIDC)
 
 **Date:** 2026-11-16  

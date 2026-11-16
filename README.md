@@ -31,7 +31,7 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 - [x] Tasks
 - [x] Files (local filesystem with streaming upload/download and SHA-256; RustFS deferred to Grove)
 - [x] Search (Postgres FTS with `source: "postgres"`; Meilisearch dormant/non-authoritative)
-- [~] Infrastructure: PostgreSQL + SQLx + Docker + CI verified; Coolify deploy webhook secret-gated (NV); OpenTelemetry exporter NV
+- [~] Infrastructure: PostgreSQL + SQLx + Docker + CI + `cargo deny`/cargo-vet/advisory gates verified; Coolify deploy webhook secret-gated (NV); `tracing` + `TraceLayer` + static `/metrics` active, OTLP exporter NV
 - [x] License: AGPL-3.0-or-later (full text + NOTICE; dependency-audit policy in `deny.toml`)
 
 ### Development Phases
