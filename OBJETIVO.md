@@ -85,7 +85,9 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 034 candidato — fronteira de origem e produto)
+## 5) Próximo 80/20 (ciclo 035 candidato — Documents e honestidade de UI)
+
+- **Ciclo 034 (PR #248, CI verde, mergeado em `dev@23ca350c`):** guard de `Origin` no WS + URLs runtime no FE + prova T8 isolada; ADR-0002 critério #2 marcado como atendido; #1/#3/#4 permanecem NV.
 
 - **Ciclo 033 (PR #246, CI verde, mergeado em `dev@f89678d5`):** busca no header canônico ligada ao endpoint verificado, com testes unitários no gate do CI e drift documental fechado.
 

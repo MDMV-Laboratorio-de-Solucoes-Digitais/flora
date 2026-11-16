@@ -5,7 +5,7 @@
 ## Delivered
 - Working, accessible header search wired to the verified `/api/v1/search` (typed client, debounce, states).
 - CI-enforced unit tests plus an optional informational e2e spec.
-- Governance drift closed; five R1 research docs recorded.
+- Governance drift closed; three R1 research docs plus three assessment notes recorded (five subagents).
 
 ## Evidence
 See `.specify/validations/033-search-ui/validate.md`. PR #246 all checks green; merged at `f89678d5`.

@@ -6,4 +6,4 @@
 - [x] T004 FE runtime config chain + resolver tests + `.env.example`.
 - [x] T005 Local gates (fmt, clippy, workspace tests, 6 DB suites, 4 FE gates) green.
 - [x] T006 T8 live proof on isolated canonical instance (preflight, Bearer/select-org, WS 403/401/101).
-- [ ] T007 PR, CI green, merge, sync, ADR gate note, finalize, plan 035.
+- [x] T007 PR #248 CI green (incl. e2e-browser), merge `23ca350c`, sync, ADR #2 noted MET, plan 035.
