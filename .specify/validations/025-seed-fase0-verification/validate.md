@@ -11,4 +11,4 @@
 - PR #231: all 4 `build` + 2 `db-tests` checks green (GitHub run IDs 43870100343, 43870100410, 43870107684, 43870107773); merged to `dev` as commit `d09d39c1`.
 
 ## NV
-cargo-deny CI gate, cargo-vet 442 exemptions, OTel honest wiring, notification transport decision, browser e2e, 2vCPU/4GB validation.
+cargo-deny CI gate, cargo-vet exemptions (442 at cycle 025; 455 today), OTel honest wiring, notification transport decision, browser e2e, 2vCPU/4GB validation.

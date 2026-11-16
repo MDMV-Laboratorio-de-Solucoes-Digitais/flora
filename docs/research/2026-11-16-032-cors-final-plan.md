@@ -1,3 +1,5 @@
+> **Superseded by PR #244/#245 (cycle 032):** pre-implementation snapshot; check committed files for current state.
+
 # 032 — CORS hardening: final audit + exact edit plan (cycle 032)
 
 **Date:** 2026-11-16. **Repo:** `flora` (archived checkout), branch `dev`.

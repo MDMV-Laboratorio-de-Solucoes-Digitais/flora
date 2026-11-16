@@ -46,6 +46,22 @@ export interface Task {
 	updatedAt: ISO8601Date | null;
 }
 
+/** Entity kind emitted by GET /api/v1/search. */
+export type SearchResultType = string;
+
+export interface SearchResult {
+	type: SearchResultType;
+	id: UUID;
+	snippet: string;
+}
+
+export interface SearchResponse {
+	query: string;
+	results: SearchResult[];
+	/** Authoritative backend; currently always "postgres". */
+	source: string;
+}
+
 export interface FileAttachment {
 	id: UUID;
 	fileName: string;
