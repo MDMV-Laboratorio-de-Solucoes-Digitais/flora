@@ -25,6 +25,7 @@ Run on isolated infrastructure per `docs/research/2026-11-16-029-smoke-alt-port-
 
 This closes the last unexecuted item of the ADR-0001 verification gate. No production access, no deploy webhook,
 no IdP contact (login only builds the authorize URL).
+PR #238: all checks green (4 `build`, 2 `db-tests`, dependency-review, 2 `supply-chain-vet`; GitHub runs 43897995565 / 43897995951 / 43898004560 / 43898004683); merged as `b8972c0e`.
 
 ## Contract coverage
 - ADR-0001 gate: fmt/clippy/deny/vet/advisory + six DB suites + frontend CI + integrated smoke rc=0 — all evidenced.
