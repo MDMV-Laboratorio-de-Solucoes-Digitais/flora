@@ -4,7 +4,116 @@ use axum::{
     extract::{FromRef, FromRequestParts},
     http::{StatusCode, request::Parts},
 };
+use chrono::Utc;
 use uuid::Uuid;
+
+/// A JWT that has been validated against the server-side session store.
+#[derive(Debug, Clone)]
+struct VerifiedSession {
+    /// The authenticated user's ID.
+    user_id: Uuid,
+    /// The organization the session is scoped to.
+    organization_id: Uuid,
+    /// The decoded JWT claims.
+    claims: flora_core::utils::jwt::FloraClaims,
+}
+
+/// Authenticates a `Bearer` token and enforces server-side session authority.
+///
+/// The JWT is decoded and then its `jti` is looked up in PostgreSQL. A session is
+/// accepted only when it exists, is active, has not expired, and belongs to the same
+/// user and organization as the token claims (including the nil-organization
+/// pre-selection session).
+///
+/// # Errors
+///
+/// Returns `401` for a missing/invalid token or a missing/revoked/expired/mismatched
+/// session, and `500` when the session store is unavailable. Error messages are
+/// intentionally generic to avoid leaking session state.
+async fn authenticate_bearer(
+    parts: &Parts,
+    state: &AppState,
+) -> Result<VerifiedSession, (StatusCode, String)> {
+    let auth_header = parts
+        .headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|val| val.to_str().ok())
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                "Missing or invalid Authorization header".to_string(),
+            )
+        })?;
+
+    if !auth_header.starts_with("Bearer ") {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            "Authorization header must start with Bearer".to_string(),
+        ));
+    }
+
+    let token = &auth_header["Bearer ".len()..];
+    let claims = flora_core::utils::jwt::decode_token(token, &state.config.app.jwt_secret)
+        .map_err(|_| {
+            (
+                StatusCode::UNAUTHORIZED,
+                "Invalid or expired session".to_string(),
+            )
+        })?;
+
+    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            "Invalid or expired session".to_string(),
+        )
+    })?;
+    let organization_id = Uuid::parse_str(&claims.organization_id).map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            "Invalid or expired session".to_string(),
+        )
+    })?;
+
+    let session = state
+        .session_service
+        .validate_session(&claims.jti)
+        .await
+        .map_err(|error| {
+            tracing::error!(error = %error, "session lookup failed during authentication");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Authentication service unavailable".to_string(),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                "Invalid or expired session".to_string(),
+            )
+        })?;
+
+    if !session.is_active
+        || session.expires_at <= Utc::now()
+        || session.user_id != user_id
+        || session.organization_id != organization_id
+    {
+        tracing::debug!(
+            user_id = %user_id,
+            jti = %claims.jti,
+            "session rejected by server-side authority"
+        );
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            "Invalid or expired session".to_string(),
+        ));
+    }
+
+    Ok(VerifiedSession {
+        user_id,
+        organization_id,
+        claims,
+    })
+}
 
 /// Organization context extracted from the session.
 #[derive(Clone, Debug)]
@@ -32,45 +141,13 @@ where
 {
     type Rejection = (StatusCode, String);
 
-    #[expect(
-        clippy::unused_async_trait_impl,
-        reason = "axum::extract::FromRequestParts requires async fn"
-    )]
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-
-        let auth_header = parts
-            .headers
-            .get(axum::http::header::AUTHORIZATION)
-            .and_then(|val| val.to_str().ok())
-            .ok_or_else(|| {
-                (
-                    StatusCode::UNAUTHORIZED,
-                    "Missing or invalid Authorization header".to_string(),
-                )
-            })?;
-
-        if !auth_header.starts_with("Bearer ") {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                "Authorization header must start with Bearer".to_string(),
-            ));
-        }
-
-        let token = &auth_header["Bearer ".len()..];
-        let claims = flora_core::utils::jwt::decode_token(token, &app_state.config.app.jwt_secret)
-            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {e}")))?;
-
-        let user_id = Uuid::parse_str(&claims.sub).map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                "Invalid user ID in token".to_string(),
-            )
-        })?;
+        let verified = authenticate_bearer(parts, &app_state).await?;
 
         Ok(Self {
-            user_id,
-            email: claims.email,
+            user_id: verified.user_id,
+            email: verified.claims.email,
         })
     }
 }
@@ -83,41 +160,9 @@ where
 {
     type Rejection = (StatusCode, String);
 
-    #[expect(
-        clippy::unused_async_trait_impl,
-        reason = "axum::extract::FromRequestParts requires async fn"
-    )]
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-
-        let auth_header = parts
-            .headers
-            .get(axum::http::header::AUTHORIZATION)
-            .and_then(|val| val.to_str().ok())
-            .ok_or_else(|| {
-                (
-                    StatusCode::UNAUTHORIZED,
-                    "Missing or invalid Authorization header".to_string(),
-                )
-            })?;
-
-        if !auth_header.starts_with("Bearer ") {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                "Authorization header must start with Bearer".to_string(),
-            ));
-        }
-
-        let token = &auth_header["Bearer ".len()..];
-        let claims = flora_core::utils::jwt::decode_token(token, &app_state.config.app.jwt_secret)
-            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {e}")))?;
-
-        let organization_id = Uuid::parse_str(&claims.organization_id).map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                "Invalid organization ID in token".to_string(),
-            )
-        })?;
+        let verified = authenticate_bearer(parts, &app_state).await?;
 
         let workspace_id = parts
             .headers
@@ -126,7 +171,7 @@ where
             .and_then(|val| Uuid::parse_str(val).ok());
 
         Ok(Self {
-            organization_id,
+            organization_id: verified.organization_id,
             workspace_id,
         })
     }
@@ -135,7 +180,8 @@ where
 /// Authenticated user & organization context extracted from JWT Bearer token.
 ///
 /// Validates the JWT signature, expiry, subject (user ID), and scoped organization ID
-/// per FR-013 and FR-015.
+/// per FR-013 and FR-015, and enforces server-side session authority via the `jti`
+/// session row (cycle 012).
 #[derive(Debug, Clone)]
 pub struct AuthExtractor {
     /// The authenticated user's ID.
@@ -174,48 +220,9 @@ where
 {
     type Rejection = (StatusCode, String);
 
-    #[expect(
-        clippy::unused_async_trait_impl,
-        reason = "axum::extract::FromRequestParts requires async fn"
-    )]
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-
-        let auth_header = parts
-            .headers
-            .get(axum::http::header::AUTHORIZATION)
-            .and_then(|val| val.to_str().ok())
-            .ok_or_else(|| {
-                (
-                    StatusCode::UNAUTHORIZED,
-                    "Missing or invalid Authorization header".to_string(),
-                )
-            })?;
-
-        if !auth_header.starts_with("Bearer ") {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                "Authorization header must start with Bearer".to_string(),
-            ));
-        }
-
-        let token = &auth_header["Bearer ".len()..];
-        let claims = flora_core::utils::jwt::decode_token(token, &app_state.config.app.jwt_secret)
-            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {e}")))?;
-
-        let user_id = Uuid::parse_str(&claims.sub).map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                "Invalid user ID in token".to_string(),
-            )
-        })?;
-
-        let organization_id = Uuid::parse_str(&claims.organization_id).map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                "Invalid organization ID in token".to_string(),
-            )
-        })?;
+        let verified = authenticate_bearer(parts, &app_state).await?;
 
         let workspace_id = parts
             .headers
@@ -224,11 +231,11 @@ where
             .and_then(|val| Uuid::parse_str(val).ok());
 
         Ok(Self {
-            user_id,
-            organization_id,
-            email: claims.email.clone(),
+            user_id: verified.user_id,
+            organization_id: verified.organization_id,
+            email: verified.claims.email.clone(),
             workspace_id,
-            claims,
+            claims: verified.claims,
         })
     }
 }
@@ -342,22 +349,21 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_auth_extractor_valid_jwt() {
+    async fn test_auth_extractor_invalid_signature_rejected_without_db() {
         let user_id = Uuid::now_v7();
         let org_id = Uuid::now_v7();
         let config = Config::default();
         let claims = FloraClaims::new(
             user_id,
-            "jti-1".to_string(),
+            "jti-invalid-signature".to_string(),
             org_id,
             "user@flora.test",
             3600,
         );
-        let token = encode_token(&claims, &config.app.jwt_secret);
+        let token = encode_token(&claims, "not-the-configured-secret");
 
         let req = Request::builder()
             .header("Authorization", format!("Bearer {token}"))
-            .header("x-workspace-id", org_id.to_string())
             .body(())
             .unwrap_or_else(|_| Request::new(()));
 
@@ -365,12 +371,10 @@ mod tests {
         let state = make_test_app_state(&config);
 
         let auth_ext = AuthExtractor::from_request_parts(&mut parts, &state).await;
-        assert!(auth_ext.is_ok());
-        let auth_val = auth_ext.unwrap_or_else(|_| panic!("auth failed"));
-        assert_eq!(auth_val.user_id, user_id);
-        assert_eq!(auth_val.organization_id, org_id);
-        assert_eq!(auth_val.email, "user@flora.test");
-        assert_eq!(auth_val.workspace_id, Some(org_id));
+        assert!(auth_ext.is_err());
+        let (status, msg) = auth_ext.unwrap_err();
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(msg, "Invalid or expired session");
     }
 
     #[tokio::test]

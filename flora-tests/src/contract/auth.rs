@@ -375,40 +375,6 @@ async fn test_select_organization_rejects_missing_auth() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// `POST /auth/select-organization` with nil organization must be rejected before DB access.
-#[cfg(test)]
-#[tokio::test]
-async fn test_select_organization_rejects_nil_org() -> anyhow::Result<()> {
-    let config = Config::default();
-    let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
-    let router = axum::Router::new()
-        .nest("/auth", create_auth_router())
-        .with_state(state);
-
-    let claims = flora_core::utils::jwt::FloraClaims::new(
-        uuid::Uuid::new_v4(),
-        uuid::Uuid::new_v4().to_string(),
-        uuid::Uuid::nil(),
-        "user@example.test",
-        3600,
-    );
-    let token = flora_core::utils::jwt::encode_token(&claims, &config.app.jwt_secret);
-
-    let request = http::Request::builder()
-        .method("POST")
-        .uri("/auth/select-organization")
-        .header("content-type", "application/json")
-        .header("authorization", format!("Bearer {token}"))
-        .body(axum::body::Body::from(
-            r#"{"organization_id":"00000000-0000-0000-0000-000000000000"}"#,
-        ))?;
-
-    let response = ServiceExt::oneshot(router, request).await?;
-    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
-    Ok(())
-}
-
 /// DB-backed select-organization tests (cycle 009).
 ///
 /// Run explicitly with:
@@ -697,6 +663,312 @@ mod db_select_organization {
 
         let response = select_org_request(router, &token, org.id).await?;
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        Ok(())
+    }
+}
+
+/// DB-backed session-authority tests (cycle 012).
+///
+/// Run explicitly with:
+/// `FLORA_DATABASE__POSTGRES_URL=postgresql://... cargo test -p flora-tests contract::auth::db_ -- --ignored`
+/// CI runs them in the Postgres-enabled `db-tests` job.
+#[cfg(test)]
+mod db_session_authority {
+    use super::*;
+    use ::chrono::{Duration, Utc};
+    use flora_api::routes::tasks::create_tasks_router;
+    use flora_core::models::{Membership, Organization, Role, Session, User};
+    use flora_core::traits::UserRepository;
+    use uuid::Uuid;
+
+    async fn db_state() -> anyhow::Result<Option<(AppState, Config)>> {
+        let Some(url) = std::env::var("FLORA_DATABASE__POSTGRES_URL")
+            .ok()
+            .or_else(|| std::env::var("DATABASE_URL").ok())
+        else {
+            eprintln!(
+                "skipping DB-backed session-authority test: FLORA_DATABASE__POSTGRES_URL/DATABASE_URL not set"
+            );
+            return Ok(None);
+        };
+
+        let pool = PgPool::connect(&url).await?;
+        flora_core::migrations::run_migrations(&pool).await?;
+        let config = Config::default();
+        let state = make_test_state(pool, &config)?;
+        Ok(Some((state, config)))
+    }
+
+    async fn seed_user(state: &AppState, label: &str) -> anyhow::Result<User> {
+        let uniq = Uuid::now_v7().simple().to_string();
+        let user_repo = PgUserRepository::new((*state.db_pool).clone());
+        user_repo
+            .create(User::new(
+                &format!("{label}-{uniq}@example.test"),
+                &format!("Session {label} User"),
+            ))
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    async fn seed_org(state: &AppState, label: &str) -> anyhow::Result<Organization> {
+        let uniq = Uuid::now_v7().simple().to_string();
+        let org_repo = PgOrganizationRepository::new((*state.db_pool).clone());
+        let org = org_repo
+            .create(Organization::new(
+                &format!("Session {label} {uniq}"),
+                &format!("session-{label}-{uniq}"),
+            ))
+            .await?;
+        Ok(org)
+    }
+
+    async fn seed_user_org_role(state: &AppState) -> anyhow::Result<(User, Organization, Role)> {
+        let user = seed_user(state, "authority").await?;
+        let org = seed_org(state, "authority").await?;
+        let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+        let role = role_repo.create(Role::new(org.id, "Member")).await?;
+        Ok((user, org, role))
+    }
+
+    async fn seed_membership(
+        state: &AppState,
+        user: &User,
+        org: &Organization,
+        role: &Role,
+    ) -> anyhow::Result<()> {
+        let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+        let _ = membership_repo
+            .create(Membership::new(user.id, org.id, role.id))
+            .await?;
+        Ok(())
+    }
+
+    async fn seed_session(
+        state: &AppState,
+        user_id: Uuid,
+        organization_id: Uuid,
+        jti: &str,
+        is_active: bool,
+        expires_at: ::chrono::DateTime<Utc>,
+    ) -> anyhow::Result<()> {
+        let session_repo = PgSessionRepository::new((*state.db_pool).clone());
+        let now = Utc::now();
+        let _ = session_repo
+            .create(Session {
+                id: Uuid::now_v7(),
+                user_id,
+                organization_id,
+                jti: jti.to_string(),
+                refresh_token_id: None,
+                client_ip: None,
+                user_agent: None,
+                expires_at,
+                last_activity_at: now,
+                is_active,
+                created_at: now,
+                updated_at: now,
+            })
+            .await?;
+        Ok(())
+    }
+
+    fn token_for(
+        config: &Config,
+        user_id: Uuid,
+        jti: &str,
+        organization_id: Uuid,
+        email: &str,
+    ) -> String {
+        flora_core::utils::jwt::encode_token(
+            &flora_core::utils::jwt::FloraClaims::new(
+                user_id,
+                jti.to_string(),
+                organization_id,
+                email,
+                config.app.session_ttl_secs,
+            ),
+            &config.app.jwt_secret,
+        )
+    }
+
+    async fn protected_status(state: AppState, token: &str) -> anyhow::Result<StatusCode> {
+        let router = axum::Router::new()
+            .nest("/api/v1/tasks", create_tasks_router())
+            .with_state(state);
+        let request = http::Request::builder()
+            .uri("/api/v1/tasks")
+            .header("authorization", format!("Bearer {token}"))
+            .body(axum::body::Body::empty())?;
+        let response = ServiceExt::oneshot(router, request).await?;
+        Ok(response.status())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 012)"]
+    async fn db_session_valid_is_accepted() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, org, role) = seed_user_org_role(&state).await?;
+        seed_membership(&state, &user, &org, &role).await?;
+        let jti = format!("jti-valid-{}", Uuid::now_v7());
+        seed_session(
+            &state,
+            user.id,
+            org.id,
+            &jti,
+            true,
+            Utc::now() + Duration::seconds(3600),
+        )
+        .await?;
+        let token = token_for(&config, user.id, &jti, org.id, &user.email);
+        assert_eq!(protected_status(state, &token).await?, StatusCode::OK);
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 012)"]
+    async fn db_session_revoked_is_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, org, role) = seed_user_org_role(&state).await?;
+        seed_membership(&state, &user, &org, &role).await?;
+        let jti = format!("jti-revoked-{}", Uuid::now_v7());
+        seed_session(
+            &state,
+            user.id,
+            org.id,
+            &jti,
+            false,
+            Utc::now() + Duration::seconds(3600),
+        )
+        .await?;
+        let token = token_for(&config, user.id, &jti, org.id, &user.email);
+        assert_eq!(
+            protected_status(state, &token).await?,
+            StatusCode::UNAUTHORIZED
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 012)"]
+    async fn db_session_expired_is_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, org, role) = seed_user_org_role(&state).await?;
+        seed_membership(&state, &user, &org, &role).await?;
+        let jti = format!("jti-expired-{}", Uuid::now_v7());
+        seed_session(
+            &state,
+            user.id,
+            org.id,
+            &jti,
+            true,
+            Utc::now() - Duration::seconds(1),
+        )
+        .await?;
+        let token = token_for(&config, user.id, &jti, org.id, &user.email);
+        assert_eq!(
+            protected_status(state, &token).await?,
+            StatusCode::UNAUTHORIZED
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 012)"]
+    async fn db_session_missing_is_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, org, _role) = seed_user_org_role(&state).await?;
+        let jti = format!("jti-missing-{}", Uuid::now_v7());
+        let token = token_for(&config, user.id, &jti, org.id, &user.email);
+        assert_eq!(
+            protected_status(state, &token).await?,
+            StatusCode::UNAUTHORIZED
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 012)"]
+    async fn db_session_user_mismatch_is_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, org, _role) = seed_user_org_role(&state).await?;
+        let other_user = seed_user(&state, "authority-other").await?;
+        let jti = format!("jti-user-mismatch-{}", Uuid::now_v7());
+        seed_session(
+            &state,
+            other_user.id,
+            org.id,
+            &jti,
+            true,
+            Utc::now() + Duration::seconds(3600),
+        )
+        .await?;
+        let token = token_for(&config, user.id, &jti, org.id, &user.email);
+        assert_eq!(
+            protected_status(state, &token).await?,
+            StatusCode::UNAUTHORIZED
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 012)"]
+    async fn db_session_org_mismatch_is_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, org, _role) = seed_user_org_role(&state).await?;
+        let other_org = seed_org(&state, "authority-other").await?;
+        let jti = format!("jti-org-mismatch-{}", Uuid::now_v7());
+        seed_session(
+            &state,
+            user.id,
+            other_org.id,
+            &jti,
+            true,
+            Utc::now() + Duration::seconds(3600),
+        )
+        .await?;
+        let token = token_for(&config, user.id, &jti, org.id, &user.email);
+        assert_eq!(
+            protected_status(state, &token).await?,
+            StatusCode::UNAUTHORIZED
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 012)"]
+    async fn db_session_nil_org_passes_auth_but_requires_org() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, _org, _role) = seed_user_org_role(&state).await?;
+        let jti = format!("jti-nil-org-{}", Uuid::now_v7());
+        seed_session(
+            &state,
+            user.id,
+            Uuid::nil(),
+            &jti,
+            true,
+            Utc::now() + Duration::seconds(3600),
+        )
+        .await?;
+        let token = token_for(&config, user.id, &jti, Uuid::nil(), &user.email);
+        assert_eq!(
+            protected_status(state, &token).await?,
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
         Ok(())
     }
 }

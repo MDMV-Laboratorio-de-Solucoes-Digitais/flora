@@ -57,5 +57,5 @@ jobs:
           rustup default 1.98.0
           rustc --version
           cargo --version
-      - name: Run DB-backed select-organization tests
-        run: cargo test -p flora-tests contract::auth::db_select_organization -- --ignored --test-threads=1
+      - name: Run DB-backed session/select-organization contract tests
+        run: cargo test -p flora-tests contract::auth::db_ -- --ignored --test-threads=1

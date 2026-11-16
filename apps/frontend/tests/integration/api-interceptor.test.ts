@@ -10,22 +10,55 @@ describe('API Interceptor', () => {
 		authState.logout();
 	});
 
-	it('should lock session and throw typed ApiError on 401 response', async () => {
+	it('should lock session and throw typed ApiError preserving 401 body', async () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn().mockResolvedValue({
 				ok: false,
 				status: 401,
 				statusText: 'Unauthorized',
-				text: () => Promise.resolve('Unauthorized')
+				text: () =>
+					Promise.resolve(JSON.stringify({ error: 'session_expired', message: 'Session expired' }))
 			})
 		);
 
-		await expect(ApiClient.request('/test')).rejects.toMatchObject({
-			name: 'ApiError',
-			status: 401,
-			message: 'Unauthorized'
-		});
+		try {
+			await ApiClient.request('/test');
+			throw new Error('expected ApiError');
+		} catch (error_) {
+			expect(error_).toBeInstanceOf(ApiError);
+			const apiError = error_ as ApiError;
+			expect(apiError.status).toBe(401);
+			expect(apiError.code).toBe('session_expired');
+			expect(apiError.message).toBe('Session expired');
+			expect(apiError.body).toEqual({
+				error: 'session_expired',
+				message: 'Session expired'
+			});
+		}
+		expect(authState.isSessionLocked).toBe(true);
+	});
+
+	it('should fall back to unauthorized code when 401 has no body', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue({
+				ok: false,
+				status: 401,
+				statusText: 'Unauthorized',
+				text: () => Promise.resolve('')
+			})
+		);
+
+		try {
+			await ApiClient.request('/test');
+			throw new Error('expected ApiError');
+		} catch (error_) {
+			expect(error_).toBeInstanceOf(ApiError);
+			const apiError = error_ as ApiError;
+			expect(apiError.status).toBe(401);
+			expect(apiError.code).toBe('unauthorized');
+		}
 		expect(authState.isSessionLocked).toBe(true);
 	});
 
