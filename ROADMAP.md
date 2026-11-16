@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–024 mergeados; 025 — consolidação Seed/FASE 0 — em execução)  
+**Atualizado em:** 2026-11-16 (ciclos 011–025 mergeados; 026 — gate Seed em CI — em execução; 027 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-019`, `.specify/assessments/003-019`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -43,7 +43,9 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 022 (PR #225, CI verde, mergeado em `dev@a85e2020f`): dedup idempotente DB-enforced de notificações não lidas, degradação fail-open Meilisearch→PG FTS com contrato explícito, e expansão de CI `db-tests` (search/notifications/files). Freshness/paridade de indexação Meilisearch adiada (023).
 - [x] Ciclo 023 (PR #228, CI verde, mergeado em `dev@52160a539`): contrato de busca Postgres-autoritativa (`source: "postgres"`, Meilisearch dormente), normalização de separadores em FTS e contratos DB-gated; prepara o Seed verificável.
 - [x] Ciclo 024 (PR #230, CI verde, mergeado em `dev@bf1766cb`): verificação real do ID token OIDC (JWKS/`iss`/`aud`/`exp`/`nonce`, allowlist de redirect, identidade por `sub`) com contratos determinísticos.
-- [~] Ciclo 025 (em execução): ADR-0001 de reconciliação Seed, LICENSE/NOTICE completos, `deny.toml`, README mechanism-neutral; FASE 0 CI enforcement e OTel honesto ficam como 026. verificação real do ID token OIDC (JWKS/`iss`/`aud`/`exp`/`nonce`, allowlist de redirect, identidade por `sub`) com contratos determinísticos; depois FASE 0 em CI e ADR de reconciliação de mecanismos.
+- [x] Ciclo 025 (PR #231, CI verde, mergeado em `dev@d09d39c1`): ADR-0001 de reconciliação Seed, LICENSE/NOTICE completos, `deny.toml`, README mechanism-neutral.
+- [~] Ciclo 026 (PR em preparação/CI): gate Seed executável em CI (fmt/clippy/cargo-deny), `deny.toml` com `AGPL-3.0-or-later`, constituição v1.3.0 mechanism-neutral, deps OTel fantasmas removidas.
+- [ ] Ciclo 027 (candidato): retirada do scaffolding PGMQ/Valkey, cargo-vet como gate de nova dependência, e2e browser com JWT fresco.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
