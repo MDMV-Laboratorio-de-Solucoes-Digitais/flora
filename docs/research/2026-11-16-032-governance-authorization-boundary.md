@@ -1,3 +1,5 @@
+> **Superseded by PR #244/#245 (cycle 032):** pre-implementation snapshot; check committed files for current state.
+
 # 032 — Limite de autorização: o agente pode promover um check informativo a obrigatório? (2026-11-16)
 
 **Data:** 2026-11-16

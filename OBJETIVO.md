@@ -1,8 +1,8 @@
 # OBJETIVO — Flora
 
-**Data da consolidação:** 2026-11-15 (atualizado no ciclo 019)  
+**Data da consolidação:** 2026-11-16 (atualizado no ciclo 033)  
 **Escopo:** repositório `flora` (workspace Rust modular monolith + `apps/frontend` Svelte 5).  
-**Fontes:** inspeção do código/artefatos locais, `.specify/memory/constitution.md`, `specs/001-009`, `.specify/assessments/003-009`, verificações locais executadas em 2026-11-15, e pesquisa consolidada em `docs/research/2026-11-15-flora-seed-80-20-research.md` e `docs/research/2026-11-15-macro-alternative-80-20-research.md`.
+**Fontes:** inspeção do código/artefatos locais, `.specify/memory/constitution.md`, `specs/001-033`, `.specify/assessments/003-033`, verificações locais executadas em 2026-11-15, e pesquisa consolidada em `docs/research/2026-11-15-flora-seed-80-20-research.md` e `docs/research/2026-11-15-macro-alternative-80-20-research.md`.
 
 ## 1) Norte estratégico (o que a Flora quer ser)
 
@@ -33,7 +33,7 @@ Princípios diretores:
 ### P2 — Adiar (até Seed estável e demanda comprovada)
 - Cliente de email/sync multi-conta completo, calls/gravação/transcrição, CRM e databases genéricas, canvas, agentes/IA com memória/rotinas/sandbox avançados, integrações profundas (calendar/PR/WhatsApp), paridade de UX/superfície do Macro.
 
-## 3) Estado atual (consolidado em 2026-11-15)
+## 3) Estado atual (consolidado em 2026-11-16)
 
 ### 3.1 Governança e artefatos
 - Constituição v1.3.0; specs 001-009; assessments 003-009 (go nos ciclos executados). Bug flow SpecKit usado pontualmente. Documentação de direção em `OBJETIVO.md`, `ROADMAP.md` e `docs/research/`.
@@ -85,7 +85,9 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 033 candidato — fronteira de origem e produto)
+## 5) Próximo 80/20 (ciclo 034 candidato — fronteira de origem e produto)
+
+- **Ciclo 033 (PR em preparação/CI):** busca no header canônico ligada ao endpoint verificado, com testes unitários no gate do CI e drift documental fechado.
 
 - **Ciclo 032 (PR #244, CI verde, mergeado em `dev@cecaf686`):** allowlist CORS backend com testes determinísticos e drift documental fechado; ADR-0002 #2 permanece NV.
 

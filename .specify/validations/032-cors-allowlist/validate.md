@@ -6,7 +6,7 @@
 - `cargo fmt --all -- --check`: OK; `cargo clippy --workspace --all-targets -D warnings`: clean.
 - Unit tests: flora-api 21, flora-core 12 (4 new CORS preflight cases + 4 config validation cases).
 - Six DB-gated PG18 suites: auth 12, messaging 4, websocket 8, search 8, notifications 5, files 6 — all passed.
-- Static invariant: no `Any` remains in `flora-api/src/middleware/cors.rs`; single call site passes config origins.
+- Static invariant: no `Any` remains in executable `cors.rs` code (the word survives only in a comment); single call site passes config origins.
 
 ## Contract coverage
 Allowed preflight returns `Access-Control-Allow-Origin` for the configured origin, includes `authorization` in ACAH, sets no `Access-Control-Allow-Credentials`, and derives `Vary: Origin`; disallowed origins get no ACAO; wildcard and unparseable origins fail at config validation.

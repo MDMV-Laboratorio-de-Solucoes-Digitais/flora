@@ -5,7 +5,6 @@
 	import { authState } from '$lib/state/AuthState.svelte';
 	import { wsClient } from '$lib/api/websocket';
 	import {
-		Search,
 		Menu,
 		MessageSquare,
 		Hash,
@@ -19,6 +18,7 @@
 		Sparkles
 	} from 'lucide-svelte';
 	import { Input } from '$lib/components/ui/input';
+	import SearchBox from '$lib/components/search/SearchBox.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
@@ -217,14 +217,7 @@
 			class="z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background px-4"
 		>
 			<div class="flex flex-1 items-center gap-4">
-				<div class="relative w-full max-w-md">
-					<Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
-					<Input
-						type="search"
-						placeholder="Search messages, tasks, files..."
-						class="w-full bg-muted/50 pl-9 focus-visible:bg-background"
-					/>
-				</div>
+				<SearchBox />
 			</div>
 
 			<div class="ml-4 flex items-center gap-2">
