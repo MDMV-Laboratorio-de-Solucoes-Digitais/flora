@@ -95,7 +95,7 @@ flora/
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml
-├── flora-notifications/       # Notifications module
+├── (retired in cycle 027: unwired PGMQ/Valkey adapter)       # Notifications module
 │   ├── src/
 │   │   └── lib.rs
 │   └── Cargo.toml

@@ -83,3 +83,30 @@ jobs:
         run: cargo test -p flora-tests contract::notifications::db_ -- --ignored --test-threads=1
       - name: Run DB-backed files contract tests
         run: cargo test -p flora-tests contract::files::db_ -- --ignored --test-threads=1
+
+  # 028: FASE 0 closure — informational supply-chain gates. Neither blocks merges yet;
+  # promotion to required checks requires CODEOWNERS and a review window (Fatia B).
+  supply-chain-vet:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo-vet
+        uses: taiki-e/install-action@cargo-vet
+      - name: Vet (informational, Fatia A)
+        run: cargo vet --locked --no-minimize-exemptions
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency review (PR diff only)
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          fail-on-scopes: runtime
+          license-check: false
+          warn-only: false

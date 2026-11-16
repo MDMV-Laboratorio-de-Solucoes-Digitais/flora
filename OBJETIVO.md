@@ -85,7 +85,17 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 028 candidato — verificação ampliada)
+## 5) Próximo 80/20 (ciclo 029 candidato — verificação de ponta a ponta)
+
+- **Ciclo 028 (PR em preparação/CI):** FASE 0 fechado com store cargo-vet versionado + exceção `multer`, gate informativo, dependency-review e sweep OSV semanal; smoke com JWT fresco; drift residual corrigido.
+
+1. **P0 — E2E browser:** bin `flora-mint-session` feature-gated + Playwright `setup` project + job CI não-required (Chromium); 1 smoke `workspace→canal→mensagem→tarefa`.
+2. **P1 — Release SBOM:** definir trigger de tag/release antes de gerar CycloneDX (hoje bloqueado: sem processo de release).
+3. **P1 — Tauri:** adotar formalmente ADR-0002 (minuta em `docs/research/2026-11-16-028-tauri-smoke-closure.md`).
+4. **P2 — Supply chain:** promover cargo-vet a gate bloqueante + CODEOWNERS após janela de observação; corrigir `expect_used` em código de teste paralelo para permitir clippy `--all-targets`; load/OOM/restore em 2vCPU/4GB.
+5. **NVs:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; JWKS rotation/real-OP.
+
+Detalhes: `docs/research/2026-11-16-028-*.md`, `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `ROADMAP.md`.
 
 - **Ciclo 027 (PR #234, CI verde, mergeado em `dev@044f40c6`):** retirada do adapter PGMQ/Valkey não conectado, `TraceLayer` sem custo e fechamento do drift ADR/README/planos/specs.
 

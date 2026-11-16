@@ -160,7 +160,8 @@ $RECYCLE.BIN/
 # Local tooling / environment artifacts
 .clean-room/
 .commandcode.inactive-*/
-supply-chain/
+# 028: cargo-vet store is versioned as an informational new-dependency gate (Fatia A).
+# Do not re-ignore it: a clean checkout must be able to run `cargo vet --locked`.
 
 # Archify diagram artifacts
 .archify/
