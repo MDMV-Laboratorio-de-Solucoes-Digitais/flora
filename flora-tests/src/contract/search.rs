@@ -501,7 +501,7 @@ mod db_search {
             seed.org.id,
             seed.user.id,
             Some(seed.workspace.id),
-            "unique-beta-report-xyz020.pdf",
+            "unique beta report xyz020 pdf",
             "application/pdf",
             false,
         )
@@ -612,7 +612,7 @@ mod db_search {
             seed_a.org.id,
             seed_a.user.id,
             Some(seed_a.workspace.id),
-            "tenant-visible-file-vis020.txt",
+            "tenant visible file vis020 txt",
             "text/plain",
             false,
         )
@@ -622,7 +622,7 @@ mod db_search {
             seed_b.org.id,
             seed_b.user.id,
             Some(seed_b.workspace.id),
-            "tenant-visible-file-vis020.txt",
+            "tenant visible file vis020 txt",
             "text/plain",
             false,
         )
@@ -632,7 +632,7 @@ mod db_search {
             seed_a.org.id,
             seed_a.user.id,
             Some(seed_a.workspace.id),
-            "tenant-deleted-file-del020.txt",
+            "tenant deleted file del020 txt",
             "text/plain",
             true,
         )
@@ -713,7 +713,7 @@ mod db_search {
             seed.org.id,
             seed.user.id,
             Some(seed.workspace.id),
-            "hardening-edge021.txt",
+            "hardening edge021 txt",
             "text/plain",
             false,
         )
@@ -724,7 +724,7 @@ mod db_search {
         // mixed case / plural / CSV tokens
         let (status, body) = authed_get_json(
             app.clone(),
-            "/search?q=edge021&type=Messages, TASKS ,files".to_string(),
+            "/search?q=edge021&type=Messages,%20TASKS%20,files".to_string(),
             &seed.token,
             seed.org.id,
         )

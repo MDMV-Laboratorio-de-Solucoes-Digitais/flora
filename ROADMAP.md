@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–021 entregues/em PR; ciclo 022 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–021 entregues/mergeados; ciclo 022 em PR/CI; ciclo 023 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-019`, `.specify/assessments/003-019`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -39,8 +39,9 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 018: hardening de arquivos + contratos DB-gated (slice A1) — validação `workspace_id ∈ org` em upload/metadata, endurecimento de multipart/erros, alinhamento FE e testes DB-gated (PG descartável + storage temporário) para happy path, isolamento/authz, validações, deleção/legacy. **PR #221 mergeado, CI verde.**
 - [x] Ciclo 019: wiring essencial busca/notificações (slice S1) — migração `messages.search_tsv` + GIN, fallback PG FTS em `/api/v1/search` sem Meilisearch (contrato preservado, tenant-safe), notificação in-app `Reply` best-effort em respostas de thread e contratos DB-gated (PG descartável). **PR #222 mergeado, CI verde.**
 - [x] Ciclo 020: extensão PG FTS para tarefas/arquivos e notificação de atribuição (slice S1) — migração `tasks/files.search_tsv` + GIN, fallback PG multi-entidade `message|task|file` (contrato preservado, tenant-safe, Meilisearch inalterado), `Assignment` best-effort em transição efetiva de assignee e contratos DB-gated (PG descartável). **PR #223 mergeado, CI verde.**
-- [x] Ciclo 021: contrato tri-state de unassign/atribuição de tarefas + dedup de notificação `Assignment` e hardening/contratos DB-gated do fallback PG de busca, com decisão explícita de precedence/paridade Meilisearch (indexação task/file diferida). **PR em validação CI.**
-- [~] Ciclo 022 (em preparação): paridade Meilisearch (indexação/reindex/degradação) e robustez de idempotência/notificações/busca.
+- [x] Ciclo 021: contrato tri-state de unassign/atribuição de tarefas + dedup de notificação `Assignment` e hardening/contratos DB-gated do fallback PG de busca, com decisão explícita de precedence/paridade Meilisearch (indexação task/file diferida). **PR #224, CI verde, mergeado** (`dev@b5be7d16f`).
+- [~] Ciclo 022 (PR em preparação/CI): dedup idempotente DB-enforced de notificações não lidas, degradação fail-open Meilisearch→PG FTS com contrato explícito, e expansão de CI `db-tests` (search/notifications/files). Freshness/paridade de indexação Meilisearch adiada (023).
+- [ ] Ciclo 023 (candidato): wiring mínimo/harness de indexação/freshness Meilisearch (task/file/message) ou contrato operacional de capacidade + rebuild determinístico, preservando fallback PG autoritativo.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)

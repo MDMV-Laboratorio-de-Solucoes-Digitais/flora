@@ -424,6 +424,7 @@ async fn maybe_notify_reply(
         reply_id,
         None,
     );
+    // 022: conflict-safe unread dedup; suppression is not an error.
     let _ = notif_repo.create(notification).await?;
     Ok(())
 }

@@ -287,7 +287,10 @@ pub trait NotificationRepository: Send + Sync + std::fmt::Debug {
     ) -> crate::Result<Page<Notification>>;
 
     /// Create a new notification.
-    async fn create(&self, notification: Notification) -> crate::Result<Notification>;
+    ///
+    /// Returns `Ok(None)` when suppressed by an idempotent unread-dedup conflict
+    /// (same `user_id`, `event_type`, `target_id`, unread). Suppression is not an error.
+    async fn create(&self, notification: Notification) -> crate::Result<Option<Notification>>;
 
     /// Returns `true` if an unread notification of `event_type` exists for
     /// the same user and target (021: simple best-effort dedup guard).

@@ -88,23 +88,34 @@ async fn search(
     });
 
     if let Some(search_service) = &state.search_service {
-        let hits = search_service
+        match search_service
             .search(&org_id, &query, types.as_deref(), limit as usize)
-            .await?;
+            .await
+        {
+            Ok(hits) => {
+                let results = hits
+                    .into_iter()
+                    .map(|hit| SearchResult {
+                        result_type: hit.item_type,
+                        id: hit.id,
+                        snippet: hit.snippet,
+                    })
+                    .collect();
 
-        let results = hits
-            .into_iter()
-            .map(|hit| SearchResult {
-                result_type: hit.item_type,
-                id: hit.id,
-                snippet: hit.snippet,
-            })
-            .collect();
-
-        return Ok(Json(SearchResponse { query, results }));
+                return Ok(Json(SearchResponse { query, results }));
+            }
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    %org_id,
+                    "Meilisearch query failed; falling back to Postgres FTS"
+                );
+            }
+        }
     }
 
-    // 019/020: Postgres FTS fallback (messages/tasks/files, Seed/VPS default when Meilisearch unavailable)
+    // 019/020/022: Postgres FTS fallback (messages/tasks/files). Authoritative
+    // correctness baseline and fail-open path when Meilisearch is unavailable/errors.
     let results = search_pg(&state, org_id, &query, types.as_deref(), limit).await?;
     Ok(Json(SearchResponse { query, results }))
 }
