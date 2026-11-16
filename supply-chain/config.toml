@@ -24,9 +24,29 @@ criteria = "safe-to-deploy"
 version = "0.12.16"
 criteria = "safe-to-deploy"
 
+[[exemptions.anstream]]
+version = "1.0.0"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
 [[exemptions.anstyle]]
 version = "1.0.14"
 criteria = "safe-to-deploy"
+
+[[exemptions.anstyle-parse]]
+version = "1.0.0"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
+[[exemptions.anstyle-query]]
+version = "1.1.5"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
+[[exemptions.anstyle-wincon]]
+version = "3.0.11"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
 
 [[exemptions.anyhow]]
 version = "1.0.104"
@@ -204,6 +224,26 @@ criteria = "safe-to-deploy"
 version = "0.5.2"
 criteria = "safe-to-deploy"
 
+[[exemptions.clap]]
+version = "4.6.7"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
+[[exemptions.clap_builder]]
+version = "4.6.7"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
+[[exemptions.clap_derive]]
+version = "4.6.7"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
+[[exemptions.clap_lex]]
+version = "1.1.1"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
 [[exemptions.cmake]]
 version = "0.1.58"
 criteria = "safe-to-deploy"
@@ -211,6 +251,11 @@ criteria = "safe-to-deploy"
 [[exemptions.cmov]]
 version = "0.5.4"
 criteria = "safe-to-deploy"
+
+[[exemptions.colorchoice]]
+version = "1.0.5"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
 
 [[exemptions.combine]]
 version = "4.6.7"
@@ -668,6 +713,11 @@ criteria = "safe-to-deploy"
 version = "2.12.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.is_terminal_polyfill]]
+version = "1.70.2"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
+
 [[exemptions.iso8601]]
 version = "0.6.5"
 criteria = "safe-to-deploy"
@@ -840,6 +890,11 @@ criteria = "safe-to-deploy"
 [[exemptions.once_cell]]
 version = "1.21.4"
 criteria = "safe-to-deploy"
+
+[[exemptions.once_cell_polyfill]]
+version = "1.70.2"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
 
 [[exemptions.openssl-probe]]
 version = "0.2.1"
@@ -1536,6 +1591,11 @@ criteria = "safe-to-deploy"
 [[exemptions.utf8_iter]]
 version = "1.0.4"
 criteria = "safe-to-deploy"
+
+[[exemptions.utf8parse]]
+version = "0.2.2"
+criteria = "safe-to-deploy"
+notes = "Cycle 030: transitive via dev-mint clap helper; informational gate only."
 
 [[exemptions.uuid]]
 version = "1.25.0"

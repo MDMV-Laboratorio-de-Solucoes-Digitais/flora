@@ -19,13 +19,11 @@ jobs:
           rustup component add rustfmt clippy
           rustc --version
           cargo --version
-      # 026: make the Seed verification gate executable in CI (ADR-0001).
-      # Strict clippy is applied to production targets (`--lib --bins`); test-only
-      # targets are still linted locally per cycle, but a parallel agent's test
-      # code currently trips `expect_used` under `--all-targets` (tracked NV).
+      # 026/029: Seed verification gate (ADR-0001). Strict clippy covers all targets;
+      # test-only `expect_used` is scoped at module level, not suppressed globally.
       - name: Format check
         run: cargo fmt --all -- --check
-      - name: Clippy (strict, production targets)
+      - name: Clippy (strict, all targets)
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Install cargo-deny
         uses: taiki-e/install-action@cargo-deny
@@ -110,3 +108,67 @@ jobs:
           fail-on-scopes: runtime
           license-check: false
           warn-only: false
+
+  # 030: one Chromium smoke. Informational (non-required); the injected session
+  # jti is single-use, so Playwright runs with retries: 0 and workers: 1.
+  e2e-browser:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      FLORA_DATABASE__POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/flora
+      FLORA_APP__JWT_SECRET: dev-only-32+char-random-string-for-browser-e2e
+      FLORA_APP__SESSION_TTL_SECS: '3600'
+      FLORA_SEARCH__ENABLED: 'false'
+      FLORA_MESSAGING__ENABLED: 'false'
+      VITE_API_URL: http://127.0.0.1:3000
+      E2E_API_ORIGIN: http://127.0.0.1:3000
+      E2E_FRONTEND_ORIGIN: http://127.0.0.1:4173
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.0
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+          rustup toolchain install 1.98.0 --profile minimal --no-self-update
+          rustup default 1.98.0
+          rustup component add clippy
+      - uses: oven-sh/setup-bun@v2
+      - name: Install frontend dependencies
+        working-directory: apps/frontend
+        run: bun install
+      - name: Build API and gated session minter
+        run: |
+          cargo build -p flora-api
+          cargo clippy -p flora-core --bin flora-mint-session --features dev-mint -- -D warnings
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+        working-directory: apps/frontend
+      - name: Run browser smoke
+        working-directory: apps/frontend
+        run: bun run test:e2e
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 3

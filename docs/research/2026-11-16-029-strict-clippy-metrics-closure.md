@@ -1,3 +1,5 @@
+> **Superseded by PR #238/#239 (cycle 029):** this is a pre-implementation snapshot; check committed files for current state.
+
 # Strict Clippy (`--all-targets`) closure and the `/metrics` stub — 2026-11-16-029
 
 - **Type:** research only. No source, manifest, config, CI, or test file was changed. This document is the only artifact.
