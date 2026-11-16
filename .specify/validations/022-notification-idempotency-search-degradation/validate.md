@@ -21,7 +21,8 @@
 | `cargo test -p flora-tests contract::websocket::db_ -- --ignored --test-threads=1` | 8 passed |
 
 CI `db-tests` job extended with `search`, `notifications`, and `files` DB-gated suites (in addition to
-existing `auth`/`messaging`/`websocket`) on disposable PostgreSQL 18. CI result is recorded in the PR.
+existing `auth`/`messaging`/`websocket`) on disposable PostgreSQL 18. PR #225: all required checks green
+(4 `build` + 2 `db-tests`, no pending/failures); merged to `dev` as commit `a85e2020f` on 2026-11-16.
 
 ## Contract coverage
 

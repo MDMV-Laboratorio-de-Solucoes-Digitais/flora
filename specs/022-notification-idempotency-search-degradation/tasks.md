@@ -8,4 +8,4 @@
 - [x] T005 Add/update DB-gated contracts for unread dedup suppression; fix incidental CI-enabling defects (tri-state PATCH null, files status expectations, search fixtures/URI); run local verification (`fmt`, `clippy`, all DB suites).
 
 ## PR/Release
-- [~] T006 Record validation/release artifacts, update `OBJETIVO.md`/`ROADMAP.md` for 022→023, commit/push, open PR to `dev`, ensure CI green, merge, sync, and clean branch.
+- [x] T006 Record validation/release artifacts, update `OBJETIVO.md`/`ROADMAP.md` for 022→023, commit/push, open PR to `dev`, ensure CI green, merge, sync, and clean branch.

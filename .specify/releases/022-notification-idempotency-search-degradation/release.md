@@ -1,8 +1,8 @@
 # Release: 022 — Notification Idempotency, Search Degradation, CI DB-Gated Enforcement
 
 **Date:** 2026-11-16  
-**Branch/PR:** `feat/022-notification-idempotency-search-degradation` -> `dev` (pending)  
-**Baseline:** `dev@b5be7d16f`
+**Branch/PR:** `feat/022-notification-idempotency-search-degradation` -> `dev`, PR #225 (merged)  
+**Baseline:** `dev@b5be7d16f` → **delivered at `dev@a85e2020f`**
 
 ## Delivered (slice S1)
 
@@ -29,7 +29,8 @@
 
 - Local: `cargo fmt --all -- --check`, strict clippy, unit tests, and all six DB-gated contract suites green
   on a disposable PostgreSQL 18 database (details in `validate.md`).
-- CI: result recorded in the PR (expanded `db-tests` job).
+- CI: PR #225 all required checks green (4 `build` + 2 `db-tests`, including the expanded DB-gated suites);
+  merged with merge commit `a85e2020f`. `dev`/`github/dev`/`origin/dev` synced; only `dev`/`main` kept.
 
 ## NV / follow-ups (023 candidates)
 
