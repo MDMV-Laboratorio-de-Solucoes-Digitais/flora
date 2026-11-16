@@ -7,7 +7,7 @@
 ## Scope (delivered)
 - **Backend (`flora-api`)**: `extractors::auth::verify_bearer_token`/`VerifiedSession` compartilhados (JWT + `validate_session(jti)` + ativo/expiração/user/org, 401/500 genéricos) reutilizados por extractors HTTP; `routes/websocket.rs` resolve token de `Authorization: Bearer` (preferido) ou `?token=` (fallback browser), valida sessão DB-backed **antes** do upgrade, rejeita nil-org, mantém checagens de org no canal e envelopes/handlers existentes; rotas `/ws` e `/api/v1/ws`.
 - **Frontend (`apps/frontend`)**: `WsClient` conecta em `/api/v1/ws` (ws/wss), suporta token via query, parse seguro de envelopes tagueados (`Subscribed/Unsubscribed/NewMessage/MessageSent/Pong/Error`), sem dependência de `/messages/sync`, falha de auth/policy interrompe reconnect e aciona `lockSession()`, backoff limitado com jitter para desconexões retentáveis, ciclo de vida em `(app)/+layout` com auth/org/token (root sem conexão duplicada); testes unit WS adicionados.
-- **Testes/CI**: `flora-tests/src/contract/websocket.rs` (`db_ws_*`: válido, revogado, expirado, ausente, mismatch user/org, nil-org, sem token; handshake 101/401), `contract/mod.rs` e `.github/workflows/rust.yml` `db-tests` inclui `contract::websocket::db_`.
+- **Testes/CI**: `flora-tests/src/contract/websocket.rs` (`db_ws_*`: válido, revogado, expirado, ausente, mismatch user/org, nil-org, sem token; handshake 101/401 — válido aceita 101 ou 426 quando upgrade não extraível no harness oneshot após auth bem-sucedida), `contract/mod.rs` e `.github/workflows/rust.yml` `db-tests` inclui `contract::websocket::db_`.
 
 ## Deterministic verification (local)
 - `cargo fmt --all -- --check` — pass

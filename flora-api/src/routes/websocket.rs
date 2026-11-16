@@ -6,10 +6,10 @@
 use axum::{
     extract::{
         Query, State,
-        ws::{WebSocket, WebSocketUpgrade},
+        ws::{WebSocket, WebSocketUpgrade, rejection::WebSocketUpgradeRejection},
     },
     http::{HeaderMap, StatusCode},
-    response::Response,
+    response::{IntoResponse, Response},
 };
 use flora_core::models::Message;
 use flora_core::repositories::{PgChannelRepository, PgMessageRepository};
@@ -104,12 +104,12 @@ pub struct WsTokenQuery {
 /// Validates the bearer token against DB-backed session authority before upgrade
 /// and enforces organization-scoped isolation for WebSocket operations.
 pub async fn websocket_handler(
-    ws: WebSocketUpgrade,
+    ws: Result<WebSocketUpgrade, WebSocketUpgradeRejection>,
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(params): Query<WsTokenQuery>,
 ) -> Response {
-    // Extract and validate user and organization from a DB-backed session.
+    // Validate session authority first so invalid auth returns 401 (not 426).
     let (user_id, org_id) = match extract_org_context(&headers, &params, &state).await {
         Ok(ctx) => ctx,
         Err(status) => {
@@ -118,6 +118,14 @@ pub async fn websocket_handler(
                 .status(status)
                 .body(axum::body::Body::empty())
                 .unwrap_or_else(|_| Response::new(axum::body::Body::empty()));
+        }
+    };
+
+    let ws = match ws {
+        Ok(ws) => ws,
+        Err(rejection) => {
+            tracing::warn!("WebSocket upgrade rejected after authentication");
+            return rejection.into_response();
         }
     };
 
