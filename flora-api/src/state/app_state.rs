@@ -14,6 +14,8 @@ use flora_core::services::{
 };
 use flora_core::{PgPool, config::Config};
 
+use crate::realtime;
+
 use super::oidc_transactions::OidcTransactionStore;
 
 /// Application state shared across all requests.
@@ -51,6 +53,8 @@ pub struct AppState {
     pub valkey: Option<redis::aio::ConnectionManager>,
     /// Transient store for OIDC auth transactions (PKCE state/verifier).
     pub oidc_transactions: OidcTransactionStore,
+    /// In-process realtime hub for single-node fanout (best-effort).
+    pub realtime_hub: tokio::sync::broadcast::Sender<realtime::HubEnvelope>,
 }
 
 impl AppState {
@@ -145,6 +149,7 @@ impl AppState {
             .as_ref()
             .map(|manager| Arc::new(flora_messaging::MessagingService::new(manager.clone())));
         let oidc_transactions = OidcTransactionStore::new(valkey.clone());
+        let realtime_hub = realtime::create_hub();
 
         Ok(Self {
             db_pool: Arc::new(db_pool),
@@ -163,6 +168,7 @@ impl AppState {
             messaging_service,
             valkey,
             oidc_transactions,
+            realtime_hub,
         })
     }
 }

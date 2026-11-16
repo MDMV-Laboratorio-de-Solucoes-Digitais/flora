@@ -163,6 +163,14 @@ pub trait MessageRepository: Send + Sync + std::fmt::Debug {
         pagination: Pagination,
     ) -> crate::Result<Page<Message>>;
 
+    /// Find messages in a channel after a cursor message (keyset catch-up), in ascending timeline order.
+    async fn find_by_channel_id_after(
+        &self,
+        channel_id: Uuid,
+        after_id: Uuid,
+        limit: usize,
+    ) -> crate::Result<Vec<Message>>;
+
     /// Find messages for a user (for notifications/mentions).
     async fn find_by_sender_id(
         &self,
