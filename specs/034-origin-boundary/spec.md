@@ -1,6 +1,6 @@
 # Feature Specification: 034 — Origin boundary (ADR-0002 #2)
 
-**Branch**: `feat/034-origin-boundary` · **Status**: In progress
+**Branch**: `feat/034-origin-boundary` · **Status**: Completed (PR #248)
 **Assessment**: `.specify/assessments/034-origin-boundary/decision.md`
 
 ## Goal

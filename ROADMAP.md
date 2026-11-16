@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–033 mergeados; 034 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–034 mergeados; 035 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-033`, `.specify/assessments/003-033`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -52,7 +52,8 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 031 (PR #242, CI verde, mergeado em `dev@aaa45536`): versão centralizada + release.yml tag-only/SBOM (sem tag), drift documental fechado.
 - [x] Ciclo 032 (PR #244, CI verde, mergeado em `dev@cecaf686`): allowlist CORS backend + drift documental; ADR-0002 #2 segue NV.
 - [x] Ciclo 033 (PR #246, CI verde, mergeado em `dev@f89678d5`): busca no header ligada ao backend verificado + drift documental; ADR-0002 #2 segue NV.
-- [ ] Ciclo 034 (candidato): ADR-0002 #2 (URLs runtime + WS Origin + prova non-browser), FASE 7 Documents; cargo-vet/load/restore/tag dependem de autorização. 
+- [x] Ciclo 034 (PR #248, CI verde, mergeado em `dev@23ca350c`): ADR-0002 #2 atendido (guard WS + URLs runtime + prova T8); #1/#3/#4 seguem NV.
+- [ ] Ciclo 035 (candidato): FASE 7 Documents (design exato pronto, ~30 arquivos) + limpeza de affordances mortas no FE; cargo-vet/load/restore/tag dependem de autorização. 
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
