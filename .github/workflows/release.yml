@@ -1,0 +1,142 @@
+name: Release (tag -> immutable GitHub Release + CycloneDX SBOM)
+
+on:
+  push:
+    tags:
+      - 'v*'   # glob filter only; exact vX.Y.Z shape is asserted in step 2
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read   # least privilege by default; job elevates only where needed
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # gh release create / upload / edit (and verify)
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SBOM: flora-sbom.cdx.json
+      TARGET: aarch64-unknown-linux-gnu   # matches docker-staging.yml shipped image
+    steps:
+      - name: Checkout (full history so annotated tag notes resolve)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Assert tag shape is vX.Y.Z
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] \
+            || { echo "::error::tag must be vX.Y.Z (no leading zeroes): $GITHUB_REF_NAME"; exit 1; }
+          echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Set up Rust 1.98.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.98.0 --profile minimal --no-self-update
+          rustup default 1.98.0
+          rustc --version && cargo --version
+
+      - name: Install pinned SBOM tools (checksummed, no fallback)
+        uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2
+        with:
+          tool: cargo-cyclonedx@0.5.10,cyclonedx@0.33.1
+          fallback: none     # both tools ship prebuilt GitHub Release binaries
+          checksum: true
+
+      - name: Assert lockstep version across all 8 manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo metadata --no-deps --format-version 1 > /tmp/flora-metadata.json
+          jq -e --arg v "$RELEASE_VERSION" '
+            ([.packages[] | select(.name == "flora" or (.name | startswith("flora-")))] | length == 8)
+            and ([.packages[] | select((.name == "flora" or (.name | startswith("flora-"))) and .version != $v)] | length == 0)
+          ' /tmp/flora-metadata.json
+
+      - name: Generate deterministic CycloneDX 1.5 JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo cyclonedx --manifest-path Cargo.toml --format json \
+            --describe crate --all --spec-version 1.5 --license-strict \
+            --target "$TARGET" --override-filename "$SBOM"
+          test -f "$SBOM" || { echo "::error::BOM not written to workspace root"; exit 1; }
+          # fail closed if the generator emitted per-manifest duplicates
+          if find . -type f -name "$SBOM" -print | grep -Fxv "./$SBOM" | grep -q .; then
+            echo "::error::generator emitted additional BOMs; need explicit selection/merge"; exit 1
+          fi
+
+      - name: Inject tag identity and assert it (idempotent)
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -e '.metadata.component.version? // error("metadata.component.version missing")' "$SBOM" >/dev/null
+          jq --arg ver "$RELEASE_VERSION" --arg tag "$GITHUB_REF_NAME" --arg sha "$GITHUB_SHA" '
+            .metadata.component.version = $ver
+            | .metadata.properties = (
+                ((.metadata.properties // []) | map(select((.name // "") | startswith("flora:release:") | not)))
+                + [ {name:"flora:release:tag",    value:$tag},
+                    {name:"flora:release:commit", value:$sha},
+                    {name:"flora:release:source", value:"https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora"} ]
+              )
+          ' "$SBOM" > "$SBOM.tmp"
+          mv "$SBOM.tmp" "$SBOM"
+          jq -e --arg ver "$RELEASE_VERSION" --arg tag "$GITHUB_REF_NAME" --arg sha "$GITHUB_SHA" '
+            (.metadata.component.version == $ver)
+            and ([.metadata.properties[] | select(.name == "flora:release:tag" and .value == $tag)] | length == 1)
+            and ([.metadata.properties[] | select(.name == "flora:release:commit" and .value == $sha)] | length == 1)
+          ' "$SBOM" >/dev/null
+
+      - name: Validate BOM against CycloneDX 1.5 schema
+        shell: bash
+        run: cyclonedx validate --input-file "$SBOM" --input-format json --input-version v1_5 --fail-on-errors
+
+      - name: Checksum (pre-publication)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum "$SBOM" > checksums.txt
+          cat checksums.txt
+
+      - name: Upload BOM for inspection (net gain even without a release)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: flora-sbom-${{ github.ref_name }}
+          path: |
+            ${{ env.SBOM }}
+            checksums.txt
+          if-no-files-found: error
+
+      - name: Refuse to publish over an existing release/draft
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "::error::release/draft already exists for $GITHUB_REF_NAME; resolve manually, never clobber"; exit 1
+          fi
+
+      - name: Create DRAFT (no assets attached here)
+        shell: bash
+        run: gh release create "$GITHUB_REF_NAME" --draft --verify-tag --notes-from-tag --title "$GITHUB_REF_NAME"
+
+      - name: Attach assets (no --clobber)
+        shell: bash
+        run: gh release upload "$GITHUB_REF_NAME" "$SBOM" checksums.txt
+
+      - name: Publish (irreversible once immutability is on)
+        shell: bash
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false
+
+      - name: Verify release attestation and asset digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release verify "$GITHUB_REF_NAME"
+          gh release verify-asset "$GITHUB_REF_NAME" "$SBOM"

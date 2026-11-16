@@ -5,7 +5,7 @@
 
 [package]
 name = "flora-tasks"
-version = "0.1.0"
+version.workspace = true
 description = "Task management module"
 repository.workspace = true
 license.workspace = true

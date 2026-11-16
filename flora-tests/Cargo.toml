@@ -5,7 +5,7 @@
 
 [package]
 name = "flora-tests"
-version = "0.1.0"
+version.workspace = true
 description = "Integration and contract tests for Flora Workspace"
 repository.workspace = true
 license.workspace = true

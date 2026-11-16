@@ -66,7 +66,7 @@ Princípios diretores:
 
 - **Ciclo 025 (PR #231, CI verde, mergeado em `dev@d09d39c1`):** ADR-0001 de reconciliação Seed (mecanismos autoritativos + gate de verificação), LICENSE AGPL completo e NOTICE, `deny.toml`, README mechanism-neutral; FASE 0 CI e OTel honesto ficam para 026.
 
-**NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; quota agregada concorrente/transacional por org/workspace, consistência avançada de purge/cleanup storage↔DB e cobertura DB-gated ampliada de bordas (multipart/quota/cleanup); DMs UX; extensão de busca FTS para tarefas/arquivos, relevância/i18n/CJK e ACL de canal em busca; eventos/notificações adicionais (mentions/assignment/completion), dedup/idempotência/tx-coupling e delivery realtime/push/outbox; quota agregada concorrente/purge↔storage cleanup e cobertura DB-gated ampliada de arquivos; lacunas realtime pós-handshake/multi-nó/replay ampliado; OIDC/JWKS e e2e browser/multi-cliente; validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`).
+**NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; quota agregada concorrente/transacional por org/workspace, consistência avançada de purge/cleanup storage↔DB e cobertura DB-gated ampliada de bordas (multipart/quota/cleanup); DMs UX; extensão de busca FTS para tarefas/arquivos, relevância/i18n/CJK e ACL de canal em busca; eventos/notificações adicionais (mentions/assignment/completion), dedup/idempotência/tx-coupling e delivery realtime/push/outbox; quota agregada concorrente/purge↔storage cleanup e cobertura DB-gated ampliada de arquivos; lacunas realtime pós-handshake/multi-nó/replay ampliado; OIDC/JWKS e e2e multi-cliente (o smoke Chromium único já está verde); validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`).
 
 ### 3.4 Gaps prioritários (o que falta para o MVP P0)
 - **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável; session authority consistente no extrator.
@@ -85,16 +85,18 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 031 candidato — release e hardening)
+## 5) Próximo 80/20 (ciclo 032 candidato — hardening)
 
-- **Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`):** 1 e2e smoke Chromium com minter feature-gated (`retries: 0`), CI não-required e integridade documentar corrigida.
+- **Ciclo 031 (PR em preparação/CI):** versão centralizada, `release.yml` tag-only com SBOM (sem tag/publicação) e drift documental fechado.
+
+- **Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`):** 1 e2e smoke Chromium com minter feature-gated (`retries: 0`), CI não-required e integridade documental corrigida.
 
 - **Ciclo 029 (PR #238, CI verde, mergeado em `dev@b8972c0e`):** clippy estrito `--all-targets`, ADR-0002 (Tauri deferido), drift 028 corrigido e smoke integrado executado com JWT fresco em portas isoladas (**rc=0**).
 
 - **Ciclo 028 (PR #236, CI verde, mergeado em `dev@4ecf1459`):** FASE 0 fechado com store cargo-vet versionado + exceção `multer`, gate informativo, dependency-review e sweep OSV semanal; smoke com JWT fresco; drift residual corrigido.
 
-1. **P0 — E2E browser:** bin `flora-mint-session` feature-gated + Playwright `setup` project + job CI não-required (Chromium); 1 smoke `workspace→canal→mensagem→tarefa`.
-2. **P1 — Release SBOM:** definir trigger de tag/release antes de gerar CycloneDX (hoje bloqueado: sem processo de release).
+1. **P0 — Release SBOM:** workflow tag-only draft-first + CycloneDX (preparado em 031; tag/publicação exigem autorização explícita).
+2. **P1 — CORS allowlist:** backend `AllowOrigin::list` (032); não reivindicar critério ADR-0002 #2 sem verificação non-browser.
 3. **P1 — Tauri:** ADR-0002 já adotada (deferral); critérios de reentrada em `docs/adr/0002-tauri-deferral-from-canonical-seed-frontend.md`.
 4. **P2 — Supply chain:** promover cargo-vet a gate bloqueante + CODEOWNERS após janela de observação; load/OOM/restore em 2vCPU/4GB. (Clippy `--all-targets` já é gate verde desde 029.)
 5. **NVs:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; JWKS rotation/real-OP.
@@ -124,7 +126,7 @@ Detalhes: `docs/research/2026-11-16-026-*.md`, `docs/adr/0001-seed-v01-mechanism
 1. **P0 — FASE 0 em CI:** gate determinístico `cargo deny check bans sources` (verificado localmente) no workflow; licenças/auditoria completa dependem de acesso ao índice crates.io na CI; decidir as 442 isenções do `cargo-vet`.
 2. **P1 — OTel honesto:** remover/corrigir `opentelemetry-otlp 0.22` (versão inexistente), adotar `TraceLayer` sem custo e sem coletor pesado, documentar NV.
 3. **P1 — Transporte de notificações:** desativar/gatear o scaffolding PGMQ/Valkey não conectado ou decidir adoção com gatilhos explícitos.
-4. **P2 — Verificação integrada:** e2e browser (`workspace→canal→mensagem→tarefa→arquivo`), decisão Tauri canônica, load/OOM/restore em 2vCPU/4GB.
+4. **P2 — Verificação integrada:** smoke Chromium já verde (#240); restam load/OOM/restore em 2vCPU/4GB e e2e multi-cliente.
 5. **NVs remanescentes:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; JWKS rotation/real-OP.
 
 Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `docs/research/2026-11-16-seed-*.md`, `ROADMAP.md`.

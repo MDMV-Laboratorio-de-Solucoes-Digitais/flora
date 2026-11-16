@@ -1,3 +1,5 @@
+> **Superseded by PR #240 (cycle 030):** pre-implementation snapshot; check committed files for current state.
+
 # 030 — Selector and flow audit for the canonical Svelte 5 frontend e2e smoke
 
 **Date:** 2026-11-16

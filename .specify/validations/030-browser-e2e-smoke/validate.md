@@ -20,7 +20,7 @@
 - 029 smoke evidence is now complete and checked in (redacted transcript + provenance).
 
 ## NV
-Local Chromium execution not run in this cycle; CI e2e job is informational (`continue-on-error`). Release SBOM,
+Browser smoke executed in CI (runs 43914284405 / 43914293666); not run locally. The e2e job is informational (`continue-on-error`). Release SBOM,
 CORS allowlist, load/restore, cargo-vet blocking, OTLP remain deferred.
 
 ## Merge evidence
