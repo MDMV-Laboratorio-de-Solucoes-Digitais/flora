@@ -88,6 +88,7 @@ export class AuthState {
 		this.workspaceId = null;
 		this.isAuthenticated = true;
 		this.isSessionLocked = false;
+		this.isInvalidated = false;
 		if (this.gracePeriodTimeout) {
 			clearTimeout(this.gracePeriodTimeout);
 			this.gracePeriodTimeout = null;

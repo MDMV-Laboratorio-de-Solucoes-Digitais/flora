@@ -144,10 +144,6 @@ async fn login(
 /// Validates and consumes the stored PKCE/state transaction, exchanges the
 /// authorization code for tokens with `code_verifier`, creates or finds the
 /// user, and issues a Flora session JWT.
-#[expect(
-    clippy::too_many_lines,
-    reason = "callback performs state validation, token exchange, user provisioning, and session issuance in one cohesive flow"
-)]
 async fn callback(
     State(state): State<AppState>,
     Query(params): Query<OidcCallbackParams>,
