@@ -35,6 +35,11 @@ pub struct CreateTaskRequest {
 }
 
 /// Request body for updating a task.
+///
+/// `assignee_id` is tri-state (021, merge-patch semantics):
+/// - omitted => no change
+/// - `null` => explicit unassign/clear
+/// - `"<uuid>"` => assign/set
 #[derive(Debug, Deserialize)]
 pub struct UpdateTaskRequest {
     /// Optional new title.
@@ -43,8 +48,9 @@ pub struct UpdateTaskRequest {
     pub description: Option<String>,
     /// Optional new status.
     pub status: Option<String>,
-    /// Optional new assignee.
-    pub assignee_id: Option<Uuid>,
+    /// Optional new assignee (tri-state: omit=no change, null=clear).
+    #[serde(default)]
+    pub assignee_id: Option<Option<Uuid>>,
 }
 
 /// Task response.
@@ -157,11 +163,17 @@ async fn create_task(
 
     let created = task_repo.create(task).await?;
 
-    // 020: best-effort assignment notification (must not fail the task path).
+    // 020/021: best-effort assignment notification on effective initial assignment.
     if let Some(assignee_id) = created.assignee_id
-        && let Err(e) =
-            maybe_notify_task_assignment(&state, org_id, None, assignee_id, user_id, created.id)
-                .await
+        && let Err(e) = maybe_notify_task_assignment(
+            &state,
+            org_id,
+            None,
+            Some(assignee_id),
+            user_id,
+            created.id,
+        )
+        .await
     {
         tracing::warn!(
             error = %e,
@@ -226,7 +238,8 @@ async fn update_task(
     }
 
     let old_assignee_id = existing.assignee_id;
-    let requested_assignee_id = req.assignee_id;
+    // 021 tri-state: omit => keep existing, null => clear, value => set.
+    let new_assignee_id = req.assignee_id.unwrap_or(old_assignee_id);
 
     let status = req
         .status
@@ -237,29 +250,28 @@ async fn update_task(
     let updated = Task {
         title: req.title.unwrap_or(existing.title),
         description: req.description.or(existing.description),
-        assignee_id: requested_assignee_id.or(old_assignee_id),
+        assignee_id: new_assignee_id,
         status,
         updated_at: chrono::Utc::now(),
         ..existing
     };
     let result = task_repo.update(task_id, updated).await?;
 
-    // 020: notify only on explicit effective transition provided by request.
-    if let Some(new_assignee_id) = requested_assignee_id
-        && let Err(e) = maybe_notify_task_assignment(
-            &state,
-            org_id,
-            old_assignee_id,
-            new_assignee_id,
-            auth.user_id,
-            result.id,
-        )
-        .await
+    // 021: notify only on effective transition to an assigned, non-actor user.
+    if let Err(e) = maybe_notify_task_assignment(
+        &state,
+        org_id,
+        old_assignee_id,
+        new_assignee_id,
+        auth.user_id,
+        result.id,
+    )
+    .await
     {
         tracing::warn!(
             error = %e,
             task_id = %result.id,
-            assignee_id = %new_assignee_id,
+            assignee_id = ?new_assignee_id,
             "Failed to create task assignment notification"
         );
     }
@@ -271,18 +283,29 @@ async fn maybe_notify_task_assignment(
     state: &AppState,
     org_id: Uuid,
     old_assignee_id: Option<Uuid>,
-    new_assignee_id: Uuid,
+    new_assignee_id: Option<Uuid>,
     actor_id: Uuid,
     task_id: Uuid,
 ) -> Result<()> {
-    if Some(new_assignee_id) == old_assignee_id || new_assignee_id == actor_id {
+    let Some(assignee_id) = new_assignee_id else {
+        return Ok(());
+    };
+    if Some(assignee_id) == old_assignee_id || assignee_id == actor_id {
         return Ok(());
     }
 
     let notif_repo = PgNotificationRepository::new((*state.db_pool).clone());
+    // 021: simple best-effort dedup guard (unread same user+target, race-prone).
+    if notif_repo
+        .has_unread_for_target(assignee_id, NotificationType::Assignment, task_id)
+        .await?
+    {
+        return Ok(());
+    }
+
     let notification = Notification::new(
         org_id,
-        new_assignee_id,
+        assignee_id,
         NotificationType::Assignment,
         task_id,
         None,

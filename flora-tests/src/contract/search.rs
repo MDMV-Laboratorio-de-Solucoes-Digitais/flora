@@ -680,4 +680,104 @@ mod db_search {
         );
         Ok(())
     }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 021)"]
+    async fn db_search_pg_fallback_type_normalization_and_limit_bounds() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_member(&state, &config).await?;
+        let channel_id = insert_channel(&state, seed.workspace.id, seed.org.id, "general").await?;
+        let msg_id = insert_message(
+            &state,
+            channel_id,
+            seed.org.id,
+            seed.user.id,
+            "hardening token edge021 appears in message",
+            false,
+        )
+        .await?;
+        let task_id = insert_task(
+            &state,
+            seed.workspace.id,
+            seed.org.id,
+            seed.user.id,
+            "hardening token edge021 task",
+            None,
+            false,
+        )
+        .await?;
+        let file_id = insert_file(
+            &state,
+            seed.org.id,
+            seed.user.id,
+            Some(seed.workspace.id),
+            "hardening-edge021.txt",
+            "text/plain",
+            false,
+        )
+        .await?;
+
+        let app = search_app(state);
+
+        // mixed case / plural / CSV tokens
+        let (status, body) = authed_get_json(
+            app.clone(),
+            "/search?q=edge021&type=Messages, TASKS ,files".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "mixed types: {status} {body}");
+        let results = body["results"].as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            results
+                .iter()
+                .any(|r| r["id"] == msg_id.to_string() && r["type"] == "message"),
+            "message missing for mixed types: {body}"
+        );
+        anyhow::ensure!(
+            results
+                .iter()
+                .any(|r| r["id"] == task_id.to_string() && r["type"] == "task"),
+            "task missing for mixed types: {body}"
+        );
+        anyhow::ensure!(
+            results
+                .iter()
+                .any(|r| r["id"] == file_id.to_string() && r["type"] == "file"),
+            "file missing for mixed types: {body}"
+        );
+
+        // unknown-only type tokens -> empty
+        let (status, body) = authed_get_json(
+            app.clone(),
+            "/search?q=edge021&type=unknown,other".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "unknown types: {status} {body}");
+        anyhow::ensure!(
+            body["results"].as_array().is_some_and(Vec::is_empty),
+            "unknown-only types must return empty: {body}"
+        );
+
+        // explicit high limit is capped server-side (contract: <=50); response stays valid/bounded
+        let (status, body) = authed_get_json(
+            app,
+            "/search?q=edge021&limit=999".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "limit cap: {status} {body}");
+        let results = body["results"].as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            results.len() <= 50,
+            "results must respect server cap: {body}"
+        );
+        Ok(())
+    }
 }
