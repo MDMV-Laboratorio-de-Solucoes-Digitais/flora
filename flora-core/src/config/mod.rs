@@ -6,7 +6,6 @@
 pub mod app;
 pub mod database;
 pub mod messaging;
-pub mod notifications;
 pub mod oidc;
 pub mod search;
 pub mod storage;
@@ -29,8 +28,6 @@ pub struct Config {
     pub search: search::SearchConfig,
     /// Messaging service configuration.
     pub messaging: messaging::MessagingConfig,
-    /// Notification delivery configuration.
-    pub notifications: notifications::NotificationsConfig,
 }
 
 impl Config {
@@ -63,7 +60,6 @@ impl Config {
         self.storage.validate()?;
         self.search.validate()?;
         self.messaging.validate()?;
-        self.notifications.validate()?;
         Ok(())
     }
 }

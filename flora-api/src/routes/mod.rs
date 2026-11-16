@@ -56,5 +56,9 @@ pub fn create_router(app_state: AppState) -> Router {
         )))
         // Wire shared application state to all routes
         .layer(crate::middleware::cors::cors_layer())
+        // 027: zero-cost per-request spans when no OTel SDK/exporter is configured.
+        // `tower-http`'s `trace` feature is already enabled; no new dependency or
+        // collector is required. Full OTLP export remains gated (NV).
+        .layer(tower_http::trace::TraceLayer::new_for_http())
         .with_state(app_state)
 }

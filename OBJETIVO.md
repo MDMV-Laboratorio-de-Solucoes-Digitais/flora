@@ -36,7 +36,7 @@ Princípios diretores:
 ## 3) Estado atual (consolidado em 2026-11-15)
 
 ### 3.1 Governança e artefatos
-- Constituição v1.2.0; specs 001-009; assessments 003-009 (go nos ciclos executados). Bug flow SpecKit usado pontualmente. Documentação de direção em `OBJETIVO.md`, `ROADMAP.md` e `docs/research/`.
+- Constituição v1.3.0; specs 001-009; assessments 003-009 (go nos ciclos executados). Bug flow SpecKit usado pontualmente. Documentação de direção em `OBJETIVO.md`, `ROADMAP.md` e `docs/research/`.
 
 ### 3.2 Implementação observada
 - **Backend:** `flora-api` (Axum) como entrypoint real. `flora-core` concentra domínio/infra; crates de feature existem com implementação parcial/duplicação.
@@ -85,7 +85,17 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 027 candidato — consolidação final Seed)
+## 5) Próximo 80/20 (ciclo 028 candidato — verificação ampliada)
+
+- **Ciclo 027 (PR em preparação/CI):** retirada do adapter PGMQ/Valkey não conectado, `TraceLayer` sem custo e fechamento do drift ADR/README/planos/specs.
+
+1. **P0 — cargo-vet como gate de nova dependência:** versionar `supply-chain/` (Hoje gitignored), adicionar 1 exceção `multer` + 3 imports, primeiro informativo e depois bloqueante; CODEOWNERS.
+2. **P1 — Advisory/SBOM:** job agendado OSV/Dependabot (sinal advisory, não gate) e CycloneDX em release.
+3. **P1 — E2E browser:** mint de JWT com `jti` seedado via bin feature-gated, Playwright Chromium smoke `workspace→canal→mensagem→tarefa`; Tauri explicitamente adiado.
+4. **P2 — Observabilidade/validação:** decisão OTLP real, smoke integrado com evidência, load/OOM/restore em 2vCPU/4GB.
+5. **NVs:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; JWKS rotation/real-OP.
+
+Detalhes: `docs/research/2026-11-16-027-*.md`, `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `ROADMAP.md`.
 
 - **Ciclo 026 (PR #232, CI verde, mergeado em `dev@9a60766f`):** gate Seed executável em CI (`fmt`, `cargo clippy --lib --bins -D warnings`, `cargo deny check bans licenses sources`), `deny.toml` corrigido para `AGPL-3.0-or-later`, constituição v1.3.0 mechanism-neutral, drift de ROADMAP/AGENTS fechado, ciclo 025 finalizado e deps OTel fantasmas removidas.
 

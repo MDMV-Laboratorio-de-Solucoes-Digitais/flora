@@ -1132,25 +1132,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "flora-notifications"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "flora-core",
- "futures",
- "redis",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "flora-search"
 version = "0.1.0"
 dependencies = [

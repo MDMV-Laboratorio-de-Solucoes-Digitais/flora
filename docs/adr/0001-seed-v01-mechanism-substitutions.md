@@ -41,8 +41,8 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
    `Search (Postgres FTS; Meilisearch deferred to Grove and gated)`. Per dark-factory governance, drift requires
    an explicit ADR rather than silent divergence; unverified/live claims are marked `NV`.
 5. **FASE 0.** AGPL-3.0 is the license. Canonical full text (including the appendix) and `NOTICE` are checked in;
-   dependency policy lives in `deny.toml`. Enforcing `cargo deny` in CI and resolving the 442 `cargo-vet`
-   exemptions remain NV until verified in this environment.
+   dependency policy lives in `deny.toml`. Cycle 026 enforced `cargo deny check bans licenses sources` in CI
+   (green runs 43875417574 / 43875425127); resolving the 442 `cargo-vet` exemptions remains NV.
 
 ## Consequences
 
@@ -50,5 +50,7 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
   components rather than mandatory heavy services.
 - Re-enabling Meilisearch/RustFS/PGMQ requires documented gates (hooks/tasks/rebuild/CI, S3 backend, transport
   decision) and a new ADR; it is never implicit.
-- Remaining Seed follow-ups: FASE 0 CI enforcement, honest OTel wiring, notification transport cleanup, browser
-  e2e, canonical Tauri decision, and 2vCPU/4GB load/restore validation — all tracked as NVs.
+- Resolved: FASE 0 CI enforcement (cycle 026), notification transport decision — the unwired PGMQ/Valkey crate
+  was retired in cycle 027 per `docs/research/2026-11-16-026-notification-transport-decision.md`.
+- Remaining Seed follow-ups (NV): `cargo-vet` new-dependency gate, RustSec advisories job/SBOM, browser e2e with
+  fresh JWT, canonical Tauri decision, OTLP exporter, and 2vCPU/4GB load/restore validation.
