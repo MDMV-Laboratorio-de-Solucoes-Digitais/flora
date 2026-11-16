@@ -50,3 +50,71 @@ pub async fn ready_check(State(state): State<AppState>) -> StatusCode {
 pub async fn live_check() -> StatusCode {
     StatusCode::OK
 }
+
+/// Machine-readable Markdown manifest for AI agents and crawlers (llms.txt).
+const LLMS_TXT_MANIFEST: &str = "\
+# Flora Workspace (flora-api)
+
+> Unified collaboration workspace API for organizations, workspaces, channels, tasks, files, search, RBAC, and notifications.
+
+## Health & Discovery
+- `GET /health`: Service liveness and capability hints (`search`, `messaging`)
+- `GET /health/ready`: Database readiness probe
+- `GET /health/live`: Process liveness probe
+- `GET /llms.txt`: This machine-readable service manifest
+
+## API Endpoints
+- `POST /api/v1/auth/*`: Authentication, login, callback, refresh, and logout
+- `/api/v1/organizations`: Organization management (requires auth + `X-Organization-ID`)
+- `/api/v1/workspaces`: Workspace management (requires auth + `X-Organization-ID`)
+- `/api/v1/channels`: Messaging channels (requires auth + `X-Organization-ID`)
+- `/api/v1/tasks`: Task management (requires auth + `X-Organization-ID`)
+- `/api/v1/files`: File storage and retrieval (requires auth + `X-Organization-ID`)
+- `/api/v1/search`: Full-text search across workspace entities (requires auth + `X-Organization-ID`)
+- `/api/v1/roles`: Role-based access control (requires auth + `X-Organization-ID`)
+- `/api/v1/notifications`: User notifications (requires auth + `X-Organization-ID`)
+- `GET /ws`, `GET /api/v1/ws`: WebSocket real-time messaging
+";
+
+/// Returns a deterministic `text/plain; charset=utf-8` Markdown manifest for `/llms.txt`.
+pub async fn llms_txt() -> (
+    StatusCode,
+    [(axum::http::header::HeaderName, &'static str); 1],
+    &'static str,
+) {
+    (
+        StatusCode::OK,
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "text/plain; charset=utf-8",
+        )],
+        LLMS_TXT_MANIFEST,
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::response::IntoResponse;
+
+    #[tokio::test]
+    async fn test_llms_txt_returns_ok_markdown_manifest() {
+        let response = llms_txt().await.into_response();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response
+                .headers()
+                .get(axum::http::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok()),
+            Some("text/plain; charset=utf-8")
+        );
+
+        let body_bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("body bytes");
+        let body = std::str::from_utf8(&body_bytes).expect("utf-8 body");
+        assert!(body.contains("# Flora Workspace (flora-api)"));
+        assert!(body.contains("/health"));
+        assert!(body.contains("/api/v1/workspaces"));
+    }
+}

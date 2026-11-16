@@ -19,10 +19,11 @@ use crate::AppState;
 /// Creates the main application router with all routes registered.
 pub fn create_router(app_state: AppState) -> Router {
     Router::new()
-        // Health check (no auth required)
+        // Health check & discovery (no auth required)
         .route("/health", get(health::health_check))
         .route("/health/ready", get(health::ready_check))
         .route("/health/live", get(health::live_check))
+        .route("/llms.txt", get(health::llms_txt))
         // Auth routes (no auth required for login/callback; auth required for logout/refresh)
         .nest("/api/v1/auth", auth::create_auth_router())
         // Protected API routes (require auth + X-Organization-ID)
