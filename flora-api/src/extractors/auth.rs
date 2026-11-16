@@ -347,14 +347,7 @@ mod tests {
                     ),
                 )),
             ),
-            search_service: std::sync::Arc::new(
-                flora_search::SearchService::new(
-                    "http://localhost:7700",
-                    None,
-                    &config.search.index_template,
-                )
-                .unwrap_or_else(|_| panic!("search")),
-            ),
+            search_service: None,
             messaging_service: None,
             valkey: None,
             oidc_transactions: crate::state::oidc_transactions::OidcTransactionStore::new(None),

@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 /// Configuration for Valkey (Redis-compatible) messaging and caching.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct MessagingConfig {
+    /// Whether messaging/pub-sub integration is enabled.
+    pub enabled: bool,
     /// Valkey connection URL.
     pub valkey_url: String,
     /// Pub/Sub channel naming convention.
@@ -22,6 +24,7 @@ pub struct MessagingConfig {
 impl Default for MessagingConfig {
     fn default() -> Self {
         Self {
+            enabled: true,
             valkey_url: std::env::var("VALKEY_URL")
                 .unwrap_or_else(|_| "redis://localhost:6379".to_owned()),
             topic_template: "org:{@@org_id@@}:channel:{@@channel_id@@}".to_owned(),
@@ -40,9 +43,9 @@ impl MessagingConfig {
     ///
     /// Returns an error if the configuration is invalid.
     pub fn validate(&self) -> Result<(), crate::Error> {
-        if self.valkey_url.is_empty() {
+        if self.enabled && self.valkey_url.trim().is_empty() {
             return Err(crate::Error::Configuration(
-                "messaging.valkey_url is required".to_owned(),
+                "messaging.valkey_url is required when messaging is enabled".to_owned(),
             ));
         }
         if self.max_fanout == 0 {

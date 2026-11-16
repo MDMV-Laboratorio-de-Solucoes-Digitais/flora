@@ -87,11 +87,7 @@ mod db_websocket {
             notification_service: Arc::new(NotificationService::new(Arc::clone(
                 &notification_repo,
             ))),
-            search_service: Arc::new(flora_search::SearchService::new(
-                &config.search.url,
-                config.search.api_key.as_deref(),
-                &config.search.index_template,
-            )?),
+            search_service: None,
             messaging_service: None,
             valkey: None,
             oidc_transactions: OidcTransactionStore::new(None),

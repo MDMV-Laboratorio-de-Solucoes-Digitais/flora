@@ -1,4 +1,5 @@
-// Application state that holds connections, services, and configuration.
+//! Application state that holds connections, services, and configuration.
+
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use std::sync::Arc;
@@ -45,9 +46,9 @@ pub struct AppState {
     pub file_service: Arc<FileService>,
     /// Notification service.
     pub notification_service: Arc<NotificationService>,
-    /// Search service.
-    pub search_service: Arc<flora_search::SearchService>,
-    /// Real-time messaging service backed by Valkey Pub/Sub.
+    /// Search service (optional; disabled/unavailable in lean Seed profiles).
+    pub search_service: Option<Arc<flora_search::SearchService>>,
+    /// Real-time messaging service backed by Valkey Pub/Sub (optional).
     pub messaging_service: Option<Arc<flora_messaging::MessagingService>>,
     /// Valkey/Redis connection manager (shared, optional).
     pub valkey: Option<redis::aio::ConnectionManager>,
@@ -58,14 +59,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// Creates a new `AppState` with the given database pool and configuration.
+    /// Creates a new `AppState` using an existing database pool.
     ///
     /// # Errors
     ///
-    /// Returns an error if the database pool cannot be created.
-    pub async fn new(config: Config) -> anyhow::Result<Self> {
-        let db_pool = flora_core::database::create_pool(&config).await?;
-
+    /// Returns an error if required services cannot be initialized.
+    pub async fn new(db_pool: PgPool, config: Config) -> anyhow::Result<Self> {
         // Initialize repositories as Arc<dyn Trait + Send + Sync>
         let _user_repo: Arc<dyn flora_core::traits::UserRepository + Send + Sync> =
             Arc::new(PgUserRepository::new(db_pool.clone()));
@@ -122,34 +121,58 @@ impl AppState {
         let notification_service =
             Arc::new(NotificationService::new(Arc::clone(&notification_repo)));
 
-        let search_service = Arc::new(
-            flora_search::SearchService::new(
+        let search_service = if config.search.enabled {
+            match flora_search::SearchService::new(
                 &config.search.url,
                 config.search.api_key.as_deref(),
                 &config.search.index_template,
-            )
-            .map_err(|e| anyhow::anyhow!("Search service init failed: {e}"))?,
-        );
-
-        let valkey = match redis::Client::open(config.messaging.valkey_url.as_str()) {
-            Ok(client) => match client.get_connection_manager().await {
-                Ok(manager) => Some(manager),
+            ) {
+                Ok(service) => Some(Arc::new(service)),
                 Err(e) => {
-                    tracing::warn!("Failed to create Valkey connection manager: {e}");
+                    tracing::warn!(
+                        error = %e,
+                        "Search service unavailable; continuing in degraded mode"
+                    );
                     None
                 }
-            },
-            Err(e) => {
-                tracing::warn!("Failed to create Valkey client: {e}");
-                None
             }
+        } else {
+            tracing::info!("Search service disabled by configuration");
+            None
         };
 
-        let messaging_service = valkey
-            .as_ref()
-            .map(|manager| Arc::new(flora_messaging::MessagingService::new(manager.clone())));
+        let (valkey, messaging_service) = if config.messaging.enabled {
+            match redis::Client::open(config.messaging.valkey_url.as_str()) {
+                Ok(client) => match client.get_connection_manager().await {
+                    Ok(manager) => {
+                        let messaging =
+                            Arc::new(flora_messaging::MessagingService::new(manager.clone()));
+                        (Some(manager), Some(messaging))
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to create Valkey connection manager: {e}");
+                        (None, None)
+                    }
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to create Valkey client: {e}");
+                    (None, None)
+                }
+            }
+        } else {
+            tracing::info!("Messaging (Valkey) disabled by configuration");
+            (None, None)
+        };
+
         let oidc_transactions = OidcTransactionStore::new(valkey.clone());
         let realtime_hub = realtime::create_hub();
+
+        tracing::info!(
+            db = true,
+            search_enabled = search_service.is_some(),
+            messaging_enabled = messaging_service.is_some(),
+            "App capabilities initialized"
+        );
 
         Ok(Self {
             db_pool: Arc::new(db_pool),

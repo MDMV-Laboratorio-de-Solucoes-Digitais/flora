@@ -78,6 +78,12 @@ async fn search(
         }));
     }
 
+    let Some(search_service) = state.search_service.as_ref() else {
+        return Err(Error::ServiceUnavailable(
+            "Search is disabled or unavailable in this deployment".to_string(),
+        ));
+    };
+
     let limit = params.limit.unwrap_or(20).min(50);
 
     let types = params.types.map(|t| {
@@ -86,8 +92,7 @@ async fn search(
             .collect::<Vec<_>>()
     });
 
-    let results = state
-        .search_service
+    let results = search_service
         .search(&org_id, &params.q, types.as_deref(), limit)
         .await?;
 

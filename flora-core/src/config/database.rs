@@ -1,21 +1,21 @@
-//! Database configuration (`PostgreSQL` primary, `SQLite` fallback).
+//! Database configuration (`PostgreSQL` primary).
 
 use serde::{Deserialize, Serialize};
 
 /// Configuration for database connections.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DatabaseConfig {
-    /// `PostgreSQL` connection string (used in production/cloud).
+    /// `PostgreSQL` connection string.
     pub postgres_url: String,
-    /// `SQLite` database path (used in development/local).
+    /// `SQLite` database path (reserved; runtime is currently PostgreSQL-only).
     pub sqlite_path: Option<String>,
-    /// Maximum number of connections in the pool (default: 10).
+    /// Maximum number of connections in the pool (conservative default for Seed VPS).
     pub max_connections: u32,
-    /// Minimum idle connections (default: 2).
+    /// Minimum idle connections.
     pub min_connections: u32,
-    /// Connection acquire timeout in seconds (default: 30).
+    /// Connection acquire timeout in seconds.
     pub acquire_timeout_secs: u64,
-    /// Idle lifetime in seconds (default: 600 = 10 minutes).
+    /// Idle lifetime in seconds.
     pub idle_lifetime_secs: u64,
 }
 
@@ -34,11 +34,6 @@ impl Default for DatabaseConfig {
 }
 
 impl DatabaseConfig {
-    /// Validates the configuration.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the configuration is invalid.
     /// Validates the database configuration.
     ///
     /// # Errors
@@ -51,15 +46,30 @@ impl DatabaseConfig {
                     .to_owned(),
             ));
         }
+        if self.postgres_url.is_empty() {
+            return Err(crate::Error::Configuration(
+                "database.postgres_url is required (SQLite runtime is not supported)".to_owned(),
+            ));
+        }
         if self.max_connections == 0 {
             return Err(crate::Error::Configuration(
                 "max_connections must be > 0".to_owned(),
             ));
         }
+        if self.min_connections > self.max_connections {
+            return Err(crate::Error::Configuration(
+                "min_connections must be <= max_connections".to_owned(),
+            ));
+        }
+        if self.acquire_timeout_secs == 0 {
+            return Err(crate::Error::Configuration(
+                "acquire_timeout_secs must be > 0".to_owned(),
+            ));
+        }
         Ok(())
     }
 
-    /// Returns true if `SQLite` mode is enabled (development/local).
+    /// Returns true if `SQLite` mode is requested (not a supported runtime path).
     #[must_use]
     pub const fn is_sqlite(&self) -> bool {
         self.sqlite_path.is_some()
