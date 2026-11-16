@@ -9,7 +9,6 @@ use axum::{
     response::Json,
     routing::{get, post},
 };
-use base64::Engine;
 use serde::{Deserialize, Serialize};
 use url::Url;
 use uuid::Uuid;
@@ -100,11 +99,27 @@ async fn login(
     let issuer = state.config.oidc.issuer_url.trim_end_matches('/');
     let client_id = &state.config.oidc.client_id;
     let default_redirect = format!("{}/api/v1/auth/callback", state.config.app.base_url);
-    let redirect_uri = params.redirect_uri.unwrap_or(default_redirect);
+    let redirect_uri = params
+        .redirect_uri
+        .unwrap_or_else(|| default_redirect.clone());
+    // 024: exact allowlist — the configured callback plus explicitly allowed URIs.
+    if redirect_uri != default_redirect
+        && !state
+            .config
+            .oidc
+            .allowed_redirect_uris
+            .iter()
+            .any(|allowed| allowed == &redirect_uri)
+    {
+        return Err(Error::OidcProvider(
+            "redirect_uri is not allowed".to_owned(),
+        ));
+    }
 
     let oauth_state = generate_state();
     let code_verifier = generate_code_verifier();
     let code_challenge = derive_s256_challenge(&code_verifier);
+    let nonce = generate_state();
 
     state
         .oidc_transactions
@@ -113,6 +128,7 @@ async fn login(
             OidcTransaction {
                 code_verifier,
                 redirect_uri: redirect_uri.clone(),
+                nonce: nonce.clone(),
             },
         )
         .await?;
@@ -128,7 +144,8 @@ async fn login(
         .append_pair("redirect_uri", &redirect_uri)
         .append_pair("state", &oauth_state)
         .append_pair("code_challenge", &code_challenge)
-        .append_pair("code_challenge_method", "S256");
+        .append_pair("code_challenge_method", "S256")
+        .append_pair("nonce", &nonce);
 
     tracing::info!(redirect_uri = %redirect_uri, "OIDC login initiated with PKCE");
 
@@ -144,6 +161,10 @@ async fn login(
 /// Validates and consumes the stored PKCE/state transaction, exchanges the
 /// authorization code for tokens with `code_verifier`, creates or finds the
 /// user, and issues a Flora session JWT.
+#[expect(
+    clippy::too_many_lines,
+    reason = "OIDC callback: token exchange, ID-token verification and session creation are kept in one transactional flow"
+)]
 async fn callback(
     State(state): State<AppState>,
     Query(params): Query<OidcCallbackParams>,
@@ -198,30 +219,40 @@ async fn callback(
         .as_str()
         .ok_or_else(|| Error::OidcProvider("missing id_token".to_string()))?;
 
-    // Decode the ID token (unverified — Zitadel signed it; we trust the issuer).
-    // In production, verify the signature against Zitadel's JWKS.
-    let claims = decode_id_token_claims(id_token)?;
-    let email = claims
-        .get("email")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("");
-    let name = claims
-        .get("name")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("User");
-    let sub = claims
-        .get("sub")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("");
+    // 024: verify signature + iss/aud/exp/nonce against the provider's JWKS before
+    // creating a user or issuing a Flora session.
+    let issuer = state
+        .config
+        .oidc
+        .issuer_url
+        .trim_end_matches('/')
+        .to_owned();
+    let jwks = crate::oidc::fetch_jwks(&issuer).await?;
+    let claims = crate::oidc::verify_id_token(
+        id_token,
+        &issuer,
+        state.config.oidc.client_id.as_str(),
+        transaction.nonce.as_str(),
+        &jwks,
+    )?;
+    let sub = claims.sub.clone();
+    let email = claims.email.as_deref().unwrap_or("");
+    let name = claims.name.as_deref().unwrap_or("User");
+    if email.is_empty() {
+        return Err(Error::OidcProvider("id_token missing email".to_owned()));
+    }
 
-    // Create or update user in the database.
+    // Create or update user in the database. Identity is the provider subject (024).
     let user_repo = PgUserRepository::new((*state.db_pool).clone());
-    let user = if let Some(existing) = user_repo.find_by_email(email).await? {
-        tracing::info!(user_id = %existing.id, email = %email, "Existing user logged in via OIDC");
+    let user = if let Some(existing) = user_repo.find_by_oidc_subject(&sub).await? {
+        tracing::info!(user_id = %existing.id, oidc_subject = %sub, "Existing user logged in via OIDC");
+        existing
+    } else if let Some(existing) = user_repo.find_by_email(email).await? {
+        tracing::info!(user_id = %existing.id, email = %email, "Existing user matched by email via OIDC");
         existing
     } else {
         let mut new_user = flora_core::models::User::new(email, name);
-        new_user.oidc_subject = Some(sub.to_string());
+        new_user.oidc_subject = Some(sub.clone());
         let created_user = user_repo.create(new_user).await?;
         tracing::info!(user_id = %created_user.id, email = %email, oidc_subject = %sub, "New user registered via OIDC");
         created_user
@@ -393,22 +424,4 @@ pub struct OidcCallbackParams {
     pub state: Option<String>,
     /// The original redirect URI used for authorization (validated against stored transaction).
     pub redirect_uri: Option<String>,
-}
-
-/// Parses an ID token's payload (base64 JSON) without signature verification.
-///
-/// In production, replace with full JWKS verification via `openidconnect`.
-fn decode_id_token_claims(token: &str) -> Result<serde_json::Value> {
-    let parts: Vec<&str> = token.split('.').collect();
-    if parts.len() < 2 {
-        return Err(Error::OidcProvider("malformed id_token".to_string()));
-    }
-
-    let payload = parts[1];
-    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload.trim_end_matches('='))
-        .or_else(|_| base64::engine::general_purpose::URL_SAFE.decode(payload))
-        .map_err(|e| Error::OidcProvider(e.to_string()))?;
-
-    serde_json::from_slice(&decoded).map_err(|e| Error::OidcProvider(e.to_string()))
 }
