@@ -17,6 +17,9 @@
 - `redirect_uri` accepted only when equal to the configured callback; `nonce` generated, stored and compared.
 - Identity resolved by `sub` (email fallback for pre-existing rows); missing `sub`/`email` fails closed.
 
+## Merge evidence
+PR #230 all required checks green (4 `build` + 2 `db-tests`); merged to `dev` as commit `bf1766cb` on 2026-11-16.
+
 ## NV / residual
 - Real-OP e2e and JWKS rotation; discovery/JWKS caching; logout/refresh semantics; RBAC endpoints still stubs;
   `oidc_subject` backfill, browser FE round-trip, 2vCPU/4GB validation.

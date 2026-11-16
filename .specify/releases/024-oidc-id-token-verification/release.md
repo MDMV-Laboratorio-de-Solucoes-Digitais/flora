@@ -1,7 +1,7 @@
 # Release: 024 — OIDC ID-Token Verification
 
 **Date:** 2026-11-16  
-**Branch/PR:** `feat/024-oidc-id-token-verification` -> `dev` (pending)  
+**Branch/PR:** `feat/024-oidc-id-token-verification` -> `dev`, PR #230 (merged)  
 **Baseline:** `github/dev` after cycle 023
 
 ## Delivered
@@ -12,7 +12,7 @@
 
 ## Evidence
 - Local: fmt, strict clippy (`flora-api --lib`), 18 unit tests including 5 new OIDC contracts; DB-gated suites recorded in `validate.md`.
-- CI: PR result to be recorded after green.
+- CI: PR #230 all required checks green; merged with merge commit `bf1766cb`.
 
 ## Seed milestone note
 Closes the decisive identity gap identified in the Seed v0.1 R1 research. Remaining Seed follow-ups: FASE 0 CI enforcement, Seed mechanism-reconciliation ADR, honest OTel wiring, notification transport decision, browser e2e.
