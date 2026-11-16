@@ -7,6 +7,8 @@ use axum::{
     routing::get,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
+use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
 use flora_core::repositories::PgMembershipRepository;
@@ -54,7 +56,7 @@ pub fn create_search_router() -> Router<AppState> {
 }
 
 /// `GET /api/v1/search` — Global search across messages, tasks, and files.
-/// Per T079, T080, T080.1.
+/// 019: PG FTS fallback for messages when Meilisearch is unavailable/disabled.
 async fn search(
     State(state): State<AppState>,
     auth: AuthExtractor,
@@ -71,43 +73,113 @@ async fn search(
         .await?
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
 
-    if params.q.trim().is_empty() {
+    let q = params.q.trim().to_string();
+    if q.is_empty() {
         return Ok(Json(SearchResponse {
             query: params.q,
             results: vec![],
         }));
     }
 
-    let Some(search_service) = state.search_service.as_ref() else {
-        return Err(Error::ServiceUnavailable(
-            "Search is disabled or unavailable in this deployment".to_string(),
-        ));
-    };
-
     let limit = params.limit.unwrap_or(20).min(50);
-
-    let types = params.types.map(|t| {
+    let raw_types: Option<Vec<String>> = params.types.as_deref().map(|t| {
         t.split(',')
             .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
             .collect::<Vec<_>>()
     });
 
-    let results = search_service
-        .search(&org_id, &params.q, types.as_deref(), limit)
-        .await?;
+    if let Some(search_service) = state.search_service.as_ref() {
+        let results = search_service
+            .search(&org_id, &q, raw_types.as_deref(), limit)
+            .await?;
+        let api_results = results
+            .into_iter()
+            .map(|r| SearchResult {
+                result_type: r.item_type,
+                id: r.id,
+                snippet: r.snippet,
+            })
+            .collect();
+        tracing::debug!(query = %q, org_id = %org_id, backend = "meilisearch", "Search executed");
+        return Ok(Json(SearchResponse {
+            query: params.q,
+            results: api_results,
+        }));
+    }
 
-    let api_results = results
-        .into_iter()
-        .map(|r| SearchResult {
-            result_type: r.item_type,
-            id: r.id,
-            snippet: r.snippet,
-        })
-        .collect();
-
-    tracing::debug!(query = %params.q, org_id = %org_id, "Search executed");
+    let normalized_types: Option<Vec<String>> = raw_types.as_ref().map(|ts| {
+        ts.iter()
+            .map(|s| s.to_ascii_lowercase())
+            .collect::<Vec<_>>()
+    });
+    let results =
+        search_messages_pg(&state, org_id, &q, normalized_types.as_deref(), limit).await?;
+    tracing::debug!(query = %q, org_id = %org_id, backend = "postgres", "Search executed");
     Ok(Json(SearchResponse {
         query: params.q,
-        results: api_results,
+        results,
     }))
+}
+
+async fn search_messages_pg(
+    state: &AppState,
+    org_id: Uuid,
+    q: &str,
+    types: Option<&[String]>,
+    limit: usize,
+) -> Result<Vec<SearchResult>> {
+    let include_messages =
+        types.is_none_or(|ts| ts.iter().any(|t| t == "message" || t == "messages"));
+    if !include_messages {
+        return Ok(vec![]);
+    }
+
+    let limit_i64 = i64::try_from(limit).unwrap_or(20);
+
+    let rows = sqlx::query(
+        r"
+        WITH q AS (
+            SELECT
+                COALESCE(
+                    websearch_to_tsquery('simple', $2),
+                    plainto_tsquery('simple', $2)
+                ) AS tsq
+        )
+        SELECT
+            m.id,
+            left(regexp_replace(m.content, '\s+', ' ', 'g'), 200) AS snippet,
+            ts_rank_cd(m.search_tsv, q.tsq) AS rank
+        FROM messages m, q
+        WHERE m.organization_id = $1
+          AND m.is_deleted = false
+          AND q.tsq IS NOT NULL
+          AND q.tsq <> ''::tsquery
+          AND m.search_tsv @@ q.tsq
+        ORDER BY rank DESC, m.created_at DESC, m.id DESC
+        LIMIT $3
+        ",
+    )
+    .bind(org_id)
+    .bind(q)
+    .bind(limit_i64)
+    .fetch_all(&*state.db_pool)
+    .await
+    .map_err(|e| Error::Search(e.to_string()))?;
+
+    let mut results = Vec::with_capacity(rows.len());
+    for row in rows {
+        let id: Uuid = row
+            .try_get("id")
+            .map_err(|e| Error::Search(e.to_string()))?;
+        let snippet: Option<String> = row
+            .try_get("snippet")
+            .map_err(|e| Error::Search(e.to_string()))?;
+        results.push(SearchResult {
+            result_type: "message".to_string(),
+            id: id.to_string(),
+            snippet: snippet.unwrap_or_default(),
+        });
+    }
+    Ok(results)
 }

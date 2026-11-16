@@ -13,12 +13,14 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::models::{Channel, Message};
+use flora_core::models::{Channel, Message, Notification, NotificationType};
 use flora_core::repositories::{
-    PgChannelRepository, PgMembershipRepository, PgMessageRepository, PgWorkspaceRepository,
+    PgChannelRepository, PgMembershipRepository, PgMessageRepository, PgNotificationRepository,
+    PgWorkspaceRepository,
 };
 use flora_core::traits::{
-    ChannelRepository, MembershipRepository, MessageRepository, WorkspaceRepository,
+    ChannelRepository, MembershipRepository, MessageRepository, NotificationRepository,
+    WorkspaceRepository,
 };
 
 use crate::AppState;
@@ -356,6 +358,27 @@ async fn post_message(
     message.thread_id = req.thread_id;
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
     let created = msg_repo.create(message).await?;
+
+    // 019: best-effort reply notification (must not fail the message path).
+    if let Some(parent_id) = created.thread_id
+        && let Err(e) = maybe_notify_reply(
+            &state,
+            org_id,
+            channel_id,
+            parent_id,
+            created.sender_id,
+            created.id,
+        )
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            message_id = %created.id,
+            parent_id = %parent_id,
+            "Failed to create reply notification"
+        );
+    }
+
     let resp = MessageResponse::from(created);
 
     emit_event(
@@ -370,6 +393,39 @@ async fn post_message(
 
     tracing::debug!(message_id = %resp.id, channel_id = %channel_id, user_id = %user_id, "Message posted");
     Ok((StatusCode::CREATED, Json(resp)))
+}
+
+async fn maybe_notify_reply(
+    state: &AppState,
+    org_id: Uuid,
+    channel_id: Uuid,
+    parent_id: Uuid,
+    sender_id: Uuid,
+    reply_id: Uuid,
+) -> Result<()> {
+    let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
+    let Some(parent) = msg_repo.find_by_id(parent_id).await? else {
+        return Ok(());
+    };
+
+    if parent.is_deleted
+        || parent.organization_id != org_id
+        || parent.channel_id != channel_id
+        || parent.sender_id == sender_id
+    {
+        return Ok(());
+    }
+
+    let notif_repo = PgNotificationRepository::new((*state.db_pool).clone());
+    let notification = Notification::new(
+        org_id,
+        parent.sender_id,
+        NotificationType::Reply,
+        reply_id,
+        None,
+    );
+    let _ = notif_repo.create(notification).await?;
+    Ok(())
 }
 
 /// `PATCH /api/v1/channels/{channel_id}/messages/{msg_id}` — Edit a message.
