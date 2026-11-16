@@ -1,6 +1,6 @@
 # OBJETIVO — Flora
 
-**Data da consolidação:** 2026-11-15 (atualizado no ciclo 016)  
+**Data da consolidação:** 2026-11-15 (atualizado no ciclo 017)  
 **Escopo:** repositório `flora` (workspace Rust modular monolith + `apps/frontend` Svelte 5).  
 **Fontes:** inspeção do código/artefatos locais, `.specify/memory/constitution.md`, `specs/001-009`, `.specify/assessments/003-009`, verificações locais executadas em 2026-11-15, e pesquisa consolidada em `docs/research/2026-11-15-flora-seed-80-20-research.md` e `docs/research/2026-11-15-macro-alternative-80-20-research.md`.
 
@@ -53,8 +53,9 @@ Princípios diretores:
 - **Ciclo 014 (PR #217, CI 6/6 verde incl. `contract::websocket::db_`, mergeado):** autoridade de sessão DB-backed no handshake `/ws` (paridade HTTP via verificador compartilhado), alinhamento de path/transporte (`/api/v1/ws`, Bearer/`?token=`) e envelopes mínimos no cliente com hardening de ciclo de vida/reconnect; 8 testes DB-gated websocket + regressões auth/messaging. `dev@f59122aa8`.
 - **Ciclo 015 (PR #218, CI 6/6 verde incl. `db_message_catch_up_after_cursor`, mergeado):** realtime mínimo/catch-up para mensagens persistidas (slice A) — cursor `after` determinístico (ASC, `(created_at,id)`), hub in-process + eventos canônicos pós-commit (REST/WS), assinaturas/fanout WS com isolamento org/canal e convergência idempotente no frontend. `dev@ec0be14e0`.
 - **Ciclo 016 (PR #219, CI 6/6 verde, mergeado):** hardening Seed/VPS (slice C) — pool DB config-driven e init único, `search`/`messaging` opcionais com degradação/config-gating, readiness DB-aware e hints de capacidade, compose com profiles/limites/healthchecks (`core`/`realtime`/`search`), alinhamento `FLORA_*`/docs e notas mínimas de backup/restore. `dev@0989fe00d`.
+- **Ciclo 017 (PR #220, CI verde, mergeado):** arquivos binários seguros (slice B) — migração aditiva `files.workspace_id`, upload multipart em streaming e download em streaming (storage local contido, temp+rename atômico, checksum SHA-256, limites/validação MIME básica), endpoints/contrato FE-compatível e authz/tenant checks no caminho feliz. `dev@12f39f626`.
 
-**NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; anexos/binários (upload/download real, slice B pendente); DMs UX; wiring busca/notificações; OIDC/JWKS e browser/multi-cliente e2e; validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`).
+**NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; contratos DB-gated específicos de arquivos (upload/download/authz/quotas/concorrência) e validação e2e browser; DMs UX; wiring busca/notificações para mutações core; lacunas realtime pós-handshake/multi-nó/replay ampliado; OIDC/JWKS; validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`); quota agregada concorrente por org/workspace ainda mínima/NV.
 
 ### 3.4 Gaps prioritários (o que falta para o MVP P0)
 - **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável; session authority consistente no extrator.
@@ -73,12 +74,12 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 017 candidato)
+## 5) Próximo 80/20 (ciclo 018 candidato)
 
-Executar **slice B — arquivos binários básicos seguros** (decisão 016), mantendo escopo mínimo e verificável em perfil Seed/Postgres-first:
-1. **Upload/download binário real (P0):** contrato mínimo seguro para envio/armazenamento/recuperação em storage local (multipart ou streaming conforme viabilidade), com validação de tenant/workspace, path safety, limites/tipos/quotas coerentes e metadados persistidos.
-2. **Integração de fluxo:** alinhar API/DTOs e wiring mínimo no frontend canônico (`apps/frontend`) para o caminho feliz de anexo/arquivo do núcleo, sem ampliar para versionamento/S3/colaboração avançada.
-3. **Verificação determinística:** testes/contratos relevantes (incluindo cenários de segurança básicos e, se aplicável, DB-gated em Postgres 18 descartável) e evidência SDD/CI verde.
-4. **NVs remanescentes (pós-016):** validação de carga/OOM e restore em 2vCPU/4GB, enforcement real de limites compose, lacunas realtime pós-handshake/multi-nó, busca/notificações wiring e endurecimento OIDC/JWKS/browser e2e.
+Consolidar **confiabilidade e integração do slice de arquivos + wiring essencial do núcleo** (Seed/Postgres-first), com escopo verificável:
+1. **Contratos DB-gated de arquivos (P0):** testes em Postgres 18 descartável para upload/download, authz/tenant/workspace, contenção de path, limites/checksum e semântica de quota/deleção.
+2. **Hardening mínimo do slice 017:** validar membership de workspace no upload/listagem, coerência de quota agregada (ou checagem transacional mínima), e limpeza/erros de storage mais explícitos.
+3. **Wiring essencial (quando viável sem ampliar escopo):** indexação/busca e eventos→notificações para mutações core prioritárias (arquivos/mensagens/tarefas) com contratos determinísticos.
+4. **NVs remanescentes:** e2e browser/multi-cliente, realtime pós-handshake/multi-nó/replay, carga/OOM/restore 2vCPU/4GB, OIDC/JWKS e enforcement real de limites compose.
 
-Detalhes: `.specify/assessments/016-next-vertical-slice/decision.md`, `specs/016-seed-vps-operability/`, `ROADMAP.md`.
+Detalhes: `.specify/assessments/017-next-vertical-slice/decision.md`, `specs/017-secure-binary-files/`, `docs/research/2026-11-16-017-*.md`, `ROADMAP.md`.

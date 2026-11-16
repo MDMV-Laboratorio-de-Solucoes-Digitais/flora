@@ -1,8 +1,8 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–016 entregues/mergeados; ciclo 017 em preparação/R1)  
+**Atualizado em:** 2026-11-16 (ciclos 011–017 entregues/mergeados; ciclo 018 em preparação/R1)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
-**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-016`, `.specify/assessments/003-016`, `OBJETIVO.md`.  
+**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-017`, `.specify/assessments/003-017`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 ## 1) Visão e horizonte
@@ -35,17 +35,18 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 014: autoridade de sessão DB-backed no handshake `/ws` + alinhamento de path/transporte/protocolo mínimo no frontend, testes DB-gated websocket + CI. **PR #217 mergeado, CI 6/6 verde.**
 - [x] Ciclo 015: realtime mínimo/catch-up para mensagens persistidas (slice A) — cursor `after` determinístico, hub/eventos canônicos in-process pós-commit, assinaturas/fanout WS e convergência frontend idempotente. **PR #218 mergeado, CI 6/6 verde.**
 - [x] Ciclo 016: hardening Seed/VPS (slice C) — pool/init único, search/messaging opcionais com degradação, readiness DB-aware, compose profiles/limites/healthchecks, alinhamento `FLORA_*`/docs e notas mínimas de backup/restore. **PR #219 mergeado, CI 6/6 verde.**
-- [~] Ciclo 017 (em preparação/R1): upload/download binário básico seguro (slice B), conforme decisão 016.
+- [x] Ciclo 017: upload/download binário seguro (slice B) — migração `files.workspace_id`, upload/download em streaming com storage local contido, checksum SHA-256, limites/validação básica, authz/tenant e alinhamento FE/API. **PR #220 mergeado, CI verde.**
+- [~] Ciclo 018 (em preparação/R1): contratos DB-gated/hardening do slice de arquivos e wiring essencial busca/notificações.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 017)
-1. **Arquivos básicos reais (slice B, prioritário):** upload/download binário seguro em disco local (multipart/streaming, path safety, limites, checksums, quotas/tenant) alinhado ao frontend/API e com verificação determinística.
-2. **Realtime/resiliência complementar:** lacunas remanescentes do slice 015 (revalidação pós-handshake, `/messages/sync`/replay ampliado, multi-cliente/e2e, semântica de deleção/catch-up) conforme evidência.
-3. **Wiring essencial:** indexação de busca e eventos→notificações para mutações core.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 018)
+1. **Arquivos: contratos DB-gated e hardening (prioritário):** testes/contratos em PG18 descartável (upload/download, authz/tenant/workspace, contenção, limites/checksum), coerência de quota agregada/membership e semântica de deleção/storage.
+2. **Wiring essencial:** indexação de busca e eventos→notificações para mutações core (arquivos/mensagens/tarefas) com verificação determinística.
+3. **Realtime/resiliência complementar:** lacunas remanescentes do slice 015 (revalidação pós-handshake, `/messages/sync`/replay ampliado, multi-cliente/e2e, semântica de deleção/catch-up).
 4. **Operabilidade/validação Seed:** carga/OOM e restore em 2vCPU/4GB, enforcement de limites compose, matriz opcional de serviços em CI/dev.
-5. **Fatia vertical e2e mínima:** consolidar `workspace → canal → mensagem` (REST+realtime/catch-up mínimo entregue) e/ou tarefa com evidência em dev/CI.
+5. **Fatia vertical e2e mínima:** consolidar `workspace → canal → mensagem`/tarefas/arquivos com evidência em dev/CI (incl. browser quando viável).
 
 ### P1 — Consolidação do Seed
 6. **Postgres-first opcionalidade:** FTS/jobs/realtime simples; tornar Valkey/Meilisearch/OIDC realmente opcionais por perfil.
