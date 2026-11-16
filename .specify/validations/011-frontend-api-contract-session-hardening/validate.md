@@ -35,7 +35,7 @@
 
 ## NV / limitations
 
-- Remote CI required checks and merge state: NV until PR execution.
+- Remote CI required checks and merge state: **verified post-merge** — PR #214 checks 6/6 green, merge commit `598f08152`, `origin/dev` synced.
 - Default-port smoke on hosts with `5432` conflict: NV/environmental (alt-port path documented).
 - Global DB-backed session revalidation in `AuthExtractor` and broader tenancy hardening: intentionally deferred (follow-up) per assessment decision.
 - OIDC/JWKS real e2e: NV.

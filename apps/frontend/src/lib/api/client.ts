@@ -56,6 +56,20 @@ function messageFromBody(body: ApiErrorBody | string | null, fallback: string): 
 	return fallback;
 }
 
+function apiErrorFromResponse(
+	response: Response,
+	url: string,
+	body: ApiErrorBody | string | null,
+	fallbackCode?: string
+): ApiError {
+	const code =
+		(body && typeof body === 'object' ? (body.error as string | undefined) : undefined) ??
+		fallbackCode;
+	const field = body && typeof body === 'object' ? (body.field as string | undefined) : undefined;
+	const message = messageFromBody(body, `API Error ${response.status}`);
+	return new ApiError(response.status, response.statusText, url, message, body, code, field);
+}
+
 export const ApiClient = {
 	async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
 		const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
@@ -76,22 +90,15 @@ export const ApiClient = {
 		}
 
 		const response = await fetch(url, { ...options, headers });
+		const body = await parseResponseBody(response);
 
 		if (response.status === 401) {
 			authState.lockSession();
-			throw new ApiError(401, response.statusText, url, 'Unauthorized', null, 'unauthorized');
+			throw apiErrorFromResponse(response, url, body, 'unauthorized');
 		}
 
-		const body = await parseResponseBody(response);
-
 		if (!response.ok) {
-			const code =
-				body && typeof body === 'object' ? (body.error as string | undefined) : undefined;
-			const field =
-				body && typeof body === 'object' ? (body.field as string | undefined) : undefined;
-			const fallback = `API Error ${response.status}`;
-			const message = messageFromBody(body, fallback);
-			throw new ApiError(response.status, response.statusText, url, message, body, code, field);
+			throw apiErrorFromResponse(response, url, body);
 		}
 
 		if (response.status === 204) {

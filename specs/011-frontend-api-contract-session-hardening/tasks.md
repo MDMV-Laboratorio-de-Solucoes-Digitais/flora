@@ -17,4 +17,4 @@
 ## Phase 2 — Verificação & SDD
 - [X] T020 Executar verificações Rust e frontend (fmt/check/clippy/testes, check/lint/test:unit/build).
 - [X] T021 Finalizar spec/plan/tasks/checklist, validação e release.
-- [~] T022 PR para `dev`, CI verde, merge e sync `origin/dev` (manter `dev`/`main`).
+- [X] T022 PR #214 para `dev`, CI remoto 6/6 verde, merge e sync `origin/dev` (`dev@598f08152`; mantidos `dev`/`main`).

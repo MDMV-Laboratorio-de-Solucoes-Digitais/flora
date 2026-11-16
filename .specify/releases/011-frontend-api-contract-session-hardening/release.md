@@ -1,7 +1,7 @@
 # Release: 011 — Frontend↔API Contract Alignment & Session Hardening (80/20)
 
 **Date:** 2026-11-15  
-**Target:** `dev` (PR from `feat/011-frontend-api-contract-session-hardening`)  
+**Target:** `dev` (PR #214 from `feat/011-frontend-api-contract-session-hardening`; merged as `598f08152`, CI 6/6 green, mirrored to `origin/dev`)  
 **SemVer proposal:** dev-line increment (no intended breaking public API; frontend client error shape enriched while preserving message semantics for common cases).
 
 ## Deliveries

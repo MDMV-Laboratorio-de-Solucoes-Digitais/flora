@@ -8,4 +8,4 @@
 - [x] `docs/dev-smoke.md` inclui exemplo concreto de override de portas (conflito de host).
 - [x] Verificações Rust (`fmt --check`, `check`, `clippy -D warnings`, `test -p flora-core --lib`, `test -p flora-tests --lib`, `test -p flora-api`) e frontend (`check`, `lint`, `test:unit -- --run --project server`, `build`) executadas com evidência.
 - [~] Smoke compatível evidenciado ou NV ambiental registrado (NV: `5432` externo no ambiente atual; caminho/fluxo documentado e validado em 010; sem alteração funcional do fluxo de smoke).
-- [~] Validação/release SDD finalizados; PR para `dev` com CI verde, merge e sync `origin/dev` pendentes.
+- [x] Validação/release SDD finalizados; PR #214 para `dev` com CI remoto 6/6 verde, merge e sync `origin/dev` concluídos (`dev@598f08152`).

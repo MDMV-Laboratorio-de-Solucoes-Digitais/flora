@@ -54,7 +54,9 @@ Princípios diretores:
 
 - **Ciclo 010 (local, 2026-11-15):** compose/docs reconciliados para PostgreSQL 18 (`uuidv7` nativo) sem alterar migração aplicada; bootstrap token do `docs/dev-smoke.md` corrigido. Smoke integrado `docs/dev-smoke.md` (`select org → workspace → task`) — **executado (rc=0)** em stack PG18 isolada com override de portas (`15433/16379/17700`) por conflito externo em `5432` (NV ambiental para porta padrão), seed + `scripts/dev-smoke-session.sql` + `test-flora.sh`: select-org 200/token org-scoped, workspaces listados, task criada. Verificação frontend determinística (`apps/frontend`, bun 1.4.4): `check`, `lint`, `test:unit -- --run --project server` (14 passed) e `build` **ok** (ajuste mínimo: inclusão de `tests/**` no projeto Vitest server, excluindo `tests/e2e/**`).
 
-**NV/não exercitado:** execução remota do CI/PR (incl. `db-tests`/frontend) e merge/sync; smoke pelo bind padrão `5432` quando ocupado externamente (evidenciado caminho equivalente); reset de volumes PG16→PG18 em ambiente não descartável; runtime e2e com OIDC/JWKS real.
+- **Ciclo 011 (mergeado, PR #214, CI remoto 6/6 verde, 2026-11-16):** `POST /api/v1/tasks` passa a persistir `description`/`assignee_id`; `ApiClient` lança `ApiError` tipado preservando status/código/campo/corpo em erros não-401 (401 mantém `lockSession()`; corpo no 401 é corrigido no ciclo 012); `AuthState.setOrganization` limpa `isInvalidated`; guard auth/org em `/tasks`; testes frontend determinísticos atualizados; `docs/dev-smoke.md` com override de portas. `dev@598f08152` sincronizado em `origin`.
+
+**NV/não exercitado:** smoke integrado do ciclo 011 (porta `5432` externa ocupada; fluxo inalterado e evidenciado no 010); reset de volumes PG16→PG18 em ambiente não descartável; runtime e2e com OIDC/JWKS real; revalidação DB de sessão no extrator (follow-up do 012).
 
 ### 3.4 Gaps prioritários (o que falta para o MVP P0)
 - **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável; session authority consistente no extrator.
@@ -73,11 +75,12 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 011 candidato)
+## 5) Próximo 80/20 (ciclo 012 candidato)
 
-Consolidar evidência remota e hardening do fluxo núcleo, mantendo segurança/tenancy:
-1. **CI/evidência remota:** validar jobs (`build`, `db-tests`, frontend CI) verdes no PR/`dev` e ampliar cobertura DB de contratos críticos conforme risco.
-2. **Compatibilidade dev/compose operacional:** validar caminho documentado em host sem conflito de porta padrão e reforçar orientações de migração/reset de volume PG16→18.
-3. **Frontend/API alinhamento mínimo:** aprofundar tipos/erros/contratos e estabilidade do slice auth→org→workspace→task sem ampliar escopo.
+Fechar a autoridade de sessão e elevar a confiança do fluxo núcleo sem ampliar produto:
+1. **Session authority (P0):** `AuthExtractor`/contextos validam `jti` no PostgreSQL por request (sessão ativa, não expirada, `user_id`/`organization_id` coerentes), com testes DB-backed de revogação/expiração/mismatch e sem cache inicial.
+2. **Contrato frontend 401:** preservar corpo/código estruturado também em respostas 401 (hoje o corpo é descartado antes do parse), mantendo `lockSession()`.
+3. **Cobertura determinística:** ampliar job `db-tests` para os novos contratos de sessão e documentar execução local com Postgres 18 descartável.
+4. **Debloat/Seed profile:** consolidar auditoria VPS (serviços opcionais, memória, backup) e roadmap de fatias seguintes (mensagens/realtime, arquivos, busca) conforme valor/risco.
 
-Detalhes: `specs/010-compose-uuidv7-smoke-frontend-verify/{spec,plan,tasks}.md`, `.specify/assessments/010-compose-uuidv7-smoke-frontend-verify/`, `.specify/validations/010-compose-uuidv7-smoke-frontend-verify/validate.md`, `ROADMAP.md`.
+Detalhes: `specs/011-frontend-api-contract-session-hardening/`, `.specify/assessments/011-frontend-api-contract-session-hardening/decision.md`, `specs/012-session-authority-revalidation/` (a criar), `ROADMAP.md`.
