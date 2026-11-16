@@ -15,7 +15,7 @@ pub struct AppConfig {
     pub port: u16,
     /// Base URL for OAuth redirects (e.g., <https://flora.example.com>)
     pub base_url: String,
-    /// CORS allowed origins (comma-separated)
+    /// CORS allowed origins (exact `scheme://host[:port]` strings; Figment array syntax)
     pub cors_origins: Vec<String>,
     /// JWT secret for signing session tokens
     pub jwt_secret: String,
@@ -43,7 +43,12 @@ impl Default for AppConfig {
             host: "0.0.0.0".to_owned(),
             port: 3000,
             base_url: "http://localhost:3000".to_owned(),
-            cors_origins: vec!["http://localhost:5173".to_owned()],
+            cors_origins: vec![
+                "http://localhost:5173".to_owned(),
+                "http://127.0.0.1:5173".to_owned(),
+                "http://localhost:4173".to_owned(),
+                "http://127.0.0.1:4173".to_owned(),
+            ],
             jwt_secret: std::env::var("FLORA_JWT_SECRET")
                 .unwrap_or_else(|_| "dev-secret-change-in-production".to_owned()),
             session_ttl_secs: 3600,
@@ -76,6 +81,40 @@ impl AppConfig {
                 "base_url is required".to_owned(),
             ));
         }
+        if self.cors_origins.is_empty() {
+            return Err(crate::Error::Configuration(
+                "cors_origins must contain at least one origin".to_owned(),
+            ));
+        }
+        for origin in &self.cors_origins {
+            if origin.is_empty() {
+                return Err(crate::Error::Configuration(
+                    "cors_origins contains an empty entry".to_owned(),
+                ));
+            }
+            // tower-http's AllowOrigin::list panics on a literal `*`; fail as a config
+            // error instead. Rejecting any `*` substring is deliberately stricter.
+            if origin.contains('*') {
+                return Err(crate::Error::Configuration(format!(
+                    "cors_origins entries must not contain '*': {origin}"
+                )));
+            }
+            // cors_layer() filters unparseable entries; validate first so a typo
+            // cannot silently remove an origin from the allowlist.
+            if axum::http::HeaderValue::from_str(origin).is_err() {
+                return Err(crate::Error::Configuration(format!(
+                    "cors_origins entry is not a valid HTTP header value: {origin}"
+                )));
+            }
+            if self.env == "production"
+                && (origin.contains("localhost") || origin.contains("127.0.0.1"))
+            {
+                tracing::warn!(
+                    origin = %origin,
+                    "cors_origins contains a loopback origin in production"
+                );
+            }
+        }
         if self.jwt_secret.len() < 32 {
             if self.env == "production" {
                 return Err(crate::Error::Configuration(
@@ -90,5 +129,41 @@ impl AppConfig {
             ));
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AppConfig;
+
+    fn config() -> AppConfig {
+        AppConfig::default()
+    }
+
+    #[test]
+    fn valid_default_origins_pass() {
+        assert!(config().validate().is_ok());
+    }
+
+    #[test]
+    fn wildcard_origin_is_rejected() {
+        let mut cfg = config();
+        cfg.cors_origins = vec!["*".to_owned()];
+        assert!(cfg.validate().is_err());
+    }
+
+    #[test]
+    fn empty_origin_is_rejected() {
+        let mut cfg = config();
+        cfg.cors_origins = vec![String::new()];
+        assert!(cfg.validate().is_err());
+    }
+
+    #[test]
+    fn control_character_origin_is_rejected() {
+        let mut cfg = config();
+        // HeaderValue accepts spaces but rejects control characters such as '\n'.
+        cfg.cors_origins = vec!["http://bad\nhost".to_owned()];
+        assert!(cfg.validate().is_err());
     }
 }
