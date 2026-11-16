@@ -4,7 +4,10 @@
 	import { ApiClient } from '$lib/api/client';
 	import type { FileAttachment } from '$lib/types/models';
 
-	let { onUploadComplete } = $props<{ onUploadComplete?: (file: FileAttachment) => void }>();
+	let { onUploadComplete, workspaceId } = $props<{
+		onUploadComplete?: (file: FileAttachment) => void;
+		workspaceId?: string;
+	}>();
 
 	let errorMessage = $state('');
 
@@ -21,6 +24,9 @@
 			try {
 				const formData = new FormData();
 				formData.append('file', file);
+				if (workspaceId) {
+					formData.append('workspace_id', workspaceId);
+				}
 
 				const fileAttachment = await ApiClient.request<FileAttachment>('/api/v1/files/upload', {
 					method: 'POST',

@@ -64,6 +64,10 @@ impl AppState {
     /// # Errors
     ///
     /// Returns an error if required services cannot be initialized.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "centralized app wiring; refactor can be done separately"
+    )]
     pub async fn new(db_pool: PgPool, config: Config) -> anyhow::Result<Self> {
         // Initialize repositories as Arc<dyn Trait + Send + Sync>
         let _user_repo: Arc<dyn flora_core::traits::UserRepository + Send + Sync> =

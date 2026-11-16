@@ -55,6 +55,10 @@ impl SearchConfig {
 
     /// Generates the index name for a given organization.
     #[must_use]
+    #[expect(
+        clippy::literal_string_with_formatting_args,
+        reason = "template placeholder token"
+    )]
     pub fn index_name(&self, org_id: &str) -> String {
         self.index_template
             .replace("{org_id}", org_id)

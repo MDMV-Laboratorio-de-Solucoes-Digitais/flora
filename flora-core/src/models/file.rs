@@ -18,6 +18,8 @@ pub struct File {
     pub organization_id: Uuid,
     /// The user who uploaded the file.
     pub owner_id: Uuid,
+    /// The workspace this file belongs to (optional for legacy records).
+    pub workspace_id: Option<Uuid>,
     /// MIME type of the file.
     pub file_type: String,
     /// Original filename.
@@ -54,6 +56,7 @@ impl File {
             id: Uuid::now_v7(),
             organization_id,
             owner_id,
+            workspace_id: None,
             file_type,
             name,
             size_bytes,

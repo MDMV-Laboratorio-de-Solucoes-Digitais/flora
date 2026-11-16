@@ -27,6 +27,13 @@ pub struct StorageConfig {
     pub multipart_enabled: bool,
     /// Chunk size for multipart uploads in bytes (default: 5 MB).
     pub chunk_size_bytes: u64,
+    /// Maximum upload size per file in bytes (default: 10 MB for Seed/VPS).
+    #[serde(default = "default_max_upload_bytes")]
+    pub max_upload_bytes: u64,
+}
+
+const fn default_max_upload_bytes() -> u64 {
+    10 * 1024 * 1024
 }
 
 impl Default for StorageConfig {
@@ -43,7 +50,8 @@ impl Default for StorageConfig {
             org_quota_bytes: 10 * 1024 * 1024 * 1024, // 10 GB
             workspace_quota_bytes: 2 * 1024 * 1024 * 1024, // 2 GB
             multipart_enabled: true,
-            chunk_size_bytes: 5 * 1024 * 1024, // 5 MB
+            chunk_size_bytes: 5 * 1024 * 1024,  // 5 MB
+            max_upload_bytes: 10 * 1024 * 1024, // 10 MB (Seed/VPS)
         }
     }
 }

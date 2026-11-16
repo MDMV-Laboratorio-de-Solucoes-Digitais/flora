@@ -391,8 +391,10 @@ async fn handle_client_text(
                 content,
                 thread_id,
             } => {
-                handle_send_message(socket, state, user_id, org_id, channel_id, content, thread_id)
-                    .await;
+                handle_send_message(
+                    socket, state, user_id, org_id, channel_id, content, thread_id,
+                )
+                .await;
             }
             WsClientMessage::Ping => {
                 handle_ping(socket).await;
@@ -414,15 +416,27 @@ async fn forward_hub_event(
         return true;
     }
     let response = match envelope.event {
-        RealtimeEvent::NewMessage { channel_id, message } => {
-            WsServerMessage::NewMessage { channel_id, message }
-        }
-        RealtimeEvent::MessageUpdated { channel_id, message } => {
-            WsServerMessage::MessageUpdated { channel_id, message }
-        }
-        RealtimeEvent::MessageDeleted { channel_id, message } => {
-            WsServerMessage::MessageDeleted { channel_id, message }
-        }
+        RealtimeEvent::NewMessage {
+            channel_id,
+            message,
+        } => WsServerMessage::NewMessage {
+            channel_id,
+            message,
+        },
+        RealtimeEvent::MessageUpdated {
+            channel_id,
+            message,
+        } => WsServerMessage::MessageUpdated {
+            channel_id,
+            message,
+        },
+        RealtimeEvent::MessageDeleted {
+            channel_id,
+            message,
+        } => WsServerMessage::MessageDeleted {
+            channel_id,
+            message,
+        },
     };
     send_ws_response(socket, response).await.is_ok()
 }

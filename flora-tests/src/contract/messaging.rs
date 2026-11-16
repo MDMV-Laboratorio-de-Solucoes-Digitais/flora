@@ -37,7 +37,7 @@ mod db_messaging {
     use tower::ServiceExt;
     use uuid::Uuid;
 
-    fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
+    fn make_test_state(pool: PgPool, config: &Config) -> AppState {
         let user_repo: Arc<dyn UserRepository + Send + Sync> =
             Arc::new(PgUserRepository::new(pool.clone()));
         let _user_repo = user_repo;
@@ -63,7 +63,7 @@ mod db_messaging {
         let notification_repo: Arc<dyn NotificationRepository + Send + Sync> =
             Arc::new(PgNotificationRepository::new(pool.clone()));
 
-        Ok(AppState {
+        AppState {
             db_pool: Arc::new(pool),
             config: Arc::new(config.clone()),
             auth_service: Arc::new(AuthService::new()),
@@ -93,7 +93,7 @@ mod db_messaging {
             valkey: None,
             oidc_transactions: OidcTransactionStore::new(None),
             realtime_hub: flora_api::realtime::create_hub(),
-        })
+        }
     }
 
     async fn db_state() -> anyhow::Result<Option<(AppState, Config)>> {
@@ -110,7 +110,7 @@ mod db_messaging {
         let pool = PgPool::connect(&url).await?;
         flora_core::migrations::run_migrations(&pool).await?;
         let config = Config::default();
-        let state = make_test_state(pool, &config)?;
+        let state = make_test_state(pool, &config);
         Ok(Some((state, config)))
     }
 

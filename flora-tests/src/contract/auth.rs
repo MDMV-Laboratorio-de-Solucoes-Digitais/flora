@@ -36,7 +36,7 @@ use tower::ServiceExt;
 
 #[cfg(test)]
 #[cfg(test)]
-fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
+fn make_test_state(pool: PgPool, config: &Config) -> AppState {
     let user_repo: Arc<dyn flora_core::traits::UserRepository + Send + Sync> =
         Arc::new(PgUserRepository::new(pool.clone()));
     let _user_repo = user_repo; // suppress unused warning
@@ -61,7 +61,7 @@ fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
     let notification_repo: Arc<dyn NotificationRepository + Send + Sync> =
         Arc::new(PgNotificationRepository::new(pool.clone()));
 
-    Ok(AppState {
+    AppState {
         db_pool: Arc::new(pool),
         config: Arc::new(config.clone()),
         auth_service: Arc::new(AuthService::new()),
@@ -89,7 +89,7 @@ fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
         valkey: None,
         oidc_transactions: OidcTransactionStore::new(None),
         realtime_hub: flora_api::realtime::create_hub(),
-    })
+    }
 }
 
 /// Contract test for `GET /auth/login`.
@@ -103,7 +103,7 @@ fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
 async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let router = axum::Router::new()
         .nest("/auth", create_auth_router())
         .with_state(state);
@@ -171,7 +171,7 @@ async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
 async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let router = axum::Router::new()
         .nest("/auth", create_auth_router())
         .with_state(state);
@@ -216,7 +216,7 @@ async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
 async fn test_auth_login_with_unencoded_redirect_uri() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let router = axum::Router::new()
         .nest("/auth", create_auth_router())
         .with_state(state);
@@ -258,7 +258,7 @@ async fn test_auth_login_with_unencoded_redirect_uri() -> anyhow::Result<()> {
 async fn test_auth_callback_rejects_missing_code() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let router = axum::Router::new()
         .nest("/auth", create_auth_router())
         .with_state(state);
@@ -277,7 +277,7 @@ async fn test_auth_callback_rejects_missing_code() -> anyhow::Result<()> {
 async fn test_auth_callback_rejects_missing_state() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let router = axum::Router::new()
         .nest("/auth", create_auth_router())
         .with_state(state);
@@ -296,7 +296,7 @@ async fn test_auth_callback_rejects_missing_state() -> anyhow::Result<()> {
 async fn test_auth_callback_rejects_invalid_state() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let router = axum::Router::new()
         .nest("/auth", create_auth_router())
         .with_state(state);
@@ -315,7 +315,7 @@ async fn test_auth_callback_rejects_invalid_state() -> anyhow::Result<()> {
 async fn test_auth_callback_rejects_reused_state() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let oauth_state = "reused-state-test";
     state
         .oidc_transactions
@@ -354,7 +354,7 @@ async fn test_auth_callback_rejects_reused_state() -> anyhow::Result<()> {
 async fn test_select_organization_rejects_missing_auth() -> anyhow::Result<()> {
     let config = Config::default();
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
-    let state = make_test_state(pool, &config)?;
+    let state = make_test_state(pool, &config);
     let router = axum::Router::new()
         .nest("/auth", create_auth_router())
         .with_state(state);
@@ -406,7 +406,7 @@ mod db_select_organization {
         let pool = PgPool::connect(&url).await?;
         flora_core::migrations::run_migrations(&pool).await?;
         let config = Config::default();
-        let state = make_test_state(pool, &config)?;
+        let state = make_test_state(pool, &config);
         Ok(Some((state, config)))
     }
 
@@ -692,7 +692,7 @@ mod db_session_authority {
         let pool = PgPool::connect(&url).await?;
         flora_core::migrations::run_migrations(&pool).await?;
         let config = Config::default();
-        let state = make_test_state(pool, &config)?;
+        let state = make_test_state(pool, &config);
         Ok(Some((state, config)))
     }
 
