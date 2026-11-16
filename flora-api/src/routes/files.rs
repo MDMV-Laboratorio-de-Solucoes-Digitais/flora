@@ -14,8 +14,8 @@ use tokio_util::io::ReaderStream;
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::repositories::PgMembershipRepository;
-use flora_core::traits::MembershipRepository;
+use flora_core::repositories::{PgMembershipRepository, PgWorkspaceRepository};
+use flora_core::traits::{MembershipRepository, WorkspaceRepository};
 
 use crate::AppState;
 use crate::extractors::AuthExtractor;
@@ -100,6 +100,24 @@ async fn ensure_member(auth: &AuthExtractor, state: &AppState) -> Result<Uuid> {
     Ok(org_id)
 }
 
+async fn ensure_workspace_in_org(state: &AppState, org_id: Uuid, workspace_id: Uuid) -> Result<()> {
+    let workspace_repo = PgWorkspaceRepository::new((*state.db_pool).clone());
+    let workspace = workspace_repo
+        .find_by_id(workspace_id)
+        .await?
+        .ok_or_else(|| Error::Validation {
+            field: "workspace_id".to_string(),
+            message: "workspace not found".to_string(),
+        })?;
+    if workspace.organization_id != org_id {
+        return Err(Error::Validation {
+            field: "workspace_id".to_string(),
+            message: "workspace not found".to_string(),
+        });
+    }
+    Ok(())
+}
+
 fn to_attachment(file: &flora_core::models::File) -> FileAttachmentResponse {
     FileAttachmentResponse {
         id: file.id.to_string(),
@@ -134,8 +152,6 @@ async fn upload_file_multipart(
     let user_id = auth.user_id;
 
     let mut workspace_id = query.workspace_id;
-    let mut file_name: Option<String> = None;
-    let mut declared_mime: Option<String> = None;
     let mut uploaded: Option<flora_core::models::File> = None;
 
     while let Some(field) = multipart
@@ -166,20 +182,21 @@ async fn upload_file_multipart(
                         message: "only one file upload is supported per request".to_string(),
                     });
                 }
-                file_name = field.file_name().map(ToString::to_string).or(file_name);
-                declared_mime = field
-                    .content_type()
-                    .map(ToString::to_string)
-                    .or(declared_mime);
+                let name = field
+                    .file_name()
+                    .map_or_else(|| "file".to_string(), ToString::to_string);
+                let mime = field.content_type().map_or_else(
+                    || "application/octet-stream".to_string(),
+                    ToString::to_string,
+                );
                 let ws = workspace_id.ok_or_else(|| Error::Validation {
                     field: "workspace_id".to_string(),
-                    message: "workspace_id is required".to_string(),
+                    message:
+                        "workspace_id is required as query parameter or as a form field before file"
+                            .to_string(),
                 })?;
-                let name = file_name.clone().unwrap_or_else(|| "file".to_string());
-                let mime = declared_mime
-                    .clone()
-                    .unwrap_or_else(|| "application/octet-stream".to_string());
-                // Stream field directly into storage via service
+                ensure_workspace_in_org(&state, org_id, ws).await?;
+
                 let reader = tokio_util::io::StreamReader::new(TryStreamExt::map_err(field, |e| {
                     std::io::Error::other(e.to_string())
                 }));
@@ -211,6 +228,7 @@ async fn upload_file_metadata(
 ) -> Result<(StatusCode, Json<FileResponse>)> {
     let org_id = ensure_member(&auth, &state).await?;
     let user_id = auth.user_id;
+    ensure_workspace_in_org(&state, org_id, req.workspace_id).await?;
 
     let input = flora_core::models::CreateFileInput {
         name: req.name,

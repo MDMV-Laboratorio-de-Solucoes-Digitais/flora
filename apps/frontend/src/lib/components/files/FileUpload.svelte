@@ -20,19 +20,24 @@
 				errorMessage = 'File too large. Maximum size is 50MB.';
 				return;
 			}
+			if (!workspaceId) {
+				errorMessage = 'Workspace is required before uploading files.';
+				return;
+			}
 			// Implement RustFS upload
 			try {
 				const formData = new FormData();
 				formData.append('file', file);
-				if (workspaceId) {
-					formData.append('workspace_id', workspaceId);
-				}
+				formData.append('workspace_id', workspaceId);
 
-				const fileAttachment = await ApiClient.request<FileAttachment>('/api/v1/files/upload', {
-					method: 'POST',
-					body: formData
-					// Fetch automatically sets multipart/form-data boundary when body is FormData
-				});
+				const fileAttachment = await ApiClient.request<FileAttachment>(
+					`/api/v1/files/upload?workspace_id=${encodeURIComponent(workspaceId)}`,
+					{
+						method: 'POST',
+						body: formData
+						// Fetch automatically sets multipart/form-data boundary when body is FormData
+					}
+				);
 
 				if (onUploadComplete) {
 					onUploadComplete(fileAttachment);
