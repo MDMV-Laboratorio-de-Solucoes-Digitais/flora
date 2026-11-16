@@ -1,3 +1,5 @@
+> **Superseded by PR #238/#239 (cycle 029):** this is a pre-implementation snapshot; check committed files for current state.
+
 # 029 — Validation & sharpening of the cycle-028 e2e slice (read-only audit)
 
 **Date:** 2026-11-16

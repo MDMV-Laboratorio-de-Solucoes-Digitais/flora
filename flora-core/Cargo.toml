@@ -52,6 +52,8 @@ zeroize.workspace = true
 figment.workspace = true
 thiserror.workspace = true
 axum.workspace = true
+clap = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
 
 [dev-dependencies]
 wiremock.workspace = true
@@ -62,3 +64,9 @@ proptest.workspace = true
 default = []
 sqlite = ["sqlx/sqlite"]
 test = []
+dev-mint = ["dep:clap", "dep:anyhow"]
+
+[[bin]]
+name = "flora-mint-session"
+path = "src/bin/flora-mint-session.rs"
+required-features = ["dev-mint"]

@@ -68,12 +68,12 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 ## ⚙️ Local Development (CI)
 
 Current repo state (prefer executable config over this list): Rust CI (`.github/workflows/rust.yml`) runs
-`cargo fmt --all -- --check`, strict `cargo clippy --workspace --lib --bins -- -D warnings`,
-`cargo deny check bans licenses sources`, `cargo build`/`cargo test` and six PostgreSQL 18 DB-gated suites;
+`cargo fmt --all -- --check`, strict `cargo clippy --workspace --all-targets -- -D warnings`,
+`cargo deny check bans licenses sources`, `cargo build`/`cargo test`, six PostgreSQL 18 DB-gated suites,
+and one informational Chromium browser smoke;
 frontend CI targets `apps/frontend` (`.github/workflows/ci.yml`). `cargo-deny` config is `deny.toml`;
-`cargo-vet` store is versioned (informational gate), and `lefthook`/`cargo-nextest` are absent. Full strict
-`cargo clippy --workspace --all-targets -- -D warnings` is currently blocked by test-only `expect_used` in
-parallel work (NV) — do not revert it.
+`cargo-vet` store is versioned (informational gate), and `lefthook`/`cargo-nextest` are absent.
+Test-only `expect_used` is explicitly scoped with `#[expect(..., reason = "...")]`, so strict clippy is green.
 
 ## ⚖️ License
 
