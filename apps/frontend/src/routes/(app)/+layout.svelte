@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authState } from '$lib/state/AuthState.svelte';
+	import { wsClient } from '$lib/api/websocket';
 	import {
 		Search,
 		Menu,
@@ -27,6 +28,8 @@
 	let isSidebarOpen = $state(true);
 	let isRightPanelOpen = $state(false);
 
+	let wsKey = $state<string | null>(null);
+
 	function enforceAuth() {
 		if (globalThis.window === undefined) return;
 		if (!authState.isAuthenticated || !authState.token) {
@@ -39,8 +42,13 @@
 		}
 	}
 
+	function disconnectWs() {
+		wsClient.disconnect();
+	}
+
 	onMount(() => {
 		enforceAuth();
+		return disconnectWs;
 	});
 
 	$effect(() => {
@@ -49,6 +57,29 @@
 		void authState.token;
 		void authState.organizationId;
 		enforceAuth();
+	});
+
+	$effect(() => {
+		const key =
+			authState.isAuthenticated &&
+			authState.token &&
+			authState.organizationId &&
+			!authState.isSessionLocked &&
+			!authState.isInvalidated
+				? `${authState.token}|${authState.organizationId}`
+				: null;
+
+		if (!key) {
+			wsKey = null;
+			wsClient.disconnect();
+			return;
+		}
+
+		if (key !== wsKey) {
+			wsClient.disconnect();
+			wsKey = key;
+			wsClient.connect();
+		}
 	});
 </script>
 

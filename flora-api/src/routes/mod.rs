@@ -45,6 +45,7 @@ pub fn create_router(app_state: AppState) -> Router {
         )
         // WebSocket for real-time messaging
         .route("/ws", get(websocket::websocket_handler))
+        .route("/api/v1/ws", get(websocket::websocket_handler))
         // Rate limiting
         .layer(axum::middleware::from_fn(
             crate::middleware::rate_limit::rate_limit_middleware,

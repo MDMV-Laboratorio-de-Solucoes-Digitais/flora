@@ -5,13 +5,12 @@
 
 use axum::{
     extract::{
-        State,
-        ws::{WebSocket, WebSocketUpgrade},
+        Query, State,
+        ws::{WebSocket, WebSocketUpgrade, rejection::WebSocketUpgradeRejection},
     },
     http::{HeaderMap, StatusCode},
-    response::Response,
+    response::{IntoResponse, Response},
 };
-use flora_core::error::{Error, Result};
 use flora_core::models::Message;
 use flora_core::repositories::{PgChannelRepository, PgMessageRepository};
 use flora_core::traits::{ChannelRepository, MessageRepository};
@@ -93,24 +92,40 @@ pub enum WsServerMessage {
     },
 }
 
+/// Query parameters for WebSocket authentication fallback.
+#[derive(Debug, serde::Deserialize)]
+pub struct WsTokenQuery {
+    /// Bearer token provided as query parameter for browser clients.
+    pub token: Option<String>,
+}
+
 /// Handles WebSocket upgrade and connection.
 ///
-/// Per T034.1 & FR-035: Validates `organization_id` on connection and enforces
-/// multi-tenancy isolation for all WebSocket operations.
+/// Validates the bearer token against DB-backed session authority before upgrade
+/// and enforces organization-scoped isolation for WebSocket operations.
 pub async fn websocket_handler(
-    ws: WebSocketUpgrade,
+    ws: Result<WebSocketUpgrade, WebSocketUpgradeRejection>,
     State(state): State<AppState>,
     headers: HeaderMap,
+    Query(params): Query<WsTokenQuery>,
 ) -> Response {
-    // Extract and validate user and organization from headers or authorization token
-    let (user_id, org_id) = match extract_org_context(&headers, &state.config.app.jwt_secret) {
+    // Validate session authority first so invalid auth returns 401 (not 426).
+    let (user_id, org_id) = match extract_org_context(&headers, &params, &state).await {
         Ok(ctx) => ctx,
-        Err(e) => {
-            tracing::warn!("WebSocket connection rejected: {e}");
+        Err(status) => {
+            tracing::warn!("WebSocket connection rejected");
             return Response::builder()
-                .status(StatusCode::UNAUTHORIZED)
+                .status(status)
                 .body(axum::body::Body::empty())
                 .unwrap_or_else(|_| Response::new(axum::body::Body::empty()));
+        }
+    };
+
+    let ws = match ws {
+        Ok(ws) => ws,
+        Err(rejection) => {
+            tracing::warn!("WebSocket upgrade rejected after authentication");
+            return rejection.into_response();
         }
     };
 
@@ -119,39 +134,55 @@ pub async fn websocket_handler(
     ws.on_upgrade(move |socket| handle_socket(socket, state, user_id, org_id))
 }
 
-/// Extracts user and organization context from a verified Bearer JWT.
-fn extract_org_context(headers: &HeaderMap, jwt_secret: &str) -> Result<(Uuid, Uuid)> {
-    let auth_header = headers
+/// Resolves a bearer token from supported transports.
+///
+/// Prefers the `Authorization: Bearer <token>` header when present.
+fn resolve_ws_token<'a>(headers: &'a HeaderMap, params: &'a WsTokenQuery) -> Option<&'a str> {
+    headers
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "))
-        .ok_or(Error::Unauthorized)?;
+        .or(params.token.as_deref())
+}
 
-    let claims = flora_core::utils::jwt::decode_token(auth_header, jwt_secret)
-        .map_err(|_| Error::Unauthorized)?;
-    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| Error::Unauthorized)?;
-    let org_id =
-        Uuid::parse_str(&claims.organization_id).map_err(|_| Error::OrganizationContextRequired)?;
+/// Extracts user and organization context from a verified, DB-backed session.
+///
+/// Rejects nil organization for WebSocket connections.
+async fn extract_org_context(
+    headers: &HeaderMap,
+    params: &WsTokenQuery,
+    state: &AppState,
+) -> Result<(Uuid, Uuid), StatusCode> {
+    let Some(token) = resolve_ws_token(headers, params) else {
+        return Err(StatusCode::UNAUTHORIZED);
+    };
 
-    if org_id.is_nil() {
-        return Err(Error::OrganizationContextRequired);
+    let verified = crate::extractors::auth::verify_bearer_token(token, state)
+        .await
+        .map_err(|(status, _)| status)?;
+
+    if verified.organization_id.is_nil() {
+        return Err(StatusCode::UNAUTHORIZED);
     }
 
-    Ok((user_id, org_id))
+    Ok((verified.user_id, verified.organization_id))
 }
 
 /// Helper function to send a WebSocket message to the client.
-async fn send_ws_response(socket: &mut WebSocket, response: WsServerMessage) -> Result<()> {
+async fn send_ws_response(
+    socket: &mut WebSocket,
+    response: WsServerMessage,
+) -> Result<(), flora_core::error::Error> {
     let resp_text = serde_json::to_string(&response).map_err(|e| {
         tracing::error!(error = %e, "Failed to serialize WebSocket response");
-        Error::IoError(std::io::Error::other(e))
+        flora_core::error::Error::IoError(std::io::Error::other(e))
     })?;
     socket
         .send(axum::extract::ws::Message::Text(resp_text.into()))
         .await
         .map_err(|e| {
             tracing::warn!(error = %e, "Failed to send WebSocket response");
-            Error::IoError(std::io::Error::other(e))
+            flora_core::error::Error::IoError(std::io::Error::other(e))
         })?;
     Ok(())
 }
@@ -332,6 +363,7 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, user_id: Uuid, or
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::http::HeaderMap;
 
     #[test]
     fn test_ws_message_serialization() {
@@ -367,5 +399,37 @@ mod tests {
         };
         let err_json = serde_json::to_string(&err).unwrap_or_default();
         assert!(err_json.contains("FORBIDDEN"));
+    }
+
+    #[test]
+    fn test_resolve_ws_token_prefers_header() {
+        let mut headers = HeaderMap::new();
+        let _ = headers.insert(
+            axum::http::header::AUTHORIZATION,
+            axum::http::HeaderValue::from_static("Bearer header-token"),
+        );
+        let params = WsTokenQuery {
+            token: Some("query-token".to_string()),
+        };
+
+        assert_eq!(resolve_ws_token(&headers, &params), Some("header-token"));
+    }
+
+    #[test]
+    fn test_resolve_ws_token_falls_back_to_query() {
+        let headers = HeaderMap::new();
+        let params = WsTokenQuery {
+            token: Some("query-token".to_string()),
+        };
+
+        assert_eq!(resolve_ws_token(&headers, &params), Some("query-token"));
+    }
+
+    #[test]
+    fn test_resolve_ws_token_missing() {
+        let headers = HeaderMap::new();
+        let params = WsTokenQuery { token: None };
+
+        assert_eq!(resolve_ws_token(&headers, &params), None);
     }
 }

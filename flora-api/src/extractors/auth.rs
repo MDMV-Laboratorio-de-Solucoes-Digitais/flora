@@ -9,16 +9,16 @@ use uuid::Uuid;
 
 /// A JWT that has been validated against the server-side session store.
 #[derive(Debug, Clone)]
-struct VerifiedSession {
+pub(crate) struct VerifiedSession {
     /// The authenticated user's ID.
-    user_id: Uuid,
+    pub(crate) user_id: Uuid,
     /// The organization the session is scoped to.
-    organization_id: Uuid,
+    pub(crate) organization_id: Uuid,
     /// The decoded JWT claims.
-    claims: flora_core::utils::jwt::FloraClaims,
+    pub(crate) claims: flora_core::utils::jwt::FloraClaims,
 }
 
-/// Authenticates a `Bearer` token and enforces server-side session authority.
+/// Verifies a raw bearer token and enforces server-side session authority.
 ///
 /// The JWT is decoded and then its `jti` is looked up in PostgreSQL. A session is
 /// accepted only when it exists, is active, has not expired, and belongs to the same
@@ -27,32 +27,13 @@ struct VerifiedSession {
 ///
 /// # Errors
 ///
-/// Returns `401` for a missing/invalid token or a missing/revoked/expired/mismatched
+/// Returns `401` for an invalid token or a missing/revoked/expired/mismatched
 /// session, and `500` when the session store is unavailable. Error messages are
 /// intentionally generic to avoid leaking session state.
-async fn authenticate_bearer(
-    parts: &Parts,
+pub(crate) async fn verify_bearer_token(
+    token: &str,
     state: &AppState,
 ) -> Result<VerifiedSession, (StatusCode, String)> {
-    let auth_header = parts
-        .headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|val| val.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                "Missing or invalid Authorization header".to_string(),
-            )
-        })?;
-
-    if !auth_header.starts_with("Bearer ") {
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            "Authorization header must start with Bearer".to_string(),
-        ));
-    }
-
-    let token = &auth_header["Bearer ".len()..];
     let claims = flora_core::utils::jwt::decode_token(token, &state.config.app.jwt_secret)
         .map_err(|_| {
             (
@@ -113,6 +94,38 @@ async fn authenticate_bearer(
         organization_id,
         claims,
     })
+}
+
+/// Authenticates a `Bearer` token from request headers.
+///
+/// # Errors
+///
+/// Returns `401` for a missing/invalid token or a missing/revoked/expired/mismatched
+/// session, and `500` when the session store is unavailable.
+async fn authenticate_bearer(
+    parts: &Parts,
+    state: &AppState,
+) -> Result<VerifiedSession, (StatusCode, String)> {
+    let auth_header = parts
+        .headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|val| val.to_str().ok())
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                "Missing or invalid Authorization header".to_string(),
+            )
+        })?;
+
+    if !auth_header.starts_with("Bearer ") {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            "Authorization header must start with Bearer".to_string(),
+        ));
+    }
+
+    let token = &auth_header["Bearer ".len()..];
+    verify_bearer_token(token, state).await
 }
 
 /// Organization context extracted from the session.
@@ -373,6 +386,28 @@ mod tests {
         let auth_ext = AuthExtractor::from_request_parts(&mut parts, &state).await;
         assert!(auth_ext.is_err());
         let (status, msg) = auth_ext.unwrap_err();
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(msg, "Invalid or expired session");
+    }
+
+    #[tokio::test]
+    async fn test_verify_bearer_token_invalid_signature_rejected_without_db() {
+        let user_id = Uuid::now_v7();
+        let org_id = Uuid::now_v7();
+        let config = Config::default();
+        let claims = FloraClaims::new(
+            user_id,
+            "jti-invalid-signature".to_string(),
+            org_id,
+            "user@flora.test",
+            3600,
+        );
+        let token = encode_token(&claims, "not-the-configured-secret");
+        let state = make_test_app_state(&config);
+
+        let result = verify_bearer_token(&token, &state).await;
+        assert!(result.is_err());
+        let (status, msg) = result.unwrap_err();
         assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert_eq!(msg, "Invalid or expired session");
     }
