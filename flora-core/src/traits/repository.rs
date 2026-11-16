@@ -238,6 +238,7 @@ pub trait FileRepository: Send + Sync + std::fmt::Debug {
     /// Find files for a workspace with pagination.
     async fn find_by_workspace_id(
         &self,
+        organization_id: Uuid,
         workspace_id: Uuid,
         pagination: Pagination,
     ) -> crate::Result<Page<File>>;

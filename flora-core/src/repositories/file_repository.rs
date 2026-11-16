@@ -26,7 +26,7 @@ impl PgFileRepository {
 impl FileRepository for PgFileRepository {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<File>> {
         let file = sqlx::query_as::<_, File>(
-            "SELECT id, organization_id, owner_id, file_type, name, size_bytes,
+            "SELECT id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
                     storage_path, checksum, metadata, is_deleted, created_at, updated_at
              FROM files
              WHERE id = $1",
@@ -40,20 +40,21 @@ impl FileRepository for PgFileRepository {
 
     async fn find_by_workspace_id(
         &self,
-        _workspace_id: Uuid,
+        organization_id: Uuid,
+        workspace_id: Uuid,
         pagination: Pagination,
     ) -> Result<crate::models::Page<File>> {
-        // Files don't have direct workspace_id, need to go through tasks or messages
-        // For now, implement a basic pagination - would need joins in real implementation
         let limit = pagination.resolved_limit();
         let files = sqlx::query_as::<_, File>(
-            "SELECT id, organization_id, owner_id, file_type, name, size_bytes,
+            "SELECT id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
                     storage_path, checksum, metadata, is_deleted, created_at, updated_at
              FROM files
-             WHERE is_deleted = false
+             WHERE organization_id = $1 AND workspace_id = $2 AND is_deleted = false
              ORDER BY created_at DESC
-             LIMIT $1",
+             LIMIT $3",
         )
+        .bind(organization_id)
+        .bind(workspace_id)
         .bind(limit)
         .fetch_all(&self.pool)
         .await
@@ -68,7 +69,7 @@ impl FileRepository for PgFileRepository {
     ) -> Result<crate::models::Page<File>> {
         let limit = pagination.resolved_limit();
         let files = sqlx::query_as::<_, File>(
-            "SELECT id, organization_id, owner_id, file_type, name, size_bytes,
+            "SELECT id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
                     storage_path, checksum, metadata, is_deleted, created_at, updated_at
              FROM files
              WHERE owner_id = $1 AND is_deleted = false
@@ -85,15 +86,16 @@ impl FileRepository for PgFileRepository {
 
     async fn create(&self, file: File) -> Result<File> {
         let created = sqlx::query_as::<_, File>(
-            "INSERT INTO files (id, organization_id, owner_id, file_type, name, size_bytes,
+            "INSERT INTO files (id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
                                  storage_path, checksum, metadata)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-             RETURNING id, organization_id, owner_id, file_type, name, size_bytes,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             RETURNING id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
                        storage_path, checksum, metadata, is_deleted, created_at, updated_at",
         )
         .bind(file.id)
         .bind(file.organization_id)
         .bind(file.owner_id)
+        .bind(file.workspace_id)
         .bind(&file.file_type)
         .bind(&file.name)
         .bind(file.size_bytes)
@@ -110,9 +112,9 @@ impl FileRepository for PgFileRepository {
         let updated = sqlx::query_as::<_, File>(
             "UPDATE files
              SET name = $2, file_type = $3, size_bytes = $4, storage_path = $5,
-                 checksum = $6, metadata = $7
+                 checksum = $6, metadata = $7, workspace_id = $8
              WHERE id = $1
-             RETURNING id, organization_id, owner_id, file_type, name, size_bytes,
+             RETURNING id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
                        storage_path, checksum, metadata, is_deleted, created_at, updated_at",
         )
         .bind(id)
@@ -122,6 +124,7 @@ impl FileRepository for PgFileRepository {
         .bind(&file.storage_path)
         .bind(&file.checksum)
         .bind(&file.metadata)
+        .bind(file.workspace_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(Error::from_sqlx)?
