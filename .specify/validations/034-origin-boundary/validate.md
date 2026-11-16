@@ -46,4 +46,4 @@ Raw (redacted, no tokens) evidence: `/tmp/opencode/flora-034/evidence/{origin-bo
 - The long-running `:3000` dev process remains stale; restarting it is an ops action, not a product defect.
 
 ## CI result
-Recorded after PR merge.
+PR #248: all checks green — 4 `build`, 2 `db-tests`, `dependency-review`, 2 `supply-chain-vet` (informational), 2 `e2e-browser` (informational, ~4m46s). GitHub runs `43972366904` / `43972379097`; merged as `23ca350c`. Browser lane green completes T7; the ADR gate note records criterion #2 as MET.
