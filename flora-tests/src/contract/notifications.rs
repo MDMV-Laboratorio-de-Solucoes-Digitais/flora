@@ -640,4 +640,203 @@ mod db_notifications {
 
         Ok(())
     }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 021)"]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "021 DB-gated contract verifies unassign, dedup, and preserve flows end-to-end"
+    )]
+    async fn db_task_unassign_no_notification_and_unread_dedup() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_two_members(&state, &config).await?;
+        let app = Router::new()
+            .nest("/tasks", create_tasks_router())
+            .nest("/notifications", create_notifications_router())
+            .with_state(state.clone());
+
+        // create unassigned task, then assign to B -> B notified
+        let (status, created) = authed_json(
+            app.clone(),
+            "POST",
+            "/tasks".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({
+                "title": "Unassign flow",
+                "workspace_id": seed.workspace.id,
+            })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::CREATED, "create: {status} {created}");
+        let task_id = created["id"].as_str().unwrap_or_default().to_string();
+        anyhow::ensure!(
+            created["assignee_id"].is_null(),
+            "initial assignee should be null: {created}"
+        );
+
+        let b_id = seed.b.user.id.to_string();
+        let (status, assigned) = authed_json(
+            app.clone(),
+            "PATCH",
+            format!("/tasks/{task_id}"),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({ "assignee_id": b_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "assign: {status} {assigned}");
+        anyhow::ensure!(
+            assigned["assignee_id"].as_str() == Some(seed.b.user.id.to_string().as_str()),
+            "assignee should be B: {assigned}"
+        );
+
+        let (status, notifs_b) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.b.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "list b: {status} {notifs_b}");
+        let arr_b = notifs_b.as_array().cloned().unwrap_or_default();
+        let b_assign_count = arr_b
+            .iter()
+            .filter(|n| n["event_type"] == "Assignment" && n["target_id"] == task_id)
+            .count();
+        anyhow::ensure!(
+            b_assign_count == 1,
+            "initial assignment should notify B once: {notifs_b}"
+        );
+
+        // 021 dedup guard: re-send effective same assignment transition is no-op in normal flow,
+        // and explicit repeat via assign->unassign->assign while unread should not duplicate.
+        let (status, unassigned) = authed_json(
+            app.clone(),
+            "PATCH",
+            format!("/tasks/{task_id}"),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({ "assignee_id": Value::Null })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "unassign: {status} {unassigned}");
+        anyhow::ensure!(
+            unassigned["assignee_id"].is_null(),
+            "assignee must be cleared on explicit null: {unassigned}"
+        );
+
+        let (status, notifs_b_after_unassign) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.b.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "list b after unassign: {status} {notifs_b_after_unassign}"
+        );
+        let b_after_unassign = notifs_b_after_unassign
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .iter()
+            .filter(|n| n["event_type"] == "Assignment" && n["target_id"] == task_id)
+            .count();
+        anyhow::ensure!(
+            b_after_unassign == 1,
+            "unassign must not create Assignment notification: {notifs_b_after_unassign}"
+        );
+
+        // assign B again while previous unread Assignment exists -> dedup guard suppresses duplicate
+        let (status, reassigned) = authed_json(
+            app.clone(),
+            "PATCH",
+            format!("/tasks/{task_id}"),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({ "assignee_id": b_id })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "reassign to B: {status} {reassigned}"
+        );
+        let (status, notifs_b_after_dedup) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.b.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "list b after dedup: {status} {notifs_b_after_dedup}"
+        );
+        let b_after_dedup = notifs_b_after_dedup
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .iter()
+            .filter(|n| n["event_type"] == "Assignment" && n["target_id"] == task_id)
+            .count();
+        anyhow::ensure!(
+            b_after_dedup == 1,
+            "unread Assignment dedup guard must prevent duplicate: {notifs_b_after_dedup}"
+        );
+
+        // omitted assignee_id in PATCH must preserve current assignee (no-op, no duplicate)
+        let (status, preserved) = authed_json(
+            app.clone(),
+            "PATCH",
+            format!("/tasks/{task_id}"),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({ "title": "Unassign flow renamed" })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "omit assignee patch: {status} {preserved}"
+        );
+        anyhow::ensure!(
+            preserved["assignee_id"].as_str() == Some(seed.b.user.id.to_string().as_str()),
+            "omitted assignee_id must preserve assignee: {preserved}"
+        );
+        let (status, notifs_b_final) = authed_json(
+            app,
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.b.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "list b final: {status} {notifs_b_final}"
+        );
+        let b_final = notifs_b_final
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .iter()
+            .filter(|n| n["event_type"] == "Assignment" && n["target_id"] == task_id)
+            .count();
+        anyhow::ensure!(
+            b_final == 1,
+            "omit/no-op patch must not create duplicate Assignment notification: {notifs_b_final}"
+        );
+
+        Ok(())
+    }
 }
