@@ -16,8 +16,21 @@ jobs:
           fi
           rustup toolchain install 1.98.0 --profile minimal --no-self-update
           rustup default 1.98.0
+          rustup component add rustfmt clippy
           rustc --version
           cargo --version
+      # 026: make the Seed verification gate executable in CI (ADR-0001).
+      # Strict clippy is applied to production targets (`--lib --bins`); test-only
+      # targets are still linted locally per cycle, but a parallel agent's test
+      # code currently trips `expect_used` under `--all-targets` (tracked NV).
+      - name: Format check
+        run: cargo fmt --all -- --check
+      - name: Clippy (strict, production targets)
+        run: cargo clippy --workspace --lib --bins -- -D warnings
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@cargo-deny
+      - name: Supply-chain policy (bans, licenses, sources)
+        run: cargo deny check bans licenses sources
       - name: Build
         run: cargo build
       - name: Test
@@ -55,6 +68,7 @@ jobs:
           fi
           rustup toolchain install 1.98.0 --profile minimal --no-self-update
           rustup default 1.98.0
+          rustup component add rustfmt clippy
           rustc --version
           cargo --version
       - name: Run DB-backed session/select-organization contract tests

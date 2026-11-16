@@ -159,16 +159,13 @@ anyhow = "1.0"
 eyre = "0.9"
 
 # --- Logging & Tracing ---
+# 026: OpenTelemetry exporters are intentionally NOT declared. They were phantom
+# workspace deps (`opentelemetry-otlp 0.22` does not exist on crates.io) and no
+# crate consumed them. Seed uses `tracing` + the API `/metrics` endpoint; a real
+# OTLP exporter is gated on `otel_enabled` plus a receiver (NV). See ADR-0001.
 tracing = "0.1"
 tracing-appender = "0.2"
-opentelemetry = "0.28"
-tracing-opentelemetry = "0.29"
-opentelemetry-otlp = "0.22"
-opentelemetry_sdk = "0.28"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "ansi"] }
-
-# --- Authentication ---
-openidconnect = "4.0"
 
 # --- Search ---
 meilisearch-sdk = "0.33"

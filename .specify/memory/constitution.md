@@ -1,5 +1,9 @@
 <!-- Sync Impact Report
-- Version change: 1.1.0 → 1.2.0
+- Version change: 1.2.0 → 1.3.0
+- Modified sections:
+  - Processes & Milestones / Development Phases: mechanism-neutral Seed wording per ADR-0001 (PG FTS, local FS, in-app Postgres notifications); PGMQ/Valkey/RustFS/Meilisearch moved to deferred profile-gated components.
+  - Governance: last-amended date and version bump.
+- Prior sync (1.1.0 → 1.2.0)
 - Modified principles:
   - IV. Code Rigor & Linting Standards (Added Svelte 5 UI/UX rigor requirements, error states, and a11y)
 - Added sections:
@@ -131,16 +135,16 @@ multiple_crate_versions = "deny"
 ### Processes & Milestones
 - **Prioritization:** Task selection based on Value vs. Effort.
 - **Branching:** `username/task-description`.
-- **First Milestone (Flora Seed v0.1):** Organizations, Workspaces, Users, Roles, OIDC, Channels, Messages, Threads, Notifications, Tasks, Files, PostgreSQL, SQLx, PGMQ, Valkey, RustFS, Meilisearch, Docker, Coolify, OpenTelemetry, AGPL. (Excluded for now: AI, CRM, calendar, calls, MCP, agents, email client, GitHub clone).
+- **First Milestone (Flora Seed v0.1):** Organizations & Workspaces; Users & Roles (OIDC with verified ID token); Channels & Messaging (Threads); Notifications (in-app, Postgres-backed with DB-enforced dedup); Tasks; Files (local filesystem, streaming + checksum); Search (Postgres FTS, tenant/soft-delete safe); Infrastructure (PostgreSQL, SQLx, Docker, CI, AGPL-3.0). Coolify deploy is secret-gated; OpenTelemetry export is NV. Per ADR-0001, PGMQ/Valkey, RustFS and Meilisearch are **deferred to Sprout/Grove as profile-gated optional components**, not Seed requirements. (Excluded for now: AI, CRM, calendar, calls, MCP, agents, email client, GitHub clone).
 
 ### Development Phases Roadmap
 - **Phase 0:** Licensing + dependency audit
 - **Phase 1:** Workspace/Identity
 - **Phase 2:** Messaging
 - **Phase 3:** Tasks
-- **Phase 4:** Files + RustFS
-- **Phase 5:** Search + Meilisearch
-- **Phase 6:** Notifications + PGMQ + Valkey
+- **Phase 4:** Files (local storage authoritative; RustFS deferred to Grove per ADR-0001)
+- **Phase 5:** Search (Postgres FTS authoritative; Meilisearch dormant/gated per ADR-0001)
+- **Phase 6:** Notifications (in-app Postgres authoritative; PGMQ/Valkey deferred per ADR-0001)
 - **Phase 7:** Documents
 - **Phase 8:** Email
 - **Phase 9:** Integrations
@@ -151,4 +155,4 @@ multiple_crate_versions = "deny"
 ## Governance
 This Constitution supersedes all other practices and guidelines within the Flora Workspace project. Amendments to this Constitution require documentation of proposed changes, maintainer review and approval, a migration plan for existing code (if applicable), and an updated version number following semantic versioning. All PRs/reviews must verify compliance with this Constitution. Complexity must be justified with reference to these principles. Project maintainers are responsible for ensuring ongoing adherence to these guidelines.
 
-**Version**: 1.2.0 | **Ratified**: 2026-08-17 | **Last Amended**: 2026-08-22
+**Version**: 1.3.0 | **Ratified**: 2026-08-17 | **Last Amended**: 2026-11-16
