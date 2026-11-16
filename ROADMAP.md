@@ -32,17 +32,18 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 011: contrato `POST /tasks` (description/assignee_id), `ApiError` tipado no frontend, `setOrganization` limpa flags, guard `/tasks`, testes determinísticos e override de portas documentado. **PR #214 mergeado, CI 6/6 verde; `dev@598f08152` sincronizado/espelhado.**
 - [x] Ciclo 012: session authority DB-backed (`jti`) nos extractors HTTP, preservação de corpo 401 no cliente, cobertura DB + CI. **PR #215 mergeado, CI 6/6 verde.**
 - [x] Ciclo 013: fatia REST `workspace→canal→mensagem` (listar/criar canais, post/list com `thread_id`, path tenancy), wiring frontend mínimo, testes DB-gated messaging + CI. **PR #216 mergeado, CI 6/6 verde.**
-- [~] Ciclo 014 (em preparação/R1): autoridade de sessão/alinhamento de protocolo no WebSocket e/ou endurecimento do perfil Seed/VPS (serviços opcionais, limites, operabilidade) conforme decisão 80/20.
+- [x] Ciclo 014: autoridade de sessão DB-backed no handshake `/ws` + alinhamento de path/transporte/protocolo mínimo no frontend, testes DB-gated websocket + CI. **PR #217 mergeado, CI 6/6 verde.**
+- [~] Ciclo 015 (em preparação/R1): realtime/catch-up mínimo para mensagens persistidas, ou upload/download binário básico, ou hardening Seed/VPS (decisão 80/20 em andamento).
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 014)
-1. **WebSocket (014 candidato):** autoridade de sessão DB-backed no handshake/conexão, alinhamento de path/protocolo/payload com frontend e semântica mínima de revogação/expiração/tenant isolation (reuso de lógica HTTP onde viável), com testes determinísticos.
-2. **Realtime mínimo confiável:** entrega/fanout básico para o slice de mensagens persistidas (ou alternativa enxuta VPS: polling/SSE/Postgres-notify) com evidência.
-3. **Seed/VPS operabilidade:** tornar Meilisearch/Valkey realmente opcionais por perfil/boot, limites de recursos no compose, healthchecks/backup mínimos e coerência de pool/config.
-4. **Fatia vertical e2e mínima:** consolidar `workspace → canal → mensagem` (REST+realtime mínimo) e/ou tarefa com evidência em dev/CI.
-5. **Arquivos básicos reais e wiring essencial:** upload/download binário, quotas coerentes, indexação de busca e eventos→notificações para mutações core.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 015)
+1. **Realtime/catch-up mínimo (candidato A):** entrega mínima de atualizações para mensagens persistidas (fanout in-process WS ou SSE/notificação + catch-up REST determinístico por cursor), com dedupe/reconnect e evidência.
+2. **Arquivos básicos reais (candidato B):** upload/download binário seguro em disco local (multipart/streaming, path safety, limites, checksums, quotas/tenant) alinhado ao frontend.
+3. **Seed/VPS operabilidade (candidato C):** Meilisearch/Valkey opcionais no boot/config, limites/healthchecks/profiles no compose, alinhamento `FLORA_*`/pool, backup/restore mínimo.
+4. **Fatia vertical e2e mínima:** consolidar `workspace → canal → mensagem` (REST+realtime/catch-up mínimo) e/ou tarefa com evidência em dev/CI.
+5. **Wiring essencial:** indexação de busca e eventos→notificações para mutações core.
 
 ### P1 — Consolidação do Seed
 6. **Postgres-first opcionalidade:** FTS/jobs/realtime simples; tornar Valkey/Meilisearch/OIDC realmente opcionais por perfil.

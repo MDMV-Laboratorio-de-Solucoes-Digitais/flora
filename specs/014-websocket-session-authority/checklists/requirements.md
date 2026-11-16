@@ -5,4 +5,4 @@
 - [x] Path/transporte alinhados para cliente (`/api/v1/ws`, token suportado conforme decisão) e nil-org tratado.
 - [x] Frontend WS lida com envelopes mínimos, sem sync quebrado/retry infinito em auth, com ciclo de vida coerente.
 - [x] Testes DB-gated WS/sessão e wiring CI; verificações determinísticas verdes.
-- [ ] Validação/release SDD, PR `dev`, CI verde, merge/sync.
+- [x] Validação/release SDD, PR `dev` #217, CI verde, merge/sync.

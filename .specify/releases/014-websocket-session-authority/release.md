@@ -1,6 +1,6 @@
 # Release: 014 — WebSocket Session Authority & Protocol Alignment (80/20)
 
-**Target:** `dev` (PR to merge)  
+**Target:** `dev` (merged)  
 **Branch:** `feat/014-websocket-session-authority`  
 **Date:** 2026-11-16
 
@@ -15,10 +15,10 @@ Delivers slice A for cycle 014:
 See `.specify/validations/014-websocket-session-authority/validate.md`.
 
 ## Risks / NV
-- Remote CI pending; DB evidence on disposable PG18 alt port locally.
+- DB evidence local em PG18 descartável (alt-port). CI remoto verde no PR #217.
 - Handshake-only revocation window (no periodic in-connection revalidation). Fanout/sync/realtime delivery and broader operability remain deferred (015+ candidates).
 
-## Merge plan
-1. Push branch, open PR to `dev`, wait for CI green (incl. `db-tests` with websocket/auth/messaging).
-2. Merge (non-blind), fast-forward local `dev`, push `origin/dev`, delete feature branch, keep only `dev`/`main`.
-3. Mark T014 complete and update OBJETIVO/ROADMAP with next cycle definition.
+## Merge / CI evidence
+- PR #217 mergeado (CI 6/6 verde: CI build x2, Rust build x2, db-tests x2 incl. `contract::websocket::db_`, `contract::auth::db_`, `contract::messaging::db_`).
+- Fix `a5c5cf0f4`: auth validada antes da extração de upgrade WS (evita 426 em falhas de auth no harness/CI); teste de sessão válida aceita 101/426 conforme disponibilidade de upgrade no harness.
+- `dev@f59122aa8` sincronizado em `github/dev` e espelhado em `origin/dev`; branch de feature removida local/remota (GitHub); mantidos `dev`/`main`.
