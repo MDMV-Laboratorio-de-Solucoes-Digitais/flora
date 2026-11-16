@@ -5,4 +5,4 @@
 - [x] Threaded reply creates `Reply` notification for valid parent author (not self, same org/channel, not deleted), best-effort/non-fatal
 - [x] DB-gated tests (disposable PG18) cover search match/isolation/empty/type behavior and reply notification creation/visibility/guards
 - [x] No new mandatory services; Postgres-first/Seed-safe; verification evidence recorded
-- [ ] PR to `dev`, CI green (no blind merge), merge/sync `github/dev`+`origin/dev`, only `dev`/`main`, planning updated
+- [x] PR to `dev` (#222), CI green (incl. db-tests, no blind merge), merged/synced `github/dev`+`origin/dev`, only `dev`/`main`, planning updated (020 definido)

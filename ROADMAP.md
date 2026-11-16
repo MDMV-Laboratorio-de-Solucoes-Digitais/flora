@@ -1,8 +1,8 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–018 entregues/mergeados; ciclo 019 em preparação/R1)  
+**Atualizado em:** 2026-11-16 (ciclos 011–019 entregues/mergeados; ciclo 020 em preparação/R1)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
-**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-018`, `.specify/assessments/003-018`, `OBJETIVO.md`.  
+**Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-019`, `.specify/assessments/003-019`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 
 ## 1) Visão e horizonte
@@ -37,13 +37,14 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 016: hardening Seed/VPS (slice C) — pool/init único, search/messaging opcionais com degradação, readiness DB-aware, compose profiles/limites/healthchecks, alinhamento `FLORA_*`/docs e notas mínimas de backup/restore. **PR #219 mergeado, CI 6/6 verde.**
 - [x] Ciclo 017: upload/download binário seguro (slice B) — migração `files.workspace_id`, upload/download em streaming com storage local contido, checksum SHA-256, limites/validação básica, authz/tenant e alinhamento FE/API. **PR #220 mergeado, CI verde.**
 - [x] Ciclo 018: hardening de arquivos + contratos DB-gated (slice A1) — validação `workspace_id ∈ org` em upload/metadata, endurecimento de multipart/erros, alinhamento FE e testes DB-gated (PG descartável + storage temporário) para happy path, isolamento/authz, validações, deleção/legacy. **PR #221 mergeado, CI verde.**
-- [~] Ciclo 019 (em preparação/R1): wiring essencial busca/notificações (Postgres FTS fallback + 1 evento in-app).
+- [x] Ciclo 019: wiring essencial busca/notificações (slice S1) — migração `messages.search_tsv` + GIN, fallback PG FTS em `/api/v1/search` sem Meilisearch (contrato preservado, tenant-safe), notificação in-app `Reply` best-effort em respostas de thread e contratos DB-gated (PG descartável). **PR #222 mergeado, CI verde.**
+- [~] Ciclo 020 (em preparação/R1): extensão PG FTS para tarefas/arquivos e notificação de atribuição de tarefa.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 019)
-1. **Wiring essencial busca/notificações (prioritário):** fallback Postgres FTS/`pg_trgm` e emissão mínima de 1 evento in-app em mutação core, com contratos DB-gated determinísticos e sem novos serviços obrigatórios.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 020)
+1. **Busca/notificações (extensão, prioritário):** ampliar PG FTS (fallback/auto) para tarefas e metadados de arquivos e adicionar notificação in-app de atribuição de tarefa, com contratos DB-gated determinísticos e sem novos serviços obrigatórios.
 2. **Arquivos (residual):** quota agregada concorrente/transacional, consistência avançada de purge/cleanup storage↔DB e ampliação de cobertura DB-gated de bordas.
 3. **Realtime/resiliência complementar:** lacunas remanescentes do slice 015 (revalidação pós-handshake, `/messages/sync`/replay ampliado, multi-cliente/e2e, semântica de deleção/catch-up).
 4. **Operabilidade/validação Seed:** carga/OOM e restore em 2vCPU/4GB, enforcement de limites compose, matriz opcional de serviços em CI/dev.
