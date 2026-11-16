@@ -1,3 +1,5 @@
+> **Superseded by PR #236/#237 (cycle 028):** this is a pre-implementation snapshot; check committed files for current state.
+
 # 028 — Plano de implementação exato do gate cargo-vet para o Flora (2026-11-16)
 
 **Data:** 2026-11-16

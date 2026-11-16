@@ -1,3 +1,5 @@
+> **Superseded by PR #236/#237 (cycle 028):** this is a pre-implementation snapshot; check committed files for current state.
+
 # 028 — Minimal, low-noise advisory coverage for Flora: concrete job plan and go/no-go
 
 **Date:** 2026-11-16

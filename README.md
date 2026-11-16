@@ -31,7 +31,7 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 - [x] Tasks
 - [x] Files (local filesystem with streaming upload/download and SHA-256; RustFS deferred to Grove)
 - [x] Search (Postgres FTS with `source: "postgres"`; Meilisearch dormant/non-authoritative)
-- [~] Infrastructure: PostgreSQL + SQLx + Docker + CI + `cargo deny`/cargo-vet/advisory gates verified; Coolify deploy webhook secret-gated (NV); `tracing` + `TraceLayer` + static `/metrics` active, OTLP exporter NV
+- [~] Infrastructure: PostgreSQL + SQLx + Docker + CI + `cargo deny` gate enforced; cargo-vet/advisory checks informational (NV: blocking/CODEOWNERS); Coolify deploy webhook secret-gated (NV); `tracing` + `TraceLayer` + static `/metrics` active, OTLP exporter NV
 - [x] License: AGPL-3.0-or-later (full text + NOTICE; dependency-audit policy in `deny.toml`)
 
 ### Development Phases
@@ -71,7 +71,7 @@ Current repo state (prefer executable config over this list): Rust CI (`.github/
 `cargo fmt --all -- --check`, strict `cargo clippy --workspace --lib --bins -- -D warnings`,
 `cargo deny check bans licenses sources`, `cargo build`/`cargo test` and six PostgreSQL 18 DB-gated suites;
 frontend CI targets `apps/frontend` (`.github/workflows/ci.yml`). `cargo-deny` config is `deny.toml`;
-`cargo-vet` store is gitignored (NV), and `lefthook`/`cargo-nextest` are absent. The stricter
+`cargo-vet` store is versioned (informational gate), and `lefthook`/`cargo-nextest` are absent. Full strict
 `cargo clippy --workspace --all-targets -- -D warnings` is currently blocked by test-only `expect_used` in
 parallel work (NV) — do not revert it.
 
