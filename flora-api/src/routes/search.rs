@@ -1,4 +1,4 @@
-//! Search API routes (019/020: Postgres FTS fallback for messages, tasks, files).
+//! Search API routes (019/020/023: authoritative Postgres FTS for messages, tasks, files).
 
 use axum::{
     Router,
@@ -47,6 +47,9 @@ pub struct SearchResponse {
     pub query: String,
     /// The search results.
     pub results: Vec<SearchResult>,
+    /// Authoritative backend that produced the results (023 capability contract).
+    /// Postgres FTS is always authoritative; Meilisearch is a dormant, non-authoritative capability.
+    pub source: String,
 }
 
 /// Creates the search router.
@@ -76,6 +79,7 @@ async fn search(
         return Ok(Json(SearchResponse {
             query,
             results: vec![],
+            source: "postgres".to_owned(),
         }));
     }
 
@@ -87,37 +91,17 @@ async fn search(
             .collect()
     });
 
-    if let Some(search_service) = &state.search_service {
-        match search_service
-            .search(&org_id, &query, types.as_deref(), limit as usize)
-            .await
-        {
-            Ok(hits) => {
-                let results = hits
-                    .into_iter()
-                    .map(|hit| SearchResult {
-                        result_type: hit.item_type,
-                        id: hit.id,
-                        snippet: hit.snippet,
-                    })
-                    .collect();
-
-                return Ok(Json(SearchResponse { query, results }));
-            }
-            Err(e) => {
-                tracing::warn!(
-                    error = %e,
-                    %org_id,
-                    "Meilisearch query failed; falling back to Postgres FTS"
-                );
-            }
-        }
-    }
-
-    // 019/020/022: Postgres FTS fallback (messages/tasks/files). Authoritative
-    // correctness baseline and fail-open path when Meilisearch is unavailable/errors.
+    // 023: Postgres FTS is the sole authoritative backend for this endpoint.
+    // Meilisearch was never wired to mutations (no index hooks, no `setup_index`),
+    // so trusting it when configured could serve empty/stale results while looking
+    // healthy. `flora-search` and the compose `search` profile are preserved as a
+    // dormant, non-authoritative capability for a gated future re-enablement.
     let results = search_pg(&state, org_id, &query, types.as_deref(), limit).await?;
-    Ok(Json(SearchResponse { query, results }))
+    Ok(Json(SearchResponse {
+        query,
+        results,
+        source: "postgres".to_owned(),
+    }))
 }
 
 #[derive(sqlx::FromRow)]
