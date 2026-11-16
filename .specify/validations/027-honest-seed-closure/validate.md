@@ -9,7 +9,7 @@
 - `cargo-deny --metadata-path ... check licenses bans sources`: no findings.
 - Unit tests: flora-core 8, flora-api 17, flora-tests 44 passed.
 - DB-gated suites on disposable PG18: auth 12, messaging 4, websocket 8, search 8, notifications 5, files 6 — all passed.
-- PR CI result recorded after merge.
+- PR #234: all 4 `build` + 2 `db-tests` checks green (GitHub runs 43881348717 / 43881348909 / 43881358827 / 43881358879); merged to `dev` as `044f40c6`.
 
 ## Contract coverage
 - Retired only the unwired adapter: core `NotificationService`, `PgNotificationRepository` + 022 dedup index and the `realtime` Valkey profile remain intact.
