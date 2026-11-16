@@ -1,6 +1,6 @@
 # Release: 025 — Seed reconciliation and FASE 0 basics
 
-**Branch/PR:** `feat/025-seed-fase0-verification` -> `dev` (pending)  
+**Branch/PR:** `feat/025-seed-fase0-verification` -> `dev`, PR #231 (merged as `d09d39c1`)  
 **Baseline:** `github/dev` after cycle 024 (`bf1766cb`)
 
 ## Delivered
@@ -9,7 +9,7 @@
 - Cycle 024 finalization and OBJETIVO/ROADMAP updated for 026.
 
 ## Evidence
-Local verification and PR CI recorded in `validate.md`.
+Local verification green; PR #231 all required checks green (runs 43870100343 / 43870107684); merged at `d09d39c1`.
 
 ## NV
 cargo-deny CI enforcement (crates.io access required), cargo-vet exemptions, OTel, notification transport, browser e2e, load/restore.

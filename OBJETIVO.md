@@ -64,7 +64,7 @@ Princípios diretores:
 
 - **Ciclo 024 (PR #230, CI verde, mergeado em `dev@bf1766cb`):** verificação real do ID token OIDC — descoberta/JWKS com seleção por `kid`, assinatura/`iss`/`aud`/`exp`/`sub`/`nonce`, rejeição de JWK simétrico, allowlist exata de `redirect_uri` e identidade por `sub`; 5 contratos unitários determinísticos. Fecha o gap decisivo de "Users & Roles (OIDC)" para Seed v0.1.
 
-- **Ciclo 025 (em execução):** ADR-0001 de reconciliação Seed (mecanismos autoritativos + gate de verificação), LICENSE AGPL completo e NOTICE, `deny.toml`, README mechanism-neutral; FASE 0 CI e OTel honesto ficam para 026.
+- **Ciclo 025 (PR #231, CI verde, mergeado em `dev@d09d39c1`):** ADR-0001 de reconciliação Seed (mecanismos autoritativos + gate de verificação), LICENSE AGPL completo e NOTICE, `deny.toml`, README mechanism-neutral; FASE 0 CI e OTel honesto ficam para 026.
 
 **NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; quota agregada concorrente/transacional por org/workspace, consistência avançada de purge/cleanup storage↔DB e cobertura DB-gated ampliada de bordas (multipart/quota/cleanup); DMs UX; extensão de busca FTS para tarefas/arquivos, relevância/i18n/CJK e ACL de canal em busca; eventos/notificações adicionais (mentions/assignment/completion), dedup/idempotência/tx-coupling e delivery realtime/push/outbox; quota agregada concorrente/purge↔storage cleanup e cobertura DB-gated ampliada de arquivos; lacunas realtime pós-handshake/multi-nó/replay ampliado; OIDC/JWKS e e2e browser/multi-cliente; validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`).
 
@@ -85,7 +85,17 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 026 candidato — endurecimento Seed)
+## 5) Próximo 80/20 (ciclo 027 candidato — consolidação final Seed)
+
+- **Ciclo 026 (PR em preparação/CI):** gate Seed executável em CI (`fmt`, `cargo clippy --lib --bins -D warnings`, `cargo deny check bans licenses sources`), `deny.toml` corrigido para `AGPL-3.0-or-later`, constituição v1.3.0 mechanism-neutral, drift de ROADMAP/AGENTS fechado, ciclo 025 finalizado e deps OTel fantasmas removidas.
+
+1. **P0 — Transporte de notificações:** retirar/gatear scaffolding PGMQ/Valkey não conectado (`flora-notifications`, `pgmq_queue`, XADD) em PR behavior-preserving, com gatilhos de reativação.
+2. **P1 — Supply chain:** tornar `supply-chain/` versionado e adicionar 3 imports ao cargo-vet como gate de nova dependência; job `advisories` separado (RustSec via rede) e SBOM na release.
+3. **P1 — E2E browser:** JWT fresco via seed/bootstrap, slim Chromium smoke `workspace→canal→mensagem→tarefa`, Tauri explicitamente adiado.
+4. **P2 — Observabilidade/verificação:** `TraceLayer` sem exporter, decisão OTLP real, smoke integrado com evidência, load/OOM/restore em 2vCPU/4GB.
+5. **NVs:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; JWKS rotation/real-OP.
+
+Detalhes: `docs/research/2026-11-16-026-*.md`, `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `ROADMAP.md`.
 
 1. **P0 — FASE 0 em CI:** gate determinístico `cargo deny check bans sources` (verificado localmente) no workflow; licenças/auditoria completa dependem de acesso ao índice crates.io na CI; decidir as 442 isenções do `cargo-vet`.
 2. **P1 — OTel honesto:** remover/corrigir `opentelemetry-otlp 0.22` (versão inexistente), adotar `TraceLayer` sem custo e sem coletor pesado, documentar NV.
