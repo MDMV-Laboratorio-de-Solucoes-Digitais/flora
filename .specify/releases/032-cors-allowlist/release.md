@@ -1,6 +1,6 @@
 # Release: 032 — CORS allowlist backend
 
-**Branch/PR:** `feat/032-cors-allowlist` -> `dev` (pending) · **Baseline:** `github/dev@966fb19`
+**Branch/PR:** `feat/032-cors-allowlist` -> `dev`, PR #244 (merged as `cecaf686`) · **Baseline:** `github/dev@966fb19`
 
 ## Delivered
 - Exact CORS origin allowlist wired from `AppConfig`, explicit methods/headers, no credentials.
@@ -8,7 +8,7 @@
 - Residual doc drift closed; five R1 research docs recorded.
 
 ## Evidence
-See `.specify/validations/032-cors-allowlist/validate.md`.
+See `.specify/validations/032-cors-allowlist/validate.md`. PR #244 all checks green; merged at `cecaf686`.
 
 ## NV / follow-ups (033)
 ADR-0002 #2 (runtime URLs + non-browser proof + WS Origin), cargo-vet blocking + CODEOWNERS (explicit authorization), load/restore drill, OTLP; FE dead search box wiring; FASE 7 Documents.

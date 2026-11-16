@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–031 mergeados; 032 em PR/CI; 033 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–032 mergeados; 033 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-031`, `.specify/assessments/003-031`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -50,7 +50,7 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 029 (PR #238, CI verde, mergeado em `dev@b8972c0e`): clippy `--all-targets`, ADR-0002, drift 028 e smoke integrado rc=0 (JWT fresco, portas isoladas).
 - [x] Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`): 1 e2e smoke Chromium (`retries: 0`), minter feature-gated, drift documental corrigido.
 - [x] Ciclo 031 (PR #242, CI verde, mergeado em `dev@aaa45536`): versão centralizada + release.yml tag-only/SBOM (sem tag), drift documental fechado.
-- [~] Ciclo 032 (PR em preparação/CI): allowlist CORS backend + drift documental; ADR-0002 #2 segue NV.
+- [x] Ciclo 032 (PR #244, CI verde, mergeado em `dev@cecaf686`): allowlist CORS backend + drift documental; ADR-0002 #2 segue NV.
 - [ ] Ciclo 033 (candidato): FE runtime URLs + WS Origin (ADR-0002 #2), wiring da busca morta, FASE 7 Documents; cargo-vet/load/restore/tag dependem de autorização. 
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
