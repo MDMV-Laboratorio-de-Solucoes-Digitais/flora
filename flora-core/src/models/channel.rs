@@ -10,7 +10,7 @@ use validator::Validate;
 
 /// The type of channel — public or private.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(rename_all = "snake_case")]
+#[sqlx(type_name = "varchar", rename_all = "PascalCase")]
 pub enum ChannelType {
     /// Public channel, visible to all workspace members.
     #[default]

@@ -1,25 +1,39 @@
 <script lang="ts">
 	import { ApiClient } from '$lib/api/client';
+	import type { ApiMessage } from '$lib/api/mappers';
 	import { logger } from '$lib/utils/logger';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 
-	let { parentMessageId, channelId } = $props<{ parentMessageId: string; channelId: string }>();
+	let { parentMessageId, channelId, onSent } = $props<{
+		parentMessageId: string;
+		channelId: string;
+		onSent?: (message: ApiMessage) => void | Promise<void>;
+	}>();
 
 	let replyContent = $state('');
 	let isSubmitting = $state(false);
 
 	async function sendReply() {
-		if (!replyContent.trim()) return;
+		if (!channelId || !replyContent.trim()) return;
 		isSubmitting = true;
 		try {
-			await ApiClient.request(`/api/v1/channels/${channelId}/messages`, {
-				method: 'POST',
-				body: JSON.stringify({ content: replyContent, threadId: parentMessageId })
-			});
+			const created = await ApiClient.request<ApiMessage>(
+				`/api/v1/channels/${channelId}/messages`,
+				{
+					method: 'POST',
+					body: JSON.stringify({ content: replyContent.trim(), thread_id: parentMessageId })
+				}
+			);
 			replyContent = '';
+			await onSent?.(created);
 		} catch (error) {
-			logger.error('chat', 'Failed to send thread reply', undefined, error as Error);
+			logger.error(
+				'chat',
+				'Failed to send thread reply',
+				{ channelId, parentMessageId },
+				error as Error
+			);
 		} finally {
 			isSubmitting = false;
 		}
@@ -32,7 +46,9 @@
 		bind:value={replyContent}
 		placeholder="Reply to thread..."
 		onkeydown={(event_: KeyboardEvent) => event_.key === 'Enter' && sendReply()}
-		disabled={isSubmitting}
+		disabled={isSubmitting || !channelId}
 	/>
-	<Button size="sm" class="h-8" onclick={sendReply} disabled={isSubmitting}>Reply</Button>
+	<Button size="sm" class="h-8" onclick={sendReply} disabled={isSubmitting || !channelId}
+		>Reply</Button
+	>
 </div>

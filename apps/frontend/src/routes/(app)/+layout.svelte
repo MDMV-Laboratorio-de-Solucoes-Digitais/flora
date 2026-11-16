@@ -121,19 +121,11 @@
 					<h3
 						class="mb-2 px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
 					>
-						Recent Channels
+						Channels
 					</h3>
-					<div class="space-y-1">
-						<Button variant="ghost" class="h-8 w-full justify-start px-3 text-sm font-normal">
-							# general
-						</Button>
-						<Button variant="ghost" class="h-8 w-full justify-start px-3 text-sm font-normal">
-							# development
-						</Button>
-						<Button variant="ghost" class="h-8 w-full justify-start px-3 text-sm font-normal">
-							# design
-						</Button>
-					</div>
+					<p class="px-3 text-xs text-muted-foreground">
+						Open Channels to browse workspace channels.
+					</p>
 				</div>
 			{/if}
 		</div>

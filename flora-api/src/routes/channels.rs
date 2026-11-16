@@ -24,6 +24,13 @@ use flora_core::traits::{
 use crate::AppState;
 use crate::extractors::AuthExtractor;
 
+/// Query params for listing channels in a workspace.
+#[derive(Debug, Deserialize)]
+pub struct ListChannelsQuery {
+    /// Workspace to list channels for.
+    pub workspace_id: Uuid,
+}
+
 /// Query params for listing messages.
 #[derive(Debug, Deserialize)]
 pub struct ListMessagesQuery {
@@ -128,11 +135,53 @@ impl From<Channel> for ChannelResponse {
 /// Creates the channels router.
 pub fn create_channels_router() -> Router<AppState> {
     Router::new()
+        .route("/", get(list_channels))
         .route("/", post(create_channel))
         .route("/{channel_id}/messages", get(list_messages))
         .route("/{channel_id}/messages", post(post_message))
         .route("/{channel_id}/messages/{msg_id}", patch(edit_message))
         .route("/{channel_id}/messages/{msg_id}", delete(delete_message))
+}
+
+/// `GET /api/v1/channels?workspace_id=...` — List channels in a workspace.
+async fn list_channels(
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+    Query(params): Query<ListChannelsQuery>,
+) -> Result<Json<Vec<ChannelResponse>>> {
+    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
+        field: "organization_id".to_string(),
+        message: m,
+    })?;
+    let user_id = auth.user_id;
+
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let _ = membership_repo
+        .find_by_user_and_organization(user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+
+    let workspace_repo = PgWorkspaceRepository::new((*state.db_pool).clone());
+    let workspace = workspace_repo
+        .find_by_id(params.workspace_id)
+        .await?
+        .ok_or_else(|| Error::Validation {
+            field: "workspace_id".to_string(),
+            message: "workspace not found".to_string(),
+        })?;
+    if workspace.organization_id != org_id {
+        return Err(Error::Forbidden(
+            "Workspace belongs to a different organization".to_string(),
+        ));
+    }
+
+    let channel_repo = PgChannelRepository::new((*state.db_pool).clone());
+    let channels = channel_repo
+        .find_by_workspace_id(params.workspace_id)
+        .await?;
+    Ok(Json(
+        channels.into_iter().map(ChannelResponse::from).collect(),
+    ))
 }
 
 /// `POST /api/v1/channels` — Create a channel in a workspace.
@@ -262,7 +311,8 @@ async fn post_message(
         });
     }
 
-    let message = Message::new(channel_id, org_id, user_id, &req.content);
+    let mut message = Message::new(channel_id, org_id, user_id, &req.content);
+    message.thread_id = req.thread_id;
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
     let created = msg_repo.create(message).await?;
 
@@ -274,7 +324,7 @@ async fn post_message(
 async fn edit_message(
     State(state): State<AppState>,
     auth: AuthExtractor,
-    Path((_channel_id, msg_id)): Path<(Uuid, Uuid)>,
+    Path((channel_id, msg_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<EditMessageRequest>,
 ) -> Result<Json<MessageResponse>> {
     let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
@@ -289,6 +339,9 @@ async fn edit_message(
         .await?
         .ok_or_else(|| Error::MessageNotFound(msg_id.to_string()))?;
 
+    if msg.channel_id != channel_id {
+        return Err(Error::MessageNotFound(msg_id.to_string()));
+    }
     if msg.organization_id != org_id {
         return Err(Error::Forbidden(
             "cross-organization access forbidden".to_string(),
@@ -314,7 +367,7 @@ async fn edit_message(
 async fn delete_message(
     State(state): State<AppState>,
     auth: AuthExtractor,
-    Path((_channel_id, msg_id)): Path<(Uuid, Uuid)>,
+    Path((channel_id, msg_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode> {
     let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
         field: "organization_id".to_string(),
@@ -328,6 +381,9 @@ async fn delete_message(
         .await?
         .ok_or_else(|| Error::MessageNotFound(msg_id.to_string()))?;
 
+    if msg.channel_id != channel_id {
+        return Err(Error::MessageNotFound(msg_id.to_string()));
+    }
     if msg.organization_id != org_id {
         return Err(Error::Forbidden(
             "cross-organization access forbidden".to_string(),
