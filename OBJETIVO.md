@@ -85,7 +85,9 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 032 candidato — hardening)
+## 5) Próximo 80/20 (ciclo 033 candidato — fronteira de origem e produto)
+
+- **Ciclo 032 (PR em preparação/CI):** allowlist CORS backend com testes determinísticos e drift documental fechado; ADR-0002 #2 permanece NV.
 
 - **Ciclo 031 (PR #242, CI verde, mergeado em `dev@aaa45536`):** versão centralizada, `release.yml` tag-only com SBOM (sem tag/publicação) e drift documental fechado.
 
@@ -123,7 +125,7 @@ Detalhes: `docs/research/2026-11-16-027-*.md`, `docs/adr/0001-seed-v01-mechanism
 
 Detalhes: `docs/research/2026-11-16-026-*.md`, `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `ROADMAP.md`.
 
-1. **P0 — FASE 0 em CI:** gate determinístico `cargo deny check bans sources` (verificado localmente) no workflow; licenças/auditoria completa dependem de acesso ao índice crates.io na CI; decidir as 442 isenções do `cargo-vet`.
+1. **P0 — FASE 0 em CI:** gate determinístico `cargo deny check bans sources` (verificado localmente) no workflow; licenças/auditoria completa dependem de acesso ao índice crates.io na CI; decidir as 455 isenções do `cargo-vet`.
 2. **P1 — OTel honesto:** remover/corrigir `opentelemetry-otlp 0.22` (versão inexistente), adotar `TraceLayer` sem custo e sem coletor pesado, documentar NV.
 3. **P1 — Transporte de notificações:** desativar/gatear o scaffolding PGMQ/Valkey não conectado ou decidir adoção com gatilhos explícitos.
 4. **P2 — Verificação integrada:** smoke Chromium já verde (#240); restam load/OOM/restore em 2vCPU/4GB e e2e multi-cliente.

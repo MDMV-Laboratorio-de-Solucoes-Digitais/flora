@@ -1,3 +1,5 @@
+> **Superseded by PR #242 (cycle 031):** the release workflow is now committed; check `.github/workflows/release.yml` and the current manifests for live state.
+
 # 031 — Release/SBOM readiness audit: verify cycle 030 against the current tree
 
 **Date:** 2026-11-16  
