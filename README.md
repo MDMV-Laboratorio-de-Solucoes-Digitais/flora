@@ -21,24 +21,27 @@ A self-hostable, modular corporate platform built in Rust, aimed at providing or
 ## 🗺️ Roadmap
 
 ### First Milestone: Flora Seed v0.1
-- [ ] Organizations & Workspaces
-- [ ] Users & Roles (OIDC)
-- [ ] Channels & Messaging (Threads)
-- [ ] Notifications (PGMQ + Valkey)
-- [ ] Tasks
-- [ ] Files (RustFS)
-- [ ] Search (Meilisearch)
-- [ ] Infrastructure: PostgreSQL, SQLx, Docker, Coolify, OpenTelemetry
-- [ ] License: AGPL
+Mechanisms are named after their authoritative Seed backend; optional components are profile-gated.
+See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
+
+- [x] Organizations & Workspaces
+- [x] Users & Roles (OIDC — PKCE S256 + verified ID token/JWKS; DB sessions)
+- [x] Channels & Messaging (Threads)
+- [x] Notifications (in-app Postgres with DB-enforced dedup; PGMQ + Valkey deferred to Sprout/Grove)
+- [x] Tasks
+- [x] Files (local filesystem with streaming upload/download and SHA-256; RustFS deferred to Grove)
+- [x] Search (Postgres FTS with `source: "postgres"`; Meilisearch dormant/non-authoritative)
+- [~] Infrastructure: PostgreSQL + SQLx + Docker + CI verified; Coolify deploy webhook secret-gated (NV); OpenTelemetry exporter NV
+- [x] License: AGPL-3.0-or-later (full text + NOTICE; dependency-audit policy in `deny.toml`)
 
 ### Development Phases
-- **FASE 0**: Licensing + dependency audit
+- **FASE 0**: Licensing + dependency audit (license complete; CI audit gate NV)
 - **FASE 1**: Workspace/Identity
 - **FASE 2**: Messaging
 - **FASE 3**: Tasks
-- **FASE 4**: Files + RustFS
-- **FASE 5**: Search + Meilisearch
-- **FASE 6**: Notifications + PGMQ + Valkey
+- **FASE 4**: Files (local storage; RustFS deferred to Grove)
+- **FASE 5**: Search (Postgres FTS; Meilisearch deferred and gated)
+- **FASE 6**: Notifications (in-app Postgres; PGMQ + Valkey deferred)
 - **FASE 7**: Documents
 - **FASE 8**: Email
 - **FASE 9**: Integrations
