@@ -80,10 +80,12 @@ async fn search(
     }
 
     let limit = params.limit.unwrap_or(20).min(50);
-    let types: Option<Vec<String>> = params
-        .result_type
-        .as_ref()
-        .map(|t| t.split(',').map(|s| s.trim().to_lowercase()).collect());
+    let types: Option<Vec<String>> = params.result_type.as_ref().map(|t| {
+        t.split(',')
+            .map(|s| s.trim().to_lowercase())
+            .filter(|s| !s.is_empty())
+            .collect()
+    });
 
     if let Some(search_service) = &state.search_service {
         let hits = search_service

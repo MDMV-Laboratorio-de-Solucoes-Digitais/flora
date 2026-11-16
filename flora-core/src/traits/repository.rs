@@ -289,6 +289,15 @@ pub trait NotificationRepository: Send + Sync + std::fmt::Debug {
     /// Create a new notification.
     async fn create(&self, notification: Notification) -> crate::Result<Notification>;
 
+    /// Returns `true` if an unread notification of `event_type` exists for
+    /// the same user and target (021: simple best-effort dedup guard).
+    async fn has_unread_for_target(
+        &self,
+        user_id: Uuid,
+        event_type: crate::models::NotificationType,
+        target_id: Uuid,
+    ) -> crate::Result<bool>;
+
     /// Mark a notification as read.
     async fn mark_as_read(&self, id: Uuid) -> crate::Result<()>;
 

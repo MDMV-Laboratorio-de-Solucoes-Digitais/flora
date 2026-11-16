@@ -98,6 +98,31 @@ impl NotificationRepository for PgNotificationRepository {
         Ok(created)
     }
 
+    async fn has_unread_for_target(
+        &self,
+        user_id: Uuid,
+        event_type: crate::models::NotificationType,
+        target_id: Uuid,
+    ) -> Result<bool> {
+        let exists = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(
+                SELECT 1
+                FROM notifications
+                WHERE user_id = $1
+                  AND event_type = $2
+                  AND target_id = $3
+                  AND is_read = false
+            )",
+        )
+        .bind(user_id)
+        .bind(event_type)
+        .bind(target_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(exists)
+    }
+
     async fn mark_as_read(&self, id: Uuid) -> Result<()> {
         let result = sqlx::query("UPDATE notifications SET is_read = true WHERE id = $1")
             .bind(id)
