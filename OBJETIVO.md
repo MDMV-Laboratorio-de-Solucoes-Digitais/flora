@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 032 candidato — hardening)
 
-- **Ciclo 031 (PR em preparação/CI):** versão centralizada, `release.yml` tag-only com SBOM (sem tag/publicação) e drift documental fechado.
+- **Ciclo 031 (PR #242, CI verde, mergeado em `dev@aaa45536`):** versão centralizada, `release.yml` tag-only com SBOM (sem tag/publicação) e drift documental fechado.
 
 - **Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`):** 1 e2e smoke Chromium com minter feature-gated (`retries: 0`), CI não-required e integridade documental corrigida.
 
