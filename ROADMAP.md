@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–022 mergeados; 023 em PR/CI; ciclo 024 — Seed v0.1 — em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–023 mergeados; ciclo 024 — Seed v0.1 — em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-019`, `.specify/assessments/003-019`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -41,7 +41,7 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 020: extensão PG FTS para tarefas/arquivos e notificação de atribuição (slice S1) — migração `tasks/files.search_tsv` + GIN, fallback PG multi-entidade `message|task|file` (contrato preservado, tenant-safe, Meilisearch inalterado), `Assignment` best-effort em transição efetiva de assignee e contratos DB-gated (PG descartável). **PR #223 mergeado, CI verde.**
 - [x] Ciclo 021: contrato tri-state de unassign/atribuição de tarefas + dedup de notificação `Assignment` e hardening/contratos DB-gated do fallback PG de busca, com decisão explícita de precedence/paridade Meilisearch (indexação task/file diferida). **PR #224, CI verde, mergeado** (`dev@b5be7d16f`).
 - [x] Ciclo 022 (PR #225, CI verde, mergeado em `dev@a85e2020f`): dedup idempotente DB-enforced de notificações não lidas, degradação fail-open Meilisearch→PG FTS com contrato explícito, e expansão de CI `db-tests` (search/notifications/files). Freshness/paridade de indexação Meilisearch adiada (023).
-- [~] Ciclo 023 (PR em preparação/CI): contrato de busca Postgres-autoritativa (`source: "postgres"`, Meilisearch dormente), normalização de separadores em FTS e contratos DB-gated; prepara o Seed verificável.
+- [x] Ciclo 023 (PR #228, CI verde, mergeado em `dev@52160a539`): contrato de busca Postgres-autoritativa (`source: "postgres"`, Meilisearch dormente), normalização de separadores em FTS e contratos DB-gated; prepara o Seed verificável.
 - [ ] Ciclo 024 (candidato — Seed v0.1): verificação real do ID token OIDC (JWKS/`iss`/`aud`/`exp`/`nonce`, allowlist de redirect, identidade por `sub`) com contratos determinísticos; depois FASE 0 em CI e ADR de reconciliação de mecanismos.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
