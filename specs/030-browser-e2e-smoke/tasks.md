@@ -4,4 +4,4 @@
 - [x] T002 Feature-gated session minter (build/clippy/gating/claim round-trip verified).
 - [x] T003 Playwright setup + one smoke + gitignore/script wiring (bun check/lint green).
 - [x] T004 Non-required CI e2e job; stale clippy prose and 029 smoke evidence completed.
-- [ ] T005 Verify, PR, CI green, merge, sync, planning for 031.
+- [x] T005 Verify, PR #240 CI green (including e2e-browser), merge `ab3fc007`, sync, planning for 031.

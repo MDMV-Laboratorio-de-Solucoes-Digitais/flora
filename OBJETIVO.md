@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 031 candidato — release e hardening)
 
-- **Ciclo 030 (PR em preparação/CI):** 1 e2e smoke Chromium com minter feature-gated (`retries: 0`), CI não-required e integridade documentar corrigida.
+- **Ciclo 030 (PR #240, CI verde incl. e2e-browser, mergeado em `dev@ab3fc007`):** 1 e2e smoke Chromium com minter feature-gated (`retries: 0`), CI não-required e integridade documentar corrigida.
 
 - **Ciclo 029 (PR #238, CI verde, mergeado em `dev@b8972c0e`):** clippy estrito `--all-targets`, ADR-0002 (Tauri deferido), drift 028 corrigido e smoke integrado executado com JWT fresco em portas isoladas (**rc=0**).
 
