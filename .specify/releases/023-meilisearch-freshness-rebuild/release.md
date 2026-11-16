@@ -1,8 +1,8 @@
 # Release: 023 — Postgres-Authoritative Search Contract
 
 **Date:** 2026-11-16  
-**Branch/PR:** `feat/023-postgres-authoritative-search` -> `dev` (pending)  
-**Baseline:** `dev@023bd2467`
+**Branch/PR:** `fix/023-search-recovery` -> `dev`, PR #228 (merged; re-land of PR #227)  
+**Baseline:** `dev@023bd2467` -> **delivered at `dev@52160a539`**
 
 ## Delivered (slice S1)
 - **PG-authoritative search:** `GET /api/v1/search` always executes Postgres FTS; the Meilisearch request branch
@@ -22,7 +22,7 @@
 ## Evidence
 - Local: fmt, strict clippy (core/tests all-targets; api lib), unit tests and all six DB-gated suites green on a
   disposable PostgreSQL 18 database — details in `.specify/validations/023-meilisearch-freshness-rebuild/validate.md`.
-- CI: PR result to be recorded here after the required checks are green.
+- CI: PR #228 all required checks green (4 `build` + 2 `db-tests`); merged with merge commit `52160a539`. The concurrent `/llms.txt` work on `github/dev` was preserved as the PR base.
 
 ## Seed milestone note
 This cycle closes the *search mechanism* question for Seed (PG FTS authoritative; Meilisearch deferred to a gated

@@ -22,6 +22,10 @@ excluded from this branch's commit. Its test code trips `clippy::expect_used` un
 authoritative check for this cycle's code is `cargo clippy -p flora-api --lib -- -D warnings` plus the green
 CI run on the PR (which does not carry those files).
 
+CI: PR #228 all required checks green (4 `build` + 2 `db-tests`); merged to `dev` as commit `52160a539`
+on 2026-11-16. PR #227 was superseded after its head was replaced concurrently; the validated commit was
+re-landed via cherry-pick on `fix/023-search-recovery` (PR #228).
+
 TDD evidence: both new 023 contracts were executed **before** implementation and failed as expected:
 - `db_search_pg_authoritative_with_meilisearch_configured` → missing `source` field.
 - `db_search_pg_matches_hyphenated_names` → hyphenated file name returned no match.
