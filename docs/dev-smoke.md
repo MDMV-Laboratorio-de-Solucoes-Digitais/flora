@@ -14,7 +14,9 @@ Reproducible local smoke path without real OIDC, using `docker compose`, `dev-se
 >
 > **Port conflict note (NV/environmental):** if host `5432/6379/7700` are already in use, run compose with alternative host ports via an override file and point env vars/`psql` to the chosen ports. The migration/seed/bootstrap/API flow remains the same.
 >
-> **Lean Seed profile (016-C):** default compose brings up **postgres only**. Enable optional dependencies with profiles: `--profile realtime` (Valkey) and/or `--profile search` (Meilisearch), and set `FLORA_MESSAGING__ENABLED=true` / `FLORA_SEARCH__ENABLED=true` accordingly. API starts in degraded/optional mode when disabled.
+> **Lean Seed profile (016-C, updated 023):** default compose brings up **postgres only**. Enable optional dependencies with profiles: `--profile realtime` (Valkey) and/or `--profile search` (Meilisearch), and set `FLORA_MESSAGING__ENABLED=true` / `FLORA_SEARCH__ENABLED=true` accordingly. API starts in degraded/optional mode when disabled.
+>
+> **Search authority (023):** `GET /api/v1/search` is always answered by **Postgres FTS** (`"source": "postgres"` in the response). Meilisearch is a **dormant, non-authoritative capability**: the `flora-search` crate and the compose `search` profile are kept for a gated future re-enablement, but enabling `FLORA_SEARCH__ENABLED` does **not** change search results. Re-enablement as an authoritative backend requires mutation-indexing hooks, async task-await handling, a Postgres-sourced rebuild/backfill tool, and deterministic Meilisearch-gated tests (all NV; design notes in `docs/research/2026-11-16-023-*.md`).
 
 ## 1) Start dependencies
 ```bash

@@ -15,7 +15,10 @@ pub struct SearchConfig {
     pub max_limit: usize,
     /// Index naming template (e.g., "`flora_org`_{`org_id`}").
     pub index_template: String,
-    /// Whether to enable search (can be disabled for minimal deployments).
+    /// Whether to keep the optional Meilisearch capability active. Disabled by default
+    /// for the Seed profile (Postgres FTS is the authoritative search backend); the
+    /// `flora-search` crate and compose `search` profile remain available for a gated
+    /// future re-enablement with mutation hooks and rebuild tooling.
     pub enabled: bool,
 }
 
@@ -28,7 +31,7 @@ impl Default for SearchConfig {
             default_limit: 20,
             max_limit: 100,
             index_template: "flora_org_{org_id}".to_owned(),
-            enabled: true,
+            enabled: false,
         }
     }
 }
