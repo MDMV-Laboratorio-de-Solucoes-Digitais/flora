@@ -17,7 +17,10 @@ mod db_notifications {
     };
     use flora_core::{
         config::Config,
-        models::{Membership, Organization, Role, Session, User, Workspace},
+        models::{
+            Membership, Notification, NotificationType, Organization, Role, Session, User,
+            Workspace,
+        },
         repositories::{
             PgFileRepository, PgMembershipRepository, PgMessageRepository,
             PgNotificationRepository, PgOrganizationRepository, PgRoleRepository,
@@ -835,6 +838,53 @@ mod db_notifications {
         anyhow::ensure!(
             b_final == 1,
             "omit/no-op patch must not create duplicate Assignment notification: {notifs_b_final}"
+        );
+
+        Ok(())
+    }
+
+    /// 022: the DB-enforced partial unique index + `ON CONFLICT DO NOTHING` insert must
+    /// make notification creation idempotent for duplicate unread `(user,type,target)`
+    /// signals. Suppression is returned as `None`, not an error, and the unread-only
+    /// scope allows a fresh notification once the previous one is marked as read.
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 022)"]
+    async fn db_notification_create_is_idempotent_for_unread_dedup() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_two_members(&state, &config).await?;
+        let repo = PgNotificationRepository::new((*state.db_pool).clone());
+        let target_id = Uuid::now_v7();
+
+        let make_notification = || {
+            Notification::new(
+                seed.org.id,
+                seed.b.user.id,
+                NotificationType::Assignment,
+                target_id,
+                None,
+            )
+        };
+
+        // First insert creates the notification.
+        let first = repo.create(make_notification()).await?;
+        let first =
+            first.ok_or_else(|| anyhow::anyhow!("first insert must create a notification"))?;
+
+        // A duplicate unread signal for the same (user,type,target) is suppressed (race-safe).
+        let duplicate = repo.create(make_notification()).await?;
+        anyhow::ensure!(
+            duplicate.is_none(),
+            "duplicate unread notification must be suppressed by the DB-enforced dedup"
+        );
+
+        // Unread-only scope: after the first is read, a fresh unread notification is allowed.
+        repo.mark_as_read(first.id).await?;
+        let after_read = repo.create(make_notification()).await?;
+        anyhow::ensure!(
+            after_read.is_some(),
+            "a new unread notification must be allowed after the previous one was read"
         );
 
         Ok(())

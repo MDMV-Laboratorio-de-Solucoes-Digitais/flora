@@ -34,6 +34,34 @@ pub struct CreateTaskRequest {
     pub assignee_id: Option<Uuid>,
 }
 
+/// Deserialize the tri-state `assignee_id` of a PATCH request.
+///
+/// Serde maps an explicit JSON `null` on a plain `Option<Option<Uuid>>` to the
+/// outer `None`, making it indistinguishable from an omitted field. With
+/// `#[serde(default)]`, missing fields use the default (`None`) without calling
+/// this function, so here `null` can safely mean "explicitly clear".
+#[expect(
+    clippy::option_option,
+    reason = "tri-state PATCH assignee: omit vs explicit null vs UUID value must stay distinguishable"
+)]
+fn deserialize_tri_state_assignee<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Option<Option<Uuid>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::Null => Ok(Some(None)),
+        serde_json::Value::String(s) => Uuid::parse_str(&s)
+            .map(|uuid| Some(Some(uuid)))
+            .map_err(serde::de::Error::custom),
+        other => Err(serde::de::Error::custom(format!(
+            "assignee_id must be null or a UUID string, got {other}"
+        ))),
+    }
+}
+
 /// Request body for updating a task.
 ///
 /// `assignee_id` is tri-state (021, merge-patch semantics):
@@ -49,7 +77,7 @@ pub struct UpdateTaskRequest {
     /// Optional new status.
     pub status: Option<String>,
     /// Optional new assignee (tri-state: omit=no change, null=clear).
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_tri_state_assignee")]
     pub assignee_id: Option<Option<Uuid>>,
 }
 
@@ -295,14 +323,6 @@ async fn maybe_notify_task_assignment(
     }
 
     let notif_repo = PgNotificationRepository::new((*state.db_pool).clone());
-    // 021: simple best-effort dedup guard (unread same user+target, race-prone).
-    if notif_repo
-        .has_unread_for_target(assignee_id, NotificationType::Assignment, task_id)
-        .await?
-    {
-        return Ok(());
-    }
-
     let notification = Notification::new(
         org_id,
         assignee_id,
@@ -310,6 +330,7 @@ async fn maybe_notify_task_assignment(
         task_id,
         None,
     );
+    // 022: DB-enforced unread dedup (conflict-safe/idempotent); suppression is not an error.
     let _ = notif_repo.create(notification).await?;
     Ok(())
 }

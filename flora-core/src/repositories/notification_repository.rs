@@ -80,10 +80,11 @@ impl NotificationRepository for PgNotificationRepository {
         Ok(crate::models::Page::new(notifications, None))
     }
 
-    async fn create(&self, notification: Notification) -> Result<Notification> {
+    async fn create(&self, notification: Notification) -> Result<Option<Notification>> {
         let created = sqlx::query_as::<_, Notification>(
             "INSERT INTO notifications (id, organization_id, user_id, event_type, target_id, target_url)
              VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (user_id, event_type, target_id) WHERE is_read = false DO NOTHING
              RETURNING id, organization_id, user_id, event_type, target_id, target_url, is_read, created_at, updated_at",
         )
         .bind(notification.id)
@@ -92,7 +93,7 @@ impl NotificationRepository for PgNotificationRepository {
         .bind(notification.event_type)
         .bind(notification.target_id)
         .bind(&notification.target_url)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::from_sqlx)?;
         Ok(created)

@@ -362,7 +362,7 @@ mod db_files {
             )
             .body(Body::from(body))?;
         let resp = app.oneshot(req).await?;
-        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
         Ok(())
     }
 
@@ -454,7 +454,7 @@ mod db_files {
             )
             .body(Body::from(body))?;
         let resp = app.clone().oneshot(req).await?;
-        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
         // empty file
         let body = multipart_body(
@@ -476,7 +476,7 @@ mod db_files {
             )
             .body(Body::from(body))?;
         let resp = app.oneshot(req).await?;
-        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
         Ok(())
     }
 
@@ -590,7 +590,7 @@ mod db_files {
                 .to_string(),
             ))?;
         let resp = app.oneshot(req).await?;
-        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
         Ok(())
     }
 }
