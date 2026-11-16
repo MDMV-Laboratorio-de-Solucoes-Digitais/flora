@@ -14,4 +14,4 @@
 ADR-0002 #2 still NV; no result navigation; e2e informational; CI does not run client-project component tests.
 
 ## CI result
-Recorded after PR merge.
+PR #246: all checks green (4 build, 2 db-tests, dependency-review, 2 supply-chain-vet, 2 e2e-browser; GitHub runs 43962395012 / 43962408774); merged as `f89678d5`. An initial e2e assertion mismatch ("Search result" vs "1 result") was corrected before the green run.

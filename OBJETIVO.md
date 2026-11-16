@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 034 candidato — fronteira de origem e produto)
 
-- **Ciclo 033 (PR em preparação/CI):** busca no header canônico ligada ao endpoint verificado, com testes unitários no gate do CI e drift documental fechado.
+- **Ciclo 033 (PR #246, CI verde, mergeado em `dev@f89678d5`):** busca no header canônico ligada ao endpoint verificado, com testes unitários no gate do CI e drift documental fechado.
 
 - **Ciclo 032 (PR #244, CI verde, mergeado em `dev@cecaf686`):** allowlist CORS backend com testes determinísticos e drift documental fechado; ADR-0002 #2 permanece NV.
 

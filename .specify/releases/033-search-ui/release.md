@@ -1,6 +1,6 @@
 # Release: 033 — Wire Seed search UI
 
-**Branch/PR:** `feat/033-search-ui` -> `dev` (pending) · **Baseline:** `github/dev@3709953`
+**Branch/PR:** `feat/033-search-ui` -> `dev`, PR #246 (merged as `f89678d5`) · **Baseline:** `github/dev@3709953`
 
 ## Delivered
 - Working, accessible header search wired to the verified `/api/v1/search` (typed client, debounce, states).
@@ -8,7 +8,7 @@
 - Governance drift closed; five R1 research docs recorded.
 
 ## Evidence
-See `.specify/validations/033-search-ui/validate.md`.
+See `.specify/validations/033-search-ui/validate.md`. PR #246 all checks green; merged at `f89678d5`.
 
 ## NV / follow-ups (034)
 ADR-0002 #2 (runtime URLs + WS Origin + non-browser proof), FASE 7 Documents (minimal design ready), cargo-vet blocking (authorization), load/restore, tag/release.
