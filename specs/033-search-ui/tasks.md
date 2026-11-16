@@ -4,4 +4,4 @@
 - [x] T002 Typed search models, client method, helpers and unit tests.
 - [x] T003 SearchBox component + header wiring + optional e2e test.
 - [x] T004 Governance drift closed.
-- [ ] T005 Verify, PR, CI green, merge, sync, planning for 034.
+- [x] T005 Verify, PR #246 CI green, merge `f89678d5`, sync, planning for 034.
