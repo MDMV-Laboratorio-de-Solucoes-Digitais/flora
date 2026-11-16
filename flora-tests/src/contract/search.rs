@@ -423,4 +423,261 @@ mod db_search {
 
         Ok(())
     }
+
+    async fn insert_task(
+        state: &AppState,
+        workspace_id: Uuid,
+        organization_id: Uuid,
+        creator_id: Uuid,
+        title: &str,
+        description: Option<&str>,
+        is_deleted: bool,
+    ) -> anyhow::Result<Uuid> {
+        let id = Uuid::now_v7();
+        let _ = sqlx::query(
+            "INSERT INTO tasks (id, workspace_id, organization_id, creator_id, title, description, status, is_deleted)
+             VALUES ($1, $2, $3, $4, $5, $6, 'Todo', $7)",
+        )
+        .bind(id)
+        .bind(workspace_id)
+        .bind(organization_id)
+        .bind(creator_id)
+        .bind(title)
+        .bind(description)
+        .bind(is_deleted)
+        .execute(state.db_pool.as_ref())
+        .await?;
+        Ok(id)
+    }
+
+    async fn insert_file(
+        state: &AppState,
+        organization_id: Uuid,
+        owner_id: Uuid,
+        workspace_id: Option<Uuid>,
+        name: &str,
+        file_type: &str,
+        is_deleted: bool,
+    ) -> anyhow::Result<Uuid> {
+        let id = Uuid::now_v7();
+        let uniq = Uuid::now_v7().simple().to_string();
+        let _ = sqlx::query(
+            "INSERT INTO files (id, organization_id, owner_id, workspace_id, file_type, name, size_bytes, storage_path, checksum, metadata, is_deleted)
+             VALUES ($1, $2, $3, $4, $5, $6, 1, $7, $8, '{}'::jsonb, $9)",
+        )
+        .bind(id)
+        .bind(organization_id)
+        .bind(owner_id)
+        .bind(workspace_id)
+        .bind(file_type)
+        .bind(name)
+        .bind(format!("test/{uniq}"))
+        .bind(format!("sum-{uniq}"))
+        .bind(is_deleted)
+        .execute(state.db_pool.as_ref())
+        .await?;
+        Ok(id)
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 020)"]
+    async fn db_search_pg_fallback_returns_tasks_and_files() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_member(&state, &config).await?;
+        let task_id = insert_task(
+            &state,
+            seed.workspace.id,
+            seed.org.id,
+            seed.user.id,
+            "unique alpha task xyz020",
+            Some("task description details"),
+            false,
+        )
+        .await?;
+        let file_id = insert_file(
+            &state,
+            seed.org.id,
+            seed.user.id,
+            Some(seed.workspace.id),
+            "unique-beta-report-xyz020.pdf",
+            "application/pdf",
+            false,
+        )
+        .await?;
+
+        let app = search_app(state);
+
+        let (status, body) = authed_get_json(
+            app.clone(),
+            "/search?q=alpha&type=task".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "task search: {status} {body}");
+        let results = body["results"].as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            results
+                .iter()
+                .any(|r| r["id"] == task_id.to_string() && r["type"] == "task"),
+            "task not found: {body}"
+        );
+
+        let (status, body) = authed_get_json(
+            app.clone(),
+            "/search?q=beta&type=file".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "file search: {status} {body}");
+        let results = body["results"].as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            results
+                .iter()
+                .any(|r| r["id"] == file_id.to_string() && r["type"] == "file"),
+            "file not found: {body}"
+        );
+
+        // omitted type can include newly supported entities
+        let (status, body) = authed_get_json(
+            app,
+            "/search?q=xyz020".to_string(),
+            &seed.token,
+            seed.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "merged search: {status} {body}");
+        let results = body["results"].as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            results.iter().any(|r| r["id"] == task_id.to_string()),
+            "task missing in merged results: {body}"
+        );
+        anyhow::ensure!(
+            results.iter().any(|r| r["id"] == file_id.to_string()),
+            "file missing in merged results: {body}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 020)"]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "020 DB-gated contract asserts tenant/soft-delete isolation across task and file entities"
+    )]
+    async fn db_search_pg_fallback_tasks_files_tenant_and_deleted_isolation() -> anyhow::Result<()>
+    {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed_a = seed_member(&state, &config).await?;
+        let seed_b = seed_member(&state, &config).await?;
+
+        let task_a = insert_task(
+            &state,
+            seed_a.workspace.id,
+            seed_a.org.id,
+            seed_a.user.id,
+            "tenant visible task vis020",
+            None,
+            false,
+        )
+        .await?;
+        let task_b = insert_task(
+            &state,
+            seed_b.workspace.id,
+            seed_b.org.id,
+            seed_b.user.id,
+            "tenant visible task vis020",
+            None,
+            false,
+        )
+        .await?;
+        let _task_deleted = insert_task(
+            &state,
+            seed_a.workspace.id,
+            seed_a.org.id,
+            seed_a.user.id,
+            "tenant deleted task del020",
+            None,
+            true,
+        )
+        .await?;
+
+        let file_a = insert_file(
+            &state,
+            seed_a.org.id,
+            seed_a.user.id,
+            Some(seed_a.workspace.id),
+            "tenant-visible-file-vis020.txt",
+            "text/plain",
+            false,
+        )
+        .await?;
+        let file_b = insert_file(
+            &state,
+            seed_b.org.id,
+            seed_b.user.id,
+            Some(seed_b.workspace.id),
+            "tenant-visible-file-vis020.txt",
+            "text/plain",
+            false,
+        )
+        .await?;
+        let _file_deleted = insert_file(
+            &state,
+            seed_a.org.id,
+            seed_a.user.id,
+            Some(seed_a.workspace.id),
+            "tenant-deleted-file-del020.txt",
+            "text/plain",
+            true,
+        )
+        .await?;
+
+        let app = search_app(state);
+
+        let (status, body) = authed_get_json(
+            app.clone(),
+            "/search?q=vis020&type=task,file".to_string(),
+            &seed_a.token,
+            seed_a.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "tenant search: {status} {body}");
+        let results = body["results"].as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            results.iter().any(|r| r["id"] == task_a.to_string()),
+            "own task missing: {body}"
+        );
+        anyhow::ensure!(
+            results.iter().any(|r| r["id"] == file_a.to_string()),
+            "own file missing: {body}"
+        );
+        anyhow::ensure!(
+            results.iter().all(|r| r["id"] != task_b.to_string()),
+            "cross-org task leak: {body}"
+        );
+        anyhow::ensure!(
+            results.iter().all(|r| r["id"] != file_b.to_string()),
+            "cross-org file leak: {body}"
+        );
+
+        let (status, body) = authed_get_json(
+            app,
+            "/search?q=del020&type=task,file".to_string(),
+            &seed_a.token,
+            seed_a.org.id,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "deleted search: {status} {body}");
+        anyhow::ensure!(
+            body["results"].as_array().is_some_and(Vec::is_empty),
+            "deleted task/file must not be returned: {body}"
+        );
+        Ok(())
+    }
 }

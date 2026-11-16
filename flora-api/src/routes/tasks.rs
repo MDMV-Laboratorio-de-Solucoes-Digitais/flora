@@ -11,9 +11,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::models::{Task, TaskStatus};
-use flora_core::repositories::{PgMembershipRepository, PgTaskRepository};
-use flora_core::traits::{MembershipRepository, TaskRepository};
+use flora_core::models::{Notification, NotificationType, Task, TaskStatus};
+use flora_core::repositories::{
+    PgMembershipRepository, PgNotificationRepository, PgTaskRepository,
+};
+use flora_core::traits::{MembershipRepository, NotificationRepository, TaskRepository};
 use std::str::FromStr;
 
 use crate::AppState;
@@ -155,6 +157,20 @@ async fn create_task(
 
     let created = task_repo.create(task).await?;
 
+    // 020: best-effort assignment notification (must not fail the task path).
+    if let Some(assignee_id) = created.assignee_id
+        && let Err(e) =
+            maybe_notify_task_assignment(&state, org_id, None, assignee_id, user_id, created.id)
+                .await
+    {
+        tracing::warn!(
+            error = %e,
+            task_id = %created.id,
+            assignee_id = %assignee_id,
+            "Failed to create task assignment notification"
+        );
+    }
+
     tracing::info!(task_id = %created.id, user_id = %user_id, "Task created");
     Ok((StatusCode::CREATED, Json(TaskResponse::from(created))))
 }
@@ -209,6 +225,9 @@ async fn update_task(
         ));
     }
 
+    let old_assignee_id = existing.assignee_id;
+    let requested_assignee_id = req.assignee_id;
+
     let status = req
         .status
         .as_ref()
@@ -218,13 +237,58 @@ async fn update_task(
     let updated = Task {
         title: req.title.unwrap_or(existing.title),
         description: req.description.or(existing.description),
-        assignee_id: req.assignee_id.or(existing.assignee_id),
+        assignee_id: requested_assignee_id.or(old_assignee_id),
         status,
         updated_at: chrono::Utc::now(),
         ..existing
     };
     let result = task_repo.update(task_id, updated).await?;
+
+    // 020: notify only on explicit effective transition provided by request.
+    if let Some(new_assignee_id) = requested_assignee_id
+        && let Err(e) = maybe_notify_task_assignment(
+            &state,
+            org_id,
+            old_assignee_id,
+            new_assignee_id,
+            auth.user_id,
+            result.id,
+        )
+        .await
+    {
+        tracing::warn!(
+            error = %e,
+            task_id = %result.id,
+            assignee_id = %new_assignee_id,
+            "Failed to create task assignment notification"
+        );
+    }
+
     Ok(Json(TaskResponse::from(result)))
+}
+
+async fn maybe_notify_task_assignment(
+    state: &AppState,
+    org_id: Uuid,
+    old_assignee_id: Option<Uuid>,
+    new_assignee_id: Uuid,
+    actor_id: Uuid,
+    task_id: Uuid,
+) -> Result<()> {
+    if Some(new_assignee_id) == old_assignee_id || new_assignee_id == actor_id {
+        return Ok(());
+    }
+
+    let notif_repo = PgNotificationRepository::new((*state.db_pool).clone());
+    let notification = Notification::new(
+        org_id,
+        new_assignee_id,
+        NotificationType::Assignment,
+        task_id,
+        None,
+    );
+    let _ = notif_repo.create(notification).await?;
+    Ok(())
 }
 
 /// `DELETE /api/v1/tasks/{id}` — Soft-delete a task.
