@@ -1,7 +1,36 @@
 import { authState } from '../state/AuthState.svelte';
 import type { SearchResponse } from '../types/models';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Default local Rust backend URL
+/** Default API origin when neither runtime config nor VITE_API_URL is present. */
+export const DEFAULT_API_BASE_URL = 'http://localhost:3000'; // Default local Rust backend URL
+
+/** Shape of the deploy-time global injected by `static/config.js`. */
+export type FloraRuntimeConfig = {
+	apiBaseUrl?: string;
+	wsBaseUrl?: string | null;
+};
+
+/** Resolves the HTTP API origin: runtime global > Vite build env > default. Pure. */
+export function resolveApiBaseUrl(
+	runtime: string | null | undefined,
+	vite: string | undefined,
+	fallback: string = DEFAULT_API_BASE_URL
+): string {
+	if (typeof runtime === 'string' && runtime.trim().length > 0) return runtime.trim();
+	if (typeof vite === 'string' && vite.trim().length > 0) return vite.trim();
+	return fallback;
+}
+
+/** Resolves the WS origin: explicit runtime override, else the resolved API origin. */
+export function resolveWsBaseUrl(runtimeWs: string | null | undefined, apiBaseUrl: string): string {
+	if (typeof runtimeWs === 'string' && runtimeWs.trim().length > 0) return runtimeWs.trim();
+	return apiBaseUrl;
+}
+
+export const API_BASE_URL = resolveApiBaseUrl(
+	globalThis.__FLORA_CONFIG__?.apiBaseUrl,
+	import.meta.env.VITE_API_URL
+);
 
 export type ApiErrorBody = {
 	error?: string;
