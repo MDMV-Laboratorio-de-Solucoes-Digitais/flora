@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 030 candidato — verificação de ponta a ponta)
 
-- **Ciclo 029 (PR em preparação/CI):** clippy estrito `--all-targets`, ADR-0002 (Tauri deferido), drift 028 corrigido e smoke integrado executado com JWT fresco em portas isoladas (**rc=0**).
+- **Ciclo 029 (PR #238, CI verde, mergeado em `dev@b8972c0e`):** clippy estrito `--all-targets`, ADR-0002 (Tauri deferido), drift 028 corrigido e smoke integrado executado com JWT fresco em portas isoladas (**rc=0**).
 
 - **Ciclo 028 (PR #236, CI verde, mergeado em `dev@4ecf1459`):** FASE 0 fechado com store cargo-vet versionado + exceção `multer`, gate informativo, dependency-review e sweep OSV semanal; smoke com JWT fresco; drift residual corrigido.
 

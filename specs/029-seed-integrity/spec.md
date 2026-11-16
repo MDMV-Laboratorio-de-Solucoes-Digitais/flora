@@ -1,7 +1,7 @@
 # Feature Specification: 029 — Seed integrity and executable evidence
 
 **Branch**: `feat/029-seed-integrity`  
-**Status**: In progress  
+**Status**: Completed (PR #238)  
 **Assessment**: `.specify/assessments/029-next-vertical-slice/decision.md`
 
 ## Goal

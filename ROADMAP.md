@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–028 mergeados; 029 em PR/CI; 030 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–029 mergeados; 030 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-019`, `.specify/assessments/003-019`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -47,7 +47,7 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 026 (PR #232, CI verde, mergeado em `dev@9a60766f`): gate Seed executável em CI (fmt/clippy/cargo-deny), `deny.toml` com `AGPL-3.0-or-later`, constituição v1.3.0 mechanism-neutral, deps OTel fantasmas removidas.
 - [x] Ciclo 027 (PR #234, CI verde, mergeado em `dev@044f40c6`): retirada do adapter PGMQ/Valkey não conectado, `TraceLayer` sem custo, drift documental fechado.
 - [x] Ciclo 028 (PR #236, CI verde, mergeado em `dev@4ecf1459`): FASE 0 closure (cargo-vet informativo + dependency-review + OSV), smoke com JWT fresco, drift corrigido.
-- [~] Ciclo 029 (PR em preparação/CI): clippy `--all-targets`, ADR-0002, drift 028 e smoke integrado rc=0 (JWT fresco, portas isoladas).
+- [x] Ciclo 029 (PR #238, CI verde, mergeado em `dev@b8972c0e`): clippy `--all-targets`, ADR-0002, drift 028 e smoke integrado rc=0 (JWT fresco, portas isoladas).
 - [ ] Ciclo 030 (candidato): e2e browser (`retries: 0`), tag/release + SBOM, cargo-vet bloqueante, OTLP/load validation.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
