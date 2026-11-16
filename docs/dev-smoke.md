@@ -63,16 +63,39 @@ Insert a fixed active pre-selection session for Alice (nil org, jti `018f0000-00
 PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d flora -f scripts/dev-smoke-session.sql
 ```
 
-Use a matching pre-signed JWT for that session (claims: sub=Alice, jti as above, organization_id=nil, email=alice@acme.test). Pick the token that matches your `FLORA_APP__JWT_SECRET`:
+Use a **freshly minted** JWT for that session (claims: `sub`=Alice, `jti` as seeded above,
+`organization_id`=nil, `email`=alice@acme.test). Static tokens expire and must not be checked in
+(the previous examples expired on 2026-11-16). Mint one at run time with the same secret the API uses:
 
-- **If `FLORA_APP__JWT_SECRET=change-me-to-a-random-secret-at-least-32-characters-long` (.env.example):**
-  `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJqdGkiOiIwMThmMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcmdhbml6YXRpb25faWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImFsaWNlQGFjbWUudGVzdCIsImV4cCI6MTc5NDc4NzIwMCwiaWF0IjoxNzYzMjUxMjAwLCJ2ZXIiOjF9.AgxYRUAu7SpJ4N1HPw_dz4tp6f-YWhNZTdDL2DP1Yq4`
-- **If `FLORA_APP__JWT_SECRET=dev-secret-change-in-production` (legacy default, unset env):**
-  `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJqdGkiOiIwMThmMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcmdhbml6YXRpb25faWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImFsaWNlQGFjbWUudGVzdCIsImV4cCI6MTc5NDc4NzIwMCwiaWF0IjoxNzYzMjUxMjAwLCJ2ZXIiOjF9.zPbSy7mxjtwpa6nUH0TMuKoMFEuSPl_srbZz2QVTibQ`
+```bash
+# Requires Node.js; uses the effective config secret and a 1-hour expiry.
+export FLORA_TOKEN="$(node - <<'NODE'
+const crypto = require('crypto');
+const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+const secret = process.env.FLORA_APP__JWT_SECRET
+  || 'change-me-to-a-random-secret-at-least-32-characters-long';
+const now = Math.floor(Date.now() / 1000);
+const claims = {
+  sub: '22222222-2222-2222-2222-222222222222',
+  jti: '018f0000-0000-7000-8000-000000000001',
+  organization_id: '00000000-0000-0000-0000-000000000000',
+  email: 'alice@acme.test',
+  exp: now + 3600,
+  iat: now,
+  ver: 1,
+};
+const input = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64(claims)}`;
+process.stdout.write(`${input}.${crypto.createHmac('sha256', secret).update(input).digest('base64url')}\n`);
+NODE
+)"
+```
+
+The JWT alone is not sufficient: `flora-api` also requires the matching active `sessions` row, which
+`scripts/dev-smoke-session.sql` seeds with the same `jti`. Config precedence is `FLORA_APP__JWT_SECRET`
+over the legacy default; `Config::load()` is authoritative.
 
 Export it for the smoke script:
 ```bash
-export FLORA_TOKEN='<token-matching-your-secret>'
 export FLORA_BASE_URL='http://localhost:3000'
 export ORG_ID='11111111-1111-1111-1111-111111111111'
 export WORKSPACE_ID='88888888-8888-8888-8888-888888888888'

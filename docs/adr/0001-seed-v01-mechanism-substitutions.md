@@ -29,7 +29,7 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
    | Files | Local filesystem, streaming upload/download, SHA-256, contained paths | RustFS/S3-compatible object store (Grove; feature-gated slice defined in `docs/research/2026-11-16-seed-files-rustfs.md`) |
    | Notifications | In-app Postgres table with DB-enforced unread dedup (`20261116000003_*`) | PGMQ + Valkey streams (Sprout/Grove; `docs/research/2026-11-16-seed-notifications-pgmq-valkey.md`) |
    | Identity | OIDC PKCE S256 + verified ID token (JWKS/`iss`/`aud`/`exp`/`sub`/`nonce`), DB sessions with `jti` | Real-OP e2e, JWKS rotation, Keycloak/Zitadel procurement |
-   | Observability | `tracing` + best-effort `/metrics`; no mandatory collector | OpenTelemetry exporter/collector (declared deps are unusable — `opentelemetry-otlp 0.22` does not exist on crates.io) |
+   | Observability | `tracing` + `TraceLayer` per-request spans + static `/metrics`; no mandatory collector | OpenTelemetry exporter/collector (phantom deps removed in cycle 026; real OTLP requires a receiver, aligned crate versions and a shutdown path) |
 
 3. **Verification gate.** "Seed v0.1 verified" requires executed evidence, not prose:
    - `cargo fmt --all -- --check`, strict clippy, unit tests;
@@ -53,4 +53,5 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
 - Resolved: FASE 0 CI enforcement (cycle 026), notification transport decision — the unwired PGMQ/Valkey crate
   was retired in cycle 027 per `docs/research/2026-11-16-026-notification-transport-decision.md`.
 - Remaining Seed follow-ups (NV): `cargo-vet` new-dependency gate, RustSec advisories job/SBOM, browser e2e with
-  fresh JWT, canonical Tauri decision, OTLP exporter, and 2vCPU/4GB load/restore validation.
+  fresh JWT, canonical Tauri decision (draft ADR-0002 in `docs/research/2026-11-16-028-tauri-smoke-closure.md`,
+  formal adoption pending), OTLP exporter, and 2vCPU/4GB load/restore validation.
