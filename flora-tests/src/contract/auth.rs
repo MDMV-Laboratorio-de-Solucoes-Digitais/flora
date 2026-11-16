@@ -169,7 +169,11 @@ async fn test_auth_login_returns_oidc_url() -> anyhow::Result<()> {
 /// returned authorization URL and PKCE parameters are present.
 #[tokio::test]
 async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
-    let config = Config::default();
+    let mut config = Config::default();
+    config
+        .oidc
+        .allowed_redirect_uris
+        .push("https://app.example.com/callback".to_owned());
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
     let state = make_test_state(pool, &config);
     let router = axum::Router::new()
@@ -214,7 +218,11 @@ async fn test_auth_login_with_redirect_uri() -> anyhow::Result<()> {
 /// and includes it in the authorization URL.
 #[tokio::test]
 async fn test_auth_login_with_unencoded_redirect_uri() -> anyhow::Result<()> {
-    let config = Config::default();
+    let mut config = Config::default();
+    config
+        .oidc
+        .allowed_redirect_uris
+        .push("https://app.example.com/callback".to_owned());
     let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
     let state = make_test_state(pool, &config);
     let router = axum::Router::new()
@@ -324,6 +332,7 @@ async fn test_auth_callback_rejects_reused_state() -> anyhow::Result<()> {
             flora_api::state::oidc_transactions::OidcTransaction {
                 code_verifier: "verifier".to_string(),
                 redirect_uri: "http://localhost:3000/api/v1/auth/callback".to_string(),
+                nonce: "test-nonce".to_string(),
             },
         )
         .await?;

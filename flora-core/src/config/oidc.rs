@@ -17,6 +17,10 @@ pub struct OidcConfig {
     pub code_challenge_method: String,
     /// Local fallback enabled when Zitadel is unavailable (default: true in dev).
     pub local_fallback_enabled: bool,
+    /// Additional exact-match redirect URIs accepted by `/auth/login`.
+    /// The configured application callback is always allowed without listing it here.
+    #[serde(default)]
+    pub allowed_redirect_uris: Vec<String>,
 }
 
 impl Default for OidcConfig {
@@ -34,6 +38,7 @@ impl Default for OidcConfig {
             ],
             code_challenge_method: "S256".to_owned(),
             local_fallback_enabled: true,
+            allowed_redirect_uris: Vec::new(),
         }
     }
 }

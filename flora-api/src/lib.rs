@@ -5,6 +5,7 @@
 )]
 pub mod extractors;
 pub mod middleware;
+pub mod oidc;
 pub mod realtime;
 pub mod routes;
 /// Application state shared across all requests.

@@ -22,6 +22,8 @@ pub struct OidcTransaction {
     pub code_verifier: String,
     /// Redirect URI used for the authorization request and token exchange.
     pub redirect_uri: String,
+    /// One-time nonce bound to this authorization transaction and checked in the ID token.
+    pub nonce: String,
 }
 
 /// In-memory fallback entry with expiration.

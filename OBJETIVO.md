@@ -62,6 +62,8 @@ Princípios diretores:
 
 - **Ciclo 023 (PR #228, CI verde, mergeado em `dev@52160a539`):** contrato de busca Postgres-autoritativa — `/api/v1/search` sempre responde via PG FTS com `source: "postgres"`, Meilisearch mantido dormente/não-autoritativo; migração aditiva normalizando separadores `-`/`.`/`_` em `tsvector` (nomes hifenizados passam a casar por sub-token); `SearchConfig` default alinhado ao perfil Seed; contratos DB-gated determinísticos (inclusive com `SearchService` configurado e inalcançável). Sem mudanças no frontend canônico.
 
+- **Ciclo 024 (PR em preparação/CI):** verificação real do ID token OIDC — descoberta/JWKS com seleção por `kid`, assinatura/`iss`/`aud`/`exp`/`sub`/`nonce`, rejeição de JWK simétrico, allowlist exata de `redirect_uri` e identidade por `sub`; 5 contratos unitários determinísticos. Fecha o gap decisivo de "Users & Roles (OIDC)" para Seed v0.1.
+
 **NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); entrega multi-nó/Valkey/NOTIFY e revalidação pós-handshake WS; `/messages/sync`/replay completo além do catch-up 015; quota agregada concorrente/transacional por org/workspace, consistência avançada de purge/cleanup storage↔DB e cobertura DB-gated ampliada de bordas (multipart/quota/cleanup); DMs UX; extensão de busca FTS para tarefas/arquivos, relevância/i18n/CJK e ACL de canal em busca; eventos/notificações adicionais (mentions/assignment/completion), dedup/idempotência/tx-coupling e delivery realtime/push/outbox; quota agregada concorrente/purge↔storage cleanup e cobertura DB-gated ampliada de arquivos; lacunas realtime pós-handshake/multi-nó/replay ampliado; OIDC/JWKS e e2e browser/multi-cliente; validação de carga/OOM e drills de restore em 2vCPU/4GB; enforcement de limites do compose por runtime (`docker stats`).
 
 ### 3.4 Gaps prioritários (o que falta para o MVP P0)
@@ -81,13 +83,13 @@ Princípios diretores:
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
 - Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
 
-## 5) Próximo 80/20 (ciclo 024 candidato — Seed v0.1)
+## 5) Próximo 80/20 (ciclo 025 candidato — consolidação Seed v0.1)
 
 Fechar o **gap decisivo de identidade** para um Seed verificável, com fases remanescentes registradas:
-1. **P0 — OIDC verificado (024 S1):** substituir a decodificação base64 do ID token por verificação real de assinatura/`iss`/`aud`/`exp`/`nonce` via discovery/JWKS (crate `openidconnect` já declarada), allowlist de `redirect_uri`, identidade por `sub` e falha fechada; contratos determinísticos com fixtures JWKS locais e token adulterado. Converter "Users & Roles (OIDC)" de parcial para implementado com evidência.
+1. **P0 — ADR de reconciliação Seed e verificação integrada:** substituir a decodificação base64 do ID token por verificação real de assinatura/`iss`/`aud`/`exp`/`nonce` via discovery/JWKS (crate `openidconnect` já declarada), allowlist de `redirect_uri`, identidade por `sub` e falha fechada; contratos determinísticos com fixtures JWKS locais e token adulterado. Converter "Users & Roles (OIDC)" de parcial para implementado com evidência.
 2. **P1 — FASE 0 em CI:** `cargo deny`/`cargo vet` no workflow, `deny.toml`, decisão sobre as 442 isenções e licença/SPDX consistentes (LICENSE truncada, sem `NOTICE`).
 3. **P1 — ADR de reconciliação Seed:** substituir mecanismos aspiracionais do README (Meilisearch/PGMQ/Valkey/RustFS) por nomes de capacidade com backend autoritativo explícito e gates, preservando a tabela de tiers da constituição; definir critério de "Seed v0.1 verificado".
 4. **P2 — OTel honesto e transporte de notificações:** corrigir dependência `opentelemetry-otlp 0.22` inexistente, adotar `TraceLayer` sem custo e sem coletor pesado; decidir (desativar/gatear) o scaffholding PGMQ/Valkey não conectado.
 5. **NVs remanescentes:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; e2e browser/multi-cliente, Tauri canônico; 2vCPU/4GB load/OOM/restore; JWKS rotation/real-OP.
 
-Detalhes: `.specify/assessments/024-next-vertical-slice/decision.md`, `docs/research/2026-11-16-seed-*.md`, `specs/023-meilisearch-freshness-rebuild/`, `ROADMAP.md`.
+Detalhes: `.specify/assessments/024-next-vertical-slice/decision.md`, `specs/024-oidc-id-token-verification/`, `docs/research/2026-11-16-seed-*.md`, `ROADMAP.md`.
