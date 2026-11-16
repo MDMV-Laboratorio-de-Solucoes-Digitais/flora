@@ -27,7 +27,7 @@ impl Default for SearchConfig {
             api_key: std::env::var("MEILISEARCH_API_KEY").ok(),
             default_limit: 20,
             max_limit: 100,
-            index_template: "flora_org_{@@org_id@@}".to_owned(),
+            index_template: "flora_org_{org_id}".to_owned(),
             enabled: true,
         }
     }
@@ -40,7 +40,7 @@ impl SearchConfig {
     ///
     /// Returns an error if the configuration is invalid.
     pub fn validate(&self) -> Result<(), crate::Error> {
-        if self.enabled && self.url.is_empty() {
+        if self.enabled && self.url.trim().is_empty() {
             return Err(crate::Error::Configuration(
                 "search.url is required when search is enabled".to_owned(),
             ));
@@ -56,6 +56,8 @@ impl SearchConfig {
     /// Generates the index name for a given organization.
     #[must_use]
     pub fn index_name(&self, org_id: &str) -> String {
-        self.index_template.replace("{@@org_id@@}", org_id)
+        self.index_template
+            .replace("{org_id}", org_id)
+            .replace("{@@org_id@@}", org_id)
     }
 }

@@ -1,4 +1,4 @@
-# Flora Dev Smoke (Cycle 008, updated 010): `select-organization` → workspace → task
+# Flora Dev Smoke (updated 016-C): `select-organization` → workspace → task
 
 Reproducible local smoke path without real OIDC, using `docker compose`, `dev-seed.sql`, and a deterministic pre-selection session/JWT bootstrap.
 
@@ -14,49 +14,33 @@ Reproducible local smoke path without real OIDC, using `docker compose`, `dev-se
 >
 > **Port conflict note (NV/environmental):** if host `5432/6379/7700` are already in use, run compose with alternative host ports via an override file and point env vars/`psql` to the chosen ports. The migration/seed/bootstrap/API flow remains the same.
 >
-> Example (isolated alt ports):
-> ```yaml
-> # smoke-ports.override.yml
-> services:
->   postgres:
->     ports: !override
->       - "127.0.0.1:15433:5432"
->   valkey:
->     ports: !override
->       - "127.0.0.1:16379:6379"
->   meilisearch:
->     ports: !override
->       - "127.0.0.1:17700:7700"
-> ```
-> ```bash
-> docker compose -f docker-compose.yml -f smoke-ports.override.yml up -d
-> # point config/tools to mapped ports, e.g.:
-> # FLORA_DATABASE__POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:15433/flora
-> # FLORA_MESSAGING__VALKEY_URL=redis://127.0.0.1:16379
-> # FLORA_SEARCH__MEILISEARCH_URL=http://127.0.0.1:17700
-> # PGPASSWORD=postgres psql -h 127.0.0.1 -p 15433 -U postgres -d flora -f dev-seed.sql
-> ```
+> **Lean Seed profile (016-C):** default compose brings up **postgres only**. Enable optional dependencies with profiles: `--profile realtime` (Valkey) and/or `--profile search` (Meilisearch), and set `FLORA_MESSAGING__ENABLED=true` / `FLORA_SEARCH__ENABLED=true` accordingly. API starts in degraded/optional mode when disabled.
 
 ## 1) Start dependencies
 ```bash
+# Lean core (postgres only)
 docker compose up -d
+
+# Optional: include realtime/search
+# docker compose --profile realtime --profile search up -d
 ```
-Services (default): Postgres `127.0.0.1:5432` (user/pass/db `postgres`/`postgres`/`flora`), Valkey `127.0.0.1:6379`, Meilisearch `127.0.0.1:7700` (dev master key `dev-meilisearch-master-key`, per compose).
+Default services: Postgres `127.0.0.1:5432` (user/pass/db `postgres`/`postgres`/`flora`). Valkey `127.0.0.1:6379` and Meilisearch `127.0.0.1:7700` are profile-gated.
 
 ## 2) Configure environment
 ```bash
 cp .env.example .env
 # Ensure DB URL matches compose:
 # FLORA_DATABASE__POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/flora
-# Keep FLORA_JWT_SECRET consistent with the bootstrap token you use (see below).
+# Lean core: FLORA_SEARCH__ENABLED=false, FLORA_MESSAGING__ENABLED=false
+# Keep FLORA_APP__JWT_SECRET consistent with the bootstrap token you use (see below).
 ```
-> Note: `AppConfig` default secret in code is `dev-secret-change-in-production` when `FLORA_JWT_SECRET` is unset, while `.env.example` sets `change-me-to-a-random-secret-at-least-32-characters-long`. Use **one** secret consistently for minting/validation. If you changed compose host ports, update URLs accordingly.
+> Note: use **one** JWT secret consistently for minting/validation. If you changed compose host ports, update URLs accordingly.
 
 ## 3) Run API (applies migrations on startup)
 ```bash
 cargo run -p flora-api
 ```
-`flora-api` connects to Postgres and runs migrations automatically (`flora_core::migrations::run_migrations`).
+`flora-api` connects to Postgres and runs migrations automatically (`flora_core::migrations::run_migrations`) in a single init path.
 
 ## 4) Load seed data
 With host `psql`:
@@ -75,11 +59,11 @@ Insert a fixed active pre-selection session for Alice (nil org, jti `018f0000-00
 PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d flora -f scripts/dev-smoke-session.sql
 ```
 
-Use a matching pre-signed JWT for that session (claims: sub=Alice, jti as above, organization_id=nil, email=alice@acme.test). Pick the token that matches your `FLORA_JWT_SECRET`:
+Use a matching pre-signed JWT for that session (claims: sub=Alice, jti as above, organization_id=nil, email=alice@acme.test). Pick the token that matches your `FLORA_APP__JWT_SECRET`:
 
-- **If `FLORA_JWT_SECRET=change-me-to-a-random-secret-at-least-32-characters-long` (.env.example):**
+- **If `FLORA_APP__JWT_SECRET=change-me-to-a-random-secret-at-least-32-characters-long` (.env.example):**
   `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJqdGkiOiIwMThmMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcmdhbml6YXRpb25faWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImFsaWNlQGFjbWUudGVzdCIsImV4cCI6MTc5NDc4NzIwMCwiaWF0IjoxNzYzMjUxMjAwLCJ2ZXIiOjF9.AgxYRUAu7SpJ4N1HPw_dz4tp6f-YWhNZTdDL2DP1Yq4`
-- **If `FLORA_JWT_SECRET=dev-secret-change-in-production` (code default, unset env):**
+- **If `FLORA_APP__JWT_SECRET=dev-secret-change-in-production` (legacy default, unset env):**
   `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJqdGkiOiIwMThmMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcmdhbml6YXRpb25faWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImFsaWNlQGFjbWUudGVzdCIsImV4cCI6MTc5NDc4NzIwMCwiaWF0IjoxNzYzMjUxMjAwLCJ2ZXIiOjF9.zPbSy7mxjtwpa6nUH0TMuKoMFEuSPl_srbZz2QVTibQ`
 
 Export it for the smoke script:
@@ -101,11 +85,17 @@ Expected behavior:
 
 **Known semantics (NV/nuance):** `GET /api/v1/tasks` currently lists tasks assigned to the authenticated user in the org (assignee-scoped). A task created via this API defaults to no assignee, so it may not appear in the assignee-scoped list even when creation succeeds; verify creation by the create response (and/or DB) rather than relying solely on list-after-create.
 
+## 7) Minimal backup/restore basics (016-C)
+- **Postgres (authoritative):** schedule off-host `pg_dump -Fc` (and globals if needed). Keep retention (e.g. 7 daily / 4 weekly) and periodically restore into a disposable PG18 instance, run migrations/smoke, and verify data.
+- **Storage:** back up `FLORA_STORAGE__LOCAL_PATH` (uploaded blobs when implemented) alongside DB snapshots as appropriate.
+- **Valkey/Meilisearch:** treat as optional/rebuildable caches/indexes in lean Seed profiles; primary recovery focus is Postgres + storage.
+- **NV:** restore drills, off-host retention automation, and 2vCPU/4GB load/OOM validation not executed in this cycle.
+
 ## Cleanup
 ```bash
 docker compose down -v
 ```
 
 ## CI / NV notes
-- CI (`.github/workflows/rust.yml`) runs build/test without Postgres/Valkey/Meilisearch; DB-integrated runtime smoke is **NV** in CI and was **NV** in this authoring environment.
+- CI (`.github/workflows/rust.yml`) runs build/test without Postgres/Valkey/Meilisearch; DB-integrated runtime smoke is **NV** in CI unless run against a provisioned Postgres service.
 - Contract tests for `select-organization` that require no live DB (missing auth, nil org validation) run in `cargo test -p flora-tests`.

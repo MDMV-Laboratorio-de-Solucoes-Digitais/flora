@@ -27,21 +27,23 @@ async fn main() -> anyhow::Result<()> {
     let config = flora_core::config::Config::load()?;
     config.validate()?;
 
-    // Connect to PostgreSQL and run migrations
+    // Connect to PostgreSQL and run migrations (single init path)
     let pool = create_pool(&config).await?;
     run_migrations(&pool).await?;
 
-    // Build application state with DB and Valkey connections
-    let app_state = AppState::new(config.clone()).await?;
+    // Build application state with DB and optional capabilities
+    let app_state = AppState::new(pool, config.clone()).await?;
 
     // Build router and start server
     let listener =
         tokio::net::TcpListener::bind(format!("{}:{}", config.app.host, config.app.port)).await?;
 
     tracing::info!(
-        "Flora API listening on http://{}:{}",
+        "Flora API listening on http://{}:{} (search={}, messaging={})",
         config.app.host,
-        config.app.port
+        config.app.port,
+        app_state.search_service.is_some(),
+        app_state.messaging_service.is_some()
     );
 
     axum::serve(listener, routes::create_router(app_state)).await?;

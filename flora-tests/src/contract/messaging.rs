@@ -88,11 +88,7 @@ mod db_messaging {
             notification_service: Arc::new(NotificationService::new(Arc::clone(
                 &notification_repo,
             ))),
-            search_service: Arc::new(flora_search::SearchService::new(
-                &config.search.url,
-                config.search.api_key.as_deref(),
-                &config.search.index_template,
-            )?),
+            search_service: None,
             messaging_service: None,
             valkey: None,
             oidc_transactions: OidcTransactionStore::new(None),
@@ -440,7 +436,9 @@ mod db_messaging {
         )
         .await?;
         anyhow::ensure!(status == StatusCode::CREATED, "post m1: {status} {m1}");
-        let m1_id = m1["id"].as_str().ok_or_else(|| anyhow::anyhow!("missing m1 id"))?;
+        let m1_id = m1["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing m1 id"))?;
 
         let (status, m2) = authed_json(
             app.clone(),
@@ -451,7 +449,9 @@ mod db_messaging {
         )
         .await?;
         anyhow::ensure!(status == StatusCode::CREATED, "post m2: {status} {m2}");
-        let m2_id = m2["id"].as_str().ok_or_else(|| anyhow::anyhow!("missing m2 id"))?;
+        let m2_id = m2["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing m2 id"))?;
 
         let (status, m3) = authed_json(
             app.clone(),
@@ -462,7 +462,9 @@ mod db_messaging {
         )
         .await?;
         anyhow::ensure!(status == StatusCode::CREATED, "post m3: {status} {m3}");
-        let m3_id = m3["id"].as_str().ok_or_else(|| anyhow::anyhow!("missing m3 id"))?;
+        let m3_id = m3["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing m3 id"))?;
 
         let (status, after) = authed_json(
             app,
@@ -476,9 +478,18 @@ mod db_messaging {
         let arr = after
             .as_array()
             .ok_or_else(|| anyhow::anyhow!("expected array: {after}"))?;
-        anyhow::ensure!(arr.len() >= 2, "expected >=2 messages after cursor: {after}");
-        anyhow::ensure!(arr[0]["id"] == m2_id, "expected m2 first in ASC catch-up: {after}");
-        anyhow::ensure!(arr[1]["id"] == m3_id, "expected m3 second in ASC catch-up: {after}");
+        anyhow::ensure!(
+            arr.len() >= 2,
+            "expected >=2 messages after cursor: {after}"
+        );
+        anyhow::ensure!(
+            arr[0]["id"] == m2_id,
+            "expected m2 first in ASC catch-up: {after}"
+        );
+        anyhow::ensure!(
+            arr[1]["id"] == m3_id,
+            "expected m3 second in ASC catch-up: {after}"
+        );
         anyhow::ensure!(
             arr.iter().all(|m| m["id"] != m1_id),
             "cursor message must be excluded: {after}"
