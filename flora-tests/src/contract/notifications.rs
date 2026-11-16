@@ -9,7 +9,10 @@ mod db_notifications {
     };
     use chrono::{Duration, Utc};
     use flora_api::{
-        routes::{channels::create_channels_router, notifications::create_notifications_router},
+        routes::{
+            channels::create_channels_router, notifications::create_notifications_router,
+            tasks::create_tasks_router,
+        },
         state::{AppState, oidc_transactions::OidcTransactionStore},
     };
     use flora_core::{
@@ -94,7 +97,6 @@ mod db_notifications {
     }
 
     struct SeedUser {
-        #[expect(dead_code, reason = "seed fixture retained for symmetry/debug")]
         user: User,
         token: String,
     }
@@ -395,6 +397,247 @@ mod db_notifications {
             arr.iter().all(|n| n["event_type"] != "Reply"),
             "self-reply must not create Reply notification: {notifs}"
         );
+        Ok(())
+    }
+
+    fn app_tasks_notifications(state: AppState) -> Router {
+        Router::new()
+            .nest("/tasks", create_tasks_router())
+            .nest("/notifications", create_notifications_router())
+            .with_state(state)
+    }
+
+    async fn seed_three_members(
+        state: &AppState,
+        config: &Config,
+    ) -> anyhow::Result<(Seed, SeedUser)> {
+        let base = seed_two_members(state, config).await?;
+        let uniq = Uuid::now_v7().simple().to_string();
+        let user_repo = PgUserRepository::new((*state.db_pool).clone());
+        let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+        let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+        let session_repo = PgSessionRepository::new((*state.db_pool).clone());
+
+        let role = role_repo
+            .find_by_organization_id(base.org.id)
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| anyhow::anyhow!("missing role"))?;
+        let user = user_repo
+            .create(User::new(
+                &format!("notif-c-{uniq}@example.test"),
+                "Notif Test User C",
+            ))
+            .await?;
+        let _ = membership_repo
+            .create(Membership::new(user.id, base.org.id, role.id))
+            .await?;
+        let jti = format!("jti-c-{}", Uuid::now_v7());
+        let now = Utc::now();
+        let _ = session_repo
+            .create(Session {
+                id: Uuid::now_v7(),
+                user_id: user.id,
+                organization_id: base.org.id,
+                jti: jti.clone(),
+                refresh_token_id: None,
+                client_ip: None,
+                user_agent: None,
+                expires_at: now + Duration::seconds(3600),
+                last_activity_at: now,
+                is_active: true,
+                created_at: now,
+                updated_at: now,
+            })
+            .await?;
+        let token = jwt::encode_token(
+            &FloraClaims::new(
+                user.id,
+                jti,
+                base.org.id,
+                &user.email,
+                config.app.session_ttl_secs,
+            ),
+            &config.app.jwt_secret,
+        );
+        Ok((base, SeedUser { user, token }))
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 020)"]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "020 DB-gated contract exercises create/self/no-op/reassign assignment flows end-to-end"
+    )]
+    async fn db_task_assignment_creates_notification_and_guards() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (seed, c) = seed_three_members(&state, &config).await?;
+        let app = app_tasks_notifications(state);
+        let b_id = seed.b.user.id.to_string();
+
+        // A creates task assigned to B -> B notified
+        let (status, task) = authed_json(
+            app.clone(),
+            "POST",
+            "/tasks".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({
+                "title": "Assigned task",
+                "workspace_id": seed.workspace.id,
+                "assignee_id": b_id,
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::CREATED,
+            "create task: {status} {task}"
+        );
+        let task_id = task["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing task id: {task}"))?
+            .to_string();
+
+        let (status, notifs_b) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.b.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "list b: {status} {notifs_b}");
+        let arr_b = notifs_b.as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            arr_b.iter().any(|n| n["event_type"] == "Assignment"
+                && n["target_id"] == task_id
+                && n["is_read"] == false),
+            "assignee should receive Assignment notification: {notifs_b}"
+        );
+
+        let (status, notifs_a) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "list a: {status} {notifs_a}");
+        let arr_a = notifs_a.as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            arr_a.iter().all(|n| n["event_type"] != "Assignment"),
+            "actor must not receive assignment notification: {notifs_a}"
+        );
+
+        // no-op update (same assignee provided) must not duplicate
+        let (status, updated) = authed_json(
+            app.clone(),
+            "PATCH",
+            format!("/tasks/{task_id}"),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({ "assignee_id": b_id, "title": "Assigned task renamed" })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "noop update: {status} {updated}");
+        let (status, notifs_b2) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.b.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "list b2: {status} {notifs_b2}");
+        let assign_count_b = notifs_b2
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|n| n["event_type"] == "Assignment" && n["target_id"] == task_id)
+            .count();
+        anyhow::ensure!(
+            assign_count_b == 1,
+            "no-op assignment update must not duplicate notification: {notifs_b2}"
+        );
+
+        // reassign to C -> C notified
+        let c_id = c.user.id.to_string();
+        let (status, reassigned) = authed_json(
+            app.clone(),
+            "PATCH",
+            format!("/tasks/{task_id}"),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({ "assignee_id": c_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "reassign: {status} {reassigned}");
+        let (status, notifs_c) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &c.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "list c: {status} {notifs_c}");
+        let arr_c = notifs_c.as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            arr_c
+                .iter()
+                .any(|n| n["event_type"] == "Assignment" && n["target_id"] == task_id),
+            "new assignee should receive Assignment notification: {notifs_c}"
+        );
+
+        // self-assignment on create must not notify actor
+        let (status, self_task) = authed_json(
+            app.clone(),
+            "POST",
+            "/tasks".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            Some(json!({
+                "title": "Self assigned",
+                "workspace_id": seed.workspace.id,
+                "assignee_id": seed.a.user.id.to_string(),
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::CREATED,
+            "self task: {status} {self_task}"
+        );
+        let self_task_id = self_task["id"].as_str().unwrap_or_default().to_string();
+        let (status, notifs_a_self) = authed_json(
+            app,
+            "GET",
+            "/notifications?limit=50".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "list a self: {status} {notifs_a_self}"
+        );
+        let arr_a_self = notifs_a_self.as_array().cloned().unwrap_or_default();
+        anyhow::ensure!(
+            arr_a_self
+                .iter()
+                .all(|n| !(n["event_type"] == "Assignment" && n["target_id"] == self_task_id)),
+            "self-assignment must not create Assignment notification: {notifs_a_self}"
+        );
+
         Ok(())
     }
 }
