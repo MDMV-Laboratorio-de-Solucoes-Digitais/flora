@@ -119,6 +119,12 @@ pub async fn websocket_handler(
     headers: HeaderMap,
     Query(params): Query<WsTokenQuery>,
 ) -> Response {
+    // Reject present-but-unlisted/opaque origins before any auth or DB work.
+    if !origin_allowed(&headers, &state.config.app.cors_origins) {
+        tracing::warn!("WebSocket origin rejected");
+        return StatusCode::FORBIDDEN.into_response();
+    }
+
     // Validate session authority first so invalid auth returns 401 (not 426).
     let (user_id, org_id) = match extract_org_context(&headers, &params, &state).await {
         Ok(ctx) => ctx,
@@ -153,6 +159,22 @@ fn resolve_ws_token<'a>(headers: &'a HeaderMap, params: &'a WsTokenQuery) -> Opt
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "))
         .or(params.token.as_deref())
+}
+
+/// Returns `true` when a handshake carries no `Origin` (native/non-browser client)
+/// or when a present `Origin` exactly matches the configured CORS allowlist.
+///
+/// `Origin: null` (opaque origin) is denied unless explicitly configured. `AppConfig::validate()`
+/// forbids `*`, so this predicate and `cors_layer` cannot disagree about any configured entry.
+#[must_use]
+fn origin_allowed(headers: &HeaderMap, allowed: &[String]) -> bool {
+    let Some(value) = headers.get(axum::http::header::ORIGIN) else {
+        return true;
+    };
+    let Ok(value) = value.to_str() else {
+        return false;
+    };
+    allowed.iter().any(|entry| entry.as_str() == value)
 }
 
 /// Extracts user and organization context from a verified, DB-backed session.
@@ -555,5 +577,43 @@ mod tests {
         let params = WsTokenQuery { token: None };
 
         assert_eq!(resolve_ws_token(&headers, &params), None);
+    }
+
+    #[test]
+    fn origin_allowed_accepts_allowlisted_origins() {
+        let mut headers = HeaderMap::new();
+        let _ = headers.insert(
+            axum::http::header::ORIGIN,
+            axum::http::HeaderValue::from_static("tauri://localhost"),
+        );
+        let allowed = vec![
+            "http://127.0.0.1:4173".to_owned(),
+            "tauri://localhost".to_owned(),
+            "http://tauri.localhost".to_owned(),
+        ];
+        assert!(origin_allowed(&headers, &allowed));
+    }
+
+    #[test]
+    fn origin_allowed_rejects_unlisted_and_null_origins() {
+        let allowed = vec!["http://127.0.0.1:4173".to_owned()];
+        for raw in ["https://evil.example", "null"] {
+            let mut headers = HeaderMap::new();
+            let _ = headers.insert(
+                axum::http::header::ORIGIN,
+                axum::http::HeaderValue::from_static(raw),
+            );
+            assert!(
+                !origin_allowed(&headers, &allowed),
+                "origin {raw} must be denied"
+            );
+        }
+    }
+
+    #[test]
+    fn origin_allowed_accepts_missing_origin() {
+        let headers = HeaderMap::new();
+        let allowed = vec!["http://127.0.0.1:4173".to_owned()];
+        assert!(origin_allowed(&headers, &allowed));
     }
 }

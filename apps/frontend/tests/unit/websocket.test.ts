@@ -42,7 +42,9 @@ class FakeWebSocket {
 let sockets: FakeWebSocket[] = [];
 
 vi.mock('$lib/api/client', () => ({
-	API_BASE_URL: 'http://localhost:3000'
+	API_BASE_URL: 'http://localhost:3000',
+	resolveWsBaseUrl: (ws: string | null | undefined, api: string) =>
+		typeof ws === 'string' && ws.trim().length > 0 ? ws.trim() : api
 }));
 
 vi.mock('$lib/state/MessageStore.svelte', () => ({

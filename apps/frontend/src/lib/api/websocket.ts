@@ -1,5 +1,5 @@
 import { authState } from '../state/AuthState.svelte';
-import { API_BASE_URL } from './client';
+import { API_BASE_URL, resolveWsBaseUrl } from './client';
 import { ApiClient } from './client';
 import { messageStore } from '../state/MessageStore.svelte';
 import { toMessage, type ApiMessage } from './mappers';
@@ -124,7 +124,8 @@ export class WsClient {
 
 		this.manualClose = false;
 		this.authFailureHandled = false;
-		const url = buildWsUrl(API_BASE_URL, authState.token);
+		const wsBase = resolveWsBaseUrl(globalThis.__FLORA_CONFIG__?.wsBaseUrl, API_BASE_URL);
+		const url = buildWsUrl(wsBase, authState.token);
 		this.socket = new WebSocket(url);
 
 		this.socket.addEventListener('open', () => {
