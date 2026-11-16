@@ -1,6 +1,6 @@
 # Release: 026 — Executable Seed verification gate
 
-**Branch/PR:** `feat/026-seed-ci-gate` -> `dev` (pending)  
+**Branch/PR:** `feat/026-seed-ci-gate` -> `dev`, PR #232 (merged as `9a60766f`)  
 **Baseline:** `github/dev@d09d39c1`
 
 ## Delivered
@@ -10,7 +10,7 @@
 - Phantom OTel/openidconnect workspace declarations removed (no code used them).
 
 ## Evidence
-Local verification recorded in `validate.md`; PR CI result to be appended after green.
+Local verification green; PR #232 all required checks green (runs 43875417574 / 43875425127); merged at `9a60766f`.
 
 ## NV / follow-ups (027)
 cargo-vet store/imports, advisories job/SBOM, PGMQ/Valkey scaffolding retirement, browser e2e (fresh JWT needed), Tauri deferral record, full OTLP exporter, 2vCPU/4GB load/restore.

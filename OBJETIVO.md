@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 027 candidato — consolidação final Seed)
 
-- **Ciclo 026 (PR em preparação/CI):** gate Seed executável em CI (`fmt`, `cargo clippy --lib --bins -D warnings`, `cargo deny check bans licenses sources`), `deny.toml` corrigido para `AGPL-3.0-or-later`, constituição v1.3.0 mechanism-neutral, drift de ROADMAP/AGENTS fechado, ciclo 025 finalizado e deps OTel fantasmas removidas.
+- **Ciclo 026 (PR #232, CI verde, mergeado em `dev@9a60766f`):** gate Seed executável em CI (`fmt`, `cargo clippy --lib --bins -D warnings`, `cargo deny check bans licenses sources`), `deny.toml` corrigido para `AGPL-3.0-or-later`, constituição v1.3.0 mechanism-neutral, drift de ROADMAP/AGENTS fechado, ciclo 025 finalizado e deps OTel fantasmas removidas.
 
 1. **P0 — Transporte de notificações:** retirar/gatear scaffolding PGMQ/Valkey não conectado (`flora-notifications`, `pgmq_queue`, XADD) em PR behavior-preserving, com gatilhos de reativação.
 2. **P1 — Supply chain:** tornar `supply-chain/` versionado e adicionar 3 imports ao cargo-vet como gate de nova dependência; job `advisories` separado (RustSec via rede) e SBOM na release.
