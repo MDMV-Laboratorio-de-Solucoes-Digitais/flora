@@ -1,6 +1,6 @@
 # Release: 031 — Seed release readiness and integrity closure
 
-**Branch/PR:** `feat/031-release-sbom` -> `dev` (pending)  
+**Branch/PR:** `feat/031-release-sbom` -> `dev`, PR #242 (merged as `aaa45536`)  
 **Baseline:** `github/dev@856a334`
 
 ## Delivered
@@ -10,7 +10,7 @@
 - Six R1 research docs recorded.
 
 ## Evidence
-See `.specify/validations/031-release-sbom/validate.md`. PR CI result appended after green.
+See `.specify/validations/031-release-sbom/validate.md`. PR #242 all checks green (runs 43952410204 / 43952419180); merged at `aaa45536`.
 
 ## NV / follow-ups (032)
 CORS allowlist, cargo-vet blocking + CODEOWNERS, load/restore, OTLP; actual tag/release (explicit authorization required), SBOM dry run.
