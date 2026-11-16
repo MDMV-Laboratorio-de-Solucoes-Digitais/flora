@@ -44,19 +44,14 @@ Princípios diretores:
 - **Frontend:** `apps/frontend` (Svelte 5) é o alvo canônico; `apps/web` legado/importado não-canônico. Ciclo 009 adiciona fatia mínima (callback `state`, select-org + rotação de token, guards, workspace→task via API).
 - **Dev/infra:** `docker-compose.yml` (PostgreSQL 18/Valkey/Meilisearch, alinhado a `uuidv7()` nativo da migração inicial, ciclo 010), workflows CI Rust/frontend; CI Rust inclui job `db-tests` (Postgres) para testes DB-backed `select-organization` (ciclo 009).
 
-### 3.3 Verificado localmente (evidência executada, 2026-11-15)
-- `cargo check -p flora-api -p flora-core -p flora-tests` — **ok**.
-- `cargo fmt --all -- --check` — **ok**.
-- `cargo test -p flora-core --lib` — **8 passed, 0 failed**.
-- `cargo test -p flora-tests --lib` — **56 passed, 5 ignored** (DB-backed `select-organization` ignorados por padrão).
-- DB-backed `select-organization` (env-gated/`#[ignore]`): `FLORA_DATABASE__POSTGRES_URL=... cargo test -p flora-tests contract::auth::db_select_organization -- --ignored --test-threads=1` — **5 passed** (Postgres 18, migrações aplicadas).
-- Smoke integrado `docs/dev-smoke.md` (`select org → workspace → task`) — **executado (rc=0)** em stack efêmera com portas alternativas (Postgres 18:15432, Valkey 16379, Meilisearch 17700), seed + `scripts/dev-smoke-session.sql` + `test-flora.sh`: select-org 200/token org-scoped, workspaces listados, task criada.
+### 3.3 Verificado localmente (evidência executada, 2026-11-15/16)
+- Baseline Rust (recorrente): `cargo fmt --check`, `cargo check -p flora-api -p flora-core -p flora-tests`, `test -p flora-core --lib`, `test -p flora-tests --lib` verdes nos ciclos; DB-backed contracts via jobs/testes env-gated em Postgres 18 descartável quando aplicável.
+- **Ciclo 010:** compose/docs reconciliados para PostgreSQL 18 (`uuidv7` nativo, sem editar migração aplicada); smoke integrado `docs/dev-smoke.md` **rc=0** em stack PG18 isolada (alt-port por conflito externo em 5432); checks frontend determinísticos ok. **PR #213 mergeado.**
+- **Ciclo 011 (PR #214, CI 6/6 verde, mergeado):** contrato `POST /tasks` (description/assignee_id), `ApiError` tipado (401 com `lockSession()`), `setOrganization` limpa flags, guard `/tasks`, testes/docs. `dev@598f08152`.
+- **Ciclo 012 (PR #215, CI 6/6 verde incl. `db-tests`, mergeado):** autoridade de sessão DB-backed (`jti`) nos extractors HTTP, preservação de corpo 401 no cliente, 7 casos DB de sessão. `dev@8028aa28e`.
+- **Ciclo 013 (PR #216, CI 6/6 verde incl. `contract::messaging::db_`, mergeado):** fatia REST `workspace→canal→mensagem` (listar/criar canais por workspace, post/list mensagens com `thread_id`, path tenancy C19), wiring frontend mínimo com DTOs/IDs reais, ajuste `ChannelType` sqlx para schema VARCHAR; 3 testes DB-gated messaging (PG18 alt-port). `dev@530d63fea`.
 
-- **Ciclo 010 (local, 2026-11-15):** compose/docs reconciliados para PostgreSQL 18 (`uuidv7` nativo) sem alterar migração aplicada; bootstrap token do `docs/dev-smoke.md` corrigido. Smoke integrado `docs/dev-smoke.md` (`select org → workspace → task`) — **executado (rc=0)** em stack PG18 isolada com override de portas (`15433/16379/17700`) por conflito externo em `5432` (NV ambiental para porta padrão), seed + `scripts/dev-smoke-session.sql` + `test-flora.sh`: select-org 200/token org-scoped, workspaces listados, task criada. Verificação frontend determinística (`apps/frontend`, bun 1.4.4): `check`, `lint`, `test:unit -- --run --project server` (14 passed) e `build` **ok** (ajuste mínimo: inclusão de `tests/**` no projeto Vitest server, excluindo `tests/e2e/**`).
-
-- **Ciclo 011 (mergeado, PR #214, CI remoto 6/6 verde, 2026-11-16):** `POST /api/v1/tasks` passa a persistir `description`/`assignee_id`; `ApiClient` lança `ApiError` tipado preservando status/código/campo/corpo em erros não-401 (401 mantém `lockSession()`; corpo no 401 é corrigido no ciclo 012); `AuthState.setOrganization` limpa `isInvalidated`; guard auth/org em `/tasks`; testes frontend determinísticos atualizados; `docs/dev-smoke.md` com override de portas. `dev@598f08152` sincronizado em `origin`.
-
-**NV/não exercitado:** smoke integrado do ciclo 011 (porta `5432` externa ocupada; fluxo inalterado e evidenciado no 010); reset de volumes PG16→PG18 em ambiente não descartável; runtime e2e com OIDC/JWKS real; revalidação DB de sessão no extrator (follow-up do 012).
+**NV/não exercitado:** smoke integrado em porta padrão (5432 ocupada externamente em ciclos recentes); autoridade de sessão DB no handshake `/ws` e alinhamento de protocolo/realtime fanout; `/messages/sync`; anexos/binários; DMs UX; wiring busca/notificações; OIDC/JWKS e browser e2e; perfil Seed/VPS com serviços opcionais realmente desacoplados/limitados.
 
 ### 3.4 Gaps prioritários (o que falta para o MVP P0)
 - **Segurança/tenancy:** unificar autenticação/autorização/contexto de tenant nas rotas críticas (reduzir dependência de headers `X-User-ID`/`X-Organization-ID` não validados) e fechar lacunas OIDC/PKCE/JWKS conforme aplicável; session authority consistente no extrator.

@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclo 011 entregue; ciclo 012 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–013 entregues/mergeados; ciclo 014 em preparação)  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-011`, `.specify/assessments/003-011`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -30,18 +30,19 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x/~] Ciclo 009: testes DB-backed env-gated/`#[ignore]` para `select-organization`, job CI `db-tests` (Postgres), smoke integrado evidenciado (rc=0, alt-port/pg18) e fatia mínima frontend (PR #212, mergeado).
 - [x] Ciclo 010: compose/docs reconciliados para PostgreSQL 18 (`uuidv7` nativo, sem editar migração aplicada), `docs/dev-smoke.md` corrigido (token bootstrap), smoke integrado rc=0 em stack PG18 equivalente (alt-port por conflito externo), checks determinísticos frontend ok (`check/lint/test:unit server/build`) e artefatos SDD/validação/release criados. **PR #213 mergeado, CI verde.**
 - [x] Ciclo 011: contrato `POST /tasks` (description/assignee_id), `ApiError` tipado no frontend, `setOrganization` limpa flags, guard `/tasks`, testes determinísticos e override de portas documentado. **PR #214 mergeado, CI 6/6 verde; `dev@598f08152` sincronizado/espelhado.**
-- [~] Ciclo 012 (em preparação): session authority DB-backed (`jti` por request), correção do corpo de erro 401 no cliente, cobertura DB de revogação/expiração/mismatch e auditoria do perfil Seed/VPS.
+- [x] Ciclo 012: session authority DB-backed (`jti`) nos extractors HTTP, preservação de corpo 401 no cliente, cobertura DB + CI. **PR #215 mergeado, CI 6/6 verde.**
+- [x] Ciclo 013: fatia REST `workspace→canal→mensagem` (listar/criar canais, post/list com `thread_id`, path tenancy), wiring frontend mínimo, testes DB-gated messaging + CI. **PR #216 mergeado, CI 6/6 verde.**
+- [~] Ciclo 014 (em preparação/R1): autoridade de sessão/alinhamento de protocolo no WebSocket e/ou endurecimento do perfil Seed/VPS (serviços opcionais, limites, operabilidade) conforme decisão 80/20.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 012)
-1. **Session authority (012, P0):** validar `jti`/sessão no PostgreSQL por request protegido (ativa, não expirada, user/org coerentes), sem cache inicial; testes DB-backed de revogação/expiração/mismatch; atualizar job `db-tests`.
-2. **Contrato de erro frontend:** preservar corpo/código em 401 (parse antes do lock) e cobrir com teste determinístico.
-3. **Auth/contexto/tenancy consistente (contínuo):** reduzir confiança em headers crus, alinhar contratos frontend↔backend no caminho feliz.
-4. **Compatibilidade dev/compose operacional (follow-up 010):** validar caminho documentado em host sem conflito de porta padrão e reforçar orientações de reset de volume PG16→18 quando aplicável.
-5. **Fatia vertical e2e mínima:** `workspace → canal → mensagem` e/ou tarefa com persistência, leitura e realtime mínimo verificáveis em dev.
-6. **Arquivos básicos reais e wiring essencial:** upload/download binário, quotas coerentes, indexação de busca e eventos→notificações para mutações core.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 014)
+1. **WebSocket (014 candidato):** autoridade de sessão DB-backed no handshake/conexão, alinhamento de path/protocolo/payload com frontend e semântica mínima de revogação/expiração/tenant isolation (reuso de lógica HTTP onde viável), com testes determinísticos.
+2. **Realtime mínimo confiável:** entrega/fanout básico para o slice de mensagens persistidas (ou alternativa enxuta VPS: polling/SSE/Postgres-notify) com evidência.
+3. **Seed/VPS operabilidade:** tornar Meilisearch/Valkey realmente opcionais por perfil/boot, limites de recursos no compose, healthchecks/backup mínimos e coerência de pool/config.
+4. **Fatia vertical e2e mínima:** consolidar `workspace → canal → mensagem` (REST+realtime mínimo) e/ou tarefa com evidência em dev/CI.
+5. **Arquivos básicos reais e wiring essencial:** upload/download binário, quotas coerentes, indexação de busca e eventos→notificações para mutações core.
 
 ### P1 — Consolidação do Seed
 6. **Postgres-first opcionalidade:** FTS/jobs/realtime simples; tornar Valkey/Meilisearch/OIDC realmente opcionais por perfil.

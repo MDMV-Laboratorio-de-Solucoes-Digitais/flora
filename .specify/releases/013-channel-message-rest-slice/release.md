@@ -1,6 +1,6 @@
 # Release: 013 — Channel & Message REST Slice (80/20)
 
-**Target:** `dev` (PR to merge)  
+**Target:** `dev` (merged)  
 **Branch:** `feat/013-channel-message-rest-slice`  
 **Date:** 2026-11-16
 
@@ -15,10 +15,9 @@ Delivers the 013 REST-first workspace→channel→message slice on existing Post
 See `.specify/validations/013-channel-message-rest-slice/validate.md` for commands and results.
 
 ## Risks / NV
-- Remote CI pending; DB smoke used disposable PG18 alt port locally.
+- DB evidence local em PG18 descartável (porta alt 15434; 5432 ocupada externamente). CI remoto verde no PR #216.
 - WS authority/protocol, realtime delivery, attachments, OIDC/browser e2e remain deferred (014+ candidates per R1 research).
 
-## Merge plan
-1. Push branch, open PR to `dev`, wait for CI green (incl. db-tests with messaging).
-2. Merge (non-blind), fast-forward local `dev`, push `origin/dev`, delete feature branch, keep only `dev`/`main`.
-3. Mark T015 complete and update OBJETIVO/ROADMAP with next cycle definition.
+## Merge / CI evidence
+- PR #216 mergeado (CI 6/6 verde: CI build x2, Rust build x2, db-tests x2 incl. `contract::messaging::db_`).
+- `dev@530d63fea` sincronizado em `github/dev` e espelhado em `origin/dev`; branch de feature removida local/remota (GitHub); mantidos `dev`/`main`.

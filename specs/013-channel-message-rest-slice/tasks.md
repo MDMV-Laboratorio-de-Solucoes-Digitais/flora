@@ -6,4 +6,4 @@
 - [x] T012 Frontend: ChatLayout/ThreadReply/channels page + layout recents (minimal slice).
 - [x] T013 DB-gated messaging contract tests + CI wiring.
 - [x] T014 Deterministic verification (Rust + frontend) e evidência.
-- [ ] T015 SDD validate/release, PR para `dev`, CI verde, merge/sync.
+- [x] T015 SDD validate/release, PR para `dev`, CI verde (#216, 6/6), merge/sync (`dev@530d63f`, `origin/dev` espelhado).
