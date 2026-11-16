@@ -35,7 +35,7 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 - [x] License: AGPL-3.0-or-later (full text + NOTICE; dependency-audit policy in `deny.toml`)
 
 ### Development Phases
-- **FASE 0**: Licensing + dependency audit (license complete; CI audit gate NV)
+- **FASE 0**: Licensing + dependency audit (license complete; `cargo deny` gate enforced in CI — PR #232)
 - **FASE 1**: Workspace/Identity
 - **FASE 2**: Messaging
 - **FASE 3**: Tasks
@@ -67,7 +67,13 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 
 ## ⚙️ Local Development (CI)
 
-Current repo state (prefer executable config over this list): Rust CI runs `cargo build/test/release` (`.github/workflows/rust.yml`), frontend CI targets `apps/frontend` (`.github/workflows/ci.yml`). `lefthook`, `cargo-deny`, `cargo-vet`, and `cargo-nextest` configs may not be present in this checkout despite earlier plans; use `cargo fmt --all`, `cargo clippy --workspace --all-targets -- -D warnings`, and crate/app-specific test commands as documented in `AGENTS.md` and `specs/`.
+Current repo state (prefer executable config over this list): Rust CI (`.github/workflows/rust.yml`) runs
+`cargo fmt --all -- --check`, strict `cargo clippy --workspace --lib --bins -- -D warnings`,
+`cargo deny check bans licenses sources`, `cargo build`/`cargo test` and six PostgreSQL 18 DB-gated suites;
+frontend CI targets `apps/frontend` (`.github/workflows/ci.yml`). `cargo-deny` config is `deny.toml`;
+`cargo-vet` store is gitignored (NV), and `lefthook`/`cargo-nextest` are absent. The stricter
+`cargo clippy --workspace --all-targets -- -D warnings` is currently blocked by test-only `expect_used` in
+parallel work (NV) — do not revert it.
 
 ## ⚖️ License
 

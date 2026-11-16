@@ -254,14 +254,14 @@
 ### Implementation for User Story 8
 
 - [X] T087 [P] [US8] Create Notification model and repository in `flora-core/src/models/notification.rs` and `flora-core/src/repositories/notification_repository.rs`
-- [X] T088 [US8] Implement notification dispatch using Valkey streams with delivery guarantees (p95 < 3s/7s/15s) in `flora-notifications/src/lib.rs`
-- [X] T088.1 [US8] Add queue and retry for failed deliveries (max 3 attempts) in `flora-notifications/src/lib.rs`
+- [ ] T088 [US8] ~~Valkey-stream dispatch with delivery guarantees~~ Superseded by ADR-0001: Seed uses in-app Postgres notifications with DB-enforced dedup; PGMQ/Valkey deferred. Crate retired in cycle 027.
+- [ ] T088.1 [US8] ~~Queue and retry for failed deliveries~~ Deferred with PGMQ/Valkey (ADR-0001).
 - [X] T089 [US8] Add notification endpoints in `flora-api/src/routes/notifications.rs`
 - [X] T090 [US8] Implement user-configurable notification preferences (urgent vs. non-urgent)
 - [X] T090.1 [US8] Add explicit notification types (mentions, task assignments, replies, file shares, content updates) in `flora-core/src/models/notification.rs`
 - [X] T091 [US8] Add validation for notification types
 - [X] T092 [US8] Add logging for notification events
-- [X] T092.1 [US8] Add alerting for undelivered notifications in `flora-notifications/src/lib.rs`
+- [ ] T092.1 [US8] ~~Alerting for undelivered notifications~~ Deferred with PGMQ/Valkey (ADR-0001).
 
 ---
 
