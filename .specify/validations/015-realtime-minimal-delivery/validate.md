@@ -26,3 +26,6 @@
 - Local DB-gated execution may be blocked by host port/env conflicts (CI provides Postgres 18 service).
 - Browser/multi-client realtime e2e, load/concurrency on 2vCPU/4GB, default-port smoke, post-handshake WS revocation window.
 - Valkey/LISTEN/NOTIFY/multi-node delivery, binary files (015-B), Seed/VPS operability refactors (015-C).
+
+## CI / merge
+- PR #218: CI 6/6 verde (incl. db-tests auth/messaging/websocket). Mergeado e sincronizado em `dev@ec0be14e0` / `origin/dev`.

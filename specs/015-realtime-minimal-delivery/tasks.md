@@ -5,4 +5,4 @@
 - [x] T015.3 Implement WS subscription registry and authorized fanout delivery; align WS envelopes with canonical message payloads (keep handshake/auth guards).
 - [x] T015.4 Align frontend WS client/store/mappers/chat for idempotent upsert, subscribe/unsubscribe, reconnect catch-up, and coherent REST+realtime flow.
 - [x] T015.5 Add/update deterministic and DB-gated contract tests for cursor catch-up and realtime/fanout-relevant behavior; keep regressions green.
-- [ ] T015.6 Run verification (fmt/clippy/tests, DB-gated on disposable PG18, frontend checks), record SDD evidence, open PR to `dev`, ensure CI green, merge/sync, update OBJETIVO/ROADMAP.
+- [x] T015.6 Run verification (fmt/clippy/tests, DB-gated via CI, frontend checks), SDD evidence recorded, PR #218 para `dev` CI verde (6/6), mergeado/sync (`dev@ec0be14e0`, `origin/dev`), OBJETIVO/ROADMAP atualizados.

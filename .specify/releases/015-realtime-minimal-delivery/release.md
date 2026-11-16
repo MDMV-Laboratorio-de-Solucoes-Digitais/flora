@@ -1,6 +1,6 @@
 # Release: 015 — Minimal Realtime Delivery & Catch-up
 
-**Target:** `dev` (PR to merge)
+**Target:** `dev` (merged)
 
 ## Summary
 Implements cycle 015 slice A: Postgres-authoritative minimal realtime delivery and deterministic catch-up for persisted channel messages on single-node Seed profile.
@@ -23,3 +23,7 @@ Implements cycle 015 slice A: Postgres-authoritative minimal realtime delivery a
 ## Risks / NV
 - Single-node best-effort push; lag/drop recovery depends on REST catch-up. No post-handshake WS revalidation.
 - No browser/multi-client e2e or 2vCPU/4GB load evidence. Valkey/LISTEN/NOTIFY deferred.
+
+## Merge / CI evidence
+- PR #218 mergeado em `dev` (CI 6/6 verde: CI build, Rust CI build x2, db-tests x2 incl. `contract::auth::db_`, `contract::messaging::db_` com `db_message_catch_up_after_cursor`, `contract::websocket::db_`).
+- `dev@ec0be14e0` sincronizado em `github/dev` e espelhado em `origin/dev`; branch de feature removida (local/remota GitHub); mantidos `dev`/`main`.

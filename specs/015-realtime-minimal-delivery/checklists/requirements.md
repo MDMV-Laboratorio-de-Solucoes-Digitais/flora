@@ -5,4 +5,4 @@
 - [x] WS auth/tenant isolation preserved; in-process fanout with bounded behavior
 - [x] Frontend idempotent upsert + subscribe/reconnect/catch-up aligned
 - [x] DB-gated and deterministic verification evidence recorded
-- [ ] PR to `dev`, CI green, merge/sync, only `dev`/`main`, docs updated
+- [x] PR #218 para `dev`, CI verde (6/6), merge/sync (`dev@ec0be14e0`, `origin/dev`), mantidos `dev`/`main`, docs atualizados

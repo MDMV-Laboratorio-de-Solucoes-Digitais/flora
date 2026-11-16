@@ -33,16 +33,17 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 012: session authority DB-backed (`jti`) nos extractors HTTP, preservação de corpo 401 no cliente, cobertura DB + CI. **PR #215 mergeado, CI 6/6 verde.**
 - [x] Ciclo 013: fatia REST `workspace→canal→mensagem` (listar/criar canais, post/list com `thread_id`, path tenancy), wiring frontend mínimo, testes DB-gated messaging + CI. **PR #216 mergeado, CI 6/6 verde.**
 - [x] Ciclo 014: autoridade de sessão DB-backed no handshake `/ws` + alinhamento de path/transporte/protocolo mínimo no frontend, testes DB-gated websocket + CI. **PR #217 mergeado, CI 6/6 verde.**
-- [~] Ciclo 015 (em preparação/R1): realtime/catch-up mínimo para mensagens persistidas, ou upload/download binário básico, ou hardening Seed/VPS (decisão 80/20 em andamento).
+- [x] Ciclo 015: realtime mínimo/catch-up para mensagens persistidas (slice A) — cursor `after` determinístico, hub/eventos canônicos in-process pós-commit, assinaturas/fanout WS e convergência frontend idempotente. **PR #218 mergeado, CI 6/6 verde.**
+- [~] Ciclo 016 (em preparação/R1): upload/download binário básico seguro (slice B) ou hardening Seed/VPS/operabilidade (slice C), conforme decisão 80/20.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
 
 ## 4) Backlog priorizado (80/20)
 
-### P0 — Seed utilizável e seguro (próximo foco, ciclo 015)
-1. **Realtime/catch-up mínimo (candidato A):** entrega mínima de atualizações para mensagens persistidas (fanout in-process WS ou SSE/notificação + catch-up REST determinístico por cursor), com dedupe/reconnect e evidência.
-2. **Arquivos básicos reais (candidato B):** upload/download binário seguro em disco local (multipart/streaming, path safety, limites, checksums, quotas/tenant) alinhado ao frontend.
-3. **Seed/VPS operabilidade (candidato C):** Meilisearch/Valkey opcionais no boot/config, limites/healthchecks/profiles no compose, alinhamento `FLORA_*`/pool, backup/restore mínimo.
-4. **Fatia vertical e2e mínima:** consolidar `workspace → canal → mensagem` (REST+realtime/catch-up mínimo) e/ou tarefa com evidência em dev/CI.
+### P0 — Seed utilizável e seguro (próximo foco, ciclo 016)
+1. **Arquivos básicos reais (candidato B):** upload/download binário seguro em disco local (multipart/streaming, path safety, limites, checksums, quotas/tenant) alinhado ao frontend.
+2. **Seed/VPS operabilidade (candidato C):** Meilisearch/Valkey opcionais no boot/config, limites/healthchecks/profiles no compose, alinhamento `FLORA_*`/pool, backup/restore mínimo.
+3. **Realtime/resiliência complementar:** lacunas remanescentes do slice 015 (revalidação pós-handshake, `/messages/sync`/replay ampliado, multi-cliente/e2e, semântica de deleção/catch-up) conforme evidência.
+4. **Fatia vertical e2e mínima:** consolidar `workspace → canal → mensagem` (REST+realtime/catch-up mínimo entregue) e/ou tarefa com evidência em dev/CI.
 5. **Wiring essencial:** indexação de busca e eventos→notificações para mutações core.
 
 ### P1 — Consolidação do Seed
