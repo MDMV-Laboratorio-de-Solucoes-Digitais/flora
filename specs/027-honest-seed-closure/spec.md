@@ -1,7 +1,7 @@
 # Feature Specification: 027 — Honest Seed closure
 
 **Branch**: `feat/027-honest-seed-closure`  
-**Status**: In progress  
+**Status**: Completed (PR #234)  
 **Assessment**: `.specify/assessments/027-next-vertical-slice/decision.md`
 
 ## Goal

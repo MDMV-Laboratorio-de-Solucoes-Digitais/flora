@@ -1,6 +1,6 @@
 # Release: 027 — Honest Seed closure
 
-**Branch/PR:** `feat/027-honest-seed-closure` -> `dev` (pending)  
+**Branch/PR:** `feat/027-honest-seed-closure` -> `dev`, PR #234 (merged as `044f40c6`)  
 **Baseline:** `github/dev@cda98041`
 
 ## Delivered
@@ -10,7 +10,7 @@
 - Six R1 research docs recorded.
 
 ## Evidence
-Local verification in `validate.md`; PR CI result appended after green.
+Local verification green; PR #234 all required checks green (runs 43881348717 / 43881348909 / 43881358827 / 43881358879); merged at `044f40c6`.
 
 ## NV / follow-ups (028)
 cargo-vet new-dependency gate, RustSec advisories/SBOM, browser e2e with fresh JWT, Tauri decision, OTLP exporter, 2vCPU/4GB validation.

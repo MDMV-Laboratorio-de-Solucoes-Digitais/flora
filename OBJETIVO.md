@@ -87,7 +87,7 @@ Princípios diretores:
 
 ## 5) Próximo 80/20 (ciclo 028 candidato — verificação ampliada)
 
-- **Ciclo 027 (PR em preparação/CI):** retirada do adapter PGMQ/Valkey não conectado, `TraceLayer` sem custo e fechamento do drift ADR/README/planos/specs.
+- **Ciclo 027 (PR #234, CI verde, mergeado em `dev@044f40c6`):** retirada do adapter PGMQ/Valkey não conectado, `TraceLayer` sem custo e fechamento do drift ADR/README/planos/specs.
 
 1. **P0 — cargo-vet como gate de nova dependência:** versionar `supply-chain/` (Hoje gitignored), adicionar 1 exceção `multer` + 3 imports, primeiro informativo e depois bloqueante; CODEOWNERS.
 2. **P1 — Advisory/SBOM:** job agendado OSV/Dependabot (sinal advisory, não gate) e CycloneDX em release.
