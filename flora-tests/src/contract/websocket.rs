@@ -95,6 +95,7 @@ mod db_websocket {
             messaging_service: None,
             valkey: None,
             oidc_transactions: OidcTransactionStore::new(None),
+            realtime_hub: flora_api::realtime::create_hub(),
         })
     }
 

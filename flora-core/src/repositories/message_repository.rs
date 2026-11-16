@@ -49,7 +49,7 @@ impl MessageRepository for PgMessageRepository {
                     is_edited, is_deleted, created_at, updated_at
              FROM messages
              WHERE channel_id = $1 AND is_deleted = false
-             ORDER BY created_at DESC
+             ORDER BY created_at DESC, id DESC
              LIMIT $2",
         )
         .bind(channel_id)
@@ -58,6 +58,48 @@ impl MessageRepository for PgMessageRepository {
         .await
         .map_err(Error::from_sqlx)?;
         Ok(crate::models::Page::new(messages, None))
+    }
+
+    async fn find_by_channel_id_after(
+        &self,
+        channel_id: Uuid,
+        after_id: Uuid,
+        limit: usize,
+    ) -> Result<Vec<Message>> {
+        let reference = sqlx::query_as::<_, Message>(
+            "SELECT id, channel_id, organization_id, sender_id, content, thread_id,
+                    is_edited, is_deleted, created_at, updated_at
+             FROM messages
+             WHERE id = $1",
+        )
+        .bind(after_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?
+        .ok_or_else(|| Error::MessageNotFound(after_id.to_string()))?;
+
+        if reference.channel_id != channel_id {
+            return Err(Error::MessageNotFound(after_id.to_string()));
+        }
+
+        let limit = i64::try_from(limit.min(200)).unwrap_or(200);
+        let messages = sqlx::query_as::<_, Message>(
+            "SELECT id, channel_id, organization_id, sender_id, content, thread_id,
+                    is_edited, is_deleted, created_at, updated_at
+             FROM messages
+             WHERE channel_id = $1
+               AND (created_at, id) > ($2, $3)
+             ORDER BY created_at ASC, id ASC
+             LIMIT $4",
+        )
+        .bind(channel_id)
+        .bind(reference.created_at)
+        .bind(reference.id)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(messages)
     }
 
     async fn find_by_sender_id(

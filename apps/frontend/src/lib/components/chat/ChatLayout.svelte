@@ -2,6 +2,7 @@
 	import { messageStore } from '$lib/state/MessageStore.svelte';
 	import { ApiClient } from '$lib/api/client';
 	import { toMessage, type ApiMessage } from '$lib/api/mappers';
+	import { wsClient } from '$lib/api/websocket';
 	import { logger } from '$lib/utils/logger';
 	import { Button } from '$lib/components/ui/button';
 	import ThreadReply from './thread/ThreadReply.svelte';
@@ -23,9 +24,16 @@
 		}
 	}
 
+	function updateLastKnownFromStore() {
+		const msgs = messageStore.messages;
+		wsClient.lastKnownMessageId = msgs.at(-1)?.id ?? null;
+	}
+
 	async function loadMessages(id: string) {
 		if (!id) {
 			messageStore.clear();
+			wsClient.setActiveChannel(null);
+			wsClient.lastKnownMessageId = null;
 			return;
 		}
 		isLoading = true;
@@ -34,12 +42,17 @@
 			const messages = await ApiClient.request<ApiMessage[]>(
 				`/api/v1/channels/${id}/messages?limit=100`
 			);
-			messageStore.setMessages(messages.map((message) => toMessage(message)));
+			// API returns newest-first by default; display chronologically.
+			messageStore.setMessages(messages.toReversed().map((message) => toMessage(message)));
+			updateLastKnownFromStore();
+			wsClient.connect();
+			wsClient.setActiveChannel(id);
 			await scrollToBottom();
 		} catch (error) {
 			loadError = error instanceof Error ? error.message : 'Failed to load messages';
 			logger.error('chat', 'Failed to fetch messages', { channelId: id }, error as Error);
 			messageStore.clear();
+			wsClient.lastKnownMessageId = null;
 		} finally {
 			isLoading = false;
 		}
@@ -60,7 +73,9 @@
 					body: JSON.stringify({ content: newMessage.trim() })
 				}
 			);
-			messageStore.addMessage(toMessage(created));
+			const mapped = toMessage(created);
+			messageStore.upsertMessage(mapped);
+			wsClient.lastKnownMessageId = mapped.id;
 			newMessage = '';
 			await scrollToBottom();
 		} catch (error) {
@@ -72,7 +87,9 @@
 	}
 
 	async function onReplySent(createdApi: ApiMessage) {
-		messageStore.addMessage(toMessage(createdApi));
+		const mapped = toMessage(createdApi);
+		messageStore.upsertMessage(mapped);
+		wsClient.lastKnownMessageId = mapped.id;
 		await scrollToBottom();
 	}
 </script>

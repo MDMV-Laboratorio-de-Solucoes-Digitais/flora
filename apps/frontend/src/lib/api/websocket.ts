@@ -1,16 +1,28 @@
 import { authState } from '../state/AuthState.svelte';
 import { API_BASE_URL } from './client';
+import { ApiClient } from './client';
 import { messageStore } from '../state/MessageStore.svelte';
+import { toMessage, type ApiMessage } from './mappers';
 import { logger } from '../utils/logger';
+
+export interface WsMessagePayload {
+	id: string;
+	channel_id: string;
+	sender_id: string;
+	content: string;
+	thread_id?: string | null;
+	is_edited?: boolean;
+	created_at: string;
+	updated_at?: string | null;
+}
 
 export type WsEnvelope =
 	| { type: 'Subscribed'; payload?: { channel_id?: string } }
 	| { type: 'Unsubscribed'; payload?: { channel_id?: string } }
-	| {
-			type: 'NewMessage';
-			payload?: { id?: string; message?: Record<string, unknown> } & Record<string, unknown>;
-	  }
-	| { type: 'MessageSent'; payload?: { id?: string } & Record<string, unknown> }
+	| { type: 'NewMessage'; payload?: { channel_id?: string; message?: WsMessagePayload } }
+	| { type: 'MessageUpdated'; payload?: { channel_id?: string; message?: WsMessagePayload } }
+	| { type: 'MessageDeleted'; payload?: { channel_id?: string; message?: WsMessagePayload } }
+	| { type: 'MessageSent'; payload?: { message_id?: string; channel_id?: string } }
 	| { type: 'Pong'; payload?: Record<string, unknown> }
 	| { type: 'Error'; payload?: { code?: string; message?: string } & Record<string, unknown> }
 	| { type: string; payload?: unknown };
@@ -65,6 +77,7 @@ export function isAuthFailureEnvelope(envelope: WsEnvelope): boolean {
 export class WsClient {
 	private manualClose = false;
 	private authFailureHandled = false;
+	private activeChannelId: string | null = null;
 
 	isConnected = false;
 	lastKnownMessageId: string | null = null;
@@ -119,6 +132,10 @@ export class WsClient {
 			this.reconnectAttempts = 0;
 			this.authFailureHandled = false;
 			logger.info('websocket', 'Connected');
+			if (this.activeChannelId) {
+				this.sendSubscribe(this.activeChannelId);
+				void this.syncMissedMessages(this.activeChannelId);
+			}
 		});
 
 		this.socket.addEventListener('message', (event) => {
@@ -187,28 +204,62 @@ export class WsClient {
 		}, exp + jitter);
 	}
 
-	// Sync endpoint is not implemented in backend 014; keep safe no-op to avoid retry loops.
-	async syncMissedMessages() {
-		return;
+	setActiveChannel(channelId: string | null = null) {
+		if (this.activeChannelId && this.activeChannelId !== channelId) {
+			this.sendUnsubscribe(this.activeChannelId);
+		}
+		this.activeChannelId = channelId;
+		if (!channelId) return;
+		this.sendSubscribe(channelId);
+		void this.syncMissedMessages(channelId);
+	}
+
+	async syncMissedMessages(channelId: string) {
+		if (!this.lastKnownMessageId) return;
+		try {
+			const missed = await ApiClient.request<ApiMessage[]>(
+				`/api/v1/channels/${channelId}/messages?after=${encodeURIComponent(this.lastKnownMessageId)}&limit=100`
+			);
+			for (const message of missed) {
+				const mapped = toMessage(message);
+				if (mapped.channelId === channelId) {
+					messageStore.upsertMessage(mapped);
+					this.lastKnownMessageId = mapped.id;
+				}
+			}
+		} catch (error) {
+			const detail = error instanceof Error ? error.message : String(error);
+			logger.warn('websocket', 'Catch-up sync failed', { detail });
+		}
 	}
 
 	onEnvelope(envelope: WsEnvelope) {
 		const payload = envelope.payload as Record<string, unknown> | undefined;
-		const id =
-			(payload?.id as string | undefined) ?? (payload?.message as { id?: string } | undefined)?.id;
-		if (id) this.lastKnownMessageId = id;
 
 		switch (envelope.type) {
 			case 'Subscribed':
 			case 'Unsubscribed':
 			case 'Pong':
 			case 'MessageSent': {
+				const id = payload?.message_id as string | undefined;
+				if (id) this.lastKnownMessageId = id;
 				return;
 			}
-			case 'NewMessage': {
-				const message = payload?.message as Record<string, unknown> | undefined;
-				if (message && typeof message.id === 'string' && typeof message.channel_id === 'string') {
-					messageStore.addMessage(message as never);
+			case 'NewMessage':
+			case 'MessageUpdated': {
+				const message = payload?.message as WsMessagePayload | undefined;
+				if (message && typeof message.id === 'string') {
+					const mapped = toMessage(message as unknown as ApiMessage);
+					messageStore.upsertMessage(mapped);
+					this.lastKnownMessageId = mapped.id;
+				}
+				return;
+			}
+			case 'MessageDeleted': {
+				const message = payload?.message as WsMessagePayload | undefined;
+				if (message && typeof message.id === 'string') {
+					messageStore.removeMessage(message.id);
+					this.lastKnownMessageId = message.id;
 				}
 				return;
 			}

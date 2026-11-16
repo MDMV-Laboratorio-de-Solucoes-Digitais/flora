@@ -358,6 +358,7 @@ mod tests {
             messaging_service: None,
             valkey: None,
             oidc_transactions: crate::state::oidc_transactions::OidcTransactionStore::new(None),
+            realtime_hub: crate::realtime::create_hub(),
         }
     }
 

@@ -96,6 +96,7 @@ mod db_messaging {
             messaging_service: None,
             valkey: None,
             oidc_transactions: OidcTransactionStore::new(None),
+            realtime_hub: flora_api::realtime::create_hub(),
         })
     }
 
@@ -417,6 +418,72 @@ mod db_messaging {
             status == StatusCode::FORBIDDEN || status == StatusCode::NOT_FOUND,
             "expected cross-org rejection, got {status}"
         );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 015)"]
+    async fn db_message_catch_up_after_cursor() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_member(&state, &config).await?;
+        let channel_id = insert_channel(&state, seed.workspace.id, seed.org.id, "catchup").await?;
+        let app = channels_app(state);
+
+        let (status, m1) = authed_json(
+            app.clone(),
+            "POST",
+            format!("/channels/{channel_id}/messages"),
+            &seed.token,
+            Some(json!({ "content": "first" })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::CREATED, "post m1: {status} {m1}");
+        let m1_id = m1["id"].as_str().ok_or_else(|| anyhow::anyhow!("missing m1 id"))?;
+
+        let (status, m2) = authed_json(
+            app.clone(),
+            "POST",
+            format!("/channels/{channel_id}/messages"),
+            &seed.token,
+            Some(json!({ "content": "second" })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::CREATED, "post m2: {status} {m2}");
+        let m2_id = m2["id"].as_str().ok_or_else(|| anyhow::anyhow!("missing m2 id"))?;
+
+        let (status, m3) = authed_json(
+            app.clone(),
+            "POST",
+            format!("/channels/{channel_id}/messages"),
+            &seed.token,
+            Some(json!({ "content": "third" })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::CREATED, "post m3: {status} {m3}");
+        let m3_id = m3["id"].as_str().ok_or_else(|| anyhow::anyhow!("missing m3 id"))?;
+
+        let (status, after) = authed_json(
+            app,
+            "GET",
+            format!("/channels/{channel_id}/messages?after={m1_id}&limit=50"),
+            &seed.token,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "catch-up: {status} {after}");
+        let arr = after
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected array: {after}"))?;
+        anyhow::ensure!(arr.len() >= 2, "expected >=2 messages after cursor: {after}");
+        anyhow::ensure!(arr[0]["id"] == m2_id, "expected m2 first in ASC catch-up: {after}");
+        anyhow::ensure!(arr[1]["id"] == m3_id, "expected m3 second in ASC catch-up: {after}");
+        anyhow::ensure!(
+            arr.iter().all(|m| m["id"] != m1_id),
+            "cursor message must be excluded: {after}"
+        );
+
         Ok(())
     }
 }

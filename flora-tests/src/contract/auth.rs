@@ -92,6 +92,7 @@ fn make_test_state(pool: PgPool, config: &Config) -> anyhow::Result<AppState> {
         messaging_service: None,
         valkey: None,
         oidc_transactions: OidcTransactionStore::new(None),
+        realtime_hub: flora_api::realtime::create_hub(),
     })
 }
 

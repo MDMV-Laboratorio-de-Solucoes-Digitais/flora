@@ -23,6 +23,7 @@ use flora_core::traits::{
 
 use crate::AppState;
 use crate::extractors::AuthExtractor;
+use crate::realtime::{self, HubEnvelope, MessageEventPayload, RealtimeEvent};
 
 /// Query params for listing channels in a workspace.
 #[derive(Debug, Deserialize)]
@@ -36,7 +37,9 @@ pub struct ListChannelsQuery {
 pub struct ListMessagesQuery {
     /// Maximum number of messages to return.
     pub limit: Option<i64>,
-    /// Return messages before this ID (for pagination).
+    /// Return messages after this ID (cursor catch-up, ascending).
+    pub after: Option<Uuid>,
+    /// Accepted for compatibility (currently not used for keyset paging).
     pub before: Option<Uuid>,
 }
 
@@ -85,7 +88,7 @@ pub struct ChannelResponse {
 }
 
 /// Response for a message.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct MessageResponse {
     /// The message ID.
     pub id: String,
@@ -120,6 +123,21 @@ impl From<Message> for MessageResponse {
     }
 }
 
+impl From<&MessageResponse> for MessageEventPayload {
+    fn from(msg: &MessageResponse) -> Self {
+        Self {
+            id: msg.id.clone(),
+            channel_id: msg.channel_id.clone(),
+            sender_id: msg.sender_id.clone(),
+            content: msg.content.clone(),
+            thread_id: msg.thread_id.clone(),
+            is_edited: msg.is_edited,
+            created_at: msg.created_at.clone(),
+            updated_at: msg.updated_at.clone(),
+        }
+    }
+}
+
 impl From<Channel> for ChannelResponse {
     fn from(ch: Channel) -> Self {
         Self {
@@ -130,6 +148,13 @@ impl From<Channel> for ChannelResponse {
             created_at: ch.created_at.to_rfc3339(),
         }
     }
+}
+
+fn emit_event(state: &AppState, org_id: Uuid, channel_id: Uuid, event: RealtimeEvent) {
+    realtime::publish(
+        &state.realtime_hub,
+        HubEnvelope::new(org_id, channel_id, event),
+    );
 }
 
 /// Creates the channels router.
@@ -241,6 +266,9 @@ async fn create_channel(
 }
 
 /// `GET /api/v1/channels/{channel_id}/messages` — List messages in a channel.
+///
+/// - With `after=<message_id>`: returns catch-up messages after cursor in ascending timeline order.
+/// - Without `after`: returns recent messages (current behavior, newest-first).
 async fn list_messages(
     State(state): State<AppState>,
     auth: AuthExtractor,
@@ -262,8 +290,21 @@ async fn list_messages(
         return Err(Error::ChannelNotAccessible(channel_id.to_string()));
     }
 
-    let limit = usize::try_from(params.limit.unwrap_or(50).min(100)).unwrap_or(50);
+    let limit = usize::try_from(params.limit.unwrap_or(50).clamp(1, 100)).unwrap_or(50);
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
+
+    if let Some(after_id) = params.after {
+        let msgs = msg_repo
+            .find_by_channel_id_after(channel_id, after_id, limit)
+            .await?;
+        let resp: Vec<MessageResponse> = msgs
+            .into_iter()
+            .filter(|m| !m.is_deleted)
+            .map(MessageResponse::from)
+            .collect();
+        return Ok(Json(resp));
+    }
+
     let page = msg_repo
         .find_by_channel_id(
             channel_id,
@@ -304,7 +345,7 @@ async fn post_message(
         return Err(Error::ChannelNotAccessible(channel_id.to_string()));
     }
 
-    if req.content.is_empty() {
+    if req.content.trim().is_empty() {
         return Err(Error::Validation {
             field: "content".to_string(),
             message: "message content cannot be empty".to_string(),
@@ -315,9 +356,20 @@ async fn post_message(
     message.thread_id = req.thread_id;
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
     let created = msg_repo.create(message).await?;
+    let resp = MessageResponse::from(created);
 
-    tracing::debug!(message_id = %created.id, channel_id = %channel_id, user_id = %user_id, "Message posted");
-    Ok((StatusCode::CREATED, Json(MessageResponse::from(created))))
+    emit_event(
+        &state,
+        org_id,
+        channel_id,
+        RealtimeEvent::NewMessage {
+            channel_id,
+            message: MessageEventPayload::from(&resp),
+        },
+    );
+
+    tracing::debug!(message_id = %resp.id, channel_id = %channel_id, user_id = %user_id, "Message posted");
+    Ok((StatusCode::CREATED, Json(resp)))
 }
 
 /// `PATCH /api/v1/channels/{channel_id}/messages/{msg_id}` — Edit a message.
@@ -333,37 +385,53 @@ async fn edit_message(
     })?;
     let user_id = auth.user_id;
 
+    let channel_repo = PgChannelRepository::new((*state.db_pool).clone());
+    let channel = channel_repo
+        .find_by_id(channel_id)
+        .await?
+        .ok_or_else(|| Error::ChannelNotFound(channel_id.to_string()))?;
+    if channel.organization_id != org_id {
+        return Err(Error::ChannelNotAccessible(channel_id.to_string()));
+    }
+
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
-    let msg = msg_repo
+    let existing = msg_repo
         .find_by_id(msg_id)
         .await?
         .ok_or_else(|| Error::MessageNotFound(msg_id.to_string()))?;
 
-    if msg.channel_id != channel_id {
+    if existing.channel_id != channel_id || existing.organization_id != org_id {
         return Err(Error::MessageNotFound(msg_id.to_string()));
     }
-    if msg.organization_id != org_id {
-        return Err(Error::Forbidden(
-            "cross-organization access forbidden".to_string(),
-        ));
+    if existing.sender_id != user_id {
+        return Err(Error::Forbidden("Not the message author".to_string()));
     }
-    if msg.sender_id != user_id {
-        return Err(Error::Forbidden(
-            "you can only edit your own messages".to_string(),
-        ));
+    if req.content.trim().is_empty() {
+        return Err(Error::Validation {
+            field: "content".to_string(),
+            message: "message content cannot be empty".to_string(),
+        });
     }
 
-    let updated = Message {
-        content: req.content,
-        is_edited: true,
-        updated_at: chrono::Utc::now(),
-        ..msg
-    };
-    let result = msg_repo.update(msg_id, updated).await?;
-    Ok(Json(MessageResponse::from(result)))
+    let mut updated = existing.clone();
+    updated.content = req.content;
+    let saved = msg_repo.update(msg_id, updated).await?;
+    let resp = MessageResponse::from(saved);
+
+    emit_event(
+        &state,
+        org_id,
+        channel_id,
+        RealtimeEvent::MessageUpdated {
+            channel_id,
+            message: MessageEventPayload::from(&resp),
+        },
+    );
+
+    Ok(Json(resp))
 }
 
-/// `DELETE /api/v1/channels/{channel_id}/messages/{msg_id}` — Soft-delete a message.
+/// `DELETE /api/v1/channels/{channel_id}/messages/{msg_id}` — Delete a message.
 async fn delete_message(
     State(state): State<AppState>,
     auth: AuthExtractor,
@@ -375,27 +443,41 @@ async fn delete_message(
     })?;
     let user_id = auth.user_id;
 
+    let channel_repo = PgChannelRepository::new((*state.db_pool).clone());
+    let channel = channel_repo
+        .find_by_id(channel_id)
+        .await?
+        .ok_or_else(|| Error::ChannelNotFound(channel_id.to_string()))?;
+    if channel.organization_id != org_id {
+        return Err(Error::ChannelNotAccessible(channel_id.to_string()));
+    }
+
     let msg_repo = PgMessageRepository::new((*state.db_pool).clone());
-    let msg = msg_repo
+    let existing = msg_repo
         .find_by_id(msg_id)
         .await?
         .ok_or_else(|| Error::MessageNotFound(msg_id.to_string()))?;
 
-    if msg.channel_id != channel_id {
+    if existing.channel_id != channel_id || existing.organization_id != org_id {
         return Err(Error::MessageNotFound(msg_id.to_string()));
     }
-    if msg.organization_id != org_id {
-        return Err(Error::Forbidden(
-            "cross-organization access forbidden".to_string(),
-        ));
-    }
-    if msg.sender_id != user_id {
-        return Err(Error::Forbidden(
-            "you can only delete your own messages".to_string(),
-        ));
+    if existing.sender_id != user_id {
+        return Err(Error::Forbidden("Not the message author".to_string()));
     }
 
     msg_repo.soft_delete(msg_id).await?;
-    tracing::info!(message_id = %msg_id, user_id = %user_id, "Message soft-deleted");
+    let deleted = msg_repo.find_by_id(msg_id).await?.unwrap_or(existing);
+    let resp = MessageResponse::from(deleted);
+
+    emit_event(
+        &state,
+        org_id,
+        channel_id,
+        RealtimeEvent::MessageDeleted {
+            channel_id,
+            message: MessageEventPayload::from(&resp),
+        },
+    );
+
     Ok(StatusCode::NO_CONTENT)
 }
