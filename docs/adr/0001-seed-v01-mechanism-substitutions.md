@@ -42,7 +42,8 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
    an explicit ADR rather than silent divergence; unverified/live claims are marked `NV`.
 5. **FASE 0.** AGPL-3.0 is the license. Canonical full text (including the appendix) and `NOTICE` are checked in;
    dependency policy lives in `deny.toml`. Cycle 026 enforced `cargo deny check bans licenses sources` in CI
-   (green runs 43875417574 / 43875425127); resolving the 442 `cargo-vet` exemptions remains NV.
+   (green runs 43875417574 / 43875425127); the 443-exemption `supply-chain/` store was versioned in cycle 028
+   with an informational CI gate (blocking promotion + CODEOWNERS remain NV).
 
 ## Consequences
 
@@ -51,7 +52,7 @@ unwired. Treating those mechanisms as Seed blockers would be false and would pus
 - Re-enabling Meilisearch/RustFS/PGMQ requires documented gates (hooks/tasks/rebuild/CI, S3 backend, transport
   decision) and a new ADR; it is never implicit.
 - Resolved: FASE 0 CI enforcement (cycle 026), notification transport decision — the unwired PGMQ/Valkey crate
-  was retired in cycle 027 per `docs/research/2026-11-16-026-notification-transport-decision.md`.
-- Remaining Seed follow-ups (NV): `cargo-vet` new-dependency gate, RustSec advisories job/SBOM, browser e2e with
-  fresh JWT, canonical Tauri decision (draft ADR-0002 in `docs/research/2026-11-16-028-tauri-smoke-closure.md`,
-  formal adoption pending), OTLP exporter, and 2vCPU/4GB load/restore validation.
+  was retired in cycle 027 per `docs/research/2026-11-16-026-notification-transport-decision.md`; canonical Tauri
+  deferral is recorded in ADR-0002 (cycle 029).
+- Remaining Seed follow-ups (NV): cargo-vet blocking + CODEOWNERS, RustSec advisories/SBOM, browser e2e with
+  fresh JWT, OTLP exporter, and 2vCPU/4GB load/restore validation.

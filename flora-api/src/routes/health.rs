@@ -93,6 +93,10 @@ pub async fn llms_txt() -> (
 }
 
 #[cfg(test)]
+#[expect(
+    clippy::expect_used,
+    reason = "test-only body decoding: a failure here is a test bug, not a production path"
+)]
 mod tests {
     use super::*;
     use axum::response::IntoResponse;
