@@ -4,6 +4,10 @@ import {
 	isValidMove,
 	BOARD_STATUSES
 } from '../../src/lib/components/tasks/kanban.svelte';
+import {
+	statusPatchBody,
+	statusPatchEndpoint
+} from '../../src/lib/components/tasks/status-patch.svelte';
 import type { BoardTask } from '../../src/lib/components/tasks/types';
 
 function task(id: string, status: string): BoardTask {
@@ -47,5 +51,24 @@ describe('isValidMove', () => {
 		expect(isValidMove('Todo', null)).toBe(false);
 		expect(isValidMove('Todo', 'Archived')).toBe(false);
 		expect(isValidMove('Archived', 'Done')).toBe(false);
+	});
+});
+
+describe('status PATCH serialization (real changeStatus path)', () => {
+	it('builds the exact body the backend accepts for each canonical status', () => {
+		expect(statusPatchBody('Todo')?.body).toBe('{"status":"Todo"}');
+		expect(statusPatchBody('InProgress')?.body).toBe('{"status":"InProgress"}');
+		expect(statusPatchBody('Done')?.body).toBe('{"status":"Done"}');
+	});
+
+	it('refuses non-canonical statuses instead of sending them', () => {
+		expect(statusPatchBody('TODO')).toBeNull();
+		expect(statusPatchBody('Archived')).toBeNull();
+		expect(statusPatchBody('')).toBeNull();
+	});
+
+	it('encodes the task id in the endpoint path', () => {
+		expect(statusPatchEndpoint('01a1e75b-1234')).toBe('/api/v1/tasks/01a1e75b-1234');
+		expect(statusPatchEndpoint('a/b')).toBe('/api/v1/tasks/a%2Fb');
 	});
 });

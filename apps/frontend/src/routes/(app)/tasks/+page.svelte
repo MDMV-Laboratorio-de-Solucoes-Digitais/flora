@@ -7,6 +7,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import KanbanBoard from '$lib/components/tasks/KanbanBoard.svelte';
+	import { statusPatchBody, statusPatchEndpoint } from '$lib/components/tasks/status-patch.svelte';
 
 	type Workspace = { id: string; name: string };
 	type ApiTask = {
@@ -93,11 +94,16 @@
 	}
 
 	async function changeStatus(id: string, status: string) {
+		const patch = statusPatchBody(status);
+		if (!patch) {
+			errorMessage = `Unsupported status: ${status}`;
+			return;
+		}
 		errorMessage = '';
 		try {
-			await ApiClient.request<ApiTask>(`/api/v1/tasks/${id}`, {
+			await ApiClient.request<ApiTask>(statusPatchEndpoint(id), {
 				method: 'PATCH',
-				body: JSON.stringify({ status })
+				body: patch.body
 			});
 			await loadTasks();
 		} catch (error_) {

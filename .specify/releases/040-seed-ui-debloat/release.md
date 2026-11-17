@@ -23,6 +23,14 @@ Nenhum backend/migration/RBAC/RLS, ADR/constituição, required checks/protectio
 deploy/tag/release/segredos. `apps/web` removido porque a tarefa explícita do usuário
 sanciona o debloat do cliente Macro original — não como "modernização isolada".
 
+## Auditoria author-blind — veredito NO-GO (sem falha dura)
+
+O verificador em contexto fresco encontrou 1 defeito MEDIUM (caminho `changeStatus`→PATCH
+sem teste automatizado). **Corrigido em commit de acompanhamento**: helper puro
+`status-patch.svelte.ts` + 3 testes (36→39) cobrindo a serialização real no gate
+`server`; drift documental README/AGENTS também corrigido. Itens restantes (#2 Archived,
+#3 a11y DnD) são decisões de produto/§2 — ver `validate.md`.
+
 ## Follow-ups
 
 1. H4: remover crates dead (argon2/bcrypt/dotenv/rust-i18n) — ~40–60 crates no grafo.

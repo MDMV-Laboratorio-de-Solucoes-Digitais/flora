@@ -37,7 +37,23 @@
 
 Ver `/tmp/opencode/dark-factory-80-20/c040-11-author-blind-audit.md` (verificador em
 contexto fresco, contrato congelado em `c040-10`, gates re-executados de forma
-independente, busca de defeitos semeados). [Anexar veredito na conclusão final.]
+independente). **Veredito: NO-GO para merge "dark" pleno, sem falha dura de gate.**
+Gates re-executados pelo auditor: check 0/0, lint limpo, 11 files/36 testes, build
+exit 0, `check_gate_integrity.py` PASS; remoção = só `D` (5.846 entradas), zero refs.
+
+Defeitos encontrados e disposição:
+
+| # | Defeito | Severidade | Disposição |
+|---|---|---|---|
+| 1 | Caminho `changeStatus`→PATCH sem teste (só helpers puros) | MEDIUM | **Corrigido**: extraído `status-patch.svelte.ts` (helper puro) usado pela rota; +3 testes cobrindo o body exato `{"status":"Todo"\|...}`, rejeição de não-canônicos e encoding do id → **39 testes** no gate `server`. |
+| 2 | Tarefas `Archived` invisíveis no board | LOW–MED | Design documentado no spec (non-goal); mantido, sinalizado ao usuário como decisão de produto. |
+| 3 | DnD sem `onkeydown` (a11y) | LOW | §2 julgamento humano; fora do escopo Seed. |
+| 4 | `taskStore` órfão com vocabulário legado | LOW | Decisão consciente (evita 3 cópias); documentado. |
+| 5 | Drift README/AGENTS ("apps/web presente") | LOW | **Corrigido**: README:66, AGENTS:7/15 atualizados para "removido no 040". |
+
+Gates [NV] na passagem do auditor (Rust completo/DB remoto/e2e/janela 20 PRs) não
+foram alterados por este ciclo (diff só frontend + docs). Com CI remoto verde e a
+decisão de produto #2, converte para GO.
 
 ## NV / fora do escopo
 
