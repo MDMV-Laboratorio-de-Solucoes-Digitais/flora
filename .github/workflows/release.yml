@@ -50,13 +50,14 @@ jobs:
           fallback: none     # both tools ship prebuilt GitHub Release binaries
           checksum: true
 
-      - name: Assert lockstep version across all 8 manifests
+      - name: Assert lockstep version across all 6 manifests
         shell: bash
         run: |
           set -euo pipefail
           cargo metadata --no-deps --format-version 1 > /tmp/flora-metadata.json
+          # 6 = 5 workspace members + the root `flora` package; update with Cargo.toml.
           jq -e --arg v "$RELEASE_VERSION" '
-            ([.packages[] | select(.name == "flora" or (.name | startswith("flora-")))] | length == 8)
+            ([.packages[] | select(.name == "flora" or (.name | startswith("flora-")))] | length == 6)
             and ([.packages[] | select((.name == "flora" or (.name | startswith("flora-"))) and .version != $v)] | length == 0)
           ' /tmp/flora-metadata.json
 
