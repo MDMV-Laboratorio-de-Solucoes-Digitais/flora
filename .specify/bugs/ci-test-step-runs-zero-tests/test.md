@@ -26,7 +26,7 @@ The red/green signal is closed on both sides. Before the change, `cargo test` se
 | Remote CI (`db-tests`) | PR #251, runs `43986188630` / `43986194004` | pass | Unchanged; 2m15s / 2m20s |
 | Remote CI (`e2e-browser`, `supply-chain-vet`, `dependency-review`) | PR #251 | pass | Informational lanes also green |
 
-PR #251 state: `OPEN`, `MERGEABLE`, `CLEAN`. Merge is not performed in this bug: the authorization matrix requires explicit human approval for merges.
+PR #251 was merged into `github/dev` on 2026-11-17T00:42:00Z as `b075c592` after explicit user authorization. The authorization matrix was respected: the green gate alone did not authorize the merge.
 
 ## Output excerpts
 
@@ -57,4 +57,5 @@ The fix is verified. Merge remains gated on explicit approval per `docs/research
 ## Converge
 
 - 2026-11-16: reproduced locally, applied two-line workspace fix, verified locally and remotely, opened PR #251. No product code changed.
+- 2026-11-17: explicit approval obtained; PR #251 merged as `b075c592`; `dev` synchronized on GitHub and Forgejo with unique Forgejo commits preserved.
 - Residual work is tracked in `fix.md` follow-ups; this entry does not claim the Seed milestone is fully verified.
