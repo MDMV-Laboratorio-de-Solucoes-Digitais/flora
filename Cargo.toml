@@ -27,8 +27,6 @@ members = [
     "flora-core",
     "flora-api",
     "flora-messaging",
-    "flora-tasks",
-    "flora-files",
     "flora-search",
     "flora-tests",
 ]
@@ -121,14 +119,9 @@ axum = "0.8.9"
 # --- Internal crates ---
 flora-api = { path = "flora-api"}
 flora-core = { path = "flora-core" }
-flora-files = { path = "flora-files" }
 flora-messaging = { path = "flora-messaging" }
 flora-search = { path = "flora-search" }
-flora-tasks = { path = "flora-tasks" }
 flora-tests = { path = "flora-tests" }
-
-# --- flora-core dependencies ---
-rust-i18n = "4.2.1"
 
 # --- flora-tests dependencies ---
 reqwest = { version = "0.13.4", features = ["json"] }
@@ -176,7 +169,6 @@ bytes = "1.9"
 futures = "0.3"
 base64 = "0.23.1"
 sha2 = "0.11.0"
-argon2 = "0.5"
 rand = "0.10.2"
 uuid = { version = "1.11", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -201,7 +193,6 @@ hmac = "0.12"
 jwt = "0.16"
 time = "0.3"
 axum-msgpack = "0.8"
-bcrypt = "0.19.3"
 regex = "1.11"
 chrono-tz = "0.10"
 jsonwebtoken = "11.0.0"
