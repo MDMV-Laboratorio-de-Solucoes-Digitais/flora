@@ -20,6 +20,7 @@ use std::str::FromStr;
 
 use crate::AppState;
 use crate::extractors::AuthExtractor;
+use crate::tenant::ensure_workspace_in_org;
 
 /// Request body for creating a task.
 #[derive(Debug, Deserialize)]
@@ -183,6 +184,11 @@ async fn create_task(
         .find_by_user_and_organization(user_id, org_id)
         .await?
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+
+    // C045 / OWASP A01:2021 (CWE-639/BOLA): workspace_id from the request body is a
+    // selector, not proof of authorization. Reject a workspace outside the session's
+    // verified organization before creating the task (defense in depth alongside RLS).
+    ensure_workspace_in_org(&state, org_id, req.workspace_id).await?;
 
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
     let mut task = Task::new(req.workspace_id, org_id, user_id, &req.title);

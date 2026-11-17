@@ -12,5 +12,6 @@ pub mod routes;
 ///
 /// This module contains the application state structure and related functionality.
 pub mod state;
+pub mod tenant;
 
 pub use state::AppState;
