@@ -99,6 +99,16 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Próximo 80/20: C4 `/users/invite` 404 (3.75), C5 RBAC stub (2.08, decisão de dono), C6 RLS (0.80, autorização SE).
 - Factory relida em `214f6ce03be3c9882e03204b9a26dc7be2d53a7b` (7 worktrees em voo); nada materializado. Sem injeção detectada; nenhuma credencial copiada.
 
+## Atualização — ciclo 050 (2026-11-17T16:20Z)
+
+- Âncora `github/dev@b3bfda505`; branch `feature/050-rate-limit-paths`; NNN 050 por inventário (feature.json apontava 049), nunca pelo nome do branch.
+- Decisão A preservada; factory relida em `49f96e4a7bf36bd8c2ee2e81139d93851dfabcba` (7 worktrees), nada materializado.
+- Ciclo 050 fechado: C25 resolvido — `classify_endpoint` em `rate_limit.rs` cobre os paths montados sob `/api/v1`; limites/janelas inalterados; 4 testes novos. Corrigi doc órfão (`# Errors`) e formatação durante a implementação.
+- Gates: Rust 115 passed/0 failed/44 ignored, frontend 41/41, fmt/clippy/deny/build e `check_gate_integrity.py` PASS.
+- Merges anteriores confirmados ao vivo: PR #262, #263, #264 MERGED; nenhum PR aberto no início deste ciclo.
+- Próximo 80/20: N3 (4.0), C4 (3.75), C5 (2.08, decisão de dono), C6 (0.80, autorização SE).
+- **[NV]** CI/PR/aprovações ao vivo após este ciclo; sem merge/auto-merge/tag/deploy/force-push nesta sessão.
+
 ## Atualização — ciclo 051 (2026-11-17T17:35Z)
 
 - Âncora `github/dev@b3bfda505`; branch `feature/051-dead-invite-ui`; NNN 051 por inventário (feature.json apontava 050), nunca pelo nome do branch. Decisão A preservada.

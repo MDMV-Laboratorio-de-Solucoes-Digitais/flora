@@ -120,6 +120,13 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - PR #263 MERGED e PR #262 DIRTY (conflito alheio, não tocado). Sem merge/auto-merge/tag/deploy/force-push nesta sessão.
 - Próximos candidatos: C4 (3.75), C5 (2.08, decisão de dono), C6 (0.80, autorização SE). **[NV]** para estados remotos finais.
 
+## Estado verificado — 2026-11-17T16:20Z (append-only)
+
+- Âncora `github/dev@b3bfda505`; `check_gate_integrity.py` PASS; gates Rust/frontend exit 0.
+- Ciclo 050 corrige C25: `classify_endpoint` reconhece os paths montados sob `/api/v1`, devolvendo os limites específicos de login/refresh/invite; 4 testes novos (Rust 115 passed).
+- Base atual já contém os ciclos 047/048/049 mergeados; nenhum PR aberto no início deste ciclo.
+- Próximos: N3 (4.0), C4 (3.75), C5 (2.08, decisão de dono), C6 (0.80, autorização SE). **[NV]** para CI/PRs ao vivo.
+
 ## Estado verificado — 2026-11-17T17:35Z (append-only)
 
 - Âncora `github/dev@b3bfda505`; `check_gate_integrity.py` PASS; gates Rust/frontend exit 0.

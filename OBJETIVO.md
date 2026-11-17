@@ -167,6 +167,15 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Remoto verificado ao vivo:** PR #263 MERGED; PR #262 `DIRTY` (conflito) — não tocado nesta sessão. Demais estados remotos **[NV]**.
 - **Dívidas restantes:** C4 `/users/invite` 404, C5 RBAC stub (decisão de dono), C6 RLS (autorização SE), dívidas de fase 043–046 e docs ausentes (`PROGRESSO`, `research/index`).
 
+## Estado verificado — 2026-11-17T16:20Z (append-only)
+
+- **Âncora:** `github/dev@b3bfda505` (todos os PRs anteriores mergeados), branch `feature/050-rate-limit-paths`. Gate `check_gate_integrity.py` PASS.
+- **Ciclo 050:** rate limiter passa a casar os paths reais (`/api/v1/auth/login`, `/api/v1/auth/refresh`, `/api/v1/users/invite`) via classificador puro `classify_endpoint`; limites e janelas inalterados; 4 testes unitários novos.
+- **Gates:** Rust 115 passed/0 failed/44 ignored; frontend 41/41; fmt/clippy/deny/build/check/lint/build exit 0.
+- **Auditado:** falha C25 confirmada por comando: paths reais caíam no limite genérico; após a correção, classificação cobre login/refresh/invite/geral.
+- **[NV]** Estado remoto/CI após este ciclo não verificado ao vivo nesta árvore. Factory `49f96e4a` lida como fonte, nada materializado.
+- **Dívidas restantes:** N3 (FK de `memberships.role_id` + filtro de org), C4, C5 (decisão de dono), C6 (autorização SE).
+
 ## Estado verificado — 2026-11-17T17:35Z (append-only)
 
 - **Âncora:** `github/dev@b3bfda505`, branch `feature/051-dead-invite-ui`. Gate `check_gate_integrity.py` PASS. PR #265 (ciclo 050) permanece `OPEN`/`CLEAN` nesta base e não foi tocado.
