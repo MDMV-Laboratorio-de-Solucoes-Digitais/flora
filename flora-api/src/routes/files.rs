@@ -14,11 +14,12 @@ use tokio_util::io::ReaderStream;
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::repositories::{PgMembershipRepository, PgWorkspaceRepository};
-use flora_core::traits::{MembershipRepository, WorkspaceRepository};
+use flora_core::repositories::PgMembershipRepository;
+use flora_core::traits::MembershipRepository;
 
 use crate::AppState;
 use crate::extractors::AuthExtractor;
+use crate::tenant::ensure_workspace_in_org;
 
 /// Request body for legacy metadata-only upload.
 #[derive(Debug, Deserialize)]
@@ -98,24 +99,6 @@ async fn ensure_member(auth: &AuthExtractor, state: &AppState) -> Result<Uuid> {
         .await?
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
     Ok(org_id)
-}
-
-async fn ensure_workspace_in_org(state: &AppState, org_id: Uuid, workspace_id: Uuid) -> Result<()> {
-    let workspace_repo = PgWorkspaceRepository::new((*state.db_pool).clone());
-    let workspace = workspace_repo
-        .find_by_id(workspace_id)
-        .await?
-        .ok_or_else(|| Error::Validation {
-            field: "workspace_id".to_string(),
-            message: "workspace not found".to_string(),
-        })?;
-    if workspace.organization_id != org_id {
-        return Err(Error::Validation {
-            field: "workspace_id".to_string(),
-            message: "workspace not found".to_string(),
-        });
-    }
-    Ok(())
 }
 
 fn to_attachment(file: &flora_core::models::File) -> FileAttachmentResponse {

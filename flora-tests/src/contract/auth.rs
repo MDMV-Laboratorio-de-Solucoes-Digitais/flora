@@ -35,8 +35,7 @@ use std::sync::Arc;
 use tower::ServiceExt;
 
 #[cfg(test)]
-#[cfg(test)]
-fn make_test_state(pool: PgPool, config: &Config) -> AppState {
+pub(crate) fn make_test_state(pool: PgPool, config: &Config) -> AppState {
     let user_repo: Arc<dyn flora_core::traits::UserRepository + Send + Sync> =
         Arc::new(PgUserRepository::new(pool.clone()));
     let _user_repo = user_repo; // suppress unused warning
