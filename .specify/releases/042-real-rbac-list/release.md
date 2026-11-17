@@ -16,6 +16,15 @@
 `.specify/validations/042-real-rbac-list/validate.md` ·
 `docs/research/2026-11-17-042-real-rbac.md`.
 
+## Auditoria author-blind — NO-GO→GO (D1 corrigido)
+
+O verificador em contexto fresco (snapshot congelado) encontrou **D1 (ALTA)**: o seed
+canônico usa permissões `PascalCase` incompatíveis com `has_permission`, o que dava 403
+a todos os usuários semeados no `GET /roles`. **Corrigido em commit de acompanhamento**:
+`has_permission` aceita ambos os formatos + 3 testes com o payload real do Admin do seed.
+**D2 (422→400 em nil-org)** também corrigido. D3/D4/D5 registrados como follow-ups.
+Gates revalidados: clippy/role tests/rbac tests verdes.
+
 ## Não feito (autonomia preservada)
 
 Nenhum assign/revoke/create/get-by-id, PermissionService no AppState, RLS/role change,

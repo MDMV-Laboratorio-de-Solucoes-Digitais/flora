@@ -70,10 +70,9 @@ async fn list_roles(
     State(state): State<AppState>,
     auth: AuthExtractor,
 ) -> Result<Json<Vec<RoleResponse>>> {
-    let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
-        field: "organization_id".to_string(),
-        message: m,
-    })?;
+    let org_id = auth
+        .require_org()
+        .map_err(|_| Error::OrganizationContextRequired)?;
     let user_id = auth.user_id;
 
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
