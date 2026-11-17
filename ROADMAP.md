@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-17 (ciclos 011–042; 039 restore drill, 040 UI debloat + board real, 041 debloat Rust, 042 RBAC list real). ADR-0003 rege push/PR/merge como decisão de máquina sob gates determinísticos.  
+**Atualizado em:** 2026-11-17 (ciclos 011–043; 039 restore drill, 040 UI debloat + board real, 041 debloat Rust, 042 RBAC list real, 043 manifesto sem drift). ADR-0003 rege push/PR/merge como decisão de máquina sob gates determinísticos.  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-033`, `.specify/assessments/003-033`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -58,7 +58,8 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 040 (2026-11-17): remoção de `apps/web` (5.844 arquivos/43 MB) + 2 e2e mortos; `KanbanBoard` real (props + PATCH status) com módulo puro testável; non-regression provado nos 4 gates frontend (30→36 testes). Ver `specs/040-seed-ui-debloat/` e `docs/research/2026-11-17-040-seed-ui-debloat.md`.
 - [x] Ciclo 041 (2026-11-17): debloat Rust — remover 4 deps dead + 2 members órfãos (−34 pacotes/−369 linhas do Cargo.lock, zero adições); gates idênticos ao baseline. Ver `specs/041-rust-dead-crates/` e `docs/research/2026-11-17-041-rust-debloat.md`.
 - [x] Ciclo 042 (2026-11-17): `GET /api/v1/roles` real (tenancy da sessão + gate `OrgRead|OrgAdmin` + DTO sem vazamento) com helper puro e 3 testes. Ver `specs/042-real-rbac-list/` e `docs/research/2026-11-17-042-real-rbac.md`.
-- [ ] Ciclo 043 (candidato): semântica de assign/revoke + proteção do último Owner + DTO de criação (decisão do dono); RLS + role least-privilege dependem de autorização do SE. FASE 7 Documents segue adiado; cargo-vet prune/load/restore off-host/tag também.
+- [x] Ciclo 043 (2026-11-17): manifesto `/llms.txt` sem drift de tenancy (org vem da sessão, não de header) + teste de ausência. Ver `docs/research/2026-11-17-043-manifest-tenancy-drift.md`.
+- [ ] Ciclo 044 (candidato — exige decisão do dono/SE): semântica de assign/revoke + proteção do último Owner + DTO de criação; RLS + role least-privilege dependem de autorização do SE. FASE 7 Documents segue adiado; cargo-vet prune/load/restore off-host/tag também.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` **removido** no 040.
 
 ## 4) Backlog priorizado (80/20)

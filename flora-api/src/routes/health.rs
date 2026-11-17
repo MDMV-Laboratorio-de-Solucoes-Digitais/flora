@@ -66,14 +66,18 @@ const LLMS_TXT_MANIFEST: &str = "\
 
 ## API Endpoints
 - `POST /api/v1/auth/*`: Authentication, login, callback, refresh, and logout
-- `/api/v1/organizations`: Organization management (requires auth + `X-Organization-ID`)
-- `/api/v1/workspaces`: Workspace management (requires auth + `X-Organization-ID`)
-- `/api/v1/channels`: Messaging channels (requires auth + `X-Organization-ID`)
-- `/api/v1/tasks`: Task management (requires auth + `X-Organization-ID`)
-- `/api/v1/files`: File storage and retrieval (requires auth + `X-Organization-ID`)
-- `/api/v1/search`: Full-text search across workspace entities (requires auth + `X-Organization-ID`)
-- `/api/v1/roles`: Role-based access control (requires auth + `X-Organization-ID`)
-- `/api/v1/notifications`: User notifications (requires auth + `X-Organization-ID`)
+- `/api/v1/organizations`: Organization management (requires a verified session Bearer token)
+- `/api/v1/workspaces`: Workspace management (requires a verified session Bearer token)
+- `/api/v1/channels`: Messaging channels (requires a verified session Bearer token)
+- `/api/v1/tasks`: Task management (requires a verified session Bearer token)
+- `/api/v1/files`: File storage and retrieval (requires a verified session Bearer token)
+- `/api/v1/search`: Full-text search across workspace entities (requires a verified session Bearer token)
+- `/api/v1/roles`: Role-based access control (requires a verified session Bearer token)
+- `/api/v1/notifications`: User notifications (requires a verified session Bearer token)
+
+Organization context is derived from the verified session (`require_org()`), never from
+a request header. `X-Organization-ID` is accepted in CORS only for legacy compatibility;
+no route uses it for authorization.
 - `GET /ws`, `GET /api/v1/ws`: WebSocket real-time messaging
 ";
 
@@ -148,6 +152,19 @@ mod tests {
         assert!(body.contains("/health"));
         assert!(body.contains("/metrics"));
         assert!(body.contains("/api/v1/workspaces"));
+    }
+
+    #[tokio::test]
+    async fn test_llms_txt_does_not_advertise_header_as_auth() {
+        let response = llms_txt().await.into_response();
+        let body_bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("body bytes");
+        let body = std::str::from_utf8(&body_bytes).expect("utf-8 body");
+        // No route reads X-Organization-ID; tenancy comes from the verified session.
+        assert!(!body.contains("requires auth + `X-Organization-ID`"));
+        assert!(body.contains("verified session Bearer token"));
+        assert!(body.contains("derived from the verified session"));
     }
 
     #[tokio::test]
