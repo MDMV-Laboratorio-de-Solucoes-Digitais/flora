@@ -30,9 +30,9 @@ jobs:
       - name: Supply-chain policy (bans, licenses, sources)
         run: cargo deny check bans licenses sources
       - name: Build
-        run: cargo build
+        run: cargo build --workspace
       - name: Test
-        run: cargo test
+        run: cargo test --workspace
 
   db-tests:
     runs-on: ubuntu-latest
