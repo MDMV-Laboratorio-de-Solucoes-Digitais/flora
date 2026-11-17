@@ -37,9 +37,20 @@ Preservados: `dotenvy` (sqlx), `jsonwebtoken/rust_crypto`.
 
 ## Auditoria author-blind
 
-Ver `/tmp/opencode/dark-factory-80-20/c041-04-author-blind-audit.md` (verificador em
-contexto fresco, gates re-executados de forma independente, busca de defeito semeado).
-[Veredito a anexar quando concluir.]
+Ver `/tmp/opencode/dark-factory-80-20/c041-04-author-blind-audit.md`. O verificador
+confirmou independentemente: fmt/clippy/deny/test (46 passed/43 ignored)/vet todos
+verdes; exatamente 6 exemptions removidas; `dotenvy` preservada; nenhum usage órfão;
+as 9 linhas `+ "bitflags"` são desambiguação (bcrypt saiu do grafo).
+
+**F-1 (P1) — falso positivo por concorrência.** O auditor reportou um fresh
+`cargo check --workspace` com falha em `flora-api/src/routes/rbac.rs`. A falha ocorreu
+porque o verificador rodou **concorrentemente com edições em andamento** daquele arquivo
+(ciclo 042), capturando um estado intermediário inválido. Reexecutado o fresh check com
+target isolado (`CARGO_TARGET_DIR=/tmp/opencode/c042-fresh-target`) sobre o estado final:
+**330 crates compilados, exit 0 (3m19s)**. Nenhum defeito real no 041.
+
+Lição de processo registrada: verificadores author-blind não devem rodar enquanto o autor
+edita os mesmos arquivos; a auditoria deve ser disparada sobre um snapshot congelado.
 
 ## NV
 
