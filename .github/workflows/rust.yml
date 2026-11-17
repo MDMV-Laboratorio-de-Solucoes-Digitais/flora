@@ -10,12 +10,12 @@ jobs:
         run: |
           set -euo pipefail
           if ! command -v rustup >/dev/null 2>&1; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.0
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
             echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
             export PATH="$HOME/.cargo/bin:$PATH"
           fi
-          rustup toolchain install 1.98.0 --profile minimal --no-self-update
-          rustup default 1.98.0
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update
+          rustup default 1.98.1
           rustup component add rustfmt clippy
           rustc --version
           cargo --version
@@ -60,12 +60,12 @@ jobs:
         run: |
           set -euo pipefail
           if ! command -v rustup >/dev/null 2>&1; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.0
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
             echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
             export PATH="$HOME/.cargo/bin:$PATH"
           fi
-          rustup toolchain install 1.98.0 --profile minimal --no-self-update
-          rustup default 1.98.0
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update
+          rustup default 1.98.1
           rustup component add rustfmt clippy
           rustc --version
           cargo --version
@@ -145,11 +145,11 @@ jobs:
         run: |
           set -euo pipefail
           if ! command -v rustup >/dev/null 2>&1; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.0
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
             echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           fi
-          rustup toolchain install 1.98.0 --profile minimal --no-self-update
-          rustup default 1.98.0
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update
+          rustup default 1.98.1
           rustup component add clippy
       - uses: oven-sh/setup-bun@v2
       - name: Install frontend dependencies
