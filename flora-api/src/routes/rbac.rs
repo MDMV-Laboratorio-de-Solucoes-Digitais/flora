@@ -61,6 +61,39 @@ fn can_list_roles(role: &flora_core::models::Role) -> bool {
     role.has_permission(Permission::OrgRead) || role.has_permission(Permission::OrgAdmin)
 }
 
+/// Pure authorization check for mutating roles (create/assign/revoke). Extracted so
+/// the gate is unit-testable. These are privileged operations: only `OrgAdmin` (or
+/// wildcard) may reach them — `OrgRead` alone is not enough.
+fn can_manage_roles(role: &flora_core::models::Role) -> bool {
+    role.has_permission(Permission::OrgAdmin)
+}
+
+/// Resolve the verified session organization and require an admin membership role.
+///
+/// C046/R1: these mutating endpoints were public no-ops echoing the id. Even while
+/// their semantics are unimplemented, the surface must be authenticated and
+/// tenant-scoped so a future implementation cannot inherit an unauthenticated
+/// endpoint that accepts arbitrary `role_id`/`user_id` (OWASP A01:2021 / BOLA).
+async fn require_org_admin(state: &AppState, auth: &AuthExtractor) -> Result<Uuid> {
+    let org_id = auth
+        .require_org()
+        .map_err(|_| Error::OrganizationContextRequired)?;
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let membership = membership_repo
+        .find_by_user_and_organization(auth.user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let role = role_repo
+        .find_by_id(membership.role_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
+    if !can_manage_roles(&role) {
+        return Err(Error::Forbidden("Insufficient permissions".to_string()));
+    }
+    Ok(org_id)
+}
+
 /// `GET /api/v1/roles` — List roles in the caller's organization.
 ///
 /// Tenancy comes exclusively from the verified session (`auth.require_org()`),
@@ -94,23 +127,39 @@ async fn list_roles(
     Ok(Json(roles.into_iter().map(RoleResponse::from).collect()))
 }
 
-/// `POST /api/v1/roles` — Create a custom role. (placeholder — out of scope for 042)
-async fn create_role(State(_state): State<AppState>) -> Result<Json<String>> {
+/// `POST /api/v1/roles` — Create a custom role. (placeholder — semantics pending owner)
+async fn create_role(State(state): State<AppState>, auth: AuthExtractor) -> Result<Json<String>> {
+    let _org_id = require_org_admin(&state, &auth).await?;
     Ok(Json("created".to_string()))
 }
 
-/// `GET /api/v1/roles/{id}` — Get a role by ID. (placeholder — out of scope for 042)
-async fn get_role(Path(id): Path<Uuid>, State(_state): State<AppState>) -> Result<Json<String>> {
+/// `GET /api/v1/roles/{id}` — Get a role by ID. (placeholder — semantics pending owner)
+async fn get_role(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+) -> Result<Json<String>> {
+    let _org_id = require_org_admin(&state, &auth).await?;
     Ok(Json(id.to_string()))
 }
 
-/// `POST /api/v1/roles/{id}/assign` — Assign a role to a user. (placeholder — out of scope for 042)
-async fn assign_role(Path(id): Path<Uuid>, State(_state): State<AppState>) -> Result<Json<String>> {
+/// `POST /api/v1/roles/{id}/assign` — Assign a role to a user. (placeholder — semantics pending owner)
+async fn assign_role(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+) -> Result<Json<String>> {
+    let _org_id = require_org_admin(&state, &auth).await?;
     Ok(Json(id.to_string()))
 }
 
-/// `POST /api/v1/roles/{id}/revoke` — Revoke a role from a user. (placeholder — out of scope for 042)
-async fn revoke_role(Path(id): Path<Uuid>, State(_state): State<AppState>) -> Result<Json<String>> {
+/// `POST /api/v1/roles/{id}/revoke` — Revoke a role from a user. (placeholder — semantics pending owner)
+async fn revoke_role(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+) -> Result<Json<String>> {
+    let _org_id = require_org_admin(&state, &auth).await?;
     Ok(Json(id.to_string()))
 }
 
@@ -137,6 +186,15 @@ mod tests {
         assert!(!can_list_roles(&role_with(&[])));
         assert!(!can_list_roles(&role_with(&["task:write"])));
         assert!(!can_list_roles(&role_with(&["workspace:read"])));
+    }
+
+    #[test]
+    fn can_manage_roles_requires_admin_not_just_read() {
+        assert!(can_manage_roles(&role_with(&["org:admin"])));
+        assert!(can_manage_roles(&role_with(&["*"])));
+        assert!(!can_manage_roles(&role_with(&["org:read"])));
+        assert!(!can_manage_roles(&role_with(&["workspace:admin"])));
+        assert!(!can_manage_roles(&role_with(&[])));
     }
 
     #[test]

@@ -302,11 +302,14 @@ async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<Sta
         && let Some(jwt) = token.strip_prefix("Bearer ")
         && let Ok(claims) = flora_core::utils::jwt::decode_token(jwt, &state.config.app.jwt_secret)
     {
-        let session_repo = PgSessionRepository::new((*state.db_pool).clone());
-        let _ = session_repo.find_by_jti(&claims.jti).await?;
-        // Revoke all sessions for this user (security-sensitive action).
-        session_repo.revoke_all_for_user(claims.user_id()).await?;
-        tracing::info!(user_id = %claims.user_id(), "User session revoked");
+        // C046/C2: revoke only the session whose jti is in this token. The previous
+        // code discarded a find_by_jti lookup and revoked ALL sessions, which logged
+        // the user out of every device — logout means "this session" by default
+        // (OWASP Session Management CS; "logout everywhere" is a separate action).
+        // Revoking the jti invalidates the token because verify_bearer_token checks
+        // session.is_active against the DB on every request.
+        let revoked = state.session_service.revoke_session(&claims.jti).await?;
+        tracing::info!(user_id = %claims.user_id(), revoked, "User session logged out");
     }
     Ok(StatusCode::NO_CONTENT)
 }

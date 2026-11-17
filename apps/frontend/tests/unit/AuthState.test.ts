@@ -53,4 +53,24 @@ describe('AuthState', () => {
 		expect(state.organizationId).toBeNull();
 		expect(state.workspaceId).toBeNull();
 	});
+
+	it('should POST logout with the captured Bearer token and clear locally (F1/F5)', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+		vi.stubGlobal('fetch', fetchMock);
+		const state = new AuthState();
+		state.login('token123', { name: 'Luis' }, 'org-1');
+
+		state.logout();
+		// Cleanup is synchronous — never leave the token in memory while the
+		// network responds.
+		expect(state.token).toBeNull();
+
+		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+		const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+		expect(String(url)).toContain('/api/v1/auth/logout');
+		expect(init.method).toBe('POST');
+		const headers = new Headers(init.headers);
+		expect(headers.get('Authorization')).toBe('Bearer token123');
+		vi.unstubAllGlobals();
+	});
 });
