@@ -140,3 +140,12 @@ Detalhes: `docs/research/2026-11-16-026-*.md`, `docs/adr/0001-seed-v01-mechanism
 5. **NVs remanescentes:** cross-engine ranking/snippet parity, `pg_trgm`/i18n/CJK e ACL de busca; JWKS rotation/real-OP.
 
 Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `docs/research/2026-11-16-seed-*.md`, `ROADMAP.md`.
+
+## Estado verificado — 2026-11-17T13:42Z (append-only)
+
+- **Âncora:** `dev@04bf70bdd`, árvore limpa, 1 worktree. Gate autoritativo do alvo `python3 scripts/ci/check_gate_integrity.py` → **PASS** (4 required checks não-vácuos, pisos DB 12/4/8/8/5/6 = 43).
+- **Contagens recontadas por `find` (não por prosa):** specs=37 (até `042`), assessments=34, validations=33, releases=33, bugs=4, research=135. A prosa acima ainda cita `001-033` — defasagem de 9 ciclos; registrada, não reescrita.
+- **Gates SDD nativos (substituição A, sem importar a factory):** completeness PASS (37/37 com `spec.md`+`tasks.md`), unicidade de task IDs PASS (434 definições top-level + 47 subtasks), DAG PASS (0 arestas declaradas), converge append-only PASS (0 artefatos — vacuo).
+- **Divergências conhecidas:** `plan.md` ausente em `025-042`; `analyze.md`/`converge.md` ausentes em todo o repo (N/A: nenhuma spec ≥088); validations/releases `043-046` sem spec correspondente; `.specify/feature.json` e `.specify/memory/STATE.md` ausentes; `Cargo.toml` declara 5 crates `flora*` (AGENTS.md cita 7) e pin `1.98.1` (AGENTS.md cita `1.98.0`).
+- **Decisão de governança registrada (BLOCO 0.a):** manter alvo — CI GitHub Actions, CLI `gh`, gate `check_gate_integrity.py`. Factory `aa7600d` foi lida como fonte de ideias; nada foi materializado.
+- **[NV]** Estado vivo de CI/branch protection/PRs em GitHub e Forgejo não verificado; aprovações, merges e smoke remotos permanecem NV.
