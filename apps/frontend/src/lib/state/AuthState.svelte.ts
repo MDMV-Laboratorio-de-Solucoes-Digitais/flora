@@ -116,7 +116,14 @@ export class AuthState {
 		const revoke = (async () => {
 			if (!token) return;
 			try {
-				await ApiClient.request('/api/v1/auth/logout', { method: 'POST' });
+				// F1 (author-blind 046): pass the captured token explicitly instead of
+				// relying on the global authState.token at request time. A future await
+				// or a non-singleton instance would otherwise send an unauthenticated
+				// POST -> backend 204 -> session never revoked.
+				await ApiClient.request('/api/v1/auth/logout', {
+					method: 'POST',
+					headers: { Authorization: `Bearer ${token}` }
+				});
 			} catch {
 				// Ignore: local logout must still complete.
 			}

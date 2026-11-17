@@ -26,7 +26,21 @@ Frontend: POST `/auth/logout` best-effort + cleanup síncrono (compatível com c
 Contrato DB `db_logout_revokes_only_current_session` PASS: token A → 401; token B íntegro.
 Suíte auth **13 passed** (era 12).
 
+## Auditoria author-blind — GO (achados corrigidos)
+
+Veredito **GO**: 101 passed/0 failed, 13 suítes; frontend 39/39; contrato de logout
+PASS; `.github` e `guide-to-strict-rust.md` intactos; logout idempotente (204).
+Achados corrigidos em acompanhamento:
+- **F1 (médio, latente)**: `logout()` passa agora o token capturado explicitamente no
+  header `Authorization`, em vez de depender do `authState.token` global no momento do
+  request. Novo teste `should POST logout with the captured Bearer token` (frontend 40/40).
+- **F5**: o mesmo teste asserts `method === 'POST'` + `Authorization: Bearer token123`.
+- **F3**: ramo idempotente 204 sem token permanece coberto por construção (handler).
+- **F2 (baixo)**: 401 no POST pode rearmar `lockSession()` — follow-up.
+- **F4 (médio)**: `contract/rbac.rs::test_rbac_routes_exist` é vácuo (`Ok(())`) —
+  follow-up explícito (converter aquele stub em teste real de exigência de auth).
+
 ## NV / follow-ups
 
 R2 (revalidar membership em 7 handlers — sem exploit vivo), R3 (`thread_id`), 404s
-frontend, FASE 7, RLS wrapper. Nenhum required check/deploy/RLS enforcement tocado.
+frontend, F2/F4, FASE 7, RLS wrapper. Nenhum required check/deploy/RLS enforcement tocado.
