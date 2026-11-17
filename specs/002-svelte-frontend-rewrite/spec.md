@@ -31,7 +31,7 @@ As an organization administrator, I need to create and manage workspaces, assign
 **Acceptance Scenarios**:
 
 1. **Given** an unauthenticated user, **When** they attempt to access the workspace, **Then** they are redirected to the OIDC login flow.
-2. **Given** an admin user in the workspace settings, **When** they invite a new user and assign a "Member" role, **Then** the invitation is sent and the system registers the role assignment.
+2. **Given** an admin user in the workspace settings, **When** they invite a new user and assign a "Member" role, **Then** the invitation is sent and the system registers the role assignment. — **NOT IMPLEMENTED in this baseline**: no `POST /api/v1/users/invite` route exists; the dead UI was removed in cycle 051. Text preserved for history.
 3. **Given** the frontend Svelte 5 codebase, **When** the code is compiled, **Then** `svelte-check` must pass with zero warnings, enforcing `strict: true` and no `any` types.
 
 ---
