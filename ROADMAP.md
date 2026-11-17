@@ -97,3 +97,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Dependências proprietárias obrigatórias ou stack pesada para VPS barata.
 - Reuso de código incompatível com AGPL ou engenharia reversa não autorizada.
 - Deploy/produção, publicação de tag/release, segredos ou serviços pagos sem autorização. Push/PR/merge são decisão de máquina sob gates determinísticos obrigatórios (ADR-0003) e não exigem autorização humana.
+
+## Estado verificado — 2026-11-17T14:34Z (append-only)
+
+- Âncora `github/dev@4ae58ccd2`; `check_gate_integrity.py` PASS. Contagens por `find` nesta base: specs=38, assessments=35, validations=30, releases=30, bugs=4, research=132.
+- Ciclo 048 corrige `AGENTS.md`: 5 membros + raiz (6 manifests `flora*`) e toolchain `1.98.1`; nenhuma regra, gate ou permissão alterada.
+- Base `github/dev` não contém os ciclos 044–046 presentes no `dev` local; por isso `specs/` para em 042 e as contagens diferem da sessão anterior. Nenhum trabalho alheio foi reescrito.
+- **[NV]** CI/branch protection/PRs ao vivo não verificados. Sem merge, auto-merge, tag, deploy ou force-push.
