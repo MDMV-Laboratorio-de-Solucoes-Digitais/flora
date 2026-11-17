@@ -128,6 +128,34 @@ impl Default for RateLimiterState {
     }
 }
 
+/// Endpoint class used by the rate-limit middleware.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RateLimitClass {
+    Login,
+    Refresh,
+    Invite,
+    General,
+}
+
+/// Classify a request path into a rate-limit bucket.
+///
+/// Matching by suffix covers the mounted `/api/v1/...` routes and legacy paths
+/// without the prefix. See `routes::mod::create_router` for the mounted prefixes.
+fn classify_endpoint(path: &str) -> RateLimitClass {
+    if path.ends_with("/auth/login") {
+        RateLimitClass::Login
+    } else if path.ends_with("/auth/refresh") {
+        RateLimitClass::Refresh
+    } else if path.ends_with("/users/invite")
+        || path.ends_with("/invites")
+        || path.ends_with("/invitations")
+    {
+        RateLimitClass::Invite
+    } else {
+        RateLimitClass::General
+    }
+}
+
 /// Rate limiting middleware evaluating endpoint-specific limits per FR-020.
 ///
 /// # Errors
@@ -156,23 +184,22 @@ pub async fn rate_limit_middleware(
     let path = req.uri().path();
 
     // Determine limit and window based on endpoint (FR-020)
-    let (key, limit, window_secs) = if path.starts_with("/auth/login") {
-        (format!("login:{ip}"), 5, 60)
-    } else if path.starts_with("/auth/refresh") {
-        let user_key = req
-            .headers()
-            .get("x-user-id")
-            .and_then(|v| v.to_str().ok())
-            .map_or_else(|| format!("refresh:{ip}"), |u| format!("refresh:user:{u}"));
-        (user_key, 20, 60)
-    } else if path.contains("/invites") || path.contains("/invitations") {
-        (format!("invite:{ip}"), 10, 3600)
-    } else {
-        (
+    let (key, limit, window_secs) = match classify_endpoint(path) {
+        RateLimitClass::Login => (format!("login:{ip}"), 5, 60),
+        RateLimitClass::Refresh => {
+            let user_key = req
+                .headers()
+                .get("x-user-id")
+                .and_then(|v| v.to_str().ok())
+                .map_or_else(|| format!("refresh:{ip}"), |u| format!("refresh:user:{u}"));
+            (user_key, 20, 60)
+        }
+        RateLimitClass::Invite => (format!("invite:{ip}"), 10, 3600),
+        RateLimitClass::General => (
             format!("gen:{ip}"),
             state.default_limit,
             state.default_window.as_secs(),
-        )
+        ),
     };
 
     let allowed = state.check_rate_limit(&key, limit, window_secs).await;
@@ -188,6 +215,40 @@ pub async fn rate_limit_middleware(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn classifies_login_paths() {
+        assert_eq!(
+            classify_endpoint("/api/v1/auth/login"),
+            RateLimitClass::Login
+        );
+        assert_eq!(classify_endpoint("/auth/login"), RateLimitClass::Login);
+    }
+
+    #[test]
+    fn classifies_refresh_paths() {
+        assert_eq!(
+            classify_endpoint("/api/v1/auth/refresh"),
+            RateLimitClass::Refresh
+        );
+        assert_eq!(classify_endpoint("/auth/refresh"), RateLimitClass::Refresh);
+    }
+
+    #[test]
+    fn classifies_invite_paths() {
+        assert_eq!(
+            classify_endpoint("/api/v1/users/invite"),
+            RateLimitClass::Invite
+        );
+        assert_eq!(classify_endpoint("/invites"), RateLimitClass::Invite);
+        assert_eq!(classify_endpoint("/invitations"), RateLimitClass::Invite);
+    }
+
+    #[test]
+    fn classifies_general_paths() {
+        assert_eq!(classify_endpoint("/health"), RateLimitClass::General);
+        assert_eq!(classify_endpoint("/api/v1/tasks"), RateLimitClass::General);
+    }
 
     #[tokio::test]
     async fn test_in_memory_rate_limiter_allows_under_limit() {
