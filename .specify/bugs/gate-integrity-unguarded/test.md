@@ -4,11 +4,11 @@
 - **Tested**: 2026-11-16
 - **Assessment**: ./assessment.md
 - **Fix**: ./fix.md
-- **Result**: partial
+- **Result**: verified
 
 ## Summary
 
-O guard determinístico e o holdout foram executados localmente com sucesso. O veredito é `partial` até que o PR #254 rode na GitHub Actions: o holdout reproduz o shell do workflow, não o runner, e a comparação `--remote` das proteções é uma verificação local opcional.
+O guard determinístico e o holdout foram executados localmente com sucesso e o guard **rodou dentro do required check `rust-build` no PR #254**, com as sete verificações passando. Permanece NV apenas a semântica do runner Forgejo e a reprodução em GitHub Actions de um cenário de filtro sem correspondência (o holdout replaya o shell do workflow, não o Actions).
 
 ## Checks Performed
 
@@ -20,7 +20,9 @@ O guard determinístico e o holdout foram executados localmente com sucesso. O v
 | Checker independente | `python3 $DF/scripts/holdout/checker.py ...` | pass | `holdout-check: PASS scenarios=1`, exit 0. |
 | Prova de falha do gate | `observed.json` | pass | `exit_code=1`; stdout `auth: passed=0 floor=12`, `0 passed ... 89 filtered out`. |
 | Proteção ao vivo (modo opcional) | `python3 scripts/ci/check_gate_integrity.py --remote` | pass | Contextos de `dev`/`main` iguais aos 4 esperados (executado localmente). |
-| CI remoto no PR #254 | `gh pr checks 254` | not-run | Preenchido após o merge. |
+| CI remoto no PR #254 | `gh pr checks 254` | pass | Todos os checks terminal: `frontend-build`, `rust-build`, `db-tests`, `dependency-review`, `supply-chain-vet`, `e2e-browser` pass; merge em `91ff5eadf0d09a8694e6ccebd7e98618d1a6c715`. |
+| Guard no required job (remoto) | `gh run view 44000561792 --log` | pass | Step `Gate integrity (required checks / floors / no vacuity)` executou `python3 scripts/ci/check_gate_integrity.py` → `gate-integrity: PASS` com as 7 verificações. |
+| Pisos DB no remoto | mesmo log, job `db-tests` | pass | `auth: passed=12 floor=12` confirmado (demais pisos no mesmo step). |
 | Runner semantics / Forgejo | — | NV | Holdout não exercita GitHub Actions nem Forgejo. |
 
 ## Output Excerpts
@@ -46,4 +48,4 @@ holdout-check: PASS scenarios=1
 
 ## Recommendation
 
-Mesclar o PR #254 quando os quatro required checks estiverem verdes com o novo step presente no log de `rust-build`. Atualizar este `test.md` com a evidência remota após o merge.
+Bug **fechado**: PR #254 mesclado por decisão de máquina sob os quatro required checks, com o guard presente no log de `rust-build` (ADR-0003). Próximos candidatos: SHA-pin das 16 actions mutáveis (`osv-scan.yml:14` `@v2` aparenta tag inválida) e, após janela de 7 dias/20 PRs com CODEOWNERS, reavaliar promoção de `cargo-vet`/`e2e-browser`. RLS e RBAC seguem como ciclos separados.
