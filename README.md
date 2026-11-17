@@ -63,7 +63,7 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 ## 🖥️ Frontend apps
 
 - **`apps/frontend`**: canonical Flora frontend (SvelteKit + Svelte 5 rewrite, spec 002 / constitution). CI runs in `apps/frontend` (`bun install`, `check`, `lint`, `test:unit`, `build`).
-- **`apps/web`**: separate imported `@coparse/web` (SolidJS/Macro-style) codebase present in this checkout; **not** the canonical Svelte 5 target. Treat as legacy/reference unless explicitly reconciled.
+- **`apps/web`**: (removido no ciclo 040) era o cliente `@coparse/web` (SolidJS/Macro-style) importado como referência; **nunca** foi o alvo canônico Svelte 5. O alvo é apenas `apps/frontend`.
 
 ## ⚙️ Local Development (CI)
 
