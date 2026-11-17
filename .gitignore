@@ -169,5 +169,5 @@ guide-to-strict-rust.md
 # Archify diagram artifacts
 .archify/
 
-# 051: runtime orchestration queue (append-only ledger + per-agent worktrees)
+# runtime orchestration queue (append-only ledger + per-agent worktrees)
 .specify/queue/
