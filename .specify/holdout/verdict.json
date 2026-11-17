@@ -1,0 +1,10 @@
+{
+  "all_pass": true,
+  "verdicts": [
+    {
+      "scenario_id": "zero-tests-match-fails",
+      "pass": true,
+      "mismatches": []
+    }
+  ]
+}

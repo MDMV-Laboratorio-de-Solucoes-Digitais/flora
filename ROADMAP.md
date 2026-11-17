@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–034 mergeados; 035 em preparação)  
+**Atualizado em:** 2026-11-16 (ciclos 011–038; 035–037 mergeados, 038 em preparação). ADR-0003 rege push/PR/merge como decisão de máquina sob gates determinísticos.  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-033`, `.specify/assessments/003-033`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -90,4 +90,4 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Paridade com Macro; superfícies/integrações P2–P3 como requisito do Seed.
 - Dependências proprietárias obrigatórias ou stack pesada para VPS barata.
 - Reuso de código incompatível com AGPL ou engenharia reversa não autorizada.
-- Deploy/produção, merges/releases, segredos ou serviços pagos sem autorização.
+- Deploy/produção, publicação de tag/release, segredos ou serviços pagos sem autorização. Push/PR/merge são decisão de máquina sob gates determinísticos obrigatórios (ADR-0003) e não exigem autorização humana.
