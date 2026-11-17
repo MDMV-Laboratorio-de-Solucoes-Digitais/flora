@@ -1,3 +1,5 @@
+import { ApiClient } from '$lib/api/client';
+
 type StoredAuth = {
 	token: string | null;
 	user: Record<string, unknown> | null;
@@ -102,6 +104,24 @@ export class AuthState {
 	}
 
 	logout() {
+		// C046/C2: invalidate the session server-side, not just in localStorage —
+		// a stolen JWT would otherwise stay valid until `exp`. The backend revokes
+		// the session's jti, so the token fails verify_bearer_token immediately.
+		// Capture the token first, but clear local state SYNCHRONOUSLY (keeps this
+		// method compatible with its fire-and-forget callers and never leaves a
+		// token in memory while the network responds), then POST best-effort.
+		// OWASP Session Management CS / ASVS V14.3.1: cleanup must not depend on
+		// network success.
+		const token = this.token;
+		const revoke = (async () => {
+			if (!token) return;
+			try {
+				await ApiClient.request('/api/v1/auth/logout', { method: 'POST' });
+			} catch {
+				// Ignore: local logout must still complete.
+			}
+		})();
+		void revoke; // fire-and-forget: local cleanup is synchronous and authoritative.
 		this.token = null;
 		this.user = null;
 		this.organizationId = null;

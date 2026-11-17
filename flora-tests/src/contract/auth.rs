@@ -977,4 +977,65 @@ mod db_session_authority {
         );
         Ok(())
     }
+
+    /// C046/C2: logout revokes ONLY the session in the presented token.
+    /// A stolen token must fail immediately (401), while another live session of
+    /// the same user remains valid (logout != "logout everywhere").
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 046)"]
+    async fn db_logout_revokes_only_current_session() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let (user, org, role) = seed_user_org_role(&state).await?;
+        let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+        let _ = membership_repo
+            .create(Membership::new(user.id, org.id, role.id))
+            .await?;
+
+        let jti_a = format!("jti-{}", Uuid::now_v7());
+        let jti_b = format!("jti-{}", Uuid::now_v7());
+        let exp = Utc::now() + ::chrono::Duration::seconds(3600);
+        seed_session(&state, user.id, org.id, &jti_a, true, exp).await?;
+        seed_session(&state, user.id, org.id, &jti_b, true, exp).await?;
+        let token_a = token_for(&config, user.id, &jti_a, org.id, &user.email);
+        let token_b = token_for(&config, user.id, &jti_b, org.id, &user.email);
+
+        // Both tokens work before logout.
+        anyhow::ensure!(
+            protected_status(state.clone(), &token_a).await? != StatusCode::UNAUTHORIZED,
+            "token A should be valid before logout"
+        );
+        anyhow::ensure!(
+            protected_status(state.clone(), &token_b).await? != StatusCode::UNAUTHORIZED,
+            "token B should be valid before logout"
+        );
+
+        // Logout with token A.
+        let router = axum::Router::new()
+            .nest("/auth", create_auth_router())
+            .with_state(state.clone());
+        let request = http::Request::builder()
+            .method("POST")
+            .uri("/auth/logout")
+            .header("authorization", format!("Bearer {token_a}"))
+            .body(axum::body::Body::empty())?;
+        let response = ServiceExt::oneshot(router, request).await?;
+        anyhow::ensure!(
+            response.status() == StatusCode::NO_CONTENT,
+            "logout should be idempotent 204: {}",
+            response.status()
+        );
+
+        // A is dead (replay -> 401), B is alive (no "logout everywhere").
+        anyhow::ensure!(
+            protected_status(state.clone(), &token_a).await? == StatusCode::UNAUTHORIZED,
+            "token A must be 401 after logout"
+        );
+        anyhow::ensure!(
+            protected_status(state, &token_b).await? != StatusCode::UNAUTHORIZED,
+            "token B must remain valid after logging out A"
+        );
+        Ok(())
+    }
 }
