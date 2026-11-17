@@ -27,3 +27,11 @@ dependências deixou de ser produzido — sem afetar os checks obrigatórios de 
 - `grep -n 'reusable.yml@' .github/workflows/osv-scan.yml` → `v2.7.1`.
 - `check_gate_integrity.py` → PASS (4 required checks intactos).
 - Gates Rust e frontend verdes; diff de código = 1 linha.
+
+## Correção pós-analyze (2026-11-17T23:41Z)
+
+Os critérios de sucesso passam a ter IDs explícitos, para casar com a spec:
+
+- **SC-001**: `grep -n 'reusable.yml@'` → `v2.7.1`.
+- **SC-002**: `check_gate_integrity.py` → PASS (4 required checks, pisos 43).
+- **SC-003**: diff de código = 1 linha em 1 arquivo.
