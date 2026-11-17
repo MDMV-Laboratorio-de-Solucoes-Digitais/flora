@@ -105,3 +105,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - `plan.md` ausente em `025-042`; nenhum `analyze.md`/`converge.md` no repo; `feature.json`/`STATE.md` ausentes. Não há spec ≥088, portanto a exigência de `analyze.md`+`converge.md` é N/A hoje.
 - Decisão A (alvo): GitHub Actions + `gh` + `check_gate_integrity.py` permanecem autoritativos; nenhum artefato da factory `aa7600d` foi importado.
 - **[NV]** CI/PR/branch protection ao vivo não verificados. Nenhum merge, auto-merge, tag ou deploy realizado nesta sessão.
+
+## Estado verificado — 2026-11-17T14:34Z (append-only)
+
+- Âncora `github/dev@4ae58ccd2`; `check_gate_integrity.py` PASS. Contagens por `find` nesta base: specs=38, assessments=35, validations=30, releases=30, bugs=4, research=132.
+- Ciclo 048 corrige `AGENTS.md`: 5 membros + raiz (6 manifests `flora*`) e toolchain `1.98.1`; nenhuma regra, gate ou permissão alterada.
+- Base `github/dev` não contém os ciclos 044–046 presentes no `dev` local; por isso `specs/` para em 042 e as contagens diferem da sessão anterior. Nenhum trabalho alheio foi reescrito.
+- **[NV]** CI/branch protection/PRs ao vivo não verificados. Sem merge, auto-merge, tag, deploy ou force-push.

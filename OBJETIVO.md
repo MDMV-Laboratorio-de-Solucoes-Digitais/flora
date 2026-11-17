@@ -149,3 +149,12 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Divergências conhecidas:** `plan.md` ausente em `025-042`; `analyze.md`/`converge.md` ausentes em todo o repo (N/A: nenhuma spec ≥088); validations/releases `043-046` sem spec correspondente; `.specify/feature.json` e `.specify/memory/STATE.md` ausentes; `Cargo.toml` declara 5 crates `flora*` (AGENTS.md cita 7) e pin `1.98.1` (AGENTS.md cita `1.98.0`).
 - **Decisão de governança registrada (BLOCO 0.a):** manter alvo — CI GitHub Actions, CLI `gh`, gate `check_gate_integrity.py`. Factory `aa7600d` foi lida como fonte de ideias; nada foi materializado.
 - **[NV]** Estado vivo de CI/branch protection/PRs em GitHub e Forgejo não verificado; aprovações, merges e smoke remotos permanecem NV.
+
+## Estado verificado — 2026-11-17T14:34Z (append-only)
+
+- **Âncora:** `github/dev@4ae58ccd2`, branch `feature/048-governance-drift`, árvore limpa no início do ciclo. Gate autoritativo `python3 scripts/ci/check_gate_integrity.py` → PASS.
+- **Contagens por `find` nesta base:** specs=38 (inclui `047`/`048` locais), assessments=35, validations=30, releases=30, bugs=4, research=132. A prosa acima cita `001-033`; registrada, não apagada.
+- **Correção de governança (ciclo 048):** `AGENTS.md` agora descreve 5 membros + raiz (6 manifests) e toolchain `1.98.1`, conforme `Cargo.toml:19` e o bug `rust-toolchain-pin-bump-1-98-1`. Nenhuma regra foi enfraquecida.
+- **Dívidas:** ciclos `043-046` com validação/release sem spec nesta base; `plan.md` ausente em `025-042`; sem `analyze.md`/`converge.md` antes de 047; `docs/PROGRESSO.md`, `docs/research/index.md` e `index.md` ausentes; 4 bug reports já `applied`/`verified`.
+- **Decisão A preservada:** CI GitHub Actions, CLI `gh`, gate `check_gate_integrity.py`. Factory `214f6ce0` lida como fonte, nada materializado.
+- **[NV]** CI/PR/branch protection ao vivo e merges não verificados nesta base; PR #262 permanece em aberto em outro branch.
