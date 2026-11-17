@@ -1,7 +1,6 @@
 //! DB-gated contract tests for task endpoints (cycle 044).
 //! Replaces the previous `Ok(())` stubs with real assertions on the Axum router
 //! backed by disposable PostgreSQL 18 (the `db-tests` CI leg).
-
 #[cfg(test)]
 mod db {
     use axum::{
@@ -218,6 +217,71 @@ mod db {
         anyhow::ensure!(
             status == StatusCode::NOT_FOUND,
             "deleted task still visible: {status}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 045)"]
+    async fn db_task_cross_org_workspace_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed_a = seed_member(&state, &config).await?;
+        let seed_b = seed_member(&state, &config).await?;
+
+        // Own workspace -> 201 (control).
+        let (status, created) = call(
+            state.clone(),
+            "POST",
+            "/",
+            &seed_a.token,
+            Some(json!({
+                "title": "Own org task",
+                "workspace_id": seed_a.workspace_id,
+                "assignee_id": seed_a.user_id
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::CREATED,
+            "own workspace should be accepted: {status} {created}"
+        );
+
+        // Workspace from another org -> 4xx, never 201 (OWASP A01/CWE-639).
+        let (status, rejected) = call(
+            state.clone(),
+            "POST",
+            "/",
+            &seed_a.token,
+            Some(json!({
+                "title": "Cross-org task",
+                "workspace_id": seed_b.workspace_id,
+                "assignee_id": seed_a.user_id
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status.is_client_error(),
+            "cross-org workspace must be rejected, got {status}: {rejected}"
+        );
+
+        // Assignee from another org must also be rejected (BOLA via body field).
+        let (status, rejected) = call(
+            state,
+            "POST",
+            "/",
+            &seed_a.token,
+            Some(json!({
+                "title": "Cross-org assignee task",
+                "workspace_id": seed_a.workspace_id,
+                "assignee_id": seed_b.user_id
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status.is_client_error(),
+            "cross-org assignee must be rejected, got {status}: {rejected}"
         );
         Ok(())
     }

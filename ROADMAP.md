@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-17 (ciclos 011–044; 039 restore drill, 040–041 debloat, 042 RBAC list, 043 manifesto, 044 Seed verification closure + ADRs 0004–0006). ADR-0003 rege push/PR/merge como decisão de máquina sob gates determinísticos.  
+**Atualizado em:** 2026-11-17 (ciclos 011–045; 039 restore drill, 040–041 debloat, 042 RBAC list, 043 manifesto, 044 Seed closure + ADRs 0004–0006, 045 fix cross-tenant). ADR-0003 rege push/PR/merge como decisão de máquina sob gates determinísticos.  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-033`, `.specify/assessments/003-033`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -60,7 +60,7 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 042 (2026-11-17): `GET /api/v1/roles` real (tenancy da sessão + gate `OrgRead|OrgAdmin` + DTO sem vazamento) com helper puro e 3 testes. Ver `specs/042-real-rbac-list/` e `docs/research/2026-11-17-042-real-rbac.md`.
 - [x] Ciclo 043 (2026-11-17): manifesto `/llms.txt` sem drift de tenancy (org vem da sessão, não de header) + teste de ausência. Ver `docs/research/2026-11-17-043-manifest-tenancy-drift.md`.
 - [x] Ciclo 044 (2026-11-17): Seed verification closure — ADRs 0004–0006 (roles/RLS/rollout, enforcement EVOLUTIVO), 5 contratos DB reais (workspace/tasks), 2 bugs corrigidos (Member perms, soft-delete). Ver `docs/research/2026-11-17-044-seed-verification-closure.md`.
-- [ ] Ciclo 045 (candidato — exige decisão do dono/SE): promover 5 contratos a legs `db-tests`, RBAC assign/revoke + último Owner, wrapper de transação para RLS, load/OOM, backup off-host, deploy Coolify. FASE 7 Documents segue adiado (não é pré-requisito Seed).
+- [x] Ciclo 045 (2026-11-17): bug cross-tenant em `POST /tasks` fechado (`workspace_id` do body validado contra a org da sessão); módulo `tenant.rs` compartilhado + contrato `db_task_cross_org_workspace_rejected`. Ver `docs/research/2026-11-17-045-cross-tenant-workspace-fix.md`.
 - [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` **removido** no 040.
 
 ## 4) Backlog priorizado (80/20)
