@@ -51,6 +51,11 @@ passam, `*`, negativos e kebab-case também.
 **🟡 D2 — CORRIGIDO.** nil-org retornava 422 (`Error::Validation`); trocado por
 `Error::OrganizationContextRequired` → 400, conforme spec/validate.
 
+**Reconfirmação independente** (`c042-03-d1d2-recheck.md`): verificador novo confirmou
+D1 RESOLVIDO (payload idêntico ao Admin do seed, 32 strings, OrgRead/OrgAdmin = true;
+`legacy_permission_name` é `const fn` com match exaustivo de 27 variantes) e D2 RESOLVIDO
+(400 confirmado). Nenhum novo defeito; aliases 1:1, nenhuma permissão errada aceita.
+
 **🟡/🔵 Follow-ups (não bloqueantes):** D3 `memberships.role_id` sem FK + `find_by_id`
 sem filtro de org (defesa em profundidade, sem vazamento); D4 teste de contrato DB A/B;
 D5 docs/`llms.txt` ainda citam `X-Organization-ID` (obsoleto).
