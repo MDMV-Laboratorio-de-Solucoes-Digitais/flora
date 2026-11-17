@@ -118,3 +118,13 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - PR #265 (ciclo 050) `OPEN`/`CLEAN` nesta base — não tocado. Sem merge/auto-merge/tag/deploy nesta sessão.
 - Próximo 80/20: validar tag `osv-scan@v2` (6.0, validade **[NV]**), C5 (2.08, decisão de dono), N3 (1.5), C6 (0.80, autorização SE).
 - **[NV]** CI/PR/aprovações ao vivo após este ciclo.
+
+## Atualização — ciclo 052 (2026-11-17T23:44Z)
+
+- Âncora `github/dev@01d822205`; branch `feature/052-osv-scan-ref-pin`; NNN 052 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão A preservada: CI GitHub Actions, CLI `gh`, gate `scripts/ci/check_gate_integrity.py`. Factory `d2bd95823cc5b4758b1c4cf5bd9133b20309ebb7` lida como fonte; scripts SDD executados em `/tmp` com baselines neutros, nada materializado no alvo.
+- Ciclo 052 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze (conflito de SC IDs corrigido na fonte, rerun PASS) → implement → converge → validate R4 → release R7.
+- Implementação: `.github/workflows/osv-scan.yml:14` `@v2` → `@v2.7.1` (1 linha). `__gitignore` ignora `.specify/queue/` (runtime).
+- Gates: `check_gate_integrity.py` PASS (local + `--remote`); fmt/clippy/deny/build exit 0; test 105 passed/0 failed/51 ignored; frontend check 0/0, lint ok, 42/42, build ok.
+- PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo após este ciclo e execução real do job OSV.
