@@ -9,8 +9,8 @@
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::repositories::PgWorkspaceRepository;
-use flora_core::traits::WorkspaceRepository;
+use flora_core::repositories::{PgMembershipRepository, PgWorkspaceRepository};
+use flora_core::traits::{MembershipRepository, WorkspaceRepository};
 
 use crate::state::AppState;
 
@@ -40,6 +40,30 @@ pub async fn ensure_workspace_in_org(
         return Err(Error::Validation {
             field: "workspace_id".to_string(),
             message: "workspace not found".to_string(),
+        });
+    }
+    Ok(())
+}
+
+/// Ensure `user_id` is a member of `org_id` (the session-verified organization).
+///
+/// Guards `assignee_id` supplied in task create/update bodies: assigning a task to
+/// a user from another organization is BOLA (OWASP A01:2021 / CWE-639). The error
+/// deliberately does not disclose whether the user exists.
+///
+/// # Errors
+///
+/// Returns an error when the database query fails or the user is not a member of
+/// `org_id` (including when the user does not exist).
+pub async fn ensure_user_in_org(state: &AppState, org_id: Uuid, user_id: Uuid) -> Result<()> {
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let membership = membership_repo
+        .find_by_user_and_organization(user_id, org_id)
+        .await?;
+    if membership.is_none() {
+        return Err(Error::Validation {
+            field: "assignee_id".to_string(),
+            message: "assignee not found".to_string(),
         });
     }
     Ok(())

@@ -279,7 +279,7 @@ mod db {
 
         // Workspace from another org -> 4xx, never 201 (OWASP A01/CWE-639).
         let (status, rejected) = call(
-            state,
+            state.clone(),
             "POST",
             "/",
             &seed_a.token,
@@ -293,6 +293,24 @@ mod db {
         anyhow::ensure!(
             status.is_client_error(),
             "cross-org workspace must be rejected, got {status}: {rejected}"
+        );
+
+        // Assignee from another org must also be rejected (BOLA via body field).
+        let (status, rejected) = call(
+            state,
+            "POST",
+            "/",
+            &seed_a.token,
+            Some(json!({
+                "title": "Cross-org assignee task",
+                "workspace_id": seed_a.workspace_id,
+                "assignee_id": seed_b.user_id
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status.is_client_error(),
+            "cross-org assignee must be rejected, got {status}: {rejected}"
         );
         Ok(())
     }

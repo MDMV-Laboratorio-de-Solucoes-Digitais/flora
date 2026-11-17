@@ -20,7 +20,7 @@ use std::str::FromStr;
 
 use crate::AppState;
 use crate::extractors::AuthExtractor;
-use crate::tenant::ensure_workspace_in_org;
+use crate::tenant::{ensure_user_in_org, ensure_workspace_in_org};
 
 /// Request body for creating a task.
 #[derive(Debug, Deserialize)]
@@ -189,6 +189,10 @@ async fn create_task(
     // selector, not proof of authorization. Reject a workspace outside the session's
     // verified organization before creating the task (defense in depth alongside RLS).
     ensure_workspace_in_org(&state, org_id, req.workspace_id).await?;
+    // Assignee (when provided) must belong to the session's verified org (BOLA guard).
+    if let Some(assignee_id) = req.assignee_id {
+        ensure_user_in_org(&state, org_id, assignee_id).await?;
+    }
 
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
     let mut task = Task::new(req.workspace_id, org_id, user_id, &req.title);
@@ -271,8 +275,11 @@ async fn update_task(
         ));
     }
 
+    // 021 tri-state: omit => keep, null => clear, value => set (validate only a set).
+    if let Some(Some(assignee_id)) = req.assignee_id {
+        ensure_user_in_org(&state, org_id, assignee_id).await?;
+    }
     let old_assignee_id = existing.assignee_id;
-    // 021 tri-state: omit => keep existing, null => clear, value => set.
     let new_assignee_id = req.assignee_id.unwrap_or(old_assignee_id);
 
     let status = req
