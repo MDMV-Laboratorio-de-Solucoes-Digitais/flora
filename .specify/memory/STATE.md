@@ -98,3 +98,13 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - **Remoto verificado ao vivo:** PR #263 MERGED; PR #262 `DIRTY` (conflito) — não tocado. Demais estados **[NV]**.
 - Próximo 80/20: C4 `/users/invite` 404 (3.75), C5 RBAC stub (2.08, decisão de dono), C6 RLS (0.80, autorização SE).
 - Factory relida em `214f6ce03be3c9882e03204b9a26dc7be2d53a7b` (7 worktrees em voo); nada materializado. Sem injeção detectada; nenhuma credencial copiada.
+
+## Atualização — ciclo 051 (2026-11-17T17:35Z)
+
+- Âncora `github/dev@b3bfda505`; branch `feature/051-dead-invite-ui`; NNN 051 por inventário (feature.json apontava 050), nunca pelo nome do branch. Decisão A preservada.
+- Factory relida em `ebe0cb86b14c932b3b0ee3ce805264686e906ac2` (7 worktrees); nada materializado.
+- Ciclo 051 fechado: C4 resolvido pela via mínima — remoção da UI de convite sem backend; spec 002 marcada (não reescrita). Nenhuma decisão de autorização tomada.
+- Gates: Rust 111 passed/0 failed/44 ignored, frontend 41/41, fmt/clippy/deny/build e `check_gate_integrity.py` PASS. `rg 'UserManager|users/invite' apps/frontend/src` → 0.
+- PR #265 (ciclo 050) `OPEN`/`CLEAN` nesta base — não tocado. Sem merge/auto-merge/tag/deploy nesta sessão.
+- Próximo 80/20: validar tag `osv-scan@v2` (6.0, validade **[NV]**), C5 (2.08, decisão de dono), N3 (1.5), C6 (0.80, autorização SE).
+- **[NV]** CI/PR/aprovações ao vivo após este ciclo.
