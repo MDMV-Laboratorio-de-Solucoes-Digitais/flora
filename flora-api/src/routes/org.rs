@@ -152,7 +152,22 @@ async fn create_org(
         id: Uuid::now_v7(),
         organization_id: created_org.id,
         name: "Member".to_string(),
-        permissions: serde_json::json!(["read", "write"]),
+        // Canonical kebab-case permission strings: `has_permission()` compares
+        // against `Permission::to_string()`, so legacy ["read","write"] silently
+        // granted nothing (runtime-created orgs could not update their workspace).
+        permissions: serde_json::json!([
+            "workspace:read",
+            "workspace:write",
+            "channel:read",
+            "channel:write",
+            "message:read",
+            "message:write",
+            "task:read",
+            "task:write",
+            "file:read",
+            "file:write",
+            "notification:read"
+        ]),
         description: Some("Read and write access to resources".to_string()),
         is_builtin: true,
         created_at: chrono::Utc::now(),
