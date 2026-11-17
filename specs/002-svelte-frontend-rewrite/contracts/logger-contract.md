@@ -20,15 +20,21 @@ export interface LoggerUtility {
     info(module: string, message: string, context?: Record<string, unknown>): void;
     warn(module: string, message: string, context?: Record<string, unknown>): void;
     error(module: string, message: string, context?: Record<string, unknown>, error?: Error): void;
-    
-    // Internal method to batch POST logs to the Rust backend
-    flush(): Promise<void>;
+
+    /** Defensive copy of the bounded in-memory buffer for local diagnostics. */
+    snapshot(): readonly LogEntry[];
 }
 ```
 
-## Backend Ingestion API (Rust Axum)
+## Local behavior (cycle 049)
 
-- **Endpoint**: `POST /api/v1/telemetry/logs`
-- **Payload Format**: `Array<LogEntry>`
-- **Authentication**: Requires valid OIDC bearer token in headers.
-- **Behavior**: The Rust backend parses this array and maps it directly to the `tracing` crate, forwarding to the configured OpenTelemetry Collector.
+- **No network**: the logger never calls `fetch`, `sendBeacon` or `ApiClient`. There is
+  no `POST /api/v1/telemetry/logs` endpoint in `flora-api`; the previous transport
+  produced silent 404s on every flush, including normal page load.
+- **Buffer**: at most 200 most-recent `LogEntry` values are kept in memory; older
+  entries are discarded to avoid unbounded growth.
+- **No console output**: the `no-console` rule remains in force; diagnostics use
+  `snapshot()` instead of `console.*`.
+- **Backend ingestion**: removed from scope. There is no OTel collector or exporter
+  in this checkout; reintroducing ingestion requires a separate decision and a real
+  authenticated endpoint.
