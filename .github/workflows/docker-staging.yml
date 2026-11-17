@@ -1,14 +1,10 @@
 name: Build & Deploy Flora Staging (GHCR -> Coolify)
 
+# 037: deploy is deliberately NOT part of the autonomous push/PR/merge gate.
+# The push-to-dev trigger is disabled: running this workflow publishes to GHCR and
+# calls the Coolify webhook (a real deploy), which stays outside merge automation.
+# Re-enabling it is a separate CD policy decision, not a CI gate change.
 on:
-  push:
-    branches:
-      - dev
-    paths:
-      - 'Dockerfile'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'flora-*/**'
   workflow_dispatch:
 
 permissions:
@@ -18,6 +14,9 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-24.04-arm
+    # GitHub Actions forbids `secrets.*` inside `if:`. Hoist to job-level env.
+    env:
+      HAS_HOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +39,7 @@ jobs:
             ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:${{ github.sha }}
 
       - name: Trigger Coolify Staging Deploy
-        if: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK != '' }}
+        if: ${{ env.HAS_HOOK == 'true' }}
         run: |
           curl -fsS -X POST "${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"

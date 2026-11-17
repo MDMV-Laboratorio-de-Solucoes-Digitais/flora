@@ -1,8 +1,14 @@
 name: Rust CI
 on: [push, pull_request]
+
+concurrency:
+  group: rust-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  rust-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Set up Rust
@@ -36,6 +42,7 @@ jobs:
 
   db-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:18
@@ -69,23 +76,40 @@ jobs:
           rustup component add rustfmt clippy
           rustc --version
           cargo --version
-      - name: Run DB-backed session/select-organization contract tests
-        run: cargo test -p flora-tests contract::auth::db_ -- --ignored --test-threads=1
-      - name: Run DB-backed messaging contract tests
-        run: cargo test -p flora-tests contract::messaging::db_ -- --ignored --test-threads=1
-      - name: Run DB-backed websocket contract tests
-        run: cargo test -p flora-tests contract::websocket::db_ -- --ignored --test-threads=1
-      - name: Run DB-backed search contract tests
-        run: cargo test -p flora-tests contract::search::db_ -- --ignored --test-threads=1
-      - name: Run DB-backed notifications contract tests
-        run: cargo test -p flora-tests contract::notifications::db_ -- --ignored --test-threads=1
-      - name: Run DB-backed files contract tests
-        run: cargo test -p flora-tests contract::files::db_ -- --ignored --test-threads=1
+      # 037: a filtered `cargo test` that matches zero tests still exits 0.
+      # Each leg therefore sums the libtest "N passed" counters and fails below a floor.
+      # Floors = number of discovered `#[ignore]` tests per filter (cargo test -- --list).
+      - name: Run DB-backed contract tests (minimum-passed floors)
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_leg() {
+            local label="$1" filter="$2" floor="$3" log passed
+            log="$(mktemp)"
+            echo "== $label: $filter (floor $floor) =="
+            cargo test -p flora-tests "$filter" -- --ignored --test-threads=1 2>&1 | tee "$log"
+            passed="$(awk '
+              /^test result:/ {
+                for (i = 1; i <= NF; i++)
+                  if ($i == "passed;") { sum += $(i - 1); break }
+              }
+              END { print sum + 0 }
+            ' "$log")"
+            echo "$label: passed=$passed floor=$floor"
+            [ "$passed" -ge "$floor" ]
+          }
+          run_leg auth          contract::auth::db_          12
+          run_leg messaging     contract::messaging::db_      4
+          run_leg websocket     contract::websocket::db_      8
+          run_leg search        contract::search::db_         8
+          run_leg notifications contract::notifications::db_  5
+          run_leg files         contract::files::db_          6
 
   # 028: FASE 0 closure — informational supply-chain gates. Neither blocks merges yet;
   # promotion to required checks requires CODEOWNERS and a review window (Fatia B).
   supply-chain-vet:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -97,6 +121,7 @@ jobs:
   dependency-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -113,6 +138,7 @@ jobs:
   # jti is single-use, so Playwright runs with retries: 0 and workers: 1.
   e2e-browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     continue-on-error: true
     services:
       postgres:
