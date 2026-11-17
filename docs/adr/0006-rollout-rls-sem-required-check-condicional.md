@@ -48,7 +48,7 @@ Além disso, a prova do ADR-0005 mostrou que **ligar enforcement hoje quebraria 
 
 ## Verification
 
-**NV** até execução: (a) wrapper de transação com `set_config`真的 usado pelos handlers;
+**NV** até execução: (a) wrapper de transação com `set_config` realmente usado pelos handlers;
 (b) suítes `app_only` e `enforced` verdes com contagens mínimas (piso 43); (c) rollup
 sem `skipped` em nenhum required check; (d) prova cross-org falhando quando a policy é
 removida (mutation test). Nada marcado verde sem execução (ADR-0001).

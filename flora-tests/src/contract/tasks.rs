@@ -186,6 +186,10 @@ mod db {
         )
         .await?;
         anyhow::ensure!(status == StatusCode::OK, "unassign {status}: {unassigned}");
+        anyhow::ensure!(
+            unassigned["assignee_id"].is_null(),
+            "tri-state null did not clear assignee: {unassigned}"
+        );
         Ok(())
     }
 
