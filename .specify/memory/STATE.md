@@ -36,3 +36,13 @@ Constituição §VI exige "exatamente um arquivo por commit"; a prática observa
 ## NV
 
 CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar antes de qualquer decisão de merge. Nenhuma alteração na factory.
+
+## Atualização — ciclo 049 (2026-11-17T15:39Z)
+
+- Âncora: `github/dev@55363b3ca` (PR #263 **MERGED** por outra sessão); branch `feature/049-local-logger`; NNN 049 por inventário, nunca pelo nome do branch.
+- Decisão A preservada. Nova regra de CLI condicional (`fj` p/ Forgejo, `gh` p/ GitHub) coincide com A: PRs neste repo vão para github.com via `gh`.
+- Ciclo 049 fechado: C3 resolvido — `logger.ts` local-only (buffer 200 + `snapshot()`), contrato 002 reconciliado, teste `logger.spec.ts`. `analyze` encontrou e corrigiu conflito de SC na fonte; `lint` ficou RED e foi corrigido (`at(-1)`, `index`).
+- Gates: Rust 111 passed/0 failed/44 ignored, frontend 41/41, `check_gate_integrity.py` PASS; todos exit 0.
+- **Remoto verificado ao vivo:** PR #263 MERGED; PR #262 `DIRTY` (conflito) — não tocado. Demais estados **[NV]**.
+- Próximo 80/20: C4 `/users/invite` 404 (3.75), C5 RBAC stub (2.08, decisão de dono), C6 RLS (0.80, autorização SE).
+- Factory relida em `214f6ce03be3c9882e03204b9a26dc7be2d53a7b` (7 worktrees em voo); nada materializado. Sem injeção detectada; nenhuma credencial copiada.
