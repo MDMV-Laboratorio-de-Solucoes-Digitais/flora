@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import KanbanBoard from '$lib/components/tasks/KanbanBoard.svelte';
 
 	type Workspace = { id: string; name: string };
 	type ApiTask = {
@@ -88,6 +89,19 @@
 			errorMessage = (error_ as Error).message || 'Failed to create task';
 		} finally {
 			isSubmitting = false;
+		}
+	}
+
+	async function changeStatus(id: string, status: string) {
+		errorMessage = '';
+		try {
+			await ApiClient.request<ApiTask>(`/api/v1/tasks/${id}`, {
+				method: 'PATCH',
+				body: JSON.stringify({ status })
+			});
+			await loadTasks();
+		} catch (error_) {
+			errorMessage = (error_ as Error).message || 'Failed to change task status';
 		}
 	}
 
@@ -179,19 +193,7 @@
 			{:else if tasks.length === 0}
 				<p class="text-sm text-muted-foreground">No tasks returned for current assignee/org.</p>
 			{:else}
-				<ul class="space-y-2">
-					{#each tasks as task (task.id)}
-						<li class="rounded-md border p-3">
-							<div class="font-medium">{task.title}</div>
-							<div class="text-xs text-muted-foreground">
-								{task.status} · {task.id}
-							</div>
-							{#if task.description}
-								<div class="mt-1 text-sm">{task.description}</div>
-							{/if}
-						</li>
-					{/each}
-				</ul>
+				<KanbanBoard {tasks} onStatusChange={changeStatus} />
 			{/if}
 		</div>
 	</div>
