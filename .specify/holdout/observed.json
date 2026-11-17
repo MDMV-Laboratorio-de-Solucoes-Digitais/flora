@@ -1,0 +1,12 @@
+{
+  "results": [
+    {
+      "scenario_id": "zero-tests-match-fails",
+      "command": "set -euo pipefail; run_leg(){ local label=$1 filter=$2 floor=$3 log passed; log=$(mktemp); cargo test -p flora-tests \"$filter\" -- --ignored --test-threads=1 2>&1 | tee \"$log\"; passed=$(awk '/^test result:/{for(i=1;i<=NF;i++) if($i==\"passed;\"){sum+=$(i-1);break}} END{print sum+0}' \"$log\"); echo \"$label: passed=$passed floor=$floor\"; [ \"$passed\" -ge \"$floor\" ]; }; run_leg auth contract::auth::db_ZZZ_NOMATCH 12",
+      "exit_code": 1,
+      "stdout": "   Compiling flora-api v0.1.0 (/home/luis/development/MDMV/projetos/Arquivados/flora/flora-api)\n   Compiling flora-tests v0.1.0 (/home/luis/development/MDMV/projetos/Arquivados/flora/flora-tests)\n    Finished `test` profile [unoptimized] target(s) in 6.86s\n     Running unittests src/lib.rs (target/debug/deps/flora_tests-e4b2777e3251910f)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 89 filtered out; finished in 0.00s\n\nauth: passed=0 floor=12\n",
+      "stderr": "",
+      "duration_ms": 6992
+    }
+  ]
+}

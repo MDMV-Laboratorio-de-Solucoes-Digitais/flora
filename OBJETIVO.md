@@ -83,9 +83,13 @@ Princípios diretores:
 - Sem dependências proprietárias obrigatórias; IA/integrações externas apenas opcionais/plugáveis.
 - Sem stack pesada desnecessária para VPS barata; evitar microsserviços/infra complexa prematura.
 - Sem reuso de código incompatível com AGPL e sem engenharia reversa não autorizada de componentes proprietários.
-- Sem declarar “verde” sem evidência; sem deploy/produção, merges/releases, segredos ou serviços pagos sem autorização explícita.
+- Sem declarar “verde” sem evidência. **Push/PR/merge são decisão de máquina sob gates determinísticos obrigatórios (ADR-0003)** e não exigem autorização humana. Continuam exigindo autorização explícita: deploy/produção, publicação de tag/release, segredos e serviços pagos.
 
-## 5) Próximo 80/20 (ciclo 035 candidato — Documents e honestidade de UI)
+## 5) Histórico recente e próximo 80/20 (ciclos 035–038)
+
+- **Ciclo 038 (em curso):** integridade do gate de merge autônomo — verificador determinístico dos checks obrigatórios, holdout da Dark Factory provando que filtro sem correspondência falha, e reconciliação destas docs com ADR-0003.
+- **Ciclo 037 (PR #252/#253, mergeado em `dev@2f7d428c0`):** Rust 1.98.1 (UB de vtable), nomes de check únicos, pisos nos 6 legs DB (43 contratos), `docker-staging` sem `secrets` em `if:` e sem trigger de push, ADR-0003, proteção de `dev`/`main` com 4 required checks e auto-merge.
+- **Ciclo 036 (PR #251):** gate de testes corrigido para `cargo test --workspace` (0 → 104 testes).
 
 - **Ciclo 034 (PR #248, CI verde, mergeado em `dev@23ca350c`):** guard de `Origin` no WS + URLs runtime no FE + prova T8 isolada; ADR-0002 critério #2 marcado como atendido; #1/#3/#4 permanecem NV.
 
