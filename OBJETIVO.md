@@ -166,3 +166,12 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Gates:** fmt/clippy/deny/build/test (111 passed), frontend check/lint/test/build — todos exit 0. `rg '/api/v1/telemetry/logs' apps/frontend/src` → 0 ocorrências.
 - **Remoto verificado ao vivo:** PR #263 MERGED; PR #262 `DIRTY` (conflito) — não tocado nesta sessão. Demais estados remotos **[NV]**.
 - **Dívidas restantes:** C4 `/users/invite` 404, C5 RBAC stub (decisão de dono), C6 RLS (autorização SE), dívidas de fase 043–046 e docs ausentes (`PROGRESSO`, `research/index`).
+
+## Estado verificado — 2026-11-17T17:35Z (append-only)
+
+- **Âncora:** `github/dev@b3bfda505`, branch `feature/051-dead-invite-ui`. Gate `check_gate_integrity.py` PASS. PR #265 (ciclo 050) permanece `OPEN`/`CLEAN` nesta base e não foi tocado.
+- **Ciclo 051:** removida a affordance morta de convite (`UserManager.svelte` + import/uso em settings). `rg 'UserManager|users/invite' apps/frontend/src` → 0. Cenário obsoleto em `specs/002/.../spec.md:34` marcado como não implementado, texto preservado.
+- **Gates:** Rust 111 passed/0 failed/44 ignored; frontend 41/41; fmt/clippy/deny/build/check/lint/build exit 0.
+- **Nota:** não havia falso sucesso — `client.ts` lança em não-2xx; o defeito era falha silenciosa mais affordance que sempre retornava 404. Nenhuma autorização de convite foi decidida.
+- **Dívidas restantes:** N3 (FK/filtro de org, risco de migração), C5 (decisão de dono), C6 (autorização SE), `docs/PROGRESSO.md`/`research/index.md` ausentes.
+- **[NV]** CI/PR/aprovações ao vivo após este ciclo. Factory `ebe0cb86` lida como fonte; nada materializado.

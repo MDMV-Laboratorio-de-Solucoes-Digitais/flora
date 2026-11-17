@@ -119,3 +119,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 049 remove o transporte morto de telemetria no frontend (`logger.ts` local-only, contrato 002 atualizado, teste no projeto `server`): zero chamadas de rede, zero 404s.
 - PR #263 MERGED e PR #262 DIRTY (conflito alheio, não tocado). Sem merge/auto-merge/tag/deploy/force-push nesta sessão.
 - Próximos candidatos: C4 (3.75), C5 (2.08, decisão de dono), C6 (0.80, autorização SE). **[NV]** para estados remotos finais.
+
+## Estado verificado — 2026-11-17T17:35Z (append-only)
+
+- Âncora `github/dev@b3bfda505`; `check_gate_integrity.py` PASS; gates Rust/frontend exit 0.
+- Ciclo 051 encerra C4 pela via mínima: remoção da UI de convite sem backend. Nenhum endpoint criado; nenhuma decisão de autorização tomada. Spec 002 marcada, não reescrita.
+- PR #265 (ciclo 050) aberto e `CLEAN` nesta base; não tocado. Sem merge/auto-merge/tag/deploy nesta sessão.
+- Próximos: tag `osv-scan@v2` (6.0, validade **[NV]**), C5 (2.08, decisão de dono), N3 (1.5), C6 (0.80, autorização SE).
