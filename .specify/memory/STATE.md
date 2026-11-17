@@ -24,7 +24,7 @@
 
 ## Remoto (verificado ao vivo via gh, 2026-11-17T13:53Z)
 
-- PR **#262** — https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/262 — `OPEN`, `mergeStateStatus=BLOCKED`, 17 arquivos, +435/−2, 3 commits.
+- PR **#262** — https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/262 — `OPEN`, `mergeStateStatus=BLOCKED`, 18 arquivos, +476/−2, 4 commits (o último registra este STATE.md).
 - Checks: `pending` (db-tests, dependency-review, e2e-browser, frontend-build, rust-build, supply-chain-vet). Nenhum check obrigatório verde observado; sem aprovação, sem merge, sem auto-merge.
 
 ## Dívidas / próximo 80/20
