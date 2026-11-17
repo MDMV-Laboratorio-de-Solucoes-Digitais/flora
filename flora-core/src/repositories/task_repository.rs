@@ -29,7 +29,7 @@ impl TaskRepository for PgTaskRepository {
             "SELECT id, workspace_id, organization_id, creator_id, assignee_id,
                     title, description, status, is_deleted, created_at, updated_at
              FROM tasks
-             WHERE id = $1",
+             WHERE id = $1 AND NOT is_deleted",
         )
         .bind(id)
         .fetch_optional(&self.pool)
