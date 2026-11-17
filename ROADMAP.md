@@ -112,3 +112,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 048 corrige `AGENTS.md`: 5 membros + raiz (6 manifests `flora*`) e toolchain `1.98.1`; nenhuma regra, gate ou permissão alterada.
 - Base `github/dev` não contém os ciclos 044–046 presentes no `dev` local; por isso `specs/` para em 042 e as contagens diferem da sessão anterior. Nenhum trabalho alheio foi reescrito.
 - **[NV]** CI/branch protection/PRs ao vivo não verificados. Sem merge, auto-merge, tag, deploy ou force-push.
+
+## Estado verificado — 2026-11-17T15:39Z (append-only)
+
+- Âncora `github/dev@55363b3ca`; `check_gate_integrity.py` PASS; gates Rust/frontend todos exit 0.
+- Ciclo 049 remove o transporte morto de telemetria no frontend (`logger.ts` local-only, contrato 002 atualizado, teste no projeto `server`): zero chamadas de rede, zero 404s.
+- PR #263 MERGED e PR #262 DIRTY (conflito alheio, não tocado). Sem merge/auto-merge/tag/deploy/force-push nesta sessão.
+- Próximos candidatos: C4 (3.75), C5 (2.08, decisão de dono), C6 (0.80, autorização SE). **[NV]** para estados remotos finais.

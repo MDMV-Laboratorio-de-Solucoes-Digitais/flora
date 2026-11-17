@@ -158,3 +158,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Dívidas:** ciclos `043-046` com validação/release sem spec nesta base; `plan.md` ausente em `025-042`; sem `analyze.md`/`converge.md` antes de 047; `docs/PROGRESSO.md`, `docs/research/index.md` e `index.md` ausentes; 4 bug reports já `applied`/`verified`.
 - **Decisão A preservada:** CI GitHub Actions, CLI `gh`, gate `check_gate_integrity.py`. Factory `214f6ce0` lida como fonte, nada materializado.
 - **[NV]** CI/PR/branch protection ao vivo e merges não verificados nesta base; PR #262 permanece em aberto em outro branch.
+
+## Estado verificado — 2026-11-17T15:39Z (append-only)
+
+- **Âncora:** `github/dev@55363b3ca` (PR #263 mergeado por outra sessão), branch `feature/049-local-logger`. Gate `check_gate_integrity.py` PASS.
+- **Ciclo 049:** `logger.ts` passa a ser local-only (buffer 200 + `snapshot()`), eliminando os 404s silenciosos de `/api/v1/telemetry/logs`; contrato 002 reconciliado; teste `logger.spec.ts` no projeto `server` (41/41 no total).
+- **Gates:** fmt/clippy/deny/build/test (111 passed), frontend check/lint/test/build — todos exit 0. `rg '/api/v1/telemetry/logs' apps/frontend/src` → 0 ocorrências.
+- **Remoto verificado ao vivo:** PR #263 MERGED; PR #262 `DIRTY` (conflito) — não tocado nesta sessão. Demais estados remotos **[NV]**.
+- **Dívidas restantes:** C4 `/users/invite` 404, C5 RBAC stub (decisão de dono), C6 RLS (autorização SE), dívidas de fase 043–046 e docs ausentes (`PROGRESSO`, `research/index`).
