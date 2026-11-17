@@ -1,6 +1,6 @@
 # ROADMAP — Flora
 
-**Atualizado em:** 2026-11-16 (ciclos 011–038; 035–037 mergeados, 038 em preparação). ADR-0003 rege push/PR/merge como decisão de máquina sob gates determinísticos.  
+**Atualizado em:** 2026-11-17 (ciclos 011–043; 039 restore drill, 040 UI debloat + board real, 041 debloat Rust, 042 RBAC list real, 043 manifesto sem drift). ADR-0003 rege push/PR/merge como decisão de máquina sob gates determinísticos.  
 **Norte:** alternativa self-hosted viável ao Macro para PMEs em VPS barata (Rust + PostgreSQL, Svelte 5; Tauri futuro), com debloat e operação enxuta.  
 **Fonte de verdade operacional:** código, `Cargo.toml`, `.github/workflows/`, `.specify/memory/constitution.md`, `specs/001-033`, `.specify/assessments/003-033`, `OBJETIVO.md`.  
 Itens “verificados” exigem evidência executada; caso contrário marcar NV.
@@ -53,8 +53,14 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - [x] Ciclo 032 (PR #244, CI verde, mergeado em `dev@cecaf686`): allowlist CORS backend + drift documental; ADR-0002 #2 segue NV.
 - [x] Ciclo 033 (PR #246, CI verde, mergeado em `dev@f89678d5`): busca no header ligada ao backend verificado + drift documental; ADR-0002 #2 segue NV.
 - [x] Ciclo 034 (PR #248, CI verde, mergeado em `dev@23ca350c`): ADR-0002 #2 atendido (guard WS + URLs runtime + prova T8); #1/#3/#4 seguem NV.
-- [ ] Ciclo 035 (candidato): FASE 7 Documents (design exato pronto, ~30 arquivos) + limpeza de affordances mortas no FE; cargo-vet/load/restore/tag dependem de autorização. 
-- [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` não-canônico ainda presente.
+- [x] Ciclos 035–038 (PRs #241–#255, CI verde, mergeados em `dev@c177caa46`): ver evidência nos commits; ADR-0003 passou a reger merge como decisão de máquina sob 4 required checks.
+- [x] Ciclo 039 (2026-11-17): restore drill executado (runbook 032) — B1–B9 PASS, 12/12 contagens iguais, `test-flora.sh` `rc=0`, RTO 97 s, caps 1 vCPU/1 GB enforcement confirmado. NV-1 do Seed backup fechado localmente. Sem código/deploy/tag. Ver `.specify/validations/039-restore-drill/` e `docs/research/2026-11-17-039-restore-drill-80-20.md`.
+- [x] Ciclo 040 (2026-11-17): remoção de `apps/web` (5.844 arquivos/43 MB) + 2 e2e mortos; `KanbanBoard` real (props + PATCH status) com módulo puro testável; non-regression provado nos 4 gates frontend (30→36 testes). Ver `specs/040-seed-ui-debloat/` e `docs/research/2026-11-17-040-seed-ui-debloat.md`.
+- [x] Ciclo 041 (2026-11-17): debloat Rust — remover 4 deps dead + 2 members órfãos (−34 pacotes/−369 linhas do Cargo.lock, zero adições); gates idênticos ao baseline. Ver `specs/041-rust-dead-crates/` e `docs/research/2026-11-17-041-rust-debloat.md`.
+- [x] Ciclo 042 (2026-11-17): `GET /api/v1/roles` real (tenancy da sessão + gate `OrgRead|OrgAdmin` + DTO sem vazamento) com helper puro e 3 testes. Ver `specs/042-real-rbac-list/` e `docs/research/2026-11-17-042-real-rbac.md`.
+- [x] Ciclo 043 (2026-11-17): manifesto `/llms.txt` sem drift de tenancy (org vem da sessão, não de header) + teste de ausência. Ver `docs/research/2026-11-17-043-manifest-tenancy-drift.md`.
+- [ ] Ciclo 044 (candidato — exige decisão do dono/SE): semântica de assign/revoke + proteção do último Owner + DTO de criação; RLS + role least-privilege dependem de autorização do SE. FASE 7 Documents segue adiado; cargo-vet prune/load/restore off-host/tag também.
+- [~] Frontend Svelte 5 canônico com lacunas de contrato/fluxo; `apps/web` **removido** no 040.
 
 ## 4) Backlog priorizado (80/20)
 

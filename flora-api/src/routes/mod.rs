@@ -27,7 +27,8 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/llms.txt", get(health::llms_txt))
         // Auth routes (no auth required for login/callback; auth required for logout/refresh)
         .nest("/api/v1/auth", auth::create_auth_router())
-        // Protected API routes (require auth + X-Organization-ID)
+        // Protected API routes (require a verified session Bearer token;
+        // organization context comes from the session, not a request header)
         .nest("/api/v1/organizations", org::create_org_router())
         .nest(
             "/api/v1/workspaces",
