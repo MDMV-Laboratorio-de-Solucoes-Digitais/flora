@@ -184,3 +184,12 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Nota:** não havia falso sucesso — `client.ts` lança em não-2xx; o defeito era falha silenciosa mais affordance que sempre retornava 404. Nenhuma autorização de convite foi decidida.
 - **Dívidas restantes:** N3 (FK/filtro de org, risco de migração), C5 (decisão de dono), C6 (autorização SE), `docs/PROGRESSO.md`/`research/index.md` ausentes.
 - **[NV]** CI/PR/aprovações ao vivo após este ciclo. Factory `ebe0cb86` lida como fonte; nada materializado.
+
+## Estado verificado — 2026-11-17T23:44Z (append-only)
+
+- **Âncora:** `github/dev@01d822205` (dev local = remoto); branch `feature/052-osv-scan-ref-pin`. Gate autoritativo `check_gate_integrity.py` PASS (local + `--remote`: contextos dev/main conferem).
+- **Ciclo 052:** próximo 80/20 do 051 executado — `@v2` (ref inexistente no action upstream) pinado em `@v2.7.1`, verificado por `git ls-remote` e pela doc oficial do Google. Diff de código: 1 arquivo, 1 linha.
+- **Gates (23:42–23:43Z):** fmt/clippy/deny/build exit 0; test 105 passed/0 failed/51 ignored; frontend check 0/0, lint ok, unit 42/42, build exit 0.
+- **Concorrência:** worktree própria em `.specify/queue/worktrees/osv-scan-ref-pin/`, ledger append-only, `.gitignore` ignora runtime. Nenhum trabalho alheio tocado.
+- **Dívidas restantes:** C25b (6 testes DB sem leg no gate), V1 (DB legs fail-open), N3 (FK/filtro de org), C5 (decisão de dono), C6 (autorização SE); `docs/PROGRESSO.md`/`research/index.md` ausentes.
+- **[NV]** CI/PR/aprovações ao vivo e execução real do job OSV; factory `d2bd958` lida como fonte, nada materializado.

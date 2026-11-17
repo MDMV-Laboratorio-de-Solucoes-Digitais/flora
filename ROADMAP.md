@@ -136,3 +136,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 051 encerra C4 pela via mínima: remoção da UI de convite sem backend. Nenhum endpoint criado; nenhuma decisão de autorização tomada. Spec 002 marcada, não reescrita.
 - PR #265 (ciclo 050) aberto e `CLEAN` nesta base; não tocado. Sem merge/auto-merge/tag/deploy nesta sessão.
 - Próximos: tag `osv-scan@v2` (6.0, validade **[NV]**), C5 (2.08, decisão de dono), N3 (1.5), C6 (0.80, autorização SE).
+
+## Estado verificado — 2026-11-17T23:44Z (append-only)
+
+- Âncora `github/dev@01d822205`; `check_gate_integrity.py` PASS (4 required checks, pisos 43).
+- Ciclo 052 fecha o item "tag `osv-scan@v2`" do 051: `osv-scan.yml:14` passa a `@v2.7.1`. Tag verificado em duas fontes primárias; job continua advisory (não required), sem ADR-0003 alterado.
+- PR de `feature/052-osv-scan-ref-pin` → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- Próximos: C25b (2.0), V1 (1.25), N3 (1.0), C5 (decisão de dono), C6 (autorização SE). **[NV]** para CI/PRs ao vivo.
