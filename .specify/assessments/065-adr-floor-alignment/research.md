@@ -26,3 +26,7 @@ autorização — feita pelo SE e anotada em `STATE.md`.
 ## Cobertura idiomática
 
 PT-BR (ADRs/artefatos) + EN (nomes de checks). **[NV]** para remoto.
+
+## Correção pós-verificação (2026-11-18T13:12Z)
+
+O detalhamento correto é `13/4/8/8/5/6/4/3 — total 51` (workspace passou de 2 para 3 no ciclo 064). A citação anterior `/4/2` somava 50 e contradizia o total; corrigida no ADR-0003:19.
