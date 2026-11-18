@@ -113,7 +113,7 @@ fn can_manage_roles(role: &flora_core::models::Role) -> bool {
 }
 
 /// Pure guard for modifying/deleting a role: built-ins are immutable by SE decision.
-fn can_modify_role(role: &flora_core::models::Role) -> bool {
+const fn can_modify_role(role: &flora_core::models::Role) -> bool {
     !role.is_builtin
 }
 
@@ -246,7 +246,7 @@ async fn update_role(
         if name.trim().is_empty() {
             return Err(Error::InvalidInput("Role name is required".to_string()));
         }
-        role.name = name.trim().to_owned();
+        role.name = String::from(name.trim());
     }
     if let Some(description) = req.description {
         role.description = Some(description);
