@@ -301,3 +301,30 @@ Nenhum deles foi iniciado; aprovações permanecem **[NV]**.
 **0 runs**; agendamento `cron: '37 14 * * 1'` (segunda-feira) + `workflow_dispatch`.
 O pin `@v2.7.1` (ciclo 052) ainda não tem execução que o valide — **[NV]**
 até a próxima segunda-feira. Nenhum dispatch foi disparado nesta sessão.
+
+## Decisão 80/20 — 2026-11-18T04:45Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 063 — validar o pin `@v2.7.1` do OSV via `workflow_dispatch`.** `(2×5)/(2×2) = 2.5`, único candidato autônomo restante. Evidência: workflow `active`, 0 runs desde 2026-11-16, cron semanal; o [NV] de 052 só fecha com execução real. `workflow_dispatch` é gatilho declarado no próprio workflow; não é merge/force-push/deleção.
+- **Escalados:** ADR-0003/0006 (maintainer), N3 (SE), C5/C6 (dono) — ver tabela canônica em `STATE.md`. Dívidas de fase não forjadas.
+- HEAD da factory como fonte desta sessão: `b5bc7265d7fe6efaa316c54a54eed1c3ce1e71bc`; nada transplantado.
+
+## Validação do pin OSV — 2026-11-18T04:47Z (append-only)
+
+Fecha o **[NV]** registrado no ciclo 052 e no apêndice de 04:29Z: o pin
+`@v2.7.1` foi validado por execução real, não apenas por análise estática.
+
+- Gatilho: `gh workflow run osv-scan.yml --repo MDMV-Laboratorio-de-Solucoes-Digitais/flora --ref dev` (declarado no próprio workflow).
+- Run: `databaseId=44239662140`, `headBranch=dev`, `status=completed`,
+  `conclusion=success`, `createdAt=2026-11-18T04:46:43Z`,
+  `updatedAt=2026-11-18T04:47:13Z`,
+  URL: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/44239662140.
+- Etapas observadas até conclusão: checkout, setup, `osv-scanner-reporter`,
+  upload de artefato, upload para code-scanning — todas com ✓.
+- Interpretação: o workflow reutilizável resolvel `@v2.7.1` e executa; o sinal
+  advisory de supply-chain está operacional. `fail-on-vuln: false` permanece
+  configurado, portanto `success` não significa "zero vulnerabilidades" —
+  apenas que o scan e o upload concluíram.
+- Anotação informativa do runner: label `ubuntu-latest` migrará para Ubuntu 26
+  em outubro/2026 — impacto futuro **[NV]**, fora deste ciclo.
+- Nota anterior (04:29Z) permanece como registro histórico; esta a corrige.

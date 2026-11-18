@@ -274,3 +274,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Ciclo 062:** `STATE.md` ganhou tabela canônica de escalonamentos (ADR-0003/0006, N3, C5/C6) e estado OSV ao vivo (active, id 420259367, 0 runs, cron semanal). Nenhum item bloqueado executado.
 - **Verificação:** verificador 6/6; 25 inserções/0 remoções; fontes citadas conferidas; gates exit 0.
 - **[NV]** aprovações de maintainer/SE/dono e execução futura do OSV; factory `4a5de2ce`, nada materializado.
+
+## Estado verificado — 2026-11-18T04:50Z (append-only)
+
+- **Âncora:** `github/dev@e1ff815bf`; branch `feature/063-validate-osv-run`. Decisão `(2×5)/(2×2)=2.5` registrada em STATE; gate PASS (8 pisos/50).
+- **Ciclo 063:** pin `@v2.7.1` do OSV validado por execução real (run 44239662140, `success`, 04:46:43Z→04:47:13Z, ref `dev`); [NV] de 052 fechado por apêndice, histórico preservado.
+- **Ressalva:** `fail-on-vuln: false` — `success` indica scan/upload concluídos, não zero vulnerabilidades.
+- **Escalados [NV]:** ADR-0003/0006, N3, C5/C6 — não executados.
+- **[NV]** CI/PR remoto; factory `b5bc7265`, nada materializado.
