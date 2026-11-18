@@ -7,7 +7,7 @@
 ## Context
 
 ADR-0003 define merge como decisão de máquina sob quatro required checks
-(`frontend-build`, `rust-build`, `db-tests` com piso 43, `dependency-review`); GitHub
+(`frontend-build`, `rust-build`, `db-tests` com piso 51, `dependency-review`); GitHub
 conta `skipped` como sucesso, então `if:`/`continue-on-error` em required check criaria
 um gate verde que não testa nada. A flag de rollout não pode seguir esse caminho.
 Além disso, a prova do ADR-0005 mostrou que **ligar enforcement hoje quebraria a app**
@@ -49,7 +49,7 @@ Além disso, a prova do ADR-0005 mostrou que **ligar enforcement hoje quebraria 
 ## Verification
 
 **NV** até execução: (a) wrapper de transação com `set_config` realmente usado pelos handlers;
-(b) suítes `app_only` e `enforced` verdes com contagens mínimas (piso 43); (c) rollup
+(b) suítes `app_only` e `enforced` verdes com contagens mínimas (piso 51); (c) rollup
 sem `skipped` em nenhum required check; (d) prova cross-org falhando quando a policy é
 removida (mutation test). Nada marcado verde sem execução (ADR-0001).
 

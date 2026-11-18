@@ -335,3 +335,20 @@ Fecha o **[NV]** registrado no ciclo 052 e no apêndice de 04:29Z: o pin
 - Auditoria read-only executada em `flora` (local) às 11:12Z: `orfaos=0`, `cross_org=0`, `memberships=3`, `roles=3`. **Produção não auditada — [NV]**; a migration terá pré-voo `RAISE EXCEPTION` para falhar fechado se houver dados inválidos no deploy.
 - Critério `(impacto × confiança) ÷ (esforço × risco)` = `(4×5)/(5×3) = 1.33`, candidato autorizado de maior prioridade. ADR-0003/0006 (patch documental), C5 (`RoleWrite`) e C6 (desenho de canário, sem produção) ficam autorizados e enfileirados em ciclos separados.
 - HEAD da factory como fonte desta sessão: `ce3d42132edb9466b75eab968be775ebdea38985`; nada transplantado.
+
+## Decisão 80/20 (autorização SE) — 2026-11-18T13:04Z (antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 065 — alinhar cifras dos ADR-0003/0006 ao gate atual.** `(2×5)/(1×1) = 10.0`. Autorização SE explícita na conversa: `13/4/8/8/5/6/4/2 — total 51` (o SE escreveu "total 50" com base em STATE anterior; a cifra real após o ciclo 064 é 51 — registrar a correção com evidência do gate).
+- Evidência: `docs/adr/0003:19` ("12/4/8/8/5/6 — total 43"), `docs/adr/0006:10,52` ("piso 43"); gate imprime `8 pisos / 51 total` derivado de `FLOORS`.
+- Demais autorizados enfileirados: C6 canário/desenho (3.33), C5 `RoleWrite` (2.5).
+- HEAD da factory como fonte desta sessão: `c81f0f8191d9dfa1285001bdd45f2a8fddd8dac3`; nada transplantado.
+
+## Fechamento do escalonamento ADR — 2026-11-18T13:09Z (append-only)
+
+O item `ADR-0003/0006` da tabela de escalonamento foi **autorizado pelo SE e
+concluído** no ciclo 065: citações de piso alinhadas a
+`13/4/8/8/5/6/4/2 — total 51`. O SE citou 50 com base no estado anterior ao
+ciclo 064 (workspace 2→3); o valor real do gate é 51 e foi registrado.
+A linha histórica da tabela permanece intacta; este apêndice a corrige.
+Itens ainda autorizados e pendentes: C5 (`RoleWrite`) e C6 (canário RLS, sem produção).
