@@ -175,3 +175,14 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - **Escalado [NV], não autônomo:** ADR-0003 drift (texto 43 vs 8 pisos/50, `(2×5)/(1×2)=5.0`) exige aprovação de maintainer para alterar documento de governança (Constituição §Governance) — não alterado nesta sessão.
 - Demais: N3 `(4×3)/(3×4)=1.0`; dívidas de fase `(2×5)/(5×3)=0.67`; C5/C6 dependem de dono/SE.
 - HEAD da factory como fonte desta sessão: `046e1f2a8ce96a42a04b7ea3735da0251e7b1cef` (mutou desde `d2bd958`; nada transplantado).
+
+## Atualização — ciclo 056 (2026-11-18T02:29Z)
+
+- Âncora `github/dev@94fcf19ca`; branch `feature/056-docs-research-index`; NNN 056 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão 80/20 registrada neste arquivo antes do BLOCO 6: `(2×5)/(3×1)=3.33` — índice de research + PROGRESSO. ADR-0003/0006 escalados **[NV]** (aprovação de maintainer).
+- Factory fonte desta sessão `046e1f2a8ce96a42a04b7ea3735da0251e7b1cef` (mutou desde `d2bd958`); nada transplantado.
+- Ciclo 056 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze PASS → implement → converge → validate R4 → release R7.
+- Implementação: `docs/research/index.md` (135 entradas, 135 links válidos, idempotente) e `docs/PROGRESSO.md` (nota datada, contagens `find`, **[NV]** inline). Correções pós-verificador com revalidação PASS.
+- Gates: guardião PASS 50 total; fmt/clippy/deny/build/test exit 0; frontend check 0/0, lint ok, 42/42, build ok.
+- PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo, valor atual de feature.json e ADRs.
