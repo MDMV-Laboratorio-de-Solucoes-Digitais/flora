@@ -211,3 +211,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Gates:** fmt/clippy/deny/build/test e frontend check/lint/unit/build — todos exit 0.
 - **Dívidas restantes:** falso positivo local (`cargo test --ignored` sem env), auth floor 12<13, dívidas de fase 001–009/025/035–046, `docs/PROGRESSO.md`/`research/index.md` ausentes.
 - **[NV]** CI/PR ao vivo e runner; factory `d2bd958` lida como fonte, nada materializado.
+
+## Estado verificado — 2026-11-18T01:49Z (append-only)
+
+- **Âncora:** `github/dev@d5d7ef5d`; branch `feature/055-auth-floor-thirteen`. Decisão 80/20 `(4×5)/(2×1)=10.0` registrada em STATE antes do ciclo; gate `check_gate_integrity.py` PASS (8 pisos/50).
+- **Ciclo 055:** piso do leg `auth` elevado de 12 para 13 nos dois locais (workflow + guardião), eliminando a tolerância a 1 teste ausente; texto do guardião atualizado para 50 total. Diff: 2 arquivos, 3+/3−.
+- **Evidência:** `--list` = 13; leg auth com Postgres real isolado = 13 passed; mutação lockstep → guardião RED; gates locais exit 0 (frontend 42/42).
+- **Dívidas restantes:** ADR-0003 com texto 43 (governança), índice de research/PROGRESSO, N3 (1.0), C5/C6 (dono/SE).
+- **[NV]** CI/PR ao vivo e leg no runner; factory `d2bd958` lida como fonte, nada materializado.

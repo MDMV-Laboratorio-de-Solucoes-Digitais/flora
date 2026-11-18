@@ -40,7 +40,7 @@ ALLOWED_JOB_IF = {
 }
 
 FLOORS = {
-    "auth": 12,
+    "auth": 13,
     "messaging": 4,
     "websocket": 8,
     "search": 8,
@@ -117,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
         if not re.search(rf"run_leg\s+{label}\s+contract::\w+(?:::\w+)*::db_\s+{floor}\b", rust):
             failures.append(f"rust.yml: db floor for {label} ({floor}) missing or changed")
     if all(not any(f"db floor for {l}" in f for f in failures) for l in FLOORS):
-        checks.append("all eight db contract floors intact (49 total)")
+        checks.append("all eight db contract floors intact (50 total)")
 
     if args.remote:
         repo = subprocess.run(
