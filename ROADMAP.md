@@ -171,3 +171,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 056 fecha a dívida de índice: research (135 docs) passa a ter entrada verificada, e `PROGRESSO.md` registra estado datado. Correções pós-verificação aplicadas e confirmadas.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - Próximos: ADR drift (5.0, escalado por aprovação), N3 (1.0), C5/C6 (autorização). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T02:48Z (append-only)
+
+- Âncora `github/dev@97838cd9c`; `check_gate_integrity.py` PASS com total derivado de `FLOORS`.
+- Ciclo 057 elimina a duplicação de verdade na saída do guardião; mutação com 9º piso prova a adaptação automática do texto.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- Próximos: ADR drift (5.0, escalado), root `index.md` (2.5), N3 (1.0), C5/C6 (autorização). **[NV]** para CI/PRs ao vivo.
