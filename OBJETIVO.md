@@ -282,3 +282,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Ressalva:** `fail-on-vuln: false` — `success` indica scan/upload concluídos, não zero vulnerabilidades.
 - **Escalados [NV]:** ADR-0003/0006, N3, C5/C6 — não executados.
 - **[NV]** CI/PR remoto; factory `b5bc7265`, nada materializado.
+
+## Estado verificado — 2026-11-18T11:29Z (append-only)
+
+- **Âncora:** `github/dev@448090327`; branch `feature/064-n3-org-scoped-roles`. Autorização SE em STATE 11:13Z; gate PASS (8 pisos/51).
+- **Ciclo 064:** N3 camada 1 (org-scoping de papéis em 9 call sites + cache) e camada 2 (UNIQUE + FK composta `ON DELETE RESTRICT` com pré-voo fail-closed). Auditoria local: 0 órfãos/0 cross-org; produção **[NV]**.
+- **Evidência:** DB limpo rejeitou cross-org/órfão e delete em uso; DB sujo abortou migration; novo contrato + 8 legs = 51 testes; verificador 7/7.
+- **A seguir (autorizados):** ADR-0003/0006 (patch), C5 (`RoleWrite`), C6 (canário sem produção).
+- **[NV]** CI/PR remoto; factory `ce3d4213`, nada materializado.
