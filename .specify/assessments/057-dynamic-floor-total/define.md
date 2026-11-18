@@ -26,3 +26,9 @@ edições; esquecer uma produz saída deterministicamente incorreta.
 
 - Não editar ADR-0003/0006 (escalados), constituição, testes ou CI.
 - Não alterar valores de `FLOORS` nem a regex.
+
+## Correção pós-implementação (2026-11-18T02:47Z)
+
+A mensagem passa a usar o numeral `8` (derivado de `len(FLOORS)`) em vez da
+palavra `eight`. FR-003 passa a ler: saída atual `all 8 db contract floors
+intact (50 total)` — conteúdo informacional idêntico ao texto anterior.
