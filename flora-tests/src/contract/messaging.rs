@@ -101,7 +101,9 @@ mod db_messaging {
             .ok()
             .or_else(|| std::env::var("DATABASE_URL").ok())
         else {
-            anyhow::bail!("FLORA_DATABASE__POSTGRES_URL/DATABASE_URL required for DB contract tests");
+            anyhow::bail!(
+                "FLORA_DATABASE__POSTGRES_URL/DATABASE_URL required for DB contract tests"
+            );
         };
 
         let pool = PgPool::connect(&url).await?;
