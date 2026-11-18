@@ -359,3 +359,11 @@ Itens ainda autorizados e pendentes: C5 (`RoleWrite`) e C6 (canário RLS, sem pr
 - **Escolhido: 066 — implementar CRUD de papéis com `RoleWrite` dedicada.** `(4×5)/(4×2) = 2.5`, último item de código autorizado. SE decidiu: permissão `RoleWrite` dedicada; `OrgAdmin` a possui habilitada por padrão; papéis `is_builtin` imutáveis (premissa registrada). C6 (canário RLS) segue como documento, sem produção.
 - Evidência: `flora-api/src/routes/rbac.rs:131-164` — quatro handlers placeholder que retornam strings; `GET /roles` já é real (ciclo 042).
 - HEAD da factory como fonte desta sessão: `c81f0f8191d9dfa1285001bdd45f2a8fddd8dac3`; nada transplantado.
+
+## Fechamento do escalonamento C5 — 2026-11-18T14:50Z (append-only)
+
+Item `C5` da tabela de escalonamento **autorizado pelo SE e concluído** no ciclo
+066: permissão `RoleWrite` dedicada, `OrgAdmin` mantida por padrão e papéis
+`is_builtin` imutáveis. Handlers placeholder substituídos por CRUD real.
+A linha histórica da tabela permanece; este apêndice a corrige.
+Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
