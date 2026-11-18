@@ -55,3 +55,9 @@ Como mantenedor, quero que a mensagem de sucesso do guardião seja derivada de
 ## Open Questions
 
 Nenhuma. Estado remoto: **[NV]**.
+
+## Correção pós-implementação (2026-11-18T02:47Z)
+
+SC-001 passa a exigir a saída `all 8 db contract floors intact (50 total)`
+(numeral derivado de `len(FLOORS)`, antes a palavra `eight`). A mutação com
+9º piso + leg correspondente imprime `all 9 db contract floors intact (54 total)`.
