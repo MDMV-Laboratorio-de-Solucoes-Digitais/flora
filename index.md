@@ -12,7 +12,7 @@
 ## Estado verificado
 
 - [PROGRESSO](docs/PROGRESSO.md) — nota datada: âncora, gate autoritativo, contagens e dívidas.
-- [Research index](docs/research/index.md) — 135 documentos de research indexados.
+- [Research index](docs/research/index.md) — índice dos documentos de research; contagem em PROGRESSO.
 
 ## Referência
 
@@ -22,5 +22,5 @@
 
 ## NV
 
-PRs/CI/proteção/merge/releases ao vivo: **[NV]**. ADR-0003 e ADR-0006 mantêm o
-texto antigo ("43") e aguardam aprovação de maintainer para correção.
+PRs/CI/proteção/merge/releases ao vivo: **[NV]**. Dívidas de ADR e intenção
+futura do dono: **[NV]** — detalhes em PROGRESSO.
