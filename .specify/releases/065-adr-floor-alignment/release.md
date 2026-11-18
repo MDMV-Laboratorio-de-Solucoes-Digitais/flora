@@ -38,3 +38,7 @@ propostas 0.1.1–0.1.17 permanecem não aplicadas). Nenhuma tag criada.
 
 C5 (`RoleWrite`) e C6 (canário RLS) seguem autorizados e enfileirados;
 produção **[NV]**. Sem merge/auto-merge/force-push nesta fase.
+
+## Correção pós-verificação (2026-11-18T13:12Z)
+
+O detalhamento correto é `13/4/8/8/5/6/4/3 — total 51` (workspace passou de 2 para 3 no ciclo 064). A citação anterior `/4/2` somava 50 e contradizia o total; corrigida no ADR-0003:19.
