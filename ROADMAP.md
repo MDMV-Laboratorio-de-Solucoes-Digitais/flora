@@ -199,3 +199,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 060 atualiza o estado verificado de `PROGRESSO.md` com contagens atuais (specs 51/230, assessments 48/197, validations 46/47, releases 46/46), preservando o histórico.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - **Escalados [NV]:** ADR-0003/0006 (maintainer) e N3 (FK/SE). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T04:11Z (append-only)
+
+- Âncora `github/dev@7ed232c46`; `check_gate_integrity.py` PASS (8 pisos/50 derivados).
+- Ciclo 061 remove código morto alinhado ao Princípio I: circuit-breaker nunca compilado, config e erro órfãos. Zero mudança de comportamento.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- **Escalados [NV]:** ADR-0003/0006, N3, C5/C6. **[NV]** para CI/PRs ao vivo.
