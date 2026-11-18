@@ -206,3 +206,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 061 remove código morto alinhado ao Princípio I: circuit-breaker nunca compilado, config e erro órfãos. Zero mudança de comportamento.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - **Escalados [NV]:** ADR-0003/0006, N3, C5/C6. **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T04:31Z (append-only)
+
+- Âncora `github/dev@104c581f3`; `check_gate_integrity.py` PASS (8 pisos/50 derivados).
+- Ciclo 062 consolida a fila escalada em `STATE.md`, evitando reavaliação e execução sem autorização. OSV permanece sem runs até o próximo cron semanal.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- **Escalados [NV]:** ADR-0003/0006, N3, C5/C6. **[NV]** para CI/PRs ao vivo.
