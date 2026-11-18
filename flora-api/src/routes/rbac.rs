@@ -85,7 +85,7 @@ async fn require_org_admin(state: &AppState, auth: &AuthExtractor) -> Result<Uui
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
     let role_repo = PgRoleRepository::new((*state.db_pool).clone());
     let role = role_repo
-        .find_by_id(membership.role_id)
+        .find_by_id_and_organization(membership.role_id, org_id)
         .await?
         .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
     if !can_manage_roles(&role) {
@@ -116,7 +116,7 @@ async fn list_roles(
 
     let role_repo = PgRoleRepository::new((*state.db_pool).clone());
     let membership_role = role_repo
-        .find_by_id(membership.role_id)
+        .find_by_id_and_organization(membership.role_id, org_id)
         .await?
         .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
     if !can_list_roles(&membership_role) {
