@@ -138,3 +138,14 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Gates: guardião PASS; `--list` 4/2; 8 legs com DB real isolado (`flora_053_verify`) → 50 testes; fmt/clippy/deny/build exit 0; test 105 passed/0 failed/51 ignored; frontend 42/42.
 - PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo após este ciclo e legs no runner do GitHub.
+
+## Atualização — ciclo 054 (2026-11-18T01:13Z)
+
+- Âncora `github/dev@dd982cadc`; branch `feature/054-db-env-fail-closed`; NNN 054 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão A preservada: CI GitHub Actions, CLI `gh`, gate `scripts/ci/check_gate_integrity.py`. Factory `d2bd95823cc5b4758b1c4cf5bd9133b20309ebb7` lida como fonte; nada materializado.
+- Ciclo 054 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze PASS → implement → converge → validate R4 → release R7.
+- Implementação: `rust.yml` com `:?` em `run_leg`; guardião exige env no bloco `db-tests`. Nenhum check renomeado; nenhum `.rs` tocado.
+- Evidência: sem env → exit 1 antes do cargo; com DB isolado → 50 testes (8 legs); mutação sem env → guardião RED; gates locais exit 0.
+- **Recuperação:** restart do servidor corrompeu um commit interrompido (objeto 0 byte) e o índice da worktree; ref restaurada ao último commit válido do reflog (`b9017755`), índice reconstruído com `read-tree HEAD`, objetos 0 byte removidos (sem conteúdo) e artefatos recommitados. Nenhum trabalho alheio alterado.
+- PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo após este ciclo e execução do step no runner.
