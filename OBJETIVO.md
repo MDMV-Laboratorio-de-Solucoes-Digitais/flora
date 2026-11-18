@@ -259,3 +259,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Escalados [NV]:** ADR-0003/0006 (aprovação de maintainer) e N3 (FK composto com órfãos [NV], ADR-0006/SE) — nenhum DDL/dado alterado.
 - **Dívidas restantes:** N3 (escalado), C5/C6 (dono/SE), dívidas de fase 001–009/025/035–046.
 - **[NV]** CI/PR remoto; factory `0cb34c4d`, nada materializado.
+
+## Estado verificado — 2026-11-18T04:11Z (append-only)
+
+- **Âncora:** `github/dev@7ed232c46`; branch `feature/061-dead-circuit-breaker`. Decisão `(2×5)/(3×2)=1.67` registrada em STATE; gate PASS (8 pisos/50).
+- **Ciclo 061:** removido placeholder de circuit-breaker nunca compilado (68 linhas) + 2 campos de config órfãos + 1 variante de erro. Diff: 3 arquivos, 79 remoções/0 inserções. Princípio I (debloat).
+- **Evidência:** grep 0 ocorrências em código; verificador 6/6; fmt/clippy/deny/build/test e frontend exit 0 (42/42).
+- **Escalados [NV]:** ADR-0003/0006 (maintainer), N3 (SE/FK), C5/C6 (dono). Dívidas de fase não forjadas.
+- **[NV]** CI/PR remoto; factory `0cb34c4d`, nada materializado.
