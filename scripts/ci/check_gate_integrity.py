@@ -46,6 +46,8 @@ FLOORS = {
     "search": 8,
     "notifications": 5,
     "files": 6,
+    "tasks": 4,
+    "workspace": 2,
 }
 
 JOB_RE = re.compile(r"^  ([A-Za-z0-9][A-Za-z0-9_-]*):\s*$")
@@ -108,10 +110,10 @@ def main(argv: list[str] | None = None) -> int:
         else:
             checks.append(f"rust.yml contains '{need}'")
     for label, floor in FLOORS.items():
-        if not re.search(rf"run_leg\s+{label}\s+contract::\w+::db_\s+{floor}\b", rust):
+        if not re.search(rf"run_leg\s+{label}\s+contract::\w+(?:::\w+)*::db_\s+{floor}\b", rust):
             failures.append(f"rust.yml: db floor for {label} ({floor}) missing or changed")
     if all(not any(f"db floor for {l}" in f for f in failures) for l in FLOORS):
-        checks.append("all six db contract floors intact (43 total)")
+        checks.append("all eight db contract floors intact (49 total)")
 
     if args.remote:
         repo = subprocess.run(
