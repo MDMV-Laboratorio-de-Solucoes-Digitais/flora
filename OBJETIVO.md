@@ -193,3 +193,12 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Concorrência:** worktree própria em `.specify/queue/worktrees/osv-scan-ref-pin/`, ledger append-only, `.gitignore` ignora runtime. Nenhum trabalho alheio tocado.
 - **Dívidas restantes:** C25b (6 testes DB sem leg no gate), V1 (DB legs fail-open), N3 (FK/filtro de org), C5 (decisão de dono), C6 (autorização SE); `docs/PROGRESSO.md`/`research/index.md` ausentes.
 - **[NV]** CI/PR/aprovações ao vivo e execução real do job OSV; factory `d2bd958` lida como fonte, nada materializado.
+
+## Estado verificado — 2026-11-18T00:10Z (append-only)
+
+- **Âncora:** `github/dev@22f16d6ac`; branch `feature/053-db-gate-uncovered-legs`. Gate autoritativo `check_gate_integrity.py` PASS (local + `--remote` na base).
+- **Ciclo 053:** 6 contratos DB antes órfãos (tasks 4, workspace 2) passam a ter legs no job `db-tests`; guardião valida 8 pisos / 49 total. Diff de código: 2 arquivos, 6+/2−. Nenhum required check renomeado.
+- **Evidência DB real:** Postgres 18.6 local, DB temporário isolado `flora_053_verify`; 8 legs executados com env real → 50 testes (auth 13/12, demais no piso). DB `flora` alheio não tocado (checksum de migração alterado por outra sessão).
+- **Gates:** fmt/clippy/deny/build exit 0; test 105 passed/0 failed/51 ignored; frontend check 0/0, lint ok, 42/42, build ok.
+- **Dívidas restantes:** V1 (db legs fail-open sem env), auth floor 12<13, phase debts 001–009/025/035–046, `docs/PROGRESSO.md`/`research/index.md` ausentes; ADR-0003 ainda cita 43.
+- **[NV]** CI/PR ao vivo e legs no runner; factory `d2bd958` lida como fonte, nada materializado.
