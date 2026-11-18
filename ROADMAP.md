@@ -143,3 +143,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 052 fecha o item "tag `osv-scan@v2`" do 051: `osv-scan.yml:14` passa a `@v2.7.1`. Tag verificado em duas fontes primárias; job continua advisory (não required), sem ADR-0003 alterado.
 - PR de `feature/052-osv-scan-ref-pin` → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - Próximos: C25b (2.0), V1 (1.25), N3 (1.0), C5 (decisão de dono), C6 (autorização SE). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T00:10Z (append-only)
+
+- Âncora `github/dev@22f16d6ac`; `check_gate_integrity.py` PASS (4 required checks).
+- Ciclo 053 eleva a CI: cobertura de 44→50 contratos DB com dois legs novos no job existente (`tasks` 4, `workspace` 2). Guardião passa a 8 pisos / 49 total.
+- Verificação local com DB real isolado confirmou 50 testes executados; PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- Próximos: V1 (fail-open, 1.25), N3 (1.0), C5 (decisão de dono), C6 (autorização SE). **[NV]** para CI/PRs ao vivo.
