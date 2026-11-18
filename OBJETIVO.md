@@ -227,3 +227,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Verificação:** verificador isolado encontrou contagens desatualizadas e `[NV]` ausente; corrigido na fonte e reverificado → PASS 3/3. Entradas 135, links 135, 0 duplicatas/ausentes.
 - **Dívidas restantes:** ADR-0003/0006 (texto 43, aprovação de maintainer **[NV]**), `index.md` raiz, N3, C5/C6.
 - **[NV]** CI/PR remoto; factory fonte `046e1f2a` (mutou desde `d2bd958`), nada materializado.
+
+## Estado verificado — 2026-11-18T02:48Z (append-only)
+
+- **Âncora:** `github/dev@97838cd9c`; branch `feature/057-dynamic-floor-total`. Decisão `(3×5)/(2×1)=7.5` registrada em STATE; gate autoritativo PASS (8 pisos/50, agora derivado de `FLOORS`).
+- **Ciclo 057:** guardião determinístico imprime `len(FLOORS)`/`sum(FLOORS.values())` em vez de literal "eight"/"50". Diff: 1 linha em 1 arquivo; regex e falhas intactas.
+- **Evidência:** mutação com 9º piso + leg → "all 9 ... (54 total)"; verificador isolado PASS 5/5; gates locais exit 0 (frontend 42/42).
+- **Dívidas restantes:** ADR-0003/0006 (43, aprovação de maintainer **[NV]**), root `index.md` (2.5), N3 (1.0), C5/C6.
+- **[NV]** CI/PR remoto; factory fonte `38f68266`, nada materializado.
