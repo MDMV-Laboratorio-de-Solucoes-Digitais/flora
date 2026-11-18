@@ -267,3 +267,10 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Evidência:** grep 0 ocorrências em código; verificador 6/6; fmt/clippy/deny/build/test e frontend exit 0 (42/42).
 - **Escalados [NV]:** ADR-0003/0006 (maintainer), N3 (SE/FK), C5/C6 (dono). Dívidas de fase não forjadas.
 - **[NV]** CI/PR remoto; factory `0cb34c4d`, nada materializado.
+
+## Estado verificado — 2026-11-18T04:31Z (append-only)
+
+- **Âncora:** `github/dev@104c581f3`; branch `feature/062-escalation-register`. Decisão `(2×5)/(2×1)=5.0` registrada em STATE; gate PASS (8 pisos/50).
+- **Ciclo 062:** `STATE.md` ganhou tabela canônica de escalonamentos (ADR-0003/0006, N3, C5/C6) e estado OSV ao vivo (active, id 420259367, 0 runs, cron semanal). Nenhum item bloqueado executado.
+- **Verificação:** verificador 6/6; 25 inserções/0 remoções; fontes citadas conferidas; gates exit 0.
+- **[NV]** aprovações de maintainer/SE/dono e execução futura do OSV; factory `4a5de2ce`, nada materializado.
