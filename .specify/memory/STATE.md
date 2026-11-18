@@ -186,3 +186,10 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Gates: guardião PASS 50 total; fmt/clippy/deny/build/test exit 0; frontend check 0/0, lint ok, 42/42, build ok.
 - PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo, valor atual de feature.json e ADRs.
+
+## Decisão 80/20 — 2026-11-18T02:43Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 057 — guardião determinístico computa o total de pisos a partir de `FLOORS`.** `(3×5)/(2×1) = 7.5`, maior candidato autônomo. Evidência: `scripts/ci/check_gate_integrity.py:120` imprime literal `"all eight db contract floors intact (50 total)"`; o número foi corrigido manualmente em 052 (43→49), 053 (49→...), 054 (49→50), 055 (→50) — drift recorrente. `FLOORS` já é a fonte da verdade.
+- **Escalado [NV]:** ADR-0003/0006 (drift 43 vs 50, 5.0) — exige aprovação de maintainer para documento de governança. Root `index.md` (2.5), local-false-positive (1.875), N3 (1.0), dívidas de fase (0.67).
+- HEAD da factory como fonte desta sessão: `38f682663f0121ec178bac592216501ad9fce8c3` (mutou desde `046e1f2a`); nada transplantado.
