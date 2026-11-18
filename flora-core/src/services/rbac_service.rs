@@ -113,9 +113,7 @@ impl RbacService {
                 Error::Forbidden("User is not a member of this organization".to_string())
             })?;
 
-        let role = self
-            .get_role(membership.role_id, organization_id)
-            .await?;
+        let role = self.get_role(membership.role_id, organization_id).await?;
         // Convert string permission to Permission enum
         let perm = Permission::from_str(permission)
             .map_err(|_| Error::InvalidInput(format!("Unknown permission: {permission}")))?;
@@ -157,9 +155,7 @@ impl RbacService {
                 Error::Forbidden("User is not a member of this organization".to_string())
             })?;
 
-        let role = self
-            .get_role(membership.role_id, organization_id)
-            .await?;
+        let role = self.get_role(membership.role_id, organization_id).await?;
         Ok(role.name == DEFAULT_OWNER_ROLE || role.name == "Admin")
     }
 
@@ -168,10 +164,11 @@ impl RbacService {
         {
             // Check cache first; a cached role from another org must never be reused
             let cache = self.role_cache.read().await;
-            if let Some(role) = cache.get(&role_id) {
-                if role.organization_id == organization_id {
-                    return Ok(role.clone());
-                }
+            if let Some(role) = cache
+                .get(&role_id)
+                .filter(|role| role.organization_id == organization_id)
+            {
+                return Ok(role.clone());
             }
         }
 
