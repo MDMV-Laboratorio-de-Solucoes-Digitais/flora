@@ -167,3 +167,11 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Gates: guardião PASS 50 total; `--list` 13; leg auth DB real 13 passed; mutação lockstep RED; fmt/clippy/deny/build/test e frontend check/lint/42/42/build exit 0.
 - PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo e leg no runner do GitHub.
+
+## Decisão 80/20 — 2026-11-18T02:11Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 056 — criar `docs/PROGRESSO.md` e `docs/research/index.md`.** `(2×5)/(3×1) = 3.33` — maior candidato autônomo. Evidência: `find docs/research -type f` → 135 arquivos sem índice; `docs/PROGRESSO.md`, `docs/research/index.md` e `index.md` ausentes (confirmado por `test -f`); contagens de specs/assessments/validations/releases por `find`.
+- **Escalado [NV], não autônomo:** ADR-0003 drift (texto 43 vs 8 pisos/50, `(2×5)/(1×2)=5.0`) exige aprovação de maintainer para alterar documento de governança (Constituição §Governance) — não alterado nesta sessão.
+- Demais: N3 `(4×3)/(3×4)=1.0`; dívidas de fase `(2×5)/(5×3)=0.67`; C5/C6 dependem de dono/SE.
+- HEAD da factory como fonte desta sessão: `046e1f2a8ce96a42a04b7ea3735da0251e7b1cef` (mutou desde `d2bd958`; nada transplantado).
