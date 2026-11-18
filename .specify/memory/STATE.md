@@ -247,3 +247,14 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - **Escolhido: 060 — refresh datado das contagens verificadas em `docs/PROGRESSO.md`.** `(2×5)/(2×1) = 5.0`, maior candidato autônomo. Evidência: nota de 02:23Z registra specs 47/202, assessments 44/175, validations 42/43, releases 42/42; `find` agora → specs 50/224, assessments 47/192, validations 46/47, releases 46/46 (ciclos 057–059). Histórico preservado: nova nota append-only, sem reescrever a anterior.
 - **Escalado [NV]:** ADR-0003/0006 (5.0), aprovação de maintainer. N3 `(4×3)/(3×4)=1.0` envolve FK composto e risco de órfãos — sob análise; não iniciado. C5/C6 dependem de dono/SE.
 - HEAD da factory como fonte desta sessão: `0cb34c4d0b020b4b249a325ff90fe130c179d00f` (mutou desde `1083d321`); nada transplantado.
+
+## Atualização — ciclo 060 (2026-11-18T03:54Z)
+
+- Âncora `github/dev@262ac042f`; branch `feature/060-refresh-verified-counts`; NNN 060 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão 80/20 registrada neste arquivo antes do BLOCO 6: `(2×5)/(2×1)=5.0` — refresh de contagens. ADR-0003/0006 escalados **[NV]**; N3 escalado (FK com órfãos [NV], ADR-0006/SE).
+- Factory fonte `0cb34c4d0b020b4b249a325ff90fe130c179d00f`; nada transplantado.
+- Ciclo 060 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze PASS → implement → converge → validate R4 → release R7.
+- Implementação: apêndice append-only em `docs/PROGRESSO.md` (37+/0−), com correção 03:52Z; contagens conferidas 12/12 por `find`; verificador 6/6.
+- Gates: guardião PASS; fmt/clippy/deny/build/test exit 0; frontend 42/42.
+- PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo, ADRs e dados para N3.
