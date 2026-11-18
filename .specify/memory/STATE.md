@@ -204,3 +204,10 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Verificador isolado PASS 5/5; gates: guardião PASS, fmt/clippy/deny/build/test exit 0, frontend 42/42.
 - PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo e ADRs.
+
+## Decisão 80/20 — 2026-11-18T03:02Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 058 — criar `index.md` na raiz.** `(1×5)/(2×1) = 2.5`, maior candidato autônomo. Evidência: `test -f index.md` → ausente; `OBJETIVO.md`/`ROADMAP.md`/`docs/PROGRESSO.md` registram a ausência; `docs/research/index.md` e `docs/PROGRESSO.md` já existem (ciclo 056) e podem ser linkados.
+- **Escalado [NV]:** ADR-0003/0006 (drift 43 vs 50, 5.0) — exige aprovação de maintainer para documento de governança. Demais: falso positivo local 1.875, N3 1.0, dívidas de fase 0.67, C5/C6 não autônomos.
+- HEAD da factory como fonte desta sessão: `38f682663f0121ec178bac592216501ad9fce8c3`; nada transplantado.
