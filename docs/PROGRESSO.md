@@ -77,3 +77,33 @@ worktree. Contagens reais após a inclusão (e após o merge em `dev`):
 
 Os números de 03:51Z permanecem como registro do estado anterior à inclusão
 dos artefatos do ciclo 060. Estado remoto/CI: **[NV]**.
+
+## Estado verificado — 2026-11-18T15:53:43Z (ciclo 067; append-only)
+
+Contagens obtidas por `find` nesta worktree (já incluem os artefatos do ciclo 067):
+
+| Artefato | Contagem |
+|---|---:|
+| `specs/` | 58 diretórios |
+| `.specify/assessments/` | 55 diretórios |
+| `.specify/validations/` | 53 diretórios |
+| `.specify/releases/` | 53 diretórios |
+| `.specify/bugs/` | 4 diretórios |
+| `docs/research/` | 138 arquivos (2 com prefixo `2026-11-18`) |
+| `docs/adr/` | 6 arquivos |
+
+Gate autoritativo do alvo: `check_gate_integrity.py` **PASS** — 4 required checks,
+8 pisos / 51 total; `--remote` confirma required contexts em `dev` e `main`.
+A cifra "50" em notas anteriores estava desatualizada (o piso `workspace` passou
+de 2 para 3 no ciclo 064); o histórico permanece intacto.
+
+Remoto observado ao vivo nesta sessão: PR **#285** merged em `9d5f6656f` com
+6 checks verdes; nenhum PR aberto em `github`. Não é mais afirmação **[NV]**
+para aquele merge específico. Status de CI futuro, Forgejo e produção: **[NV]**.
+
+Entrega deste ciclo: `docs/research/2026-11-18-067-c6-canary-rls-design.md` —
+desenho de canário RLS com rollback, sem habilitação em produção (C6, autorizado).
+Nenhum código, workflow, migration, ADR ou constituição alterado.
+
+Dívida registrada (não forjada): `docs/research/index.md` cobre até a entrada 046;
+as demais entradas do diretório seguem pendentes de indexação retroativa.

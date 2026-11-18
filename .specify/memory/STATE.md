@@ -367,3 +367,21 @@ Item `C5` da tabela de escalonamento **autorizado pelo SE e concluído** no cicl
 `is_builtin` imutáveis. Handlers placeholder substituídos por CRUD real.
 A linha histórica da tabela permanece; este apêndice a corrige.
 Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
+
+## Decisão 80/20 (modo autônomo) — 2026-11-18T15:49:43Z (registrada antes do BLOCO 6)
+
+- Critério `E = (impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador explícito por candidato.
+- **Escolhido: 067 — C6: desenho de canário RLS com rollback, sem habilitação em produção.** `(5×5)/(3×1) = 8.33`.
+- Autorização: SE já autorizou C6 (entradas 13:04Z / 14:38Z / 14:50Z). Escopo = documento + artefatos SDD; **sem** tocar produção, **sem** required checks, **sem** policies/FORCE em runtime (ADR-0006 §1–3).
+- Evidência local: 11 tabelas com `ENABLE ROW LEVEL SECURITY` porém `0 CREATE POLICY`, `0 set_config`, `0 papéis de DB`, `0 wrapper de transação`; ADR-0005 (desenho fail-closed provado em DB descartável) e ADR-0006 (promoção em duas etapas, rollback sem dado destrutivo).
+- Ranqueamento: C6 `8.33`; refresh de docs verificado `5.0`; contrato RBAC real `3.0`; remoção de stubs `0.67`; fiação Meilisearch `0.27`.
+- CI: PR #285 com 6 checks verdes e gate `check_gate_integrity.py` PASS (8 pisos / 51) — "elevar a CI" não é candidato nº 1.
+- Âncora: `feature.json` (runtime, não versionado) congela `specs/051-dead-invite-ui`; `check-prerequisites.sh` ausente no alvo. `NNN = máximo(specs) + 1 = 067`, por evidência determinística de `specs/`. Divergência registrada.
+- HEAD da factory como fonte: `c81f0f8191d9dfa1285001bdd45f2a8fddd8dac3`; nada transplantado como autoridade (scripts SDD materializados apenas em runtime, sem baseline).
+- **[NV]**: status remoto/CI futuro, prova A/B em app real, produção.
+
+## Execução do ciclo 067 — 2026-11-18T15:53:58Z
+
+- Unidade: 1 agent + worktree `.specify/queue/worktrees/c6-canary-rls` + branch `feature/067-c6-canary-rls-design`; ledger `active` registrado.
+- Entregável: `docs/research/2026-11-18-067-c6-canary-rls-design.md`; refresh append-only de `PROGRESSO.md` e `research/index.md`.
+- Nenhuma alteração em código, workflows, migrações, ADRs, constituição, produção ou required checks.
