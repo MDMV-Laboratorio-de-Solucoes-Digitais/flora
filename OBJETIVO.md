@@ -219,3 +219,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Evidência:** `--list` = 13; leg auth com Postgres real isolado = 13 passed; mutação lockstep → guardião RED; gates locais exit 0 (frontend 42/42).
 - **Dívidas restantes:** ADR-0003 com texto 43 (governança), índice de research/PROGRESSO, N3 (1.0), C5/C6 (dono/SE).
 - **[NV]** CI/PR ao vivo e leg no runner; factory `d2bd958` lida como fonte, nada materializado.
+
+## Estado verificado — 2026-11-18T02:29Z (append-only)
+
+- **Âncora:** `github/dev@94fcf19ca`; branch `feature/056-docs-research-index`. Decisão 80/20 `(2×5)/(3×1)=3.33` registrada em STATE antes do ciclo; gate autoritativo PASS (8 pisos/50).
+- **Ciclo 056:** criados `docs/research/index.md` (135 entradas determinísticas, links válidos, idempotente) e `docs/PROGRESSO.md` (nota datada com contagens por `find`, gates, dívidas, **[NV]**). Zero código alterado.
+- **Verificação:** verificador isolado encontrou contagens desatualizadas e `[NV]` ausente; corrigido na fonte e reverificado → PASS 3/3. Entradas 135, links 135, 0 duplicatas/ausentes.
+- **Dívidas restantes:** ADR-0003/0006 (texto 43, aprovação de maintainer **[NV]**), `index.md` raiz, N3, C5/C6.
+- **[NV]** CI/PR remoto; factory fonte `046e1f2a` (mutou desde `d2bd958`), nada materializado.
