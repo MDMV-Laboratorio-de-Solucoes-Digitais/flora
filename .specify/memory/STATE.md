@@ -258,3 +258,21 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Gates: guardião PASS; fmt/clippy/deny/build/test exit 0; frontend 42/42.
 - PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo, ADRs e dados para N3.
+
+## Decisão 80/20 — 2026-11-18T04:05Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 061 — remover código morto do circuit-breaker.** `(2×5)/(3×2) = 1.67`, maior candidato autônomo. Evidência: `flora-core/src/utils/circuit_breaker.rs` (68 linhas) nunca declarado em `utils/mod.rs` (só `jwt`/`pkce`); campos `circuit_breaker_threshold`/`circuit_breaker_recovery_secs` em `config/messaging.rs:19,21,33,34` sem uso; `Error::CircuitBreakerOpen` em `error.rs:181,365` referenciado apenas pelo arquivo morto. Figment não usa `deny_unknown_fields` — remover campos não quebra env extraneous. Alinhado ao Princípio I (debloat).
+- **Escalados [NV]:** ADR-0003/0006 (maintainer), N3 (SE/FK), C5/C6 (dono). Dívidas de fase exigiriam forjar validate/release históricos — não executado.
+- HEAD da factory como fonte desta sessão: `0cb34c4d0b020b4b249a325ff90fe130c179d00f`; nada transplantado.
+
+## Atualização — ciclo 061 (2026-11-18T04:11Z)
+
+- Âncora `github/dev@7ed232c46`; branch `feature/061-dead-circuit-breaker`; NNN 061 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão 80/20 registrada neste arquivo antes do BLOCO 6: `(2×5)/(3×2)=1.67` — remover circuit-breaker morto. ADR-0003/0006, N3 e C5/C6 escalados **[NV]**; dívidas de fase não forjadas.
+- Factory fonte `0cb34c4d0b020b4b249a325ff90fe130c179d00f`; nada transplantado.
+- Ciclo 061 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze PASS → implement → converge → validate R4 → release R7.
+- Implementação: 3 arquivos (79 remoções/0 inserções) — arquivo morto excluído, campos de config e variante de erro removidos.
+- Verificação: grep 0; verificador 6/6; guardião PASS; fmt/clippy/deny/build/test e frontend 42/42 exit 0.
+- PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo e escalonamentos.

@@ -15,10 +15,6 @@ pub struct MessagingConfig {
     pub max_fanout: usize,
     /// Message retention in seconds for offline delivery (default: 3600).
     pub message_ttl_secs: u64,
-    /// Circuit breaker failure threshold (default: 5).
-    pub circuit_breaker_threshold: u32,
-    /// Circuit breaker recovery timeout in seconds (default: 30).
-    pub circuit_breaker_recovery_secs: u64,
 }
 
 impl Default for MessagingConfig {
@@ -30,8 +26,6 @@ impl Default for MessagingConfig {
             topic_template: "org:{@@org_id@@}:channel:{@@channel_id@@}".to_owned(),
             max_fanout: 50,
             message_ttl_secs: 3600,
-            circuit_breaker_threshold: 5,
-            circuit_breaker_recovery_secs: 30,
         }
     }
 }

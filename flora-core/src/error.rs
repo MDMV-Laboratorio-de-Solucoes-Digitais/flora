@@ -176,10 +176,6 @@ pub enum Error {
     #[error("service unavailable: {0}")]
     ServiceUnavailable(String),
 
-    /// A circuit breaker for a service is open (fail-fast mode).
-    #[error("circuit breaker open: {0}")]
-    CircuitBreakerOpen(String),
-
     /// An I/O error occurred.
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
@@ -362,7 +358,6 @@ impl IntoResponse for Error {
             | Self::NotificationDispatch(_)
             | Self::Configuration(_)
             | Self::ServiceUnavailable(_)
-            | Self::CircuitBreakerOpen(_)
             | Self::IoError(_)
             | Self::Internal(_) => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
