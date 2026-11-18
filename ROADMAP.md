@@ -220,3 +220,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 063 fecha o último [NV] executável: scan OSV rodou com sucesso no pin `@v2.7.1`; sinal advisory operacional.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - **Escalados [NV]:** ADR-0003/0006, N3, C5/C6. **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T11:29Z (append-only)
+
+- Âncora `github/dev@448090327`; `check_gate_integrity.py` PASS (8 pisos/51).
+- Ciclo 064 fecha N3 em código e schema: papéis passam a ser resolvidos dentro da org da sessão; banco rejeita ponteiro cross-org/órfão. Deploy em produção segue **[NV]** e depende de auditoria local lá.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- **Autorizados e enfileirados:** ADR text, C5 `RoleWrite`, C6 canário (sem produção). **[NV]** para CI/PRs ao vivo.

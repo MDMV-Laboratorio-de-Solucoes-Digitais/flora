@@ -156,6 +156,34 @@ mod db {
     }
 
     #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 064)"]
+    async fn db_n3_cross_org_role_lookup_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed_a = seed_member(&state, &config).await?;
+        let seed_b = seed_member(&state, &config).await?;
+        let repo = PgRoleRepository::new((*state.db_pool).clone());
+        let role_b = repo
+            .find_by_organization_id(seed_b.org.id)
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| anyhow::anyhow!("no role seeded for org B"))?;
+
+        let cross = repo
+            .find_by_id_and_organization(role_b.id, seed_a.org.id)
+            .await?;
+        anyhow::ensure!(cross.is_none(), "CROSS-ORG ROLE LEAK");
+
+        let own = repo
+            .find_by_id_and_organization(role_b.id, seed_b.org.id)
+            .await?;
+        anyhow::ensure!(own.is_some(), "own role must still resolve");
+        Ok(())
+    }
+
+    #[tokio::test]
     #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 044)"]
     async fn db_workspace_isolation_between_orgs() -> anyhow::Result<()> {
         let Some((state, config)) = db_state().await? else {

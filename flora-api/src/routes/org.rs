@@ -101,7 +101,7 @@ async fn list_user_orgs(
     for membership in memberships {
         if let Some(org) = org_repo.find_by_id(membership.organization_id).await? {
             let role_name = role_repo
-                .find_by_id(membership.role_id)
+                .find_by_id_and_organization(membership.role_id, membership.organization_id)
                 .await?
                 .map_or_else(|| "Member".to_string(), |r| r.name);
 

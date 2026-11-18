@@ -328,3 +328,10 @@ Fecha o **[NV]** registrado no ciclo 052 e no apêndice de 04:29Z: o pin
 - Anotação informativa do runner: label `ubuntu-latest` migrará para Ubuntu 26
   em outubro/2026 — impacto futuro **[NV]**, fora deste ciclo.
 - Nota anterior (04:29Z) permanece como registro histórico; esta a corrige.
+
+## Autorização SE e decisão 80/20 — 2026-11-18T11:13Z (registrada antes do BLOCO 6)
+
+- O Software Engineer autorizou, para N3: (1) camada 1 em código (org-scoping de resolução de papéis); (2) `UNIQUE(organization_id, id)` em `roles`; (3) auditoria read-only de órfãos/mismatch; (4) FK composto `(organization_id, role_id) → roles(organization_id, id)` com `ON DELETE RESTRICT` **se** a auditoria estiver limpa; (5) se houver sujeira, retornar com os dados para escolha de limpeza.
+- Auditoria read-only executada em `flora` (local) às 11:12Z: `orfaos=0`, `cross_org=0`, `memberships=3`, `roles=3`. **Produção não auditada — [NV]**; a migration terá pré-voo `RAISE EXCEPTION` para falhar fechado se houver dados inválidos no deploy.
+- Critério `(impacto × confiança) ÷ (esforço × risco)` = `(4×5)/(5×3) = 1.33`, candidato autorizado de maior prioridade. ADR-0003/0006 (patch documental), C5 (`RoleWrite`) e C6 (desenho de canário, sem produção) ficam autorizados e enfileirados em ciclos separados.
+- HEAD da factory como fonte desta sessão: `ce3d42132edb9466b75eab968be775ebdea38985`; nada transplantado.

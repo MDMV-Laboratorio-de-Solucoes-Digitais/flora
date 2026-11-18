@@ -47,7 +47,7 @@ FLOORS = {
     "notifications": 5,
     "files": 6,
     "tasks": 4,
-    "workspace": 2,
+    "workspace": 3,
 }
 
 JOB_RE = re.compile(r"^  ([A-Za-z0-9][A-Za-z0-9_-]*):\s*$")
