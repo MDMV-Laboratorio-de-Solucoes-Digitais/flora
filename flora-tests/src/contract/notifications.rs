@@ -116,10 +116,9 @@ mod db_notifications {
             .ok()
             .or_else(|| std::env::var("DATABASE_URL").ok())
         else {
-            eprintln!(
-                "skipping DB-backed notification test: FLORA_DATABASE__POSTGRES_URL/DATABASE_URL not set"
+            anyhow::bail!(
+                "FLORA_DATABASE__POSTGRES_URL/DATABASE_URL required for DB contract tests"
             );
-            return Ok(None);
         };
 
         let pool = PgPool::connect(&url).await?;

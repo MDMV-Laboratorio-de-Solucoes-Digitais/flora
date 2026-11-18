@@ -185,3 +185,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 058 cria `index.md` na raiz, fechando o último ponto de entrada ausente do Bloco 4. Índice sem duplicação de contagens; links 8/8 válidos.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - Próximos: ADR drift (5.0, escalado), falso positivo local (1.875), N3 (1.0), C5/C6 (autorização). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T03:31Z (append-only)
+
+- Âncora `github/dev@2730fd2dd`; `check_gate_integrity.py` PASS (8 pisos/50).
+- Ciclo 059 elimina o "passed" vazio local: sem env os contratos DB falham; com DB real os 50 testes passam. CI permanece fail-closed (054) e inalterada.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- Próximos: ADR drift (5.0, escalado), N3 (1.0), C5/C6 (autorização). **[NV]** para CI/PRs ao vivo.

@@ -243,3 +243,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Gates:** guardião PASS; fmt/clippy/deny/build/test exit 0; frontend 0/0, lint ok, 42/42, build ok.
 - **Dívidas restantes:** ADR-0003/0006 (aprovação de maintainer **[NV]**), falso positivo local, N3, C5/C6.
 - **[NV]** CI/PR remoto; factory `38f68266`, nada materializado.
+
+## Estado verificado — 2026-11-18T03:31Z (append-only)
+
+- **Âncora:** `github/dev@2730fd2dd`; branch `feature/059-db-tests-fail-local`. Decisão `(3×5)/(4×2)=1.875` registrada em STATE; gate PASS (8 pisos/50).
+- **Ciclo 059:** 9 helpers `db_state()` falham com `anyhow::bail!` sem env de Postgres; 50 chamadores intactos. Diff: 8 arquivos `.rs`, 9+/30−. CI e gate inalterados.
+- **Evidência:** sem env → exit 101 (tasks 0/4, auth 0/13); `--ignored --list` = 50; com DB isolado → 50 passed; verificador 5/5; fmt/clippy/deny/build/test e frontend exit 0.
+- **Dívidas restantes:** ADR-0003/0006 (aprovação de maintainer **[NV]**), N3, C5/C6.
+- **[NV]** CI/PR remoto; factory `1083d321`, nada materializado.
