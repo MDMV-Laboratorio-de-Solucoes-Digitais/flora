@@ -352,3 +352,10 @@ concluído** no ciclo 065: citações de piso alinhadas a
 ciclo 064 (workspace 2→3); o valor real do gate é 51 e foi registrado.
 A linha histórica da tabela permanece intacta; este apêndice a corrige.
 Itens ainda autorizados e pendentes: C5 (`RoleWrite`) e C6 (canário RLS, sem produção).
+
+## Decisão 80/20 (autorização SE) — 2026-11-18T14:38Z (antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 066 — implementar CRUD de papéis com `RoleWrite` dedicada.** `(4×5)/(4×2) = 2.5`, último item de código autorizado. SE decidiu: permissão `RoleWrite` dedicada; `OrgAdmin` a possui habilitada por padrão; papéis `is_builtin` imutáveis (premissa registrada). C6 (canário RLS) segue como documento, sem produção.
+- Evidência: `flora-api/src/routes/rbac.rs:131-164` — quatro handlers placeholder que retornam strings; `GET /roles` já é real (ciclo 042).
+- HEAD da factory como fonte desta sessão: `c81f0f8191d9dfa1285001bdd45f2a8fddd8dac3`; nada transplantado.
