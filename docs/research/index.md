@@ -1,18 +1,18 @@
 # Research index — Flora
 
-> **Estado verificado:** 2026-11-18T02:15Z · **Fonte:** `find docs/research -type f` (somente leitura).
+> **Estado verificado:** 2026-11-18T02:23Z · **Fonte:** `find docs/research -maxdepth 1 -type f -name '*.md' ! -name index.md` (somente leitura).
 > **Contagem:** 135 arquivos. Índice gerado deterministicamente; nenhum resumo manual.
 > **Regeneração:** `find docs/research -maxdepth 1 -name '*.md' ! -name index.md -printf '%f\n' | sort` — títulos vêm do primeiro `# ` de cada arquivo (fallback: nome do arquivo).
 > Qualquer afirmação sobre estado remoto/CI é **[NV]**; este índice cobre apenas arquivos locais.
 
-## Contagens verificadas (2026-11-18T02:10Z)
+## Contagens verificadas (2026-11-18T02:23Z, já inclui os artefatos do ciclo 056)
 
 | Diretório | Arquivos |
 |---|---:|
-| `docs/research/` | 135 |
+| `docs/research/` (sem `index.md`) | 135 |
 | `docs/adr/` | 6 |
-| `specs/` | 196 |
-| `.specify/assessments/` | 170 |
+| `specs/` | 202 |
+| `.specify/assessments/` | 175 |
 | `.specify/validations/` | 43 |
 | `.specify/releases/` | 42 |
 | `.specify/bugs/` | 12 |
