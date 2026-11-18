@@ -405,10 +405,7 @@ mod db_select_organization {
             .ok()
             .or_else(|| std::env::var("DATABASE_URL").ok())
         else {
-            eprintln!(
-                "skipping DB-backed select-organization test: FLORA_DATABASE__POSTGRES_URL/DATABASE_URL not set"
-            );
-            return Ok(None);
+            anyhow::bail!("FLORA_DATABASE__POSTGRES_URL/DATABASE_URL required for DB contract tests");
         };
 
         let pool = PgPool::connect(&url).await?;
@@ -691,10 +688,7 @@ mod db_session_authority {
             .ok()
             .or_else(|| std::env::var("DATABASE_URL").ok())
         else {
-            eprintln!(
-                "skipping DB-backed session-authority test: FLORA_DATABASE__POSTGRES_URL/DATABASE_URL not set"
-            );
-            return Ok(None);
+            anyhow::bail!("FLORA_DATABASE__POSTGRES_URL/DATABASE_URL required for DB contract tests");
         };
 
         let pool = PgPool::connect(&url).await?;
