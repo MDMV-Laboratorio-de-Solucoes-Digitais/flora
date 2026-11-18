@@ -107,10 +107,7 @@ mod db_websocket {
             .ok()
             .or_else(|| std::env::var("DATABASE_URL").ok())
         else {
-            eprintln!(
-                "skipping DB-backed websocket test: FLORA_DATABASE__POSTGRES_URL/DATABASE_URL not set"
-            );
-            return Ok(None);
+            anyhow::bail!("FLORA_DATABASE__POSTGRES_URL/DATABASE_URL required for DB contract tests");
         };
 
         let pool = PgPool::connect(&url).await?;
