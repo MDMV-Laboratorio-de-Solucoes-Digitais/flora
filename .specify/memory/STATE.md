@@ -276,3 +276,10 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Verificação: grep 0; verificador 6/6; guardião PASS; fmt/clippy/deny/build/test e frontend 42/42 exit 0.
 - PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo e escalonamentos.
+
+## Decisão 80/20 — 2026-11-18T04:26Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 062 — registro único de escalonamentos + estado verificado do OSV.** `(2×5)/(2×1) = 5.0`, maior candidato autônomo. Evidência: ADR-0003/0006 (texto 43 vs 50), N3 (FK com órfãos **[NV]**, ADR-0006/SE) e C5/C6 (dono/SE) são reavaliados a cada sessão sem registro consolidado; OSV workflow `active` (`gh api`, created 2026-11-16) com **0 runs** e cron semanal (`37 14 * * 1`), portanto ainda sem execução para validar o pin de 052.
+- **Não executado:** ADR/N3/C5/C6 — exigem maintainer/SE/dono; dívidas de fase — exigiriam forjar artefatos históricos.
+- HEAD da factory como fonte desta sessão: `4a5de2ce218fa253a06de313c8008aea78aab351` (mutou desde `0cb34c4d`); nada transplantado.
