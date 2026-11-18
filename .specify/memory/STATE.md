@@ -128,3 +128,13 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Gates: `check_gate_integrity.py` PASS (local + `--remote`); fmt/clippy/deny/build exit 0; test 105 passed/0 failed/51 ignored; frontend check 0/0, lint ok, 42/42, build ok.
 - PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo após este ciclo e execução real do job OSV.
+
+## Atualização — ciclo 053 (2026-11-18T00:10Z)
+
+- Âncora `github/dev@22f16d6ac`; branch `feature/053-db-gate-uncovered-legs`; NNN 053 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão A preservada: CI GitHub Actions, CLI `gh`, gate `scripts/ci/check_gate_integrity.py`. Factory `d2bd95823cc5b4758b1c4cf5bd9133b20309ebb7` lida como fonte; nada materializado.
+- Ciclo 053 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze PASS → implement → converge → validate R4 → release R7.
+- Implementação: `rust.yml` ganha legs `tasks`/`workspace` (`db::db_`, pisos 4/2); guardião valida 8 pisos / 49 total. Nenhum check renomeado.
+- Gates: guardião PASS; `--list` 4/2; 8 legs com DB real isolado (`flora_053_verify`) → 50 testes; fmt/clippy/deny/build exit 0; test 105 passed/0 failed/51 ignored; frontend 42/42.
+- PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo após este ciclo e legs no runner do GitHub.
