@@ -251,3 +251,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Evidência:** sem env → exit 101 (tasks 0/4, auth 0/13); `--ignored --list` = 50; com DB isolado → 50 passed; verificador 5/5; fmt/clippy/deny/build/test e frontend exit 0.
 - **Dívidas restantes:** ADR-0003/0006 (aprovação de maintainer **[NV]**), N3, C5/C6.
 - **[NV]** CI/PR remoto; factory `1083d321`, nada materializado.
+
+## Estado verificado — 2026-11-18T03:54Z (append-only)
+
+- **Âncora:** `github/dev@262ac042f`; branch `feature/060-refresh-verified-counts`. Decisão `(2×5)/(2×1)=5.0` registrada em STATE; gate PASS (8 pisos/50).
+- **Ciclo 060:** `PROGRESSO.md` ganhou contagens atualizadas por `find` (apêndice 03:51Z + correção 03:52Z; 37 inserções/0 remoções). Verificador PASS 6/6.
+- **Escalados [NV]:** ADR-0003/0006 (aprovação de maintainer) e N3 (FK composto com órfãos [NV], ADR-0006/SE) — nenhum DDL/dado alterado.
+- **Dívidas restantes:** N3 (escalado), C5/C6 (dono/SE), dívidas de fase 001–009/025/035–046.
+- **[NV]** CI/PR remoto; factory `0cb34c4d`, nada materializado.
