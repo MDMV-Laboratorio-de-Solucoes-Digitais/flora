@@ -213,3 +213,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 062 consolida a fila escalada em `STATE.md`, evitando reavaliação e execução sem autorização. OSV permanece sem runs até o próximo cron semanal.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - **Escalados [NV]:** ADR-0003/0006, N3, C5/C6. **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T04:50Z (append-only)
+
+- Âncora `github/dev@e1ff815bf`; `check_gate_integrity.py` PASS (8 pisos/50 derivados).
+- Ciclo 063 fecha o último [NV] executável: scan OSV rodou com sucesso no pin `@v2.7.1`; sinal advisory operacional.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- **Escalados [NV]:** ADR-0003/0006, N3, C5/C6. **[NV]** para CI/PRs ao vivo.
