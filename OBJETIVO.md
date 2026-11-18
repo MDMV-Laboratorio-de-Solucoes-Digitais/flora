@@ -202,3 +202,12 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Gates:** fmt/clippy/deny/build exit 0; test 105 passed/0 failed/51 ignored; frontend check 0/0, lint ok, 42/42, build ok.
 - **Dívidas restantes:** V1 (db legs fail-open sem env), auth floor 12<13, phase debts 001–009/025/035–046, `docs/PROGRESSO.md`/`research/index.md` ausentes; ADR-0003 ainda cita 43.
 - **[NV]** CI/PR ao vivo e legs no runner; factory `d2bd958` lida como fonte, nada materializado.
+
+## Estado verificado — 2026-11-18T01:13Z (append-only)
+
+- **Âncora:** `github/dev@dd982cadc`; branch `feature/054-db-env-fail-closed`. Gate autoritativo `check_gate_integrity.py` PASS (8 pisos/49, `--remote` na base).
+- **Ciclo 054:** job `db-tests` passa a ser fail-closed — `run_leg` exige as duas env de Postgres e o guardião exige que elas estejam declaradas. Diff de código: 2 arquivos, 6 linhas adicionadas, nenhum `.rs` tocado.
+- **Prova determinística:** step extraído e executado sem env → exit 1 antes do cargo; com DB isolado → 8 legs verdes (50 testes); mutação removendo env → guardião RED. Durante a mutação, corrigi falso casamento da checagem com a própria linha `:?`.
+- **Gates:** fmt/clippy/deny/build/test e frontend check/lint/unit/build — todos exit 0.
+- **Dívidas restantes:** falso positivo local (`cargo test --ignored` sem env), auth floor 12<13, dívidas de fase 001–009/025/035–046, `docs/PROGRESSO.md`/`research/index.md` ausentes.
+- **[NV]** CI/PR ao vivo e runner; factory `d2bd958` lida como fonte, nada materializado.
