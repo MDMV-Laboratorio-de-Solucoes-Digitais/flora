@@ -164,3 +164,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 055 remove a última folga de piso: auth 12→13 (13 testes descobertos e executados). Guardião valida em lockstep; mutação prova a rejeição.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - Próximos: ADR drift 43→50 (5.0, governança), índice docs (3.33), N3 (1.0), C5/C6 (autorização). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T02:29Z (append-only)
+
+- Âncora `github/dev@94fcf19ca`; `check_gate_integrity.py` PASS (4 checks, 8 pisos/50).
+- Ciclo 056 fecha a dívida de índice: research (135 docs) passa a ter entrada verificada, e `PROGRESSO.md` registra estado datado. Correções pós-verificação aplicadas e confirmadas.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- Próximos: ADR drift (5.0, escalado por aprovação), N3 (1.0), C5/C6 (autorização). **[NV]** para CI/PRs ao vivo.
