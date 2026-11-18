@@ -37,6 +37,24 @@ impl RoleRepository for PgRoleRepository {
         Ok(role)
     }
 
+    async fn find_by_id_and_organization(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Option<Role>> {
+        let role = sqlx::query_as::<_, Role>(
+            "SELECT id, organization_id, name, permissions, description, is_builtin, created_at, updated_at
+             FROM roles
+             WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(role)
+    }
+
     async fn find_by_organization_id(&self, organization_id: Uuid) -> Result<Vec<Role>> {
         let roles = sqlx::query_as::<_, Role>(
             "SELECT id, organization_id, name, permissions, description, is_builtin, created_at, updated_at
