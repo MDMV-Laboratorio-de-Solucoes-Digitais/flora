@@ -90,7 +90,7 @@ impl PermissionService {
 
         let role = self
             .role_repo
-            .find_by_id(membership.role_id)
+            .find_by_id_and_organization(membership.role_id, organization_id)
             .await?
             .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
 
@@ -129,7 +129,7 @@ impl PermissionService {
 
         let role = self
             .role_repo
-            .find_by_id(role_id)
+            .find_by_id_and_organization(role_id, organization_id)
             .await?
             .ok_or_else(|| Error::RoleNotFound(role_id.to_string()))?;
 
@@ -184,10 +184,14 @@ impl PermissionService {
     /// # Errors
     ///
     /// Returns an error if the role is not found or database operations fail.
-    pub async fn list_permissions(&self, role_id: Uuid) -> Result<Vec<String>> {
+    pub async fn list_permissions(
+        &self,
+        organization_id: Uuid,
+        role_id: Uuid,
+    ) -> Result<Vec<String>> {
         let role = self
             .role_repo
-            .find_by_id(role_id)
+            .find_by_id_and_organization(role_id, organization_id)
             .await?
             .ok_or_else(|| Error::RoleNotFound(role_id.to_string()))?;
 
@@ -210,6 +214,7 @@ impl PermissionService {
     /// Returns an error if validation fails, role is not found, or database operations fail.
     pub async fn update_role_permissions(
         &self,
+        organization_id: Uuid,
         role_id: Uuid,
         permissions: Vec<String>,
     ) -> Result<Role> {
@@ -218,7 +223,7 @@ impl PermissionService {
 
         let mut role = self
             .role_repo
-            .find_by_id(role_id)
+            .find_by_id_and_organization(role_id, organization_id)
             .await?
             .ok_or_else(|| Error::RoleNotFound(role_id.to_string()))?;
 
