@@ -5,23 +5,23 @@
 
 ## Âncora e gate
 
-- `dev` local = `github/dev@94fcf19ca` (merge da PR #273, ciclo 055). `main` remoto em `82ee437f…`.
+- `dev` local = `github/dev@94fcf19ca` (merge da PR #273, ciclo 055) — **[NV]** quanto ao estado remoto ao vivo. `main` remoto em `82ee437f…` segundo ref de tracking local; estado vivo **[NV]**.
 - Gate determinístico autoritativo: `python3 scripts/ci/check_gate_integrity.py` → **PASS**, 4 required checks (`frontend-build`, `rust-build`, `db-tests`, `dependency-review`), **8 pisos / 50 total**. ADR-0003 rege merge deliberado após CI verde.
-- Worktrees/stashes/branches de feature: zero no início deste ciclo; ledger append-only em `.specify/queue/concurrency.jsonl` (runtime, gitignored).
+- Worktrees/stashes/branches de feature: zero no checkout compartilhado no início deste ciclo (conforme releitura de estado); esta é uma worktree de feature. Ledger append-only em `.specify/queue/concurrency.jsonl` (runtime, gitignored, ausente nesta worktree).
 
-## Contagens verificadas (por `find`, 2026-11-18T02:10Z)
+## Contagens verificadas (por `find`, 2026-11-18T02:23Z; já inclui os artefatos do ciclo 056)
 
 | Artefato | Contagem |
 |---|---:|
-| `specs/` | 46 diretórios / 196 arquivos |
-| `.specify/assessments/` | 43 diretórios / 170 arquivos |
+| `specs/` | 47 diretórios / 202 arquivos |
+| `.specify/assessments/` | 44 diretórios / 175 arquivos |
 | `.specify/validations/` | 42 diretórios / 43 arquivos |
 | `.specify/releases/` | 42 diretórios / 42 arquivos |
 | `.specify/bugs/` | 4 diretórios / 12 arquivos |
 | `docs/research/` | 135 arquivos (índice em `docs/research/index.md`) |
 | `docs/adr/` | 6 arquivos |
 
-`.specify/feature.json` aponta `specs/051-dead-invite-ui` (ciclo fechado); identidade de ciclo é resolvida por inventário/`--dry-run`, nunca pelo nome do branch.
+`.specify/feature.json` apontava `specs/051-dead-invite-ui` (ciclo fechado) na última releitura do checkout compartilhado; o arquivo é machine-local/gitignored e **não existe nesta worktree** — **[NV]** para o valor atual. Identidade de ciclo é resolvida por inventário/`--dry-run`, nunca pelo nome do branch.
 
 ## O que funciona (evidência local)
 
@@ -32,7 +32,7 @@
 
 ## Dívidas registradas
 
-- ADR-0003 ainda cita "43" (seis legs) — correção depende de aprovação de maintainer: **[NV]**, escalada.
+- ADR-0003 (`:19`) e ADR-0006 (`:10,52`) ainda citam "43" (seis legs) — correção depende de aprovação de maintainer: **[NV]**, escalada.
 - Fase: `001–009` sem validate/release; `025` sem assessment; `035–038` sem artefatos SDD; `plan.md` ausente em `025–042`; `analyze.md`/`converge.md` ausentes antes de `047`.
 - `index.md` na raiz ausente (fora do escopo de `docs/`).
 - Falso positivo local: `cargo test --ignored` sem env reporta passes (CI já fail-closed; correção local exigiria 9 helpers/50 chamadores).
