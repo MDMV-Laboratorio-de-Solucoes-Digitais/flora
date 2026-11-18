@@ -229,3 +229,14 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - **Escolhido: 059 — falhar localmente os contratos DB quando a env de Postgres estiver ausente.** `(3×5)/(4×2) = 1.875`, maior candidato autônomo restante. Evidência: 9 `return Ok(None)` em `flora-tests/src/contract/*.rs` (7 com `eprintln!` de "skipping", 2 sem) e 50 `return Ok(())` — `cargo test --ignored` sem env reporta 50 passes sem asserção. CI já é fail-closed (054); o defeito é local.
 - **Escalado [NV]:** ADR-0003/0006 (5.0), aprovação de maintainer pendente. N3 1.0; dívidas de fase 0.67; C5/C6 não autônomos.
 - HEAD da factory como fonte desta sessão: `1083d3212b595d56b15bee1186708ba34b7ea7e4` (mutou desde `38f68266`); nada transplantado.
+
+## Atualização — ciclo 059 (2026-11-18T03:31Z)
+
+- Âncora `github/dev@2730fd2dd`; branch `feature/059-db-tests-fail-local`; NNN 059 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão 80/20 registrada neste arquivo antes do BLOCO 6: `(3×5)/(4×2)=1.875` — falha local sem env. ADR-0003/0006 escalados **[NV]** por aprovação de maintainer.
+- Factory fonte `1083d3212b595d56b15bee1186708ba34b7ea7e4`; nada transplantado.
+- Ciclo 059 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze PASS → implement → converge → validate R4 → release R7.
+- Implementação: 9 `bail!` em 8 arquivos `flora-tests/src/contract/`; fmt aplicado; 50 chamadores intactos.
+- Evidência: sem env exit 101; DB isolado 50 passed; verificador 5/5; gates exit 0.
+- PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo e ADRs.
