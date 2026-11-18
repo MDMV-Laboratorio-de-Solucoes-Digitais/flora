@@ -16,7 +16,7 @@ O proprietário determinou que push, PR e merge **nunca** devem ser decisões hu
 1. **Merge é decisão de máquina.** O agente executa push, abre PR e mescla quando — e somente quando — todos os checks obrigatórios estão verdes com evidência de que testes realmente rodaram. Não há etapa de aprovação humana no caminho de merge.
 2. **Gate de verificação reforçado (ciclo 037):**
    - nomes de job únicos (`frontend-build`, `rust-build`) para que required checks sejam inequívocos;
-   - cada leg `db-tests` soma os contadores `N passed` do libtest e exige um piso (12/4/8/8/5/6 — total 43), falhando se o filtro casar zero testes ou se `cargo` falhar (`pipefail`);
+   - cada leg `db-tests` soma os contadores `N passed` do libtest e exige um piso (13/4/8/8/5/6/4/2 — total 51), falhando se o filtro casar zero testes ou se `cargo` falhar (`pipefail`);
    - `timeout-minutes` e `concurrency` por job;
    - `docker-staging.yml` corrigido (`secrets.*` movido para `env`) e com gatilho de push desligado — deploy continua fora do gate de merge e segue sendo uma decisão explícita separada.
 3. **Proteção de branch:** `dev` e `main` passam a exigir os checks `frontend-build`, `rust-build`, `db-tests` e `dependency-review`, com *strict* (branch atualizada) e `enforce_admins`. Sem required reviews — isso reintroduziria decisão humana.
