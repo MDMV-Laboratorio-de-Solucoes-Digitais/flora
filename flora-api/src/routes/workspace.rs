@@ -215,7 +215,7 @@ async fn update_workspace(
     // Check if user has workspace:write or workspace:admin permission
     let role_repo = PgRoleRepository::new((*state.db_pool).clone());
     let role = role_repo
-        .find_by_id(membership.role_id)
+        .find_by_id_and_organization(membership.role_id, org_id)
         .await?
         .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
     if !role.has_permission(flora_core::models::Permission::WorkspaceWrite)
@@ -263,7 +263,7 @@ async fn delete_workspace(
     // Check if user has workspace:admin permission
     let role_repo = PgRoleRepository::new((*state.db_pool).clone());
     let role = role_repo
-        .find_by_id(membership.role_id)
+        .find_by_id_and_organization(membership.role_id, org_id)
         .await?
         .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
     if !role.has_permission(flora_core::models::Permission::WorkspaceAdmin) {
