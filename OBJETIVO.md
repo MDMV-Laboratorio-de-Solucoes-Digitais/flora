@@ -297,3 +297,10 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Ciclo 065:** ADR-0003/0006 alinhados a `13/4/8/8/5/6/4/2 — total 51`; divergência 50→51 registrada sem reescrever histórico.
 - **Gates:** guardião PASS, fmt/clippy/deny/build/test exit 0, frontend 42/42.
 - **Pendentes autorizados:** C5 (`RoleWrite`), C6 (canário RLS sem produção). **[NV]** CI/PR remoto.
+
+## Estado verificado — 2026-11-18T14:50Z (append-only)
+
+- **Âncora:** `github/dev@8d0cb64b0`; branch `feature/066-rbac-role-write`. Autorização SE em STATE; gate PASS (8 pisos/51).
+- **Ciclo 066:** CRUD de papéis real em `rbac.rs` com `RoleWrite || OrgAdmin`, builtins imutáveis, tenant da sessão; 1 arquivo de produção (194+/25−).
+- **Gates:** 5 testes unitários, fmt/clippy/deny/build/test exit 0, frontend 42/42.
+- **Pendente autorizado:** C6 canário RLS (sem produção). **[NV]** CI/PR remoto.

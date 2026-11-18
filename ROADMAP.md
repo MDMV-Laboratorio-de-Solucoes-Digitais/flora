@@ -233,3 +233,9 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Âncora `github/dev@aef13277a`; `check_gate_integrity.py` PASS (8 pisos/51).
 - Ciclo 065 fecha a divergência documental entre ADRs e gate; nenhum código/gate alterado.
 - **Próximos autorizados:** C5 `RoleWrite`, C6 desenho de canário (sem produção). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T14:50Z (append-only)
+
+- Âncora `github/dev@8d0cb64b0`; `check_gate_integrity.py` PASS (8 pisos/51).
+- Ciclo 066 encerra os handlers placeholder de RBAC: agora há autoridade explícita (`RoleWrite`) e imutabilidade de builtins.
+- **Próximo autorizado:** C6 — desenho de canário RLS com rollback, sem habilitar em produção. **[NV]** CI/PRs ao vivo.

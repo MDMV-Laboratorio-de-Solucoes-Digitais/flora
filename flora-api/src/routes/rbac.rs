@@ -7,15 +7,17 @@
 use axum::{
     Json, Router,
     extract::{Path, State},
+    http::StatusCode,
     routing::{get, post},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::extractors::auth::AuthExtractor;
 use crate::state::AppState;
 use flora_core::error::{Error, Result};
-use flora_core::models::Permission;
+use flora_core::models::{Membership, Permission};
 use flora_core::repositories::{PgMembershipRepository, PgRoleRepository};
 use flora_core::traits::{MembershipRepository, RoleRepository};
 
@@ -23,9 +25,51 @@ use flora_core::traits::{MembershipRepository, RoleRepository};
 pub fn create_rbac_router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_roles).post(create_role))
-        .route("/{id}", get(get_role))
+        .route(
+            "/{id}",
+            get(get_role).patch(update_role).delete(delete_role),
+        )
         .route("/{id}/assign", post(assign_role))
         .route("/{id}/revoke", post(revoke_role))
+}
+
+/// Request body for creating a custom role.
+#[derive(Debug, Deserialize)]
+pub struct CreateRoleRequest {
+    /// Role name.
+    pub name: String,
+    /// Optional human-readable description.
+    pub description: Option<String>,
+    /// Permission strings in canonical `role:write` form.
+    pub permissions: Vec<String>,
+}
+
+/// Request body for updating a custom role. All fields are optional.
+#[derive(Debug, Deserialize)]
+pub struct UpdateRoleRequest {
+    /// New role name, when provided.
+    pub name: Option<String>,
+    /// New description, when provided.
+    pub description: Option<String>,
+    /// Replacement permission list, when provided.
+    pub permissions: Option<Vec<String>>,
+}
+
+/// Request body for assigning or revoking a role on a user.
+#[derive(Debug, Deserialize)]
+pub struct UserRoleRequest {
+    /// Target user identifier.
+    pub user_id: Uuid,
+}
+
+/// Validates and converts permission strings from a request body.
+fn parse_permissions(raw: &[String]) -> Result<Vec<Permission>> {
+    raw.iter()
+        .map(|value| {
+            Permission::from_str(value)
+                .map_err(|_| Error::InvalidInput(format!("Unknown permission: {value}")))
+        })
+        .collect()
 }
 
 /// Public view of a role — omits `organization_id` and timestamps.
@@ -61,11 +105,16 @@ fn can_list_roles(role: &flora_core::models::Role) -> bool {
     role.has_permission(Permission::OrgRead) || role.has_permission(Permission::OrgAdmin)
 }
 
-/// Pure authorization check for mutating roles (create/assign/revoke). Extracted so
-/// the gate is unit-testable. These are privileged operations: only `OrgAdmin` (or
-/// wildcard) may reach them — `OrgRead` alone is not enough.
+/// Pure authorization check for mutating roles (create/update/delete/assign/revoke).
+/// `RoleWrite` is the dedicated permission; `OrgAdmin` keeps it enabled by default
+/// for the built-in Admin/Owner roles. `OrgRead` alone is not enough.
 fn can_manage_roles(role: &flora_core::models::Role) -> bool {
-    role.has_permission(Permission::OrgAdmin)
+    role.has_permission(Permission::RoleWrite) || role.has_permission(Permission::OrgAdmin)
+}
+
+/// Pure guard for modifying/deleting a role: built-ins are immutable by SE decision.
+const fn can_modify_role(role: &flora_core::models::Role) -> bool {
+    !role.is_builtin
 }
 
 /// Resolve the verified session organization and require an admin membership role.
@@ -127,40 +176,151 @@ async fn list_roles(
     Ok(Json(roles.into_iter().map(RoleResponse::from).collect()))
 }
 
-/// `POST /api/v1/roles` — Create a custom role. (placeholder — semantics pending owner)
-async fn create_role(State(state): State<AppState>, auth: AuthExtractor) -> Result<Json<String>> {
-    let _org_id = require_org_admin(&state, &auth).await?;
-    Ok(Json("created".to_string()))
+/// `POST /api/v1/roles` — Create a custom role in the caller's organization.
+async fn create_role(
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+    Json(req): Json<CreateRoleRequest>,
+) -> Result<(StatusCode, Json<RoleResponse>)> {
+    let org_id = require_org_admin(&state, &auth).await?;
+    if req.name.trim().is_empty() {
+        return Err(Error::InvalidInput("Role name is required".to_string()));
+    }
+    let permissions = parse_permissions(&req.permissions)?;
+    let mut role = flora_core::models::Role::new(org_id, req.name.trim());
+    for permission in permissions {
+        role.add_permission(permission);
+    }
+    role.description = req.description;
+    let repo = PgRoleRepository::new((*state.db_pool).clone());
+    let created = repo.create(role).await?;
+    Ok((StatusCode::CREATED, Json(RoleResponse::from(created))))
 }
 
-/// `GET /api/v1/roles/{id}` — Get a role by ID. (placeholder — semantics pending owner)
+/// `GET /api/v1/roles/{id}` — Get a role in the caller's organization.
 async fn get_role(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
     auth: AuthExtractor,
-) -> Result<Json<String>> {
-    let _org_id = require_org_admin(&state, &auth).await?;
-    Ok(Json(id.to_string()))
+) -> Result<Json<RoleResponse>> {
+    let org_id = auth
+        .require_org()
+        .map_err(|_| Error::OrganizationContextRequired)?;
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let membership = membership_repo
+        .find_by_user_and_organization(auth.user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let membership_role = role_repo
+        .find_by_id_and_organization(membership.role_id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
+    if !can_list_roles(&membership_role) {
+        return Err(Error::Forbidden("Insufficient permissions".to_string()));
+    }
+    let role = role_repo
+        .find_by_id_and_organization(id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(id.to_string()))?;
+    Ok(Json(RoleResponse::from(role)))
 }
 
-/// `POST /api/v1/roles/{id}/assign` — Assign a role to a user. (placeholder — semantics pending owner)
+/// `PATCH /api/v1/roles/{id}` — Update a custom role. Built-in roles are immutable.
+async fn update_role(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+    Json(req): Json<UpdateRoleRequest>,
+) -> Result<Json<RoleResponse>> {
+    let org_id = require_org_admin(&state, &auth).await?;
+    let repo = PgRoleRepository::new((*state.db_pool).clone());
+    let mut role = repo
+        .find_by_id_and_organization(id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(id.to_string()))?;
+    if !can_modify_role(&role) {
+        return Err(Error::Forbidden("Cannot modify built-in role".to_string()));
+    }
+    if let Some(name) = req.name {
+        if name.trim().is_empty() {
+            return Err(Error::InvalidInput("Role name is required".to_string()));
+        }
+        role.name = String::from(name.trim());
+    }
+    if let Some(description) = req.description {
+        role.description = Some(description);
+    }
+    if let Some(raw) = req.permissions {
+        role.permissions = serde_json::Value::Array(
+            parse_permissions(&raw)?
+                .into_iter()
+                .map(|p| serde_json::Value::String(p.to_string()))
+                .collect(),
+        );
+    }
+    let updated = repo.update(id, role).await?;
+    Ok(Json(RoleResponse::from(updated)))
+}
+
+/// `DELETE /api/v1/roles/{id}` — Delete a custom role. Built-in roles are immutable.
+async fn delete_role(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+) -> Result<StatusCode> {
+    let org_id = require_org_admin(&state, &auth).await?;
+    let repo = PgRoleRepository::new((*state.db_pool).clone());
+    let role = repo
+        .find_by_id_and_organization(id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(id.to_string()))?;
+    if !can_modify_role(&role) {
+        return Err(Error::Forbidden("Cannot delete built-in role".to_string()));
+    }
+    repo.delete(id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// `POST /api/v1/roles/{id}/assign` — Assign a role to a user in the caller's org.
 async fn assign_role(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
     auth: AuthExtractor,
-) -> Result<Json<String>> {
-    let _org_id = require_org_admin(&state, &auth).await?;
-    Ok(Json(id.to_string()))
+    Json(req): Json<UserRoleRequest>,
+) -> Result<StatusCode> {
+    let org_id = require_org_admin(&state, &auth).await?;
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let _target_role = role_repo
+        .find_by_id_and_organization(id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(id.to_string()))?;
+
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    if membership_repo
+        .find_by_user_and_organization(req.user_id, org_id)
+        .await?
+        .is_some()
+    {
+        membership_repo.delete(req.user_id, org_id).await?;
+    }
+    let _membership = membership_repo
+        .create(Membership::new(req.user_id, org_id, id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
-/// `POST /api/v1/roles/{id}/revoke` — Revoke a role from a user. (placeholder — semantics pending owner)
+/// `POST /api/v1/roles/{id}/revoke` — Remove the user's membership (and role) from the org.
 async fn revoke_role(
-    Path(id): Path<Uuid>,
+    Path(_id): Path<Uuid>,
     State(state): State<AppState>,
     auth: AuthExtractor,
-) -> Result<Json<String>> {
-    let _org_id = require_org_admin(&state, &auth).await?;
-    Ok(Json(id.to_string()))
+    Json(req): Json<UserRoleRequest>,
+) -> Result<StatusCode> {
+    let org_id = require_org_admin(&state, &auth).await?;
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    membership_repo.delete(req.user_id, org_id).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[cfg(test)]
@@ -189,12 +349,21 @@ mod tests {
     }
 
     #[test]
-    fn can_manage_roles_requires_admin_not_just_read() {
+    fn can_manage_roles_accepts_role_write_or_org_admin() {
+        assert!(can_manage_roles(&role_with(&["role:write"])));
         assert!(can_manage_roles(&role_with(&["org:admin"])));
         assert!(can_manage_roles(&role_with(&["*"])));
         assert!(!can_manage_roles(&role_with(&["org:read"])));
         assert!(!can_manage_roles(&role_with(&["workspace:admin"])));
         assert!(!can_manage_roles(&role_with(&[])));
+    }
+
+    #[test]
+    fn can_modify_role_rejects_builtins() {
+        let mut builtin = role_with(&["role:write"]);
+        builtin.is_builtin = true;
+        assert!(!can_modify_role(&builtin));
+        assert!(can_modify_role(&role_with(&["role:write"])));
     }
 
     #[test]
