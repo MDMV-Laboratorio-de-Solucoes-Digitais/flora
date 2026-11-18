@@ -227,3 +227,9 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 064 fecha N3 em código e schema: papéis passam a ser resolvidos dentro da org da sessão; banco rejeita ponteiro cross-org/órfão. Deploy em produção segue **[NV]** e depende de auditoria local lá.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - **Autorizados e enfileirados:** ADR text, C5 `RoleWrite`, C6 canário (sem produção). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T13:09Z (append-only)
+
+- Âncora `github/dev@aef13277a`; `check_gate_integrity.py` PASS (8 pisos/51).
+- Ciclo 065 fecha a divergência documental entre ADRs e gate; nenhum código/gate alterado.
+- **Próximos autorizados:** C5 `RoleWrite`, C6 desenho de canário (sem produção). **[NV]** para CI/PRs ao vivo.
