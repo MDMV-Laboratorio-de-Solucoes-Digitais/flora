@@ -240,3 +240,10 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Evidência: sem env exit 101; DB isolado 50 passed; verificador 5/5; gates exit 0.
 - PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo e ADRs.
+
+## Decisão 80/20 — 2026-11-18T03:48Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 060 — refresh datado das contagens verificadas em `docs/PROGRESSO.md`.** `(2×5)/(2×1) = 5.0`, maior candidato autônomo. Evidência: nota de 02:23Z registra specs 47/202, assessments 44/175, validations 42/43, releases 42/42; `find` agora → specs 50/224, assessments 47/192, validations 46/47, releases 46/46 (ciclos 057–059). Histórico preservado: nova nota append-only, sem reescrever a anterior.
+- **Escalado [NV]:** ADR-0003/0006 (5.0), aprovação de maintainer. N3 `(4×3)/(3×4)=1.0` envolve FK composto e risco de órfãos — sob análise; não iniciado. C5/C6 dependem de dono/SE.
+- HEAD da factory como fonte desta sessão: `0cb34c4d0b020b4b249a325ff90fe130c179d00f` (mutou desde `1083d321`); nada transplantado.
