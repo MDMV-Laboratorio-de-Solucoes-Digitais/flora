@@ -40,3 +40,22 @@
 ## NV
 
 PRs/CI/proteção/merge/releases ao vivo, execução de runners e intenção futura do dono sobre RBAC/RLS/convites: **[NV]**. Nenhuma afirmação remota é feita sem verificação ao vivo neste documento.
+
+## Contagens verificadas (por `find`, 2026-11-18T03:51Z; âncora `262ac042f`)
+
+Atualização append-only após os ciclos 057–059. A nota de 02:23Z permanece
+integralmente como registro histórico.
+
+| Artefato | Contagem |
+|---|---:|
+| `specs/` | 50 diretórios / 224 arquivos |
+| `.specify/assessments/` | 47 diretórios / 192 arquivos |
+| `.specify/validations/` | 46 diretórios / 47 arquivos |
+| `.specify/releases/` | 46 diretórios / 46 arquivos |
+| `.specify/bugs/` | 4 diretórios / 12 arquivos |
+| `docs/research/` (sem `index.md`) | 135 arquivos |
+| `docs/adr/` | 6 arquivos |
+
+Gate autoritativo: `check_gate_integrity.py` PASS — 4 required checks, 8 pisos / 50
+total (derivado de `FLOORS`). PR/CI/proteção/merge ao vivo: **[NV]**. ADR-0003/0006
+(texto 43) e N3 (FK composto) permanecem escalados **[NV]**, sem alteração.
