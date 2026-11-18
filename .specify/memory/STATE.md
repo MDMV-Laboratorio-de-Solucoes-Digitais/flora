@@ -149,3 +149,10 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - **Recuperação:** restart do servidor corrompeu um commit interrompido (objeto 0 byte) e o índice da worktree; ref restaurada ao último commit válido do reflog (`b9017755`), índice reconstruído com `read-tree HEAD`, objetos 0 byte removidos (sem conteúdo) e artefatos recommitados. Nenhum trabalho alheio alterado.
 - PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo após este ciclo e execução do step no runner.
+
+## Decisão 80/20 — 2026-11-18T01:32Z (registrada antes do BLOCO 6)
+
+- Critério explícito `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador declarado por candidato.
+- **Escolhido: 055 — elevar piso `db-tests` de auth de 12 para 13.** `(4×5)/(2×1) = 10.0`. Evidência: `cargo test -p flora-tests 'contract::auth::db_' -- --list` → 13 testes; piso 12 em `rust.yml:107` e `check_gate_integrity.py:43`; 13/13 passaram com Postgres real no ciclo 053. Esforço 2 (duas linhas + texto 49→50), risco 1 (fortalecimento, sem rename de check).
+- Alternativas: ADR drift 43→50 `(2×5)/(1×2)=5.0` (documentação de governança, fora de escopo); índice de research/PROGRESSO `(2×5)/(3×1)=3.33`; N3 `(4×3)/(3×4)=1.0`; dívidas de fase `(2×5)/(5×3)=0.67`; C5/C6 não autônomos (dono/SE).
+- **NV**: CI/runner ao vivo; verificação do selecionador em andamento antes da implementação.
