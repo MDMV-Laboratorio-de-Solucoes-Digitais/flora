@@ -91,6 +91,13 @@ pub trait RoleRepository: Send + Sync + std::fmt::Debug {
     /// Find a role by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<Role>>;
 
+    /// Find a role by ID, restricted to one organization (tenant boundary).
+    async fn find_by_id_and_organization(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> crate::Result<Option<Role>>;
+
     /// Find roles for an organization.
     async fn find_by_organization_id(&self, organization_id: Uuid) -> crate::Result<Vec<Role>>;
 
