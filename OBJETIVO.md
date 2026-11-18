@@ -235,3 +235,11 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Evidência:** mutação com 9º piso + leg → "all 9 ... (54 total)"; verificador isolado PASS 5/5; gates locais exit 0 (frontend 42/42).
 - **Dívidas restantes:** ADR-0003/0006 (43, aprovação de maintainer **[NV]**), root `index.md` (2.5), N3 (1.0), C5/C6.
 - **[NV]** CI/PR remoto; factory fonte `38f68266`, nada materializado.
+
+## Estado verificado — 2026-11-18T03:08Z (append-only)
+
+- **Âncora:** `github/dev@58921a337`; branch `feature/058-root-doc-index`. Decisão `(1×5)/(2×1)=2.5` registrada em STATE; gate PASS (8 pisos/50 derivados).
+- **Ciclo 058:** criado `index.md` na raiz com 8 links relativos (26 linhas); verificador encontrou duplicação de conteúdo, corrigida e reverificada PASS.
+- **Gates:** guardião PASS; fmt/clippy/deny/build/test exit 0; frontend 0/0, lint ok, 42/42, build ok.
+- **Dívidas restantes:** ADR-0003/0006 (aprovação de maintainer **[NV]**), falso positivo local, N3, C5/C6.
+- **[NV]** CI/PR remoto; factory `38f68266`, nada materializado.
