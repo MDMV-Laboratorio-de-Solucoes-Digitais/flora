@@ -192,3 +192,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Ciclo 059 elimina o "passed" vazio local: sem env os contratos DB falham; com DB real os 50 testes passam. CI permanece fail-closed (054) e inalterada.
 - PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
 - Próximos: ADR drift (5.0, escalado), N3 (1.0), C5/C6 (autorização). **[NV]** para CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-18T03:54Z (append-only)
+
+- Âncora `github/dev@262ac042f`; `check_gate_integrity.py` PASS (8 pisos/50 derivados).
+- Ciclo 060 atualiza o estado verificado de `PROGRESSO.md` com contagens atuais (specs 51/230, assessments 48/197, validations 46/47, releases 46/46), preservando o histórico.
+- PR → `dev/` com CI observada ao vivo antes do merge (ADR-0003).
+- **Escalados [NV]:** ADR-0003/0006 (maintainer) e N3 (FK/SE). **[NV]** para CI/PRs ao vivo.
