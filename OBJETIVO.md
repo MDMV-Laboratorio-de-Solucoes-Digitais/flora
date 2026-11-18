@@ -290,3 +290,10 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Evidência:** DB limpo rejeitou cross-org/órfão e delete em uso; DB sujo abortou migration; novo contrato + 8 legs = 51 testes; verificador 7/7.
 - **A seguir (autorizados):** ADR-0003/0006 (patch), C5 (`RoleWrite`), C6 (canário sem produção).
 - **[NV]** CI/PR remoto; factory `ce3d4213`, nada materializado.
+
+## Estado verificado — 2026-11-18T13:09Z (append-only)
+
+- **Âncora:** `github/dev@aef13277a`; branch `feature/065-adr-floor-alignment`. Autorização SE em STATE; gate PASS (8 pisos/51).
+- **Ciclo 065:** ADR-0003/0006 alinhados a `13/4/8/8/5/6/4/2 — total 51`; divergência 50→51 registrada sem reescrever histórico.
+- **Gates:** guardião PASS, fmt/clippy/deny/build/test exit 0, frontend 42/42.
+- **Pendentes autorizados:** C5 (`RoleWrite`), C6 (canário RLS sem produção). **[NV]** CI/PR remoto.
