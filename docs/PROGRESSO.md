@@ -59,3 +59,21 @@ integralmente como registro histórico.
 Gate autoritativo: `check_gate_integrity.py` PASS — 4 required checks, 8 pisos / 50
 total (derivado de `FLOORS`). PR/CI/proteção/merge ao vivo: **[NV]**. ADR-0003/0006
 (texto 43) e N3 (FK composto) permanecem escalados **[NV]**, sem alteração.
+
+## Correção de contagens — 2026-11-18T03:52Z (append-only)
+
+A tabela de 03:51Z foi calculada antes de os artefatos deste ciclo entrarem na
+worktree. Contagens reais após a inclusão (e após o merge em `dev`):
+
+| Artefato | Contagem |
+|---|---:|
+| `specs/` | 51 diretórios / 230 arquivos |
+| `.specify/assessments/` | 48 diretórios / 197 arquivos |
+| `.specify/validations/` | 46 diretórios / 47 arquivos |
+| `.specify/releases/` | 46 diretórios / 46 arquivos |
+| `.specify/bugs/` | 4 diretórios / 12 arquivos |
+| `docs/research/` (sem `index.md`) | 135 arquivos |
+| `docs/adr/` | 6 arquivos |
+
+Os números de 03:51Z permanecem como registro do estado anterior à inclusão
+dos artefatos do ciclo 060. Estado remoto/CI: **[NV]**.
