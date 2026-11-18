@@ -162,3 +162,12 @@
 - [044 — Seed verification closure: decisão 80/20 e evidência](2026-11-17-044-seed-verification-closure.md)
 - [045 — Fecho cross-tenant: `workspace_id` do body não é autorização](2026-11-17-045-cross-tenant-workspace-fix.md)
 - [046 — Endurecimento de autenticação: logout real + superfície RBAC autenticada](2026-11-17-046-auth-hardening.md)
+
+### 2026-11-18 (2 indexadas; 138 arquivos no diretório)
+
+- [Avaliação: append-only event sourcing + snapshots por contexto de DB](2026-11-18-event-sourcing-append-only-snapshots-avaliacao.md)
+- [067 — C6: canário RLS com rollback (desenho, sem produção)](2026-11-18-067-c6-canary-rls-design.md)
+
+> Nota append-only: o diretório contém 138 arquivos, mas as seções deste índice
+> chegam até a entrada 046 (2026-11-17). A indexação retroativa das entradas
+> 047+ permanece como dívida registrada — nenhum histórico foi reescrito.
