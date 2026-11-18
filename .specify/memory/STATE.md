@@ -222,3 +222,10 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - Gates: guardião PASS; fmt/clippy/deny/build/test exit 0; frontend 42/42.
 - PR → `dev/`; merge deliberado após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
 - **[NV]** CI/PR/aprovações ao vivo e ADRs.
+
+## Decisão 80/20 — 2026-11-18T03:24Z (registrada antes do BLOCO 6)
+
+- Critério `(impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador por candidato.
+- **Escolhido: 059 — falhar localmente os contratos DB quando a env de Postgres estiver ausente.** `(3×5)/(4×2) = 1.875`, maior candidato autônomo restante. Evidência: 9 `return Ok(None)` em `flora-tests/src/contract/*.rs` (7 com `eprintln!` de "skipping", 2 sem) e 50 `return Ok(())` — `cargo test --ignored` sem env reporta 50 passes sem asserção. CI já é fail-closed (054); o defeito é local.
+- **Escalado [NV]:** ADR-0003/0006 (5.0), aprovação de maintainer pendente. N3 1.0; dívidas de fase 0.67; C5/C6 não autônomos.
+- HEAD da factory como fonte desta sessão: `1083d3212b595d56b15bee1186708ba34b7ea7e4` (mutou desde `38f68266`); nada transplantado.
