@@ -117,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
         if not re.search(rf"run_leg\s+{label}\s+contract::\w+(?:::\w+)*::db_\s+{floor}\b", rust):
             failures.append(f"rust.yml: db floor for {label} ({floor}) missing or changed")
     if all(not any(f"db floor for {l}" in f for f in failures) for l in FLOORS):
-        checks.append("all eight db contract floors intact (50 total)")
+        checks.append(f"all {len(FLOORS)} db contract floors intact ({sum(FLOORS.values())} total)")
 
     if args.remote:
         repo = subprocess.run(
