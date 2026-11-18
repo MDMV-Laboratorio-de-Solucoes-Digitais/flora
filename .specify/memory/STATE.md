@@ -156,3 +156,14 @@ CI/PR/branch protection/aprovações/merges ao vivo: **[NV]** — reconsultar an
 - **Escolhido: 055 — elevar piso `db-tests` de auth de 12 para 13.** `(4×5)/(2×1) = 10.0`. Evidência: `cargo test -p flora-tests 'contract::auth::db_' -- --list` → 13 testes; piso 12 em `rust.yml:107` e `check_gate_integrity.py:43`; 13/13 passaram com Postgres real no ciclo 053. Esforço 2 (duas linhas + texto 49→50), risco 1 (fortalecimento, sem rename de check).
 - Alternativas: ADR drift 43→50 `(2×5)/(1×2)=5.0` (documentação de governança, fora de escopo); índice de research/PROGRESSO `(2×5)/(3×1)=3.33`; N3 `(4×3)/(3×4)=1.0`; dívidas de fase `(2×5)/(5×3)=0.67`; C5/C6 não autônomos (dono/SE).
 - **NV**: CI/runner ao vivo; verificação do selecionador em andamento antes da implementação.
+
+## Atualização — ciclo 055 (2026-11-18T01:49Z)
+
+- Âncora `github/dev@d5d7ef5d`; branch `feature/055-auth-floor-thirteen`; NNN 055 por `create-new-feature.sh --dry-run` (feature.json apontava 051, fechado).
+- Decisão 80/20 registrada neste arquivo antes do BLOCO 6: `(4×5)/(2×1)=10.0` — auth floor 12→13. Verificador isolado confirmou 13 testes e ausência de flake.
+- Decisão A preservada: CI GitHub Actions, CLI `gh`, gate `scripts/ci/check_gate_integrity.py`. Factory `d2bd95823cc5b4758b1c4cf5bd9133b20309ebb7` lida como fonte; nada materializado.
+- Ciclo 055 fechado: assess `go (scoped)` → spec/clarify/plan/checklist/tasks → analyze PASS → implement → converge → validate R4 → release R7.
+- Implementação: `rust.yml` piso auth 13; guardião `FLOORS["auth"]=13` e texto 50 total. Diff 2 arquivos/3 linhas; nenhum teste tocado.
+- Gates: guardião PASS 50 total; `--list` 13; leg auth DB real 13 passed; mutação lockstep RED; fmt/clippy/deny/build/test e frontend check/lint/42/42/build exit 0.
+- PR → `dev/`; merge deliberado somente após CI verde observada ao vivo (ADR-0003). Sem auto-merge/force-push/tag/deploy.
+- **[NV]** CI/PR/aprovações ao vivo e leg no runner do GitHub.
