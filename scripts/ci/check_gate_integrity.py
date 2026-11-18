@@ -87,6 +87,10 @@ def main(argv: list[str] | None = None) -> int:
             failures.append(f"{filename}: required check '{check}' has no matching job id")
             continue
         block = jobs[check]
+        if check == "db-tests":
+            for var in ("FLORA_DATABASE__POSTGRES_URL:", "DATABASE_URL:"):
+                if not any(line.lstrip().startswith(var) for line in block):
+                    failures.append(f"rust.yml:db-tests: missing {var} env (DB legs vacuous)")
         if any("continue-on-error: true" in line for line in block):
             failures.append(f"{filename}:{check}: continue-on-error makes a required check vacuous")
         job_ifs = [line.strip() for line in block if line.strip().startswith("if:")]
