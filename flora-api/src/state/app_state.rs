@@ -10,8 +10,8 @@ use flora_core::repositories::{
     PgTaskRepository, PgUserRepository, PgWorkspaceRepository,
 };
 use flora_core::services::{
-    ChannelService, FileService, MessageService, NotificationService,
-    OrganizationService, RbacService, SessionService, TaskService, WorkspaceService,
+    ChannelService, FileService, MessageService, NotificationService, OrganizationService,
+    RbacService, SessionService, TaskService, WorkspaceService,
 };
 use flora_core::{PgPool, config::Config};
 

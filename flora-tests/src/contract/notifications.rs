@@ -27,8 +27,8 @@ mod db_notifications {
             PgSessionRepository, PgTaskRepository, PgUserRepository, PgWorkspaceRepository,
         },
         services::{
-            ChannelService, FileService, MessageService, NotificationService,
-            OrganizationService, RbacService, SessionService, TaskService, WorkspaceService,
+            ChannelService, FileService, MessageService, NotificationService, OrganizationService,
+            RbacService, SessionService, TaskService, WorkspaceService,
         },
         traits::{
             ChannelRepository, FileRepository, MembershipRepository, MessageRepository,

@@ -18,8 +18,8 @@ use flora_core::repositories::{
 };
 #[cfg(test)]
 use flora_core::services::{
-    ChannelService, FileService, MessageService, NotificationService,
-    OrganizationService, RbacService, SessionService, TaskService, WorkspaceService,
+    ChannelService, FileService, MessageService, NotificationService, OrganizationService,
+    RbacService, SessionService, TaskService, WorkspaceService,
 };
 #[cfg(test)]
 use flora_core::traits::{
