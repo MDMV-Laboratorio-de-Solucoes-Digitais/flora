@@ -1,8 +1,9 @@
 //! Role and permission management endpoints.
 //!
 //! Per T055: RBAC role assignment and permission management.
-//! Cycle 042: `GET /roles` is backed by the real role repository; the remaining
-//! handlers stay placeholders until their semantics are decided by the owner.
+//! Cycle 042: `GET /roles` is backed by the real role repository.
+//! Cycle 066: the remaining handlers are real — authority is `RoleWrite || OrgAdmin`
+//! and built-in roles are immutable (see `.specify/memory/STATE.md`).
 
 use axum::{
     Json, Router,
