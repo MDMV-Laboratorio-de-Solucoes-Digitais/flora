@@ -23,3 +23,10 @@
 ## Próxima portaria
 
 `validate.md` (R4) → `release.md` (R7) → PR → CI verde ao vivo → merge deliberado em `dev/`.
+
+## Correção de redação (append-only) — 2026-11-19T03:08Z
+
+O verificador isolado apontou um nit textual: o item acima cita `anyhow::bail!/ensure!`,
+mas `db_state()` falha fechado com `ok_or_else(|| anyhow::anyhow!(...))?` (comportamento
+equivalente: `Err` sem env, nunca `Ok` vazio). A linha histórica permanece intacta;
+esta nota a corrige. Nenhuma lógica ou teste foi alterado.
