@@ -1,0 +1,20 @@
+# Research: remover flag OIDC morta `local_fallback_enabled`
+
+- **Coletado**: 2026-11-19T21:32Z · fontes: 100% locais (código, `.env.example`, docs de research, `scripts/ci/`, `.github/workflows/ci.yml`). Nenhuma fonte de rede; nenhuma ferramenta executada além de leitura/grep.
+
+## Evidência local
+
+- `flora-core/src/config/oidc.rs:18-19` — doc `/// Local fallback enabled when Zitadel is unavailable (default: true in dev).` seguido de `pub local_fallback_enabled: bool,`; `:40` — `local_fallback_enabled: true,` no `Default`. `:22-23` mostra o padrão do campovizinho `allowed_redirect_uris` com `#[serde(default)]` (não replicar: o alvo é remoção, não anotação).
+- `grep -rn "local_fallback"` (excluindo `target/`): no código Rust, **apenas** `flora-core/src/config/oidc.rs:19` e `:40`. As demais ocorrências são textuais: `docs/research/2026-11-16-seed-oidc-identity-gap.md:120,147`, `docs/research/2026-11-16-016-auth-rbac-oidc-minimal-vps.md:56` e duas cópias espelho em `.specify/queue/worktrees/state-closure-072/`. **Zero leitores em Rust** — a flag é write-only.
+- `flora-core/src/config/oidc.rs:46-74` — `impl OidcConfig { validate }` checa `issuer_url`, `client_id`, `scopes` e `code_challenge_method` (`:53,58,63,68`); nenhuma referência à flag. `OidcConfig` só aparece em `flora-core/src/config/mod.rs:24` (campo) e `:59` (`self.oidc.validate()?`) — sem outros consumidores do struct.
+- `flora-core/src/config/mod.rs:17-31` — `Config` deriva `Deserialize, Serialize, Default` **sem** `deny_unknown_fields`; varredura `grep -rn "deny_unknown_fields" --include='*.rs'` → zero. `:43-49` — `Config::load` = `Figment::new().merge(Serialized::defaults(Self::default())).merge(Env::prefixed("FLORA_").split("__")).extract()`. Chave obsoleta `FLORA_OIDC__LOCAL_FALLBACK_ENABLED` serializada por algum deploy fora do repo seria simplesmente ignorada pelo Figment (extras permitidos), sem erro de startup. Nota: o doc `:3` menciona `config.yaml`, mas `load()` não carrega arquivo YAML e `find` não encontrou `config*.yaml` — nada a migrar.
+- `.env.example:58-68` — bloco OIDC documenta `FLORA_OIDC__ISSUER_URL`, `__CLIENT_ID`, `__CLIENT_SECRET`, `__REDIRECT_URI` e aliases legados (`OIDC_ISSUER_URL`, `ZITADEL_*`); **sem `LOCAL_FALLBACK_ENABLED`**. Nada a editar neste arquivo.
+- `docs/research/2026-11-16-seed-oidc-identity-gap.md:120` — G9 (P1): "Default config permits insecure operation: HTTP issuer `http://localhost:8080`, empty client secret, `local_fallback_enabled` declared but never consulted."; `:147` — recomendação 5: "remover/implementar `local_fallback_enabled`". `docs/research/2026-11-16-016-auth-rbac-oidc-minimal-vps.md:56` — NV-7 registra a mesma lacuna como não verificável. São **dados** de apoio; não fazem parte do escopo de edição.
+- `scripts/ci/check_gate_integrity.py` presente (6,0K); `.github/workflows/ci.yml:27-28` roda testes unitários `bun run test:unit -- --project server`. Gate do alvo reportado PASS; zero PRs.
+
+## Riscos / lacunas
+
+- `[NV]` `cargo check -p flora-core`, `cargo fmt --check`, `cargo clippy -p flora-core --all-targets -D warnings`, `python3 scripts/ci/check_gate_integrity.py` e `grep` pós-edição (zero `local_fallback` em Rust) — não executados nesta avaliação (somente leitura, sem gates/formatters). Comandos determinísticos registrados em `define.md`/`decision.md`.
+- `[NV]` comportamento de deploy fora do repo: não é verificável localmente se algum ambiente injeta `FLORA_OIDC__LOCAL_FALLBACK_ENABLED`. Compatibilidade preservada pela ausência de `deny_unknown_fields` (acima); a chave passa a ser ignorada, sem quebra de startup.
+- Serialização: `OidcConfig` e `Config` derivam `Serialize`, mas `grep` não encontrou consumidor de `to_string/to_value` sobre config — remover o campo altera o shape hipotético de `Serialized::defaults`, sem consumidor local. Risco baixo, compat de leitura (deserialize) intacta.
+- Fora de escopo e não alterados: `auth.rs`/`auth_service.rs` (a flag nunca cruzava essa fronteira), `.env.example`, docs de research (permanecem como registro histórico de G9/NV-7), worktree espelho `state-closure-072`, gate, CI, ADRs.
