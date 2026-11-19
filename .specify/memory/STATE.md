@@ -429,3 +429,13 @@ Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
 - `analyze` (READ-ONLY) PASS na 1ª execução; `converge.md` append-only.
 - Nenhuma alteração em código, workflows, gates, ADRs, constituição ou produção.
 - **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).
+
+## Fechamento pós-merge — 2026-11-19T02:49:40Z (ciclo 069; append-only)
+
+- PR **#289** `MERGED` ao vivo às `02:49:40Z`; merge commit `74a770686092031bfae2dc0ea710d9c844cb4b08`. `mergeStateStatus=CLEAN` confirmado antes do merge; sem auto-merge, force-push ou aprovação simulada.
+- Checks observados ao vivo: `frontend-build`, `rust-build`, `db-tests`, `dependency-review` pass (no run do PR); informativos `e2e-browser` e `supply-chain-vet` pass. `dependency-review skipping` apenas no run de push, permitido pela ADR-0003.
+- Âncora final: `dev` local = `github/dev@74a770686`. Worktree de feature removida, branch local apagada, branch remota removida pelo GitHub e ref podado. 0 stashes, 0 branches de feature, 1 worktree limpa.
+- Gates locais: autoritativo local/`--remote` PASS; fmt/clippy/deny/build exit 0; `cargo test --workspace` 106 passed/0 failed/52 ignored; frontend 0/0, lint ok, 42/42, build ok. Verificador isolado PASS 5/5.
+- Evidência central: `docs/research/index.md` tem 137 arquivos / 137 links / `missing=[]` — a dívida 047+ era falsa; o resíduo é apenas de prefixo de ciclo nos títulos, não corrigido por inferência.
+- Fábrica fonte `03f274148a5e3afd6970eb02aa4577e4a4bfba43` — lida, nunca modificada; 9 stashes/2 worktrees em voo **não transplantados**.
+- Dívidas: contrato RBAC vácuo e stub `AuthService` (2.50 cada), duplicatas legadas de T-ID (0.83), renomeação de títulos sem prefixo de ciclo; emenda da constituição escalada **[NV]** (aprov maintainer). CI futura, Forgejo, produção e aprovações: **[NV]**.
