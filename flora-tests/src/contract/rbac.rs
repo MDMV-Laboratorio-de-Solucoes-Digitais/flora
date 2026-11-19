@@ -192,10 +192,17 @@ mod db {
             Some(payload.clone()),
         )
         .await?;
-        anyhow::ensure!(status == StatusCode::FORBIDDEN, "reader must be denied: {status} {body}");
+        anyhow::ensure!(
+            status == StatusCode::FORBIDDEN,
+            "reader must be denied: {status} {body}"
+        );
 
-        let (status, body) = request(&state, "POST", "/", Some(&admin.token), Some(payload)).await?;
-        anyhow::ensure!(status == StatusCode::CREATED, "create status {status}: {body}");
+        let (status, body) =
+            request(&state, "POST", "/", Some(&admin.token), Some(payload)).await?;
+        anyhow::ensure!(
+            status == StatusCode::CREATED,
+            "create status {status}: {body}"
+        );
         let created_id: uuid::Uuid = body["id"]
             .as_str()
             .ok_or_else(|| anyhow::anyhow!("missing id: {body}"))?
@@ -251,7 +258,10 @@ mod db {
             Some(rename),
         )
         .await?;
-        anyhow::ensure!(status == StatusCode::OK, "custom patch status {status}: {body}");
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "custom patch status {status}: {body}"
+        );
         anyhow::ensure!(body["name"] == "Renamed", "name not updated: {body}");
         Ok(())
     }
