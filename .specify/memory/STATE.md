@@ -457,3 +457,10 @@ Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
 - Lints do alvo (`unused_results=deny`) reprovaram 2 resultados descartados; corrigidos com `let _membership`/`let _session` — nenhum lint relaxado.
 - Nenhuma alteração em produção, workflows, gates, pisos, ADRs ou constituição. Dívida registrada: CI não executa estes contratos (sem leg `rbac` em `rust.yml`), exigindo ciclo de governança separado **[NV]**.
 - **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).
+
+### Correção de redação (append-only) — 2026-11-19T03:08Z
+
+O verificador isolado apontou nit textual: `db_state()` usa
+`ok_or_else(|| anyhow::anyhow!(...))?` (fail-closed equivalente a `bail!`), não `bail!`.
+A linha de execução acima permanece como registro histórico; esta nota a corrige.
+Nenhuma lógica, teste ou gate foi alterado.
