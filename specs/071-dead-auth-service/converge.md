@@ -24,3 +24,13 @@
 ## Próxima portaria
 
 `validate.md` (R4) → `release.md` (R7) → PR → CI verde ao vivo → merge deliberado em `dev/`.
+
+## Correção append-only — 2026-11-19T04:02Z (contagem verificada)
+
+O verificador isolado apontou off-by-one na redação acima: o diff contém **10 arquivos Rust**
+(1 excluído + 9 com referências removidas) e **10 commits `refactor`**, não 11. Comando:
+`git diff --name-only dev..HEAD | grep -c '\.rs$'` → `10`;
+`git log dev..HEAD --oneline | grep -c 'refactor'` → `10`. Nenhum arquivo faltou ou sobrou;
+apenas a cifra documentada estava errada. As linhas originais permanecem como histórico.
+Adicionalmente, `cargo fmt --all -- --check` esteve RED por formatação de imports e foi
+corrigido com `cargo fmt --all` + commit `style(rust)`, sem relaxar gate.
