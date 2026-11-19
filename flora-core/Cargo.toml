@@ -58,7 +58,6 @@ proptest.workspace = true
 
 [features]
 default = []
-sqlite = ["sqlx/sqlite"]
 test = []
 dev-mint = ["dep:clap", "dep:anyhow"]
 
