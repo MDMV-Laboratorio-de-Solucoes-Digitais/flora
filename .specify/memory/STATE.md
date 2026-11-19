@@ -581,3 +581,11 @@ anterior foi alterada.
 - Execução E2E runtime **[NV]**: setup falhou no minter (`seed.setup.ts:36`) e o E2E atingiu `exit=124` em 600s; cluster Postgres isolado em 5434 foi desligado; DB compartilhado 5432 intacto; artefatos gerados removidos.
 - Fábrica fonte: HEAD `a6722a0e682aee33f007d27a68d5d9bd8da3663b`, lido via `git show`, árvore suja não transplantada; gate da factory não é autoridade (BLOCO 0.a).
 - **[NV]** CI do PR, Forgejo, produção, aprovadores e merge deste ciclo. PR será aberto via `gh` sem merge, auto-merge ou deleção de branches.
+
+## Fechamento pós-merge — 2026-11-19T12:28:07Z (ciclo 075; append-only)
+
+- PR **#297** `MERGED` ao vivo às `12:27:33Z`; merge commit `e9a943c6a9aa16bd95420af0ac58bbfa2a135669`. `mergeStateStatus=CLEAN` observado às `12:22:45Z`, após rerun do job `e2e-browser`: a falha anterior foi de infraestrutura (apt mirror na instalação do Chromium), não do teste. Required checks `frontend-build`, `rust-build`, `db-tests`, `dependency-review` pass.
+- Waiver explícito do SE para aprovador distinto (único colaborador é o autor) registrado na mensagem do merge; sem `--admin`, `--auto`, `--delete-branch`, force-push ou aprovação simulada.
+- A nota `12:12:09Z` permanece como registro do momento da abertura; esta a sucede por acréscimo, sem reescrita.
+- Âncora final: `dev` local = `github/dev@e9a943c6a`; zero PRs abertos. Worktree/branch `feature/073-state-closure` preservada.
+- **[NV]** CI futuro, Forgejo, produção e aprovações. Próximo 80/20: leg `rbac` no CI depende de maintainer; candidato autônomo é diagnosticar o travamento do `flora-mint-session --features dev-mint` que bloqueia o E2E runtime local.
