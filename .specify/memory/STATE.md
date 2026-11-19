@@ -599,3 +599,11 @@ anterior foi alterada.
 - Verificação: gate PASS (4 checks, 8 pisos/51); fmt/clippy/deny/build/test exit 0 (105 passed); frontend check 0 erros, lint exit 0 após correção de `_c`, 42/42; `playwright --list` 4 testes; `GLOBAL_SETUP_OK`; `analyze` 1ª execução `errors=[]`; verificador isolado PASS; assess/spec/plan/checklist/tasks/converge/validate/release completos.
 - PR **#299** aberto às `19:16:10Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/299 — 17 arquivos, 463 inserções. Sem merge, auto-merge, force-push ou deleção de branches.
 - **[NV]** tempo com target totalmente frio, CI do PR, Forgejo, aprovações, merge e produção. Próximo 80/20: leg `rbac` depende de maintainer; títulos sem prefixo no índice de research exigem inferência.
+
+## Fechamento pós-merge — 2026-11-19T19:30:08Z (ciclo 076; append-only)
+
+- PR **#299** `MERGED` ao vivo às `19:29:42Z`; merge commit `675988e31a09f17419cf8c56aafe89661b5752ab`. `mergeStateStatus=CLEAN` observado; todos os checks passaram, inclusive `e2e-browser` nas duas execuções — evidência ao vivo de que o `globalSetup` pré-aqueceu o binário no CI.
+- Waiver explícito do SE para aprovador distinto registrado na mensagem do merge; sem `--admin`, `--auto`, `--delete-branch`, force-push ou aprovação simulada.
+- A nota `19:16:22Z` permanece como registro do momento da abertura; esta nota a sucede por acréscimo, sem reescrita.
+- Âncora final: `dev` local = `github/dev@675988e31`; zero PRs abertos; worktree/branch `feature/073-state-closure` preservada.
+- **[NV]** CI futuro, Forgejo, produção e aprovações. Próximo 80/20: leg `rbac` no CI depende de maintainer; 10 títulos sem prefixo no índice de research exigem inferência e ficam abaixo na fila.
