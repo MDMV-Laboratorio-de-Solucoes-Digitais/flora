@@ -311,3 +311,19 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Intervalo verificado:** `specs/001`–`specs/067` (58 diretórios / 280 arquivos), assessments 55, validations 54, releases 54, research 137 (sem `index.md`). As citações históricas a 001–033 neste documento permanecem como registro daquela data.
 - **Ciclo 068:** sweep documental — contagens corrigidas no índice de research e no PROGRESSO; comentário obsoleto em `rbac.rs` corrigido. Nenhuma mudança de comportamento, gate, ADR ou constituição.
 - **[NV]** CI futura, Forgejo, produção e aprovações; reconsultar ao vivo antes de qualquer merge.
+
+## Estado verificado — 2026-11-19T04:22:55Z (ciclo 072; append-only)
+
+- **Âncora de início:** `dev@cdf50eaff` (antes da criação de `feature/072-verified-state-refresh`); gate autoritativo `python3 scripts/ci/check_gate_integrity.py` PASS às `04:14:31Z` (4 required checks, 8 pisos / 51).
+- **Contagens reais por `find`:** `specs/` 61 diretórios, `.specify/assessments/` 58, `.specify/validations/` 57, `.specify/releases/` 57, `.specify/bugs/` 4, `docs/research/` 137 arquivos sem `index.md` (138 com ele). Intervalo de specs: 001–070.
+- **Ciclos 069/070:** 069 eliminou por evidência a dívida de indexação 047+ (137 arquivos = 137 links, `missing=[]`); 070 substituiu o contrato RBAC vácuo por 3 contratos DB-gated. Ambos fechados com validate/release.
+- **Histórico:** as citações 001–033 e as notas 01:58Z/02:10Z permanecem intactas; esta nota apenas as sucede.
+- **[NV]** CI futura, Forgejo, produção, aprovações e status remoto. Nenhum merge foi feito neste ciclo.
+
+### Correção append-only — 2026-11-19T04:23:44Z (ciclo 072)
+
+A nota `04:22:55Z` registrou contagens medidas **antes** da materialização dos
+artefatos do ciclo 072. Estado final verificado por `find`: `specs/` **62
+diretórios**, assessments **59**, validations **58**, releases **58**, bugs
+**4**, research **137** arquivos sem `index.md` (138 com ele). A nota anterior
+permanece como registro do momento da medição; nenhuma linha foi reescrita.
