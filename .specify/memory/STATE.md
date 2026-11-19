@@ -473,3 +473,22 @@ Nenhuma lógica, teste ou gate foi alterado.
 - Evidência central: 3 contratos RBAC passam com Postgres descartável, falham fechado sem env e detectam mutação da asserção cross-org (`CROSS-ORG ROLE LEAK`). Nenhum handler, workflow, gate, piso, ADR ou constituição alterado.
 - Dívida registrada: CI não executa estes contratos (sem leg `rbac` em `rust.yml` + `FLOORS` + ADRs) — exige aprov maintainer, **[NV]**. Emenda da constituição, Forgejo, produção e aprovações: **[NV]**.
 - Fábrica fonte `5cc29f8738b4d9c79ac4c451a6ab0c9ebb62f351` (mutou desde `03f2741`); 9 stashes/27 linhas dirty **não transplantadas**.
+## Decisão 80/20 (modo autônomo) — 2026-11-19T03:49Z (registrada antes do BLOCO 6)
+
+- Critério `E = (impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador explícito por candidato.
+- **Escolhido: 071 — remover o stub morto `AuthService`.** `(2×5)/(2×2) = 2.50`.
+- Evidência determinística: `flora-core/src/services/auth_service.rs:1-70` — 5 métodos retornam `ServiceUnavailable("... not implemented")`, `is_available()`=false; único implementador de `AuthProvider`. Referências: `AppState` (campo em `app_state.rs:30`, init `:97`, struct `:184`), 1 teste em `extractors/auth.rs:278` e 6 contratos em `flora-tests/src/contract/{auth,files,messaging,notifications,search,websocket}.rs`. Nenhum handler usa `auth_service` — auth real vive em `routes/auth.rs` + extractor.
+- Desempate: renomeação de 124 títulos sem prefixo de ciclo também pontua 2.50 `(2×5)/(4×1)`, mas é cosmética; a remoção do stub é verificável por compilação e reduz conceitos (Princípio I — debloat).
+- Escalados **[NV]**: leg `rbac` no CI (exige `rust.yml` + `FLOORS` + ADRs, aprov maintainer); duplicatas T-ID legadas `(2×5)/(4×3)=0.83`; emenda da constituição. CI em si não é candidato: 0 PRs abertos, `dev == github/dev@cdf50eaf`.
+- Âncora: `feature.json` (runtime/gitignored) congela `specs/051-dead-invite-ui`; `check-prerequisites.sh --json` retorna 051. `NNN = máximo(specs)+1 = 071` por `--dry-run`. O branch `feature/071-state-closure` anterior foi bookkeeping sem `specs/071-*`; esta é a primeira spec 071 — divergência registrada.
+- HEAD da factory como fonte: `409b76cc3effa56d716d0e9d88e7c3bbe19c2b21` (mutou desde `5cc29f8`; 9 stashes/2 worktrees/4 linhas dirty não transplantadas).
+- Escopo: 1 arquivo deletado + 10 arquivos com remoção de referências + artefatos + `STATE.md`. Sem mudança de comportamento em produção, workflows, gates, pisos, ADRs ou constituição.
+
+## Execução do ciclo 071 — 2026-11-19T03:56Z (append-only)
+
+- Unidade: 1 agente + worktree `.specify/queue/worktrees/dead-auth-service` + branch `feature/071-dead-auth-service`; ledger `active` registrado.
+- Entregável: remoção completa do stub `AuthService` — arquivo excluído, exports/campo/init/7 construtores de teste limpos. `ServiceUnavailable`, `AuthProvider` e `UserInfo` preservados.
+- Evidência: `grep -rn 'AuthService\|auth_service' --include='*.rs'` → **zero**; `cargo check --workspace --all-targets` exit 0 (342 crates).
+- `analyze` (READ-ONLY) encontrou FR-004 ausente em plan/tasks; corrigido na fonte e reexecutado → `go=True`, `errors=[]`.
+- Nenhuma alteração em handlers de auth, workflows, gates, pisos, migrations, ADRs ou constituição.
+- **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).
