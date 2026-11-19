@@ -607,3 +607,13 @@ anterior foi alterada.
 - A nota `19:16:22Z` permanece como registro do momento da abertura; esta nota a sucede por acréscimo, sem reescrita.
 - Âncora final: `dev` local = `github/dev@675988e31`; zero PRs abertos; worktree/branch `feature/073-state-closure` preservada.
 - **[NV]** CI futuro, Forgejo, produção e aprovações. Próximo 80/20: leg `rbac` no CI depende de maintainer; 10 títulos sem prefixo no índice de research exigem inferência e ficam abaixo na fila.
+
+## Execução e entrega — 2026-11-19T19:57:39Z (ciclo 077; append-only)
+
+- Atualização da nota 076: PR **#300** (nota de fechamento) foi `MERGED` às `19:41:26Z`; merge commit `cc421e42d20a2d78efc2918d7e603a05d714858e`; `dev` local = `github/dev@cc421e42d`. A nota `19:30:08Z` permanece como registro daquele momento.
+- Stack normativa `~/development/MDMV/STACK_TECNOLOGICA_MDMV.md` **adotada** como critério: Postgres único canônico, SQLite removido (§1/§4). Auditoria com 3 scouts em paralelo verificou convergência (sqlx/Postgres/PG18/uuidv7/traits/Svelte 5/Tailwind 4/shadcn-svelte/OIDC) e gaps (OTLP, Tauri, pgmq/RustFS/Meilisearch, Zitadel e2e, `sqlite` residual). Promoção do repo fora de `Arquivados/` é governança fora do alvo, escalada **[NV]**.
+- Decisão 80/20 `(2×5)/(1×1)=10,0` — remover a feature `sqlite` morta. Alternativas: Tauri 3,75 (governança), GIN-JSONB 2,00, OTLP 1,67, leg RBAC bloqueada por maintainer.
+- Entregável: `flora-core/Cargo.toml` (1 linha) + `Cargo.lock` (1 aresta `cc` de `libsqlite3-sys`, consequência determinística); `cargo metadata --locked --offline` passou após o update. Zero consumidores da feature; `sqlite_path`/`is_sqlite()` permanecem fora de escopo.
+- Verificação: gate PASS; tomllib sem `sqlite`; grep zero; `cargo tree` sem `sqlx-sqlite`; `cargo check -p flora-core --offline` exit 0; `analyze` 2ª execução `artifacts=12, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador isolado `SqliteVerifier`: PASS-WITH-NITS (nit do lock corrigido na fonte); R4 aprovado; R7 `0.2.7→0.2.8`.
+- PR **#301** aberto às `19:57:20Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/301 — 17 arquivos, 487 inserções/2 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
+- **[NV]** extensões de arquivo não varridas, necessidade offline real, CI do PR, Forgejo, aprovações e merge. Próximo 80/20: leg RBAC depende de maintainer; títulos sem prefixo no índice de research exigem inferência.
