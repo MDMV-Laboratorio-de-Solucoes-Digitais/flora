@@ -411,3 +411,21 @@ Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
 - Gates locais: autoritativo local/`--remote` PASS; fmt/clippy/deny/build exit 0; `cargo test --workspace` 106 passed/52 ignored; frontend check 0/0, lint ok, 42/42, build ok. Verificador isolado PASS (6/6 e 5/5, nenhum nit).
 - Fábrica fonte `03f274148a5e3afd6970eb02aa4577e4a4bfba43` — lida, nunca modificada; trabalho em voo da factory (9 stashes, dirty, feature.json→specs/123, validate.md) **não transplantado**.
 - Dívidas: indexação retroativa 047–067 (próximo 80/20, E=3.75); contrato RBAC vácuo (2.50); stub `AuthService` (2.50); duplicatas legadas de T-ID (0.83); emenda da constituição escalada **[NV]** (aprov maintainer). CI futura, Forgejo, produção e aprovações: **[NV]**.
+## Decisão 80/20 (modo autônomo) — 2026-11-19T02:35Z (registrada antes do BLOCO 6)
+
+- Critério `E = (impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador explícito por candidato.
+- **Escolhido: 069 — corrigir afirmação falsa de dívida em `docs/research/index.md`.** `(2×5)/(1×1) = 10.00`.
+- Evidência determinística: `re.findall(r'\]\(([^)]+\.md)\)', index.md)` comparado a `find docs/research -maxdepth 1 -name '*.md' ! -name index.md` → **137 arquivos, 137 links, 0 faltantes**. As seções (`3/124/8/2`) somam 137. A nota em `docs/research/index.md:172-179` afirma que o índice cobre apenas até a entrada 046 e que 047+ está pendente — afirmação falsa e enganosa para agentes. Correção por apêndice datado, sem reescrever histórico.
+- Ranqueamento: constituição (7.50) escalada **[NV]** por exigir maintainer; RBAC vácuo 2.50; stub AuthService 2.50; duplicatas DAG 0.83; backfill 047–067 **eliminado por evidência** (0 faltantes). CI não é candidato: 0 PRs abertos, `dev == github/dev@cbad031b5` → `c8d4fb2e3`, runs verdes.
+- Âncora: `feature.json` (runtime/gitignored) congela `specs/051-dead-invite-ui`; `check-prerequisites.sh --json` retorna 051 com `AVAILABLE_DOCS:[]`. `NNN = máximo(specs)+1 = 069` por `--dry-run`. O branch `feature/069-state-closure` da sessão anterior foi bookkeeping sem `specs/069-*`; esta é a primeira spec 069 — divergência registrada, sem renumerar trabalho alheio.
+- HEAD da factory como fonte: `03f274148a5e3afd6970eb02aa4577e4a4bfba43`; nada transplantado como autoridade.
+- Escopo: 1 arquivo de documentação + artefatos do ciclo + `STATE.md`. Sem código, workflow, gate, ADR, constituição ou produção.
+
+## Execução do ciclo 069 — 2026-11-19T02:35Z (append-only)
+
+- Unidade: 1 agente + worktree `.specify/queue/worktrees/research-index-truth` + branch `feature/069-research-index-truth`; ledger `active` registrado.
+- Entregável: apêndice corretivo em `docs/research/index.md` com verificação 137/137 (`missing=[]`), mantendo todas as notas anteriores intactas.
+- Eliminação por evidência: o candidato "backfill 047–067" não existe — 137 arquivos, 137 links, 0 faltantes. O resíduo real é de prefixo de ciclo nos títulos, fora de escopo.
+- `analyze` (READ-ONLY) PASS na 1ª execução; `converge.md` append-only.
+- Nenhuma alteração em código, workflows, gates, ADRs, constituição ou produção.
+- **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).

@@ -182,3 +182,15 @@
 > `specs/` 59 diretórios / 287 arquivos, `.specify/assessments/` 56 diretórios /
 > 237 arquivos, `.specify/validations/` 55 diretórios, `.specify/releases/`
 > 55 diretórios; `docs/research/` permanece 137 (sem `index.md`).
+
+> **Correção 2026-11-19T02:35Z (ciclo 069, append-only):** a afirmação acima,
+> de que o índice cobre apenas até a entrada 046 e que 047+ estaria pendente,
+> é **falsa**. Verificação determinística executada nesta data: o conjunto de
+> links `re.findall(r'\]\(([^)]+\.md)\)', docs/research/index.md)` comparado aos
+> arquivos `find docs/research -maxdepth 1 -name '*.md' ! -name index.md`
+> resulta em **137 arquivos / 137 links / `missing=[]` / `extra=[]`** (seções
+> `3 + 124 + 8 + 2 = 137`). Portanto **não há backfill pendente**. As notas
+> anteriores permanecem como registro histórico, superadas por esta. O resíduo
+> real é apenas de rastreabilidade: várias entradas da seção 2026-11-16 não
+> trazem o prefixo do ciclo no título; renomeá-las exigiria inferência e não
+> foi feito neste ciclo. Estado remoto/CI futuro: **[NV]**.
