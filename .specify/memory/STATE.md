@@ -646,3 +646,12 @@ anterior foi alterada.
 - Verificação: `grep` zero; fmt/check/clippy/deny/build/test (105 passed/0 failed) + gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador isolado `OidcFlagVerifier`: **PASS**; R4 aprovado; R7 `0.3.0→0.3.1`.
 - PR **#304** aberto às `21:41:25Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/304 — 16 arquivos, 611 inserções/3 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
 - **[NV]** consumidores externos de config serializada, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: `.env.example` com chaves OIDC sem leitor (10,0) e `cssVariables` inválido no schema (5,0), ambos autônomos; leg RBAC depende de maintainer.
+
+## Execução e entrega — 2026-11-19T22:20:35Z (ciclo 081; append-only)
+
+- Atualização da nota 080: PR **#304** foi `MERGED` às `22:00:12Z`; merge commit `35b8d3142`; `dev` local = `github/dev@35b8d3142` antes deste ciclo. A nota `21:41:35Z` permanece como registro da abertura.
+- Decisão 80/20 `(2×5)/(1×1)=10,0` — limpar chaves OIDC obsoletas em `.env.example`: remover `FLORA_OIDC__REDIRECT_URI` (sem campo em `OidcConfig`, silenciosamente descartada) e `# OIDC_ISSUER_URL` (sem leitor Rust); manter `FLORA_OIDC__ISSUER_URL/CLIENT_ID/CLIENT_SECRET` e `ZITADEL_*` (lidos em `OidcConfig::default()`).
+- Entregável: `.env.example` +4/−4 — comentário com `FLORA_APP__BASE_URL` como origem do callback e exemplo comentado de `FLORA_OIDC__ALLOWED_REDIRECT_URIS` em sintaxe array do Figment 0.10.19; nenhum arquivo Rust/workflow/gate/lockfile tocado.
+- Verificação: grep das chaves coerente; `cargo check -p flora-core` exit 0; gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador `EnvVerifier`: PASS-WITH-NITS, nit `FLORA_APP__BASE_URL` corrigido por `EnvNitFix` e confirmado por `FinalRead`; R4 aprovado; R7 `0.3.1→0.3.2`.
+- PR **#305** aberto às `22:20:23Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/305 — 16 arquivos, 672 inserções/4 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
+- **[NV]** consumidores externos do template, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: `cssVariables` inválido no schema do `components.json` (5,0) e duplicação lucide (2,50); leg RBAC depende de maintainer.
