@@ -560,3 +560,13 @@ anterior foi alterada.
 - Gate autoritativo `python3 scripts/ci/check_gate_integrity.py` PASS às `04:50:34Z` (4 required checks, 8 pisos / 51).
 - A nota `04:36:59Z` permanece como registro do momento em que o merge ainda não havia ocorrido; esta nota a sucede por acréscimo, sem reescrita.
 - Dívidas: leg `rbac` no CI (aprov maintainer), emenda constitucional (maintainer), 10 títulos sem prefixo de ciclo em `docs/research/index.md` (exigem inferência), duplicatas T-ID legadas (histórico protegido); CI futuro, Forgejo e produção: **[NV]**.
+
+## Execução e entrega — 2026-11-19T04:58:26Z (ciclo 074; append-only)
+
+- Decisão 80/20 `(2×5)/(1×1)=10.0` — fechamento pós-merge do ciclo 072; alternativas inferiores: 10 títulos sem prefixo (inferência), leg RBAC e emenda constitucional (maintainer), T-ID duplicadas (protegidas).
+- Âncora: `feature.json` apontava `072` no início; `create-new-feature.sh --dry-run --number 074` retornou `FEATURE_NUM=074`. Branch `feature/074-post-merge-closure`; worktree 073 intacta.
+- Assess (5), spec, clarify (R3: 0 perguntas), plan, checklist revisado, tasks, analyze READ-ONLY (`artifacts=11, fr=5, sc=4, tasks=6, go=true, errors=[]`), converge append-only, validate R4 aprovado, release R7.
+- Gate local PASS (4 checks, 8 pisos/51); fmt/clippy/deny/build exit 0; cargo test 105 passed/0 failed; frontend check/lint/42 testes ok; prefixo sha256 do STATE preservado (61.300 → 62.583 bytes).
+- Diagnósticos da factory em HEAD limpo `fede29ca` executados e removidos: production-gate N/A (policy de hub ausente), hub-docs N/A (JSONC pré-existente), pytest N/A (sem testes Python), completeness/DAG/unicidade N/A (slugs e duplicatas legadas), converge PASS (27/27).
+- PR **#296** aberto às `04:57:40Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/296 — 16 arquivos, 357 inserções, 0 deleções. `mergeStateStatus=BLOCKED`, checks iniciais pendentes. **Sem merge, auto-merge, force-push ou deleção de branches.**
+- **[NV]** CI do PR, Forgejo, produção, aprovadores e merge futuro. Próximo 80/20: leg RBAC no CI depende de maintainer; títulos sem prefixo exigem inferência.
