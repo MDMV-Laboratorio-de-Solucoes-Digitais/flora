@@ -464,3 +464,12 @@ O verificador isolado apontou nit textual: `db_state()` usa
 `ok_or_else(|| anyhow::anyhow!(...))?` (fail-closed equivalente a `bail!`), não `bail!`.
 A linha de execução acima permanece como registro histórico; esta nota a corrige.
 Nenhuma lógica, teste ou gate foi alterado.
+
+## Fechamento pós-merge — 2026-11-19T03:19:49Z (ciclo 070; append-only)
+
+- PR **#291** `MERGED` ao vivo às `03:19:49Z`; merge commit `134d45234ec95a1014d8f80a8b67806062a7eb79`. `mergeStateStatus=CLEAN` confirmado antes do merge; sem auto-merge, force-push ou aprovação simulada.
+- Checks ao vivo: `frontend-build`, `rust-build`, `db-tests`, `dependency-review` pass (run do PR); informativos `e2e-browser`/`supply-chain-vet` pass; `dependency-review skipping` apenas no run de push (ADR-0003).
+- Âncora final: `dev` local = `github/dev@134d45234`. Worktree e branch do ciclo 070 removidas; 0 stashes, 0 branches de feature.
+- Evidência central: 3 contratos RBAC passam com Postgres descartável, falham fechado sem env e detectam mutação da asserção cross-org (`CROSS-ORG ROLE LEAK`). Nenhum handler, workflow, gate, piso, ADR ou constituição alterado.
+- Dívida registrada: CI não executa estes contratos (sem leg `rbac` em `rust.yml` + `FLOORS` + ADRs) — exige aprov maintainer, **[NV]**. Emenda da constituição, Forgejo, produção e aprovações: **[NV]**.
+- Fábrica fonte `5cc29f8738b4d9c79ac4c451a6ab0c9ebb62f351` (mutou desde `03f2741`); 9 stashes/27 linhas dirty **não transplantadas**.
