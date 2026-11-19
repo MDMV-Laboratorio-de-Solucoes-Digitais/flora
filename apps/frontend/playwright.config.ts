@@ -7,6 +7,7 @@ const AUTH_FILE = 'playwright/.auth/alice.json';
 export default defineConfig({
 	testDir: './tests/e2e',
 	testMatch: '**/*.e2e.ts',
+	globalSetup: './playwright/global-setup.ts',
 	forbidOnly: !!process.env.CI,
 	// `select-organization` revokes the injected jti and rotates the session, so a
 	// retry would reuse a revoked token. Keep this smoke strictly one-shot.
