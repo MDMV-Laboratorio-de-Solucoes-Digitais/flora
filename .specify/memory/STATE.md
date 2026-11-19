@@ -627,3 +627,13 @@ anterior foi alterada.
 - Verificação: `json.load` ok; Prettier/check/lint ok; 42/42 testes unitários; gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador isolado `ComponentsVerifier`: **PASS**; R4 aprovado; R7 `0.2.8→0.2.9`.
 - PR **#302** aberto às `20:40:37Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/302 — 16 arquivos, 559 inserções/2 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
 - **[NV]** validação pelo CLI `shadcn-svelte` (não instalado), CI do PR, Forgejo, produção e aprovações. Próximo 80/20: leg RBAC depende de maintainer; OTLP/Tauri exigem ADR e aprovador.
+
+## Execução e entrega — 2026-11-19T21:20:31Z (ciclo 079; append-only)
+
+- Atualização da nota 078: PR **#302** foi `MERGED` às `20:47:47Z`; merge commit `ea5cd2069`; `dev` local = `github/dev@ea5cd2069` antes deste ciclo. A nota `20:40:52Z` permanece como registro da abertura.
+- Pedido do SE: instalar `shadcn-svelte`. Registry primário (npm/bun, 2026-11-19): `1.8.1`, MIT, bin `shadcn-svelte`, 4 deps. Docs oficiais (`installation/sveltekit`, `cli`, `components-json`, acesso 2026-11-19): CLI é efêmero via `bun x ...@latest`; `init` é para projeto novo e sobrescreve CSS/components.json — portanto **não executado**.
+- Decisão 80/20 `(3×5)/(2×1)=7,50` — instalar devDependency exata `shadcn-svelte@1.8.1` via `bun add -D -E shadcn-svelte@1.8.1` em `apps/frontend`, sem `init`/`add`/`apply`.
+- Entregável: `apps/frontend/package.json` +1 linha e `apps/frontend/bun.lock` +9 linhas (pacote + `cn`, `commander`, `node-fetch-native`, `postcss`). `components.json`, `layout.css`, 51 componentes UI e `utils.ts` byte-idênticos ao base.
+- Verificação: `bun pm ls shadcn-svelte` → 1.8.1; `bun run shadcn-svelte --help` exit 0 (nenhum subcomando executado); `bun install --frozen-lockfile --dry-run` exit 0; Prettier/check/lint/42 testes/build green; gate PASS; `analyze` `artifacts=11, errors=[], fr=5, sc=4, tasks=5, go=true`; verificador isolado `ShadcnVerifier`: **PASS**; R4 aprovado; R7 `0.2.9→0.3.0`.
+- PR **#303** aberto às `21:20:20Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/303 — 17 arquivos, 625 inserções. Sem merge, auto-merge, force-push ou deleção de branches.
+- **[NV]** uso futuro do CLI, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: leg RBAC depende de maintainer; OTLP/Tauri exigem ADR e aprovador.
