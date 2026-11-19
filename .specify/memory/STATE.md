@@ -492,3 +492,11 @@ Nenhuma lógica, teste ou gate foi alterado.
 - `analyze` (READ-ONLY) encontrou FR-004 ausente em plan/tasks; corrigido na fonte e reexecutado → `go=True`, `errors=[]`.
 - Nenhuma alteração em handlers de auth, workflows, gates, pisos, migrations, ADRs ou constituição.
 - **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).
+
+### Correção append-only — 2026-11-19T04:02Z (contagem e fmt)
+
+Contagem real verificada: **10 arquivos Rust** no diff (1 excluído + 9 com referências
+removidas) e **10 commits `refactor`**, não 11 — a cifra anterior estava errada; nenhum
+arquivo faltou ou sobrou. `cargo fmt --all -- --check` ficou RED após a remoção dos imports
+e foi corrigido com `cargo fmt --all` + commit `style(rust)`; fmt/clippy agora exit 0.
+Verificador isolado: `PASS-WITH-NITS` (nit de contagem corrigido por esta nota).
