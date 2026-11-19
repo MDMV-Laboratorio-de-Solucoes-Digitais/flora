@@ -655,3 +655,12 @@ anterior foi alterada.
 - Verificação: grep das chaves coerente; `cargo check -p flora-core` exit 0; gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador `EnvVerifier`: PASS-WITH-NITS, nit `FLORA_APP__BASE_URL` corrigido por `EnvNitFix` e confirmado por `FinalRead`; R4 aprovado; R7 `0.3.1→0.3.2`.
 - PR **#305** aberto às `22:20:23Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/305 — 16 arquivos, 672 inserções/4 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
 - **[NV]** consumidores externos do template, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: `cssVariables` inválido no schema do `components.json` (5,0) e duplicação lucide (2,50); leg RBAC depende de maintainer.
+
+## Execução e entrega — 2026-11-19T22:56:36Z (ciclo 082; append-only)
+
+- Atualização da nota 081: PR **#305** foi `MERGED` às `22:27:10Z`; merge commit `8f24519fe`; `dev` local = `github/dev@8f24519fe` antes deste ciclo. A nota `22:20:35Z` permanece como registro da abertura.
+- Decisão 80/20 `(2×5)/(1×1)=5,0` — remover `cssVariables` de `tailwind` em `apps/frontend/components.json`: chave ausente no schema oficial (`https://shadcn-svelte.com/schema.json`, acesso 2026-11-19; `additionalProperties=false`) e descartada pelo parser `$strip` do CLI 1.8.1. `style` mantido (declarado no schema, apenas deprecado em v4).
+- Entregável: `apps/frontend/components.json` +1/−2; `$schema`, `style`, `tailwind.css` e `aliases` byte-idênticos. Nenhum arquivo Rust/workflow/gate/lockfile/`node_modules` tocado.
+- Verificação: `json.load` → `tailwind={css,baseColor}`; grep zero; Prettier/check/lint/42 testes/build green; gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador isolado `CssVerifier`: **PASS** sem findings; R4 aprovado; R7 `0.3.2→0.3.3`.
+- PR **#306** aberto às `22:56:21Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/306 — 16 arquivos, 664 inserções/2 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
+- **[NV]** validação online do schema, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: duplicação `lucide-svelte`/`@lucide/svelte` (2,50); leg RBAC depende de maintainer; OTLP depende de receptor/dono (G1).
