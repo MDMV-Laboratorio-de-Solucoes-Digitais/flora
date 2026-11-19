@@ -15,8 +15,6 @@ pub struct OidcConfig {
     pub scopes: Vec<String>,
     /// PKCE code challenge method (default: "S256").
     pub code_challenge_method: String,
-    /// Local fallback enabled when Zitadel is unavailable (default: true in dev).
-    pub local_fallback_enabled: bool,
     /// Additional exact-match redirect URIs accepted by `/auth/login`.
     /// The configured application callback is always allowed without listing it here.
     #[serde(default)]
@@ -37,7 +35,6 @@ impl Default for OidcConfig {
                 "email".to_owned(),
             ],
             code_challenge_method: "S256".to_owned(),
-            local_fallback_enabled: true,
             allowed_redirect_uris: Vec::new(),
         }
     }
