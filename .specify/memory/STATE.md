@@ -525,3 +525,13 @@ A nota de execução registrou contagens medidas antes da materialização dos
 artefatos 072. Estado final por `find`: specs 62, assessments 59, validations
 58, releases 58, bugs 4, research 137 (138 com `index.md`). Nenhuma linha
 anterior foi alterada.
+
+## Entrega e fechamento — 2026-11-19T04:36:59Z (ciclo 072; append-only)
+
+- PR **#295** aberto às `04:35:22Z` via `gh` (CLI autoritativa do alvo; `fj` não usado — constituição v1.3.0 §VI): https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/295 — base `dev`, head `feature/072-verified-state-refresh`. **Sem merge, auto-merge, force-push ou deleção de branches.**
+- 21 commits convencionais, um arquivo por commit; diff do ciclo = 21 arquivos / 626 inserções / 0 deleções. HEAD final da feature `a30f8730a` após `merge --no-ff` de `github/dev@983e4f316` (ciclo 071) para resolver conflito **aditivo** em `STATE.md`: ambos os apêndices (071 e 072) preservados; nenhum trabalho alheio reescrito ou renumerado.
+- Verificação ao vivo via `gh` às `04:36:44Z`: `state=OPEN`, `mergeable=MERGEABLE`, `mergeStateStatus=BLOCKED`, `reviewDecision=""`, checks obrigatórios `pending`. Nenhum check obrigatório verde foi observado nesta sessão; merge permanece **[NV]**/não autorizado.
+- Gates locais: `check_gate_integrity.py` PASS (4 checks, 8 pisos/51); fmt/clippy/deny/build exit 0; `cargo test --workspace` 105 passed / 55 ignored / 0 failed; frontend check 0 erros, lint ok, 42/42 testes, build exit 0; append-only 6/6 prefixos intactos; índice research 137/137.
+- Diagnósticos da factory executados de HEAD limpo `ee71d8db` e removidos: `check_production_gate.py`/`hub_docs_gate.py`/`pytest -q`/completeness/DAG/unicidade classificados **N/A** (gate de hub, convenção de slugs, duplicatas legadas); `check_converge_append_only.py` PASS com baseline bootstrapado.
+- Dívidas: leg `rbac` no CI (exige aprov maintainer), emenda constitucional (maintainer), duplicatas T-ID legadas (histórico protegido); CI final, Forgejo, aprovações, produção e merge: **[NV]**.
+- Próximo 80/20: normalizar prefixos de ciclo nos títulos sem prefixo de `docs/research/index.md` `(2×5)/(4×1)=2.50` — maior candidato autônomo restante; a leg RBAC pontua mais, porém depende de maintainer.
