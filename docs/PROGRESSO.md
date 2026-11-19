@@ -162,3 +162,11 @@ O snapshot `04:22:55Z` foi medido antes dos artefatos 072. Estado final:
 `specs/` 62, assessments 59, validations 58, releases 58, bugs 4, research
 137 sem `index.md` (138 com índice). Notas 01:58Z/02:10Z e a nota 04:22:55Z
 permanecem intactas; apenas acréscimos.
+
+## Estado verificado — 2026-11-19T23:12Z (ciclo 083; append-only)
+
+- **Âncora:** base local `dev@33d174095` no snapshot 23:11Z; o cabeçalho histórico `dev@94fcf19ca` (`:3`) permanece intacto. Estado remoto, PRs, CI ao vivo e produção: **[NV]**.
+- **Gate determinístico local:** `python3 scripts/ci/check_gate_integrity.py` → **PASS** (4 required checks), evidência de `2026-11-19T23:11Z`. CI futuro: **[NV]**.
+- **Contagens por `find` (`2026-11-19T23:11Z`, neste checkout):** `specs/` 72, `.specify/assessments/` 69, `.specify/validations/` 68, `.specify/releases/` 68, `.specify/bugs/` 4, `docs/research/` 138 arquivos `.md` (137 sem `index.md`), `docs/adr/` 6.
+- **Escopo:** apenas apêndices datados no EOF de `docs/PROGRESSO.md` e `docs/research/index.md`; nenhum outro arquivo alterado.
+- **Histórico:** notas `:3`, `:151`, `:159` e `:159-164` intactas; cifras antigas são do momento da medição.

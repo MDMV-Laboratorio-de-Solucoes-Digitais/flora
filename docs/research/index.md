@@ -210,3 +210,7 @@ CI/remoto/produção: **[NV]**.
 > Estado final: `specs/` 62 diretórios, assessments 59, validations 58,
 > releases 58, bugs 4; este diretório permanece com 137 arquivos sem
 > `index.md` (138 com ele) e 137/137 links, `missing=[]`. Nada reescrito.
+
+### Estado verificado — 2026-11-19T23:12Z (ciclo 083; append-only)
+
+Âncora local: base `33d174095` no snapshot 23:11Z; o cabeçalho histórico `2026-11-19T01:58Z` (`:3`) permanece intacto. Gate determinístico local `python3 scripts/ci/check_gate_integrity.py` → **PASS** (4 checks), evidência de `2026-11-19T23:11Z`. Contagens por `find` neste checkout (`2026-11-19T23:11Z`): `specs/` 72, `.specify/assessments/` 69, `.specify/validations/` 68, `.specify/releases/` 68, `.specify/bugs/` 4, `docs/adr/` 6; este diretório segue com 138 arquivos `.md` (137 sem `index.md`). Cobertura 137/137 links, `missing=[]`, herdada da verificação do ciclo 069 (`:186`), não reaberta. Escopo restrito aos dois apêndices em EOF; notas anteriores preservadas, nenhum link reescrito. Resíduo de rastreabilidade: títulos sem prefixo de ciclo exigem inferência e não foram renomeados. Estado remoto/CI/PR/produção: **[NV]**.
