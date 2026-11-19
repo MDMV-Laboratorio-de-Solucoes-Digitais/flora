@@ -589,3 +589,13 @@ anterior foi alterada.
 - A nota `12:12:09Z` permanece como registro do momento da abertura; esta a sucede por acréscimo, sem reescrita.
 - Âncora final: `dev` local = `github/dev@e9a943c6a`; zero PRs abertos. Worktree/branch `feature/073-state-closure` preservada.
 - **[NV]** CI futuro, Forgejo, produção e aprovações. Próximo 80/20: leg `rbac` no CI depende de maintainer; candidato autônomo é diagnosticar o travamento do `flora-mint-session --features dev-mint` que bloqueia o E2E runtime local.
+
+## Execução e entrega — 2026-11-19T19:16:22Z (ciclo 076; append-only)
+
+- Atualização das notas 074/075: PR **#298** (nota de fechamento do ciclo 075) foi `MERGED` às `12:40:12Z`; merge commit `f22a2a32c...`; `dev` local = `github/dev@f22a2a32c`. As notas anteriores permanecem como registro de cada momento.
+- Decisão 80/20 `(4×5)/(2×2)=5.00` — pré-compilar o `flora-mint-session --features dev-mint` no `globalSetup` do Playwright. Três scouts em paralelo provaram: runtime 0.00s/0.39s com target quente, build 30.18s com cache, timeout de 180s em `seed.setup.ts:14` e pré-build do CI em `rust.yml:192-195` (`e2e-browser` é `continue-on-error` em `:150`).
+- Âncora: `feature.json` apontava `075`; `--dry-run --number 076` retornou `FEATURE_NUM=076`. Branch `feature/076-mint-session-hang`; worktree 073 intacta; factory HEAD `b1deab15...` lido via `git show`, sujo/não transplantado.
+- Entregável: `apps/frontend/playwright.config.ts:10` + novo `apps/frontend/playwright/global-setup.ts`. `seed.setup.ts`, workflows, Cargo.toml, código de produção, ADRs, constituição e DB compartilhado intactos.
+- Verificação: gate PASS (4 checks, 8 pisos/51); fmt/clippy/deny/build/test exit 0 (105 passed); frontend check 0 erros, lint exit 0 após correção de `_c`, 42/42; `playwright --list` 4 testes; `GLOBAL_SETUP_OK`; `analyze` 1ª execução `errors=[]`; verificador isolado PASS; assess/spec/plan/checklist/tasks/converge/validate/release completos.
+- PR **#299** aberto às `19:16:10Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/299 — 17 arquivos, 463 inserções. Sem merge, auto-merge, force-push ou deleção de branches.
+- **[NV]** tempo com target totalmente frio, CI do PR, Forgejo, aprovações, merge e produção. Próximo 80/20: leg `rbac` depende de maintainer; títulos sem prefixo no índice de research exigem inferência.
