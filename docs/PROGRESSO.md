@@ -137,3 +137,13 @@ Este ciclo corrigiu apenas documentação de estado e um comentário obsoleto em
 `flora-api/src/routes/rbac.rs` (handlers reais desde o ciclo 066). Nenhum
 workflow, gate, migration, ADR, constituição ou produção foi alterado. A dívida
 de indexação retroativa 047+ em `docs/research/index.md` permanece registrada.
+
+### Correção append-only — 2026-11-19T02:10Z (ciclo 068)
+
+A nota das `01:58Z` registrou o snapshot obtido **antes** da materialização dos
+artefatos do ciclo 068. Após a criação deles, `find` na worktree final conta:
+`specs/` **59 diretórios / 287 arquivos**, `.specify/assessments/` **56 diretórios /
+237 arquivos**, `.specify/validations/` **55 diretórios**, `.specify/releases/`
+**55 diretórios**, `docs/research/` **137 arquivos** (sem `index.md`). As cifras
+anteriores permanecem como registro histórico do momento da medição; nenhuma
+linha foi reescrita.
