@@ -402,3 +402,12 @@ Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
 - `analyze` (READ-ONLY) encontrou SC-001/002/003 ausentes em `plan.md`; corrigido na fonte e reexecutado → `go=True`, 0 erros. `converge.md` append-only.
 - Nenhuma alteração em workflows, migrations, ADRs, constituição, required checks ou produção. Emenda constitucional e indexação 047+ permanecem escaladas/adiviadas, não executadas.
 - **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).
+
+## Fechamento pós-merge — 2026-11-19T02:17:21Z (ciclo 068; append-only)
+
+- PR **#287** `MERGED` ao vivo às `02:17:21Z`; merge commit `0d1a83f540f899a1cc11777132ef76804a384362`. `mergeStateStatus=CLEAN` imediatamente antes do merge; nenhum auto-merge, force-push ou aprovação simulada.
+- Checks observados ao vivo: `frontend-build` pass, `rust-build` pass, `db-tests` pass, `dependency-review` pass no run do PR (o run de push marca `skipping`, permitido pela ADR-0003); informativos `e2e-browser` e `supply-chain-vet` pass.
+- Âncora final: `dev` local = `github/dev@0d1a83f54`. Worktree de feature removida, branch local apagada, branch remota removida pelo GitHub na merge e ref de tracking podado com `fetch --prune`. 0 stashes, 0 branches de feature.
+- Gates locais: autoritativo local/`--remote` PASS; fmt/clippy/deny/build exit 0; `cargo test --workspace` 106 passed/52 ignored; frontend check 0/0, lint ok, 42/42, build ok. Verificador isolado PASS (6/6 e 5/5, nenhum nit).
+- Fábrica fonte `03f274148a5e3afd6970eb02aa4577e4a4bfba43` — lida, nunca modificada; trabalho em voo da factory (9 stashes, dirty, feature.json→specs/123, validate.md) **não transplantado**.
+- Dívidas: indexação retroativa 047–067 (próximo 80/20, E=3.75); contrato RBAC vácuo (2.50); stub `AuthService` (2.50); duplicatas legadas de T-ID (0.83); emenda da constituição escalada **[NV]** (aprov maintainer). CI futura, Forgejo, produção e aprovações: **[NV]**.
