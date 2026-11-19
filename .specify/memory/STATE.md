@@ -551,3 +551,12 @@ anterior foi alterada.
 - PR **#294** mesclado às `04:44:19Z` (merge commit `407d26ddce414ad88e3eb6daf0e6bf104dfdf029`) com o waiver registrado na mensagem do merge; sem `--admin`, sem `--auto`, sem `--delete-branch`, sem force-push.
 - O merge de `dev` na feature 072 reconcilou os apêndices 071 e 072 em `STATE.md` preservando ambos; nenhum trabalho alheio foi reescrito ou renumerado.
 - Esta nota é a decisão do SE registrada no repositório; nenhum agente emitiu aprovação simulada. Merge de #295 executado somente após esta reconciliação e revalidação dos checks.
+
+## Fechamento pós-merge — 2026-11-19T04:53:36Z (ciclo 072; append-only)
+
+- PR **#295** `MERGED` ao vivo às `04:50:23Z`; merge commit `c16be5c303e2209710c3e539fbc394329392e572`. `mergeStateStatus=CLEAN` observado às `04:50:13Z` após a reconciliação com #294. Checks required e informativos `pass`: `frontend-build`, `rust-build`, `db-tests`, `dependency-review`, `supply-chain-vet`, `e2e-browser`. Sem auto-merge, force-push ou aprovação simulada.
+- PR **#294** `MERGED` às `04:44:19Z` (merge commit `407d26ddce414ad88e3eb6daf0e6bf104dfdf029`) — já registrado na nota de waiver; citado aqui para completar a cadeia de fechamento.
+- Âncora final: `dev` local = `github/dev@c16be5c30`; working tree limpa; `gh pr list --state open` → `[]`.
+- Gate autoritativo `python3 scripts/ci/check_gate_integrity.py` PASS às `04:50:34Z` (4 required checks, 8 pisos / 51).
+- A nota `04:36:59Z` permanece como registro do momento em que o merge ainda não havia ocorrido; esta nota a sucede por acréscimo, sem reescrita.
+- Dívidas: leg `rbac` no CI (aprov maintainer), emenda constitucional (maintainer), 10 títulos sem prefixo de ciclo em `docs/research/index.md` (exigem inferência), duplicatas T-ID legadas (histórico protegido); CI futuro, Forgejo e produção: **[NV]**.
