@@ -27,7 +27,7 @@ mod db_notifications {
             PgSessionRepository, PgTaskRepository, PgUserRepository, PgWorkspaceRepository,
         },
         services::{
-            AuthService, ChannelService, FileService, MessageService, NotificationService,
+            ChannelService, FileService, MessageService, NotificationService,
             OrganizationService, RbacService, SessionService, TaskService, WorkspaceService,
         },
         traits::{
@@ -69,7 +69,6 @@ mod db_notifications {
         AppState {
             db_pool: Arc::new(pool),
             config: Arc::new(config.clone()),
-            auth_service: Arc::new(AuthService::new()),
             rbac_service: Arc::new(RbacService::new(
                 Arc::clone(&role_repo),
                 Arc::clone(&membership_repo),
