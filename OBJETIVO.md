@@ -304,3 +304,10 @@ Detalhes: `docs/adr/0001-seed-v01-mechanism-substitutions.md`, `deny.toml`, `doc
 - **Ciclo 066:** CRUD de papéis real em `rbac.rs` com `RoleWrite || OrgAdmin`, builtins imutáveis, tenant da sessão; 1 arquivo de produção (194+/25−).
 - **Gates:** 5 testes unitários, fmt/clippy/deny/build/test exit 0, frontend 42/42.
 - **Pendente autorizado:** C6 canário RLS (sem produção). **[NV]** CI/PR remoto.
+
+## Estado verificado — 2026-11-19T01:58Z (append-only)
+
+- **Âncora:** `dev@cbad031b5` = `github/dev@cbad031b5`; gate autoritativo PASS (8 pisos / 51), `--remote` confirma os 4 required contexts.
+- **Intervalo verificado:** `specs/001`–`specs/067` (58 diretórios / 280 arquivos), assessments 55, validations 54, releases 54, research 137 (sem `index.md`). As citações históricas a 001–033 neste documento permanecem como registro daquela data.
+- **Ciclo 068:** sweep documental — contagens corrigidas no índice de research e no PROGRESSO; comentário obsoleto em `rbac.rs` corrigido. Nenhuma mudança de comportamento, gate, ADR ou constituição.
+- **[NV]** CI futura, Forgejo, produção e aprovações; reconsultar ao vivo antes de qualquer merge.
