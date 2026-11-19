@@ -176,3 +176,9 @@
 > (`135 / 6 / 202 / 175 / 43 / 42 / 12`, datadas de 2026-11-18T02:23Z) foram
 > substituídas pelas contagens de `find` acima. O valor antigo permanece nesta
 > nota como histórico; a dívida de indexação 047+ não foi fechada neste ciclo.
+
+> Correção append-only — 2026-11-19T02:10Z (ciclo 068): a tabela acima registra o
+> snapshot das `01:58Z`, antes dos artefatos deste ciclo. Estado final por `find`:
+> `specs/` 59 diretórios / 287 arquivos, `.specify/assessments/` 56 diretórios /
+> 237 arquivos, `.specify/validations/` 55 diretórios, `.specify/releases/`
+> 55 diretórios; `docs/research/` permanece 137 (sem `index.md`).
