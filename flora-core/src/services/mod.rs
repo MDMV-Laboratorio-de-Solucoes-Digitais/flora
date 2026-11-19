@@ -1,6 +1,5 @@
 //! Service implementations for Flora Workspace.
 
-mod auth_service;
 mod channel_service;
 mod draft_service;
 mod file_service;
@@ -13,7 +12,6 @@ mod session_service;
 mod task_service;
 mod workspace_service;
 
-pub use auth_service::AuthService;
 pub use channel_service::ChannelService;
 pub use draft_service::DraftService;
 pub use file_service::FileService;

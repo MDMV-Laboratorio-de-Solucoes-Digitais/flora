@@ -275,7 +275,6 @@ mod tests {
         AppState {
             db_pool: std::sync::Arc::new(pool),
             config: std::sync::Arc::new(config.clone()),
-            auth_service: std::sync::Arc::new(flora_core::services::AuthService::new()),
             rbac_service: std::sync::Arc::new(flora_core::services::RbacService::new(
                 std::sync::Arc::new(flora_core::repositories::PgRoleRepository::new(
                     sqlx::PgPool::connect_lazy("postgresql://localhost/flora_test")

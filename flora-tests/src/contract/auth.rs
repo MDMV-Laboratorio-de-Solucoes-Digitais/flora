@@ -18,8 +18,8 @@ use flora_core::repositories::{
 };
 #[cfg(test)]
 use flora_core::services::{
-    AuthService, ChannelService, FileService, MessageService, NotificationService,
-    OrganizationService, RbacService, SessionService, TaskService, WorkspaceService,
+    ChannelService, FileService, MessageService, NotificationService, OrganizationService,
+    RbacService, SessionService, TaskService, WorkspaceService,
 };
 #[cfg(test)]
 use flora_core::traits::{
@@ -63,7 +63,6 @@ pub(crate) fn make_test_state(pool: PgPool, config: &Config) -> AppState {
     AppState {
         db_pool: Arc::new(pool),
         config: Arc::new(config.clone()),
-        auth_service: Arc::new(AuthService::new()),
         rbac_service: Arc::new(RbacService::new(
             Arc::clone(&role_repo),
             Arc::clone(&membership_repo),
