@@ -385,3 +385,20 @@ Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
 - Unidade: 1 agent + worktree `.specify/queue/worktrees/c6-canary-rls` + branch `feature/067-c6-canary-rls-design`; ledger `active` registrado.
 - Entregável: `docs/research/2026-11-18-067-c6-canary-rls-design.md`; refresh append-only de `PROGRESSO.md` e `research/index.md`.
 - Nenhuma alteração em código, workflows, migrações, ADRs, constituição, produção ou required checks.
+## Decisão 80/20 (modo autônomo) — 2026-11-19T01:58Z (registrada antes do BLOCO 6)
+
+- Critério `E = (impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador explícito por candidato.
+- **Escolhido: 068 — refresh verificado de documentação.** `(2×5)/(2×1) = 5.00`, maior candidato autônomo.
+- Evidência determinística (`find`, 2026-11-19T01:56Z): `specs/` 58 dirs / 280 arquivos, assessments 55, validations 54, releases 54, bugs 4, research 138. `docs/research/index.md:14-19` afirma 202/175/43/42/12 (copiado de `PROGRESSO.md:17`); `docs/PROGRESSO.md:88-90` afirma validations/releases 53; `OBJETIVO.md:3,39` e `ROADMAP.md:3` param em 033/046. Gate autoritativo PASS (8 pisos/51); `dev` local == `github/dev@cbad031b5`; 0 PRs abertos; últimos 4 runs verdes.[NV] para CI futuro.
+- Ranqueamento completo: retro-indexação 047–067 3.75; contrato RBAC vácuo 2.50; stub AuthService morto 2.50; DAG duplicatas legadas 0.83. Emenda da constituição (SolidJS vs Svelte 5, PGMQ obrigatório) pontua 7.50 mas **exige aprov maintainer** (Constituição §Governance) — escalada **[NV]**, não executada. CI não é candidato nº 1 (saudável ao vivo).
+- Âncora: `feature.json` (runtime/gitignored) congela `specs/051-dead-invite-ui`; `check-prerequisites.sh --json` retorna 051 com `AVAILABLE_DOCS:[]`. `NNN = máximo(specs)+1 = 068` por evidência determinística de `specs/`. Divergência registrada, sem reescrever âncora alheia.
+- HEAD da factory como fonte: `03f274148a5e3afd6970eb02aa4577e4a4bfba43`; nada transplantado como autoridade (scripts SDD materializados em `/tmp/opencode/sdd-checks` somente para leitura/gates).
+- Escopo: documentação + 1 comentário obsoleto em `flora-api/src/routes/rbac.rs:4-5` (diz "placeholders" onde o código é real desde o ciclo 066). Sem mudança de comportamento, workflows, required checks, migrações ou produção.
+
+## Execução do ciclo 068 — 2026-11-19T01:58Z (append-only)
+
+- Unidade: 1 agente + worktree `.specify/queue/worktrees/verified-docs-refresh` + branch `feature/068-verified-docs-refresh`; ledger `active` registrado.
+- Entregáveis: contagens corrigidas em `docs/research/index.md`, nota datada em `docs/PROGRESSO.md`, intervalo 001–067 em `OBJETIVO.md`/`ROADMAP.md`, comentário corrigido em `flora-api/src/routes/rbac.rs`, artefatos SDD completos (assess 5, spec 8, validate, release).
+- `analyze` (READ-ONLY) encontrou SC-001/002/003 ausentes em `plan.md`; corrigido na fonte e reexecutado → `go=True`, 0 erros. `converge.md` append-only.
+- Nenhuma alteração em workflows, migrations, ADRs, constituição, required checks ou produção. Emenda constitucional e indexação 047+ permanecem escaladas/adiviadas, não executadas.
+- **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).
