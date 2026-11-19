@@ -1,21 +1,21 @@
 # Research index — Flora
 
-> **Estado verificado:** 2026-11-18T02:23Z · **Fonte:** `find docs/research -maxdepth 1 -type f -name '*.md' ! -name index.md` (somente leitura).
-> **Contagem:** 135 arquivos. Índice gerado deterministicamente; nenhum resumo manual.
+> **Estado verificado:** 2026-11-19T01:58Z · **Fonte:** `find docs/research -maxdepth 1 -type f -name '*.md' ! -name index.md` (somente leitura).
+> **Contagem:** 137 arquivos (138 incluindo `index.md`). Índice gerado deterministicamente; nenhum resumo manual.
 > **Regeneração:** `find docs/research -maxdepth 1 -name '*.md' ! -name index.md -printf '%f\n' | sort` — títulos vêm do primeiro `# ` de cada arquivo (fallback: nome do arquivo).
 > Qualquer afirmação sobre estado remoto/CI é **[NV]**; este índice cobre apenas arquivos locais.
 
-## Contagens verificadas (2026-11-18T02:23Z, já inclui os artefatos do ciclo 056)
+## Contagens verificadas (2026-11-19T01:58Z; por `find`, ciclo 068)
 
 | Diretório | Arquivos |
 |---|---:|
-| `docs/research/` (sem `index.md`) | 135 |
+| `docs/research/` (sem `index.md`) | 137 |
 | `docs/adr/` | 6 |
-| `specs/` | 202 |
-| `.specify/assessments/` | 175 |
-| `.specify/validations/` | 43 |
-| `.specify/releases/` | 42 |
-| `.specify/bugs/` | 12 |
+| `specs/` | 58 diretórios / 280 arquivos |
+| `.specify/assessments/` | 55 diretórios |
+| `.specify/validations/` | 54 diretórios |
+| `.specify/releases/` | 54 diretórios |
+| `.specify/bugs/` | 4 diretórios |
 
 ## Índice por data
 
@@ -171,3 +171,14 @@
 > Nota append-only: o diretório contém 138 arquivos, mas as seções deste índice
 > chegam até a entrada 046 (2026-11-17). A indexação retroativa das entradas
 > 047+ permanece como dívida registrada — nenhum histórico foi reescrito.
+
+> Atualização 2026-11-19T01:58Z (ciclo 068, append-only): as cifras anteriores
+> (`135 / 6 / 202 / 175 / 43 / 42 / 12`, datadas de 2026-11-18T02:23Z) foram
+> substituídas pelas contagens de `find` acima. O valor antigo permanece nesta
+> nota como histórico; a dívida de indexação 047+ não foi fechada neste ciclo.
+
+> Correção append-only — 2026-11-19T02:10Z (ciclo 068): a tabela acima registra o
+> snapshot das `01:58Z`, antes dos artefatos deste ciclo. Estado final por `find`:
+> `specs/` 59 diretórios / 287 arquivos, `.specify/assessments/` 56 diretórios /
+> 237 arquivos, `.specify/validations/` 55 diretórios, `.specify/releases/`
+> 55 diretórios; `docs/research/` permanece 137 (sem `index.md`).

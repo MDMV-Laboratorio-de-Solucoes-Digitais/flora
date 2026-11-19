@@ -107,3 +107,43 @@ Nenhum código, workflow, migration, ADR ou constituição alterado.
 
 Dívida registrada (não forjada): `docs/research/index.md` cobre até a entrada 046;
 as demais entradas do diretório seguem pendentes de indexação retroativa.
+
+## Estado verificado — 2026-11-19T01:58Z (ciclo 068; append-only)
+
+Contagens obtidas por `find` nesta worktree (comandos e saídas em
+`.specify/assessments/068-verified-docs-refresh/research.md`):
+
+| Artefato | Contagem |
+|---|---:|
+| `specs/` | 58 diretórios / 280 arquivos |
+| `.specify/assessments/` | 55 diretórios / 232 arquivos |
+| `.specify/validations/` | 54 diretórios |
+| `.specify/releases/` | 54 diretórios |
+| `.specify/bugs/` | 4 diretórios |
+| `docs/research/` | 137 arquivos sem `index.md` (138 com ele) |
+| `docs/adr/` | 6 arquivos |
+
+Gate autoritativo do alvo: `python3 scripts/ci/check_gate_integrity.py` → **PASS**
+(4 required checks, 8 pisos / 51 total); `--remote` confirma os required contexts
+em `dev` e `main` (strict, enforce_admins, sem required reviews). ADR-0003 rege
+merge deliberado após CI verde observada ao vivo.
+
+Âncora local `dev@cbad031b5` igual a `github/dev@cbad031b5` (0/0 divergência);
+nenhum PR aberto no `github`; quatro execuções recentes em `dev` com
+`completed/success` observadas via `gh` às 01:55Z. Status de CI futuro, Forgejo,
+produção e aprovações: **[NV]**.
+
+Este ciclo corrigiu apenas documentação de estado e um comentário obsoleto em
+`flora-api/src/routes/rbac.rs` (handlers reais desde o ciclo 066). Nenhum
+workflow, gate, migration, ADR, constituição ou produção foi alterado. A dívida
+de indexação retroativa 047+ em `docs/research/index.md` permanece registrada.
+
+### Correção append-only — 2026-11-19T02:10Z (ciclo 068)
+
+A nota das `01:58Z` registrou o snapshot obtido **antes** da materialização dos
+artefatos do ciclo 068. Após a criação deles, `find` na worktree final conta:
+`specs/` **59 diretórios / 287 arquivos**, `.specify/assessments/` **56 diretórios /
+237 arquivos**, `.specify/validations/` **55 diretórios**, `.specify/releases/`
+**55 diretórios**, `docs/research/` **137 arquivos** (sem `index.md`). As cifras
+anteriores permanecem como registro histórico do momento da medição; nenhuma
+linha foi reescrita.

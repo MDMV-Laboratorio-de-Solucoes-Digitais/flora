@@ -239,3 +239,10 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - Âncora `github/dev@8d0cb64b0`; `check_gate_integrity.py` PASS (8 pisos/51).
 - Ciclo 066 encerra os handlers placeholder de RBAC: agora há autoridade explícita (`RoleWrite`) e imutabilidade de builtins.
 - **Próximo autorizado:** C6 — desenho de canário RLS com rollback, sem habilitar em produção. **[NV]** CI/PRs ao vivo.
+
+## Estado verificado — 2026-11-19T01:58Z (append-only)
+
+- Âncora `dev@cbad031b5` (= `github/dev`); `check_gate_integrity.py` PASS (8 pisos / 51), `--remote` OK para `dev`/`main`.
+- O intervalo verificado neste repositório chega ao ciclo 067; o cabeçalho histórico "ciclos 011–046" permanece como registro da data em que foi escrito.
+- Ciclo 068: documentação de estado atualizada por `find`; sem mudança em roadmap estratégico, gates, required checks ou produção.
+- **[NV]** CI/PRs futuros, Forgejo e produção; merge apenas após CI verde observada ao vivo (ADR-0003).
