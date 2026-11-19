@@ -664,3 +664,12 @@ anterior foi alterada.
 - Verificação: `json.load` → `tailwind={css,baseColor}`; grep zero; Prettier/check/lint/42 testes/build green; gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador isolado `CssVerifier`: **PASS** sem findings; R4 aprovado; R7 `0.3.2→0.3.3`.
 - PR **#306** aberto às `22:56:21Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/306 — 16 arquivos, 664 inserções/2 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
 - **[NV]** validação online do schema, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: duplicação `lucide-svelte`/`@lucide/svelte` (2,50); leg RBAC depende de maintainer; OTLP depende de receptor/dono (G1).
+
+## Execução e entrega — 2026-11-19T23:38:51Z (ciclo 083; append-only)
+
+- Atualização da nota 082: PR **#306** foi `MERGED` às `23:03:00Z`; merge commit `33d174095`; `dev` local = `github/dev@33d174095` antes deste ciclo. A nota `22:56:36Z` permanece como registro da abertura.
+- Herança de branches auditada: todos os 13 branches locais exceto `dev` estão integrados em `dev` (PRs #294–#306 mesclados, zero PRs abertos); nada a recuperar. Worktree `feature/073-state-closure` preservada.
+- Decisão 80/20 `(1×5)/(1×1)=5,0` — refresh verificado de `docs/PROGRESSO.md` e `docs/research/index.md` por apêndices datados (`2026-11-19T23:12Z`), preservando cabeçalhos e notas históricas; contagens 72/69/68/68/4, research 137 sem índice (138 com), ADR 6; gate PASS 23:11Z.
+- Verificação: `+8/−0` e `+4/−0`, prefixos byte-idênticos por `cmp`, 137/137 links `missing=[]`/`extra=[]`, gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador `DocsVerifier`: **PASS**; R4 aprovado; R7 `0.3.3→0.3.4`.
+- PR **#307** aberto às `23:38:40Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/307 — 17 arquivos, 706 inserções. Autorização de merge fornecida pelo SE neste prompt; conduzir após checks verdes.
+- **[NV]** remoto/CI/PR/aprovações/produção nos apêndices; resolver ao vivo o que for verificável (gh/API) e manter [NV] o que depender de produção/maintainer. Próximo 80/20: duplicação lucide (2,50) — único candidato autônomo restante; leg RBAC/Tauri/OTLP/emenda dependem de maintainer/SE.
