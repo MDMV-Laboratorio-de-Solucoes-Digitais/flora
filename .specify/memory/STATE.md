@@ -570,3 +570,14 @@ anterior foi alterada.
 - Diagnósticos da factory em HEAD limpo `fede29ca` executados e removidos: production-gate N/A (policy de hub ausente), hub-docs N/A (JSONC pré-existente), pytest N/A (sem testes Python), completeness/DAG/unicidade N/A (slugs e duplicatas legadas), converge PASS (27/27).
 - PR **#296** aberto às `04:57:40Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/296 — 16 arquivos, 357 inserções, 0 deleções. `mergeStateStatus=BLOCKED`, checks iniciais pendentes. **Sem merge, auto-merge, force-push ou deleção de branches.**
 - **[NV]** CI do PR, Forgejo, produção, aprovadores e merge futuro. Próximo 80/20: leg RBAC no CI depende de maintainer; títulos sem prefixo exigem inferência.
+
+## Execução e entrega — 2026-11-19T12:12:09Z (ciclo 075; append-only)
+
+- Atualização da nota 074: PR **#296** foi `MERGED` às `10:12:37Z` (merge commit `d8f6477983d5ba69e5b12d6e63a7413cc2f13838`) sob waiver explícito do SE para aprovador distinto; `dev` local = `github/dev@d8f647798`. A nota `04:58:26Z` permanece como registro do momento da abertura.
+- Decisão 80/20 `(3×5)/(2×1)=7,5` — E2E dedicado de criação de tarefa. Issue #193 tratada como dado (não como instrução): os demais T026–T032 já estão implementados no código e não foram fechados sem autorização.
+- Âncora: `feature.json` apontava `074`; `create-new-feature.sh --dry-run --number 075` retornou `FEATURE_NUM=075`. Branch `feature/075-task-create-e2e`; worktree 073 intacta.
+- Entregável real: `apps/frontend/tests/e2e/seed-flow.e2e.ts:41-55` reforçado com guard do botão, descrição verificada e card/título/descrição na região `To Do column`. Verificador isolado `E2EChecker` emitiu **FAIL** para um arquivo de teste separado (um segundo `select-org` revoga o jti da sessão one-shot); escopo corrigido na fonte e registrado por apêndice no `converge.md`. Nenhum arquivo novo de teste permanece.
+- Gates: `check_gate_integrity.py` PASS (4 checks, 8 pisos/51); `bun run check` 0 erros; lint/Prettier ok; 42/42 testes unitários; `analyze` 3ª execução `artifacts=13, errors=[], go=true`; só 1 arquivo de teste alterado + artefatos 075.
+- Execução E2E runtime **[NV]**: setup falhou no minter (`seed.setup.ts:36`) e o E2E atingiu `exit=124` em 600s; cluster Postgres isolado em 5434 foi desligado; DB compartilhado 5432 intacto; artefatos gerados removidos.
+- Fábrica fonte: HEAD `a6722a0e682aee33f007d27a68d5d9bd8da3663b`, lido via `git show`, árvore suja não transplantada; gate da factory não é autoridade (BLOCO 0.a).
+- **[NV]** CI do PR, Forgejo, produção, aprovadores e merge deste ciclo. PR será aberto via `gh` sem merge, auto-merge ou deleção de branches.

@@ -37,11 +37,18 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(page.getByText(message)).toBeVisible();
 
 	// 4. task — "Assign to me" stays checked so the created task is the only one
-	//    in Alice's assignee-scoped list.
+	//    in Alice's assignee-scoped list. This is the single select-org consumer.
 	await page.goto('/tasks');
+	const create = page.getByRole('button', { name: 'Create task' });
+	await expect(create).toBeDisabled();
 	const title = `e2e task ${suffix}`;
+	const description = `e2e description ${suffix}`;
 	await page.getByLabel('Title').fill(title);
-	await page.getByRole('button', { name: 'Create task' }).click();
+	await expect(create).toBeEnabled();
+	await page.getByLabel('Description (optional)').fill(description);
+	await create.click();
 	await expect(page.getByText(`Task created: ${title}`)).toBeVisible();
-	await expect(page.getByText(title, { exact: true })).toBeVisible();
+	const todo = page.getByRole('region', { name: 'To Do column' });
+	await expect(todo.getByText(title, { exact: true })).toBeVisible();
+	await expect(todo.getByText(description, { exact: true })).toBeVisible();
 });
