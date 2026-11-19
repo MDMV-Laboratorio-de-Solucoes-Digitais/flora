@@ -194,3 +194,19 @@
 > real é apenas de rastreabilidade: várias entradas da seção 2026-11-16 não
 > trazem o prefixo do ciclo no título; renomeá-las exigiria inferência e não
 > foi feito neste ciclo. Estado remoto/CI futuro: **[NV]**.
+
+### Estado verificado — 2026-11-19T04:22:55Z (ciclo 072; append-only)
+
+O conjunto de links continua 137/137 (`missing=[]`, `extra=[]`) — a correção do
+ciclo 069 permanece válida e não foi reaberta. Contagens atuais por `find`:
+`specs/` 61 diretórios, `.specify/assessments/` 58, `.specify/validations/` 57,
+`.specify/releases/` 57, `.specify/bugs/` 4 e 137 arquivos neste diretório
+(138 com `index.md`). Intervalo de specs: 001–070. Âncora de início
+`dev@cdf50eaff`; gate PASS às 04:14:31Z. Notas anteriores preservadas;
+CI/remoto/produção: **[NV]**.
+
+> **Correção append-only — 2026-11-19T04:23:44Z (ciclo 072):** a nota acima
+> registrou contagens do snapshot anterior à materialização dos artefatos 072.
+> Estado final: `specs/` 62 diretórios, assessments 59, validations 58,
+> releases 58, bugs 4; este diretório permanece com 137 arquivos sem
+> `index.md` (138 com ele) e 137/137 links, `missing=[]`. Nada reescrito.

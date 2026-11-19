@@ -501,6 +501,40 @@ arquivo faltou ou sobrou. `cargo fmt --all -- --check` ficou RED após a remoç�
 e foi corrigido com `cargo fmt --all` + commit `style(rust)`; fmt/clippy agora exit 0.
 Verificador isolado: `PASS-WITH-NITS` (nit de contagem corrigido por esta nota).
 
+## Decisão 80/20 (modo autônomo) — 2026-11-19T04:22:55Z (registrada antes do BLOCO 6)
+
+- Critério `E = (impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador explícito por candidato.
+- **Escolhido: 072 — refresh verificado de estado (ciclos 069/070).** `(2×5)/(2×1) = 5.00`.
+- Evidência determinística: últimas notas “Estado verificado” em 01:58Z (ciclo 068); contagens reais 61 specs / 58 assessments / 57 validations / 57 releases / 4 bugs / 137 research; 069 e 070 fechados sem nota nos quatro documentos âncora.
+- Ranqueamento: leg RBAC `(5×5)/(2×2)=6.25` **excluída** — dívida registrada exige aprov maintainer; emenda constitucional `(3×5)/(1×2)=7.50` **excluída** — exige maintainer; renomeação de 124 títulos `(2×5)/(4×1)=2.50`; stub `AuthService` `(2×5)/(2×2)=2.50`; duplicatas T-ID `(2×5)/(4×3)=0.83` — histórico protegido, não renumerado.
+- Âncora: `feature.json`/`check-prerequisites.sh --json` apontavam `051-dead-invite-ui` no início; `create-new-feature.sh --dry-run --number 072` retornou `FEATURE_NUM=072`; 071 está reservado no worktree alheio. Divergência registrada, sem reescrita.
+- HEAD da factory como fonte: `ee71d8db0a2ba34ef9fc9486f8d18915282beda1` — lido via `git show`/`git ls-tree`; trabalho em voo da factory **não transplantado**. Gate da factory não importado (BLOCO 0.a); CLI de PR do alvo é `gh` (constituição v1.3.0 §VI), não `fj`.
+- Escopo: documentação âncora + artefatos do ciclo + STATE.md. Sem código, workflow, gate, piso, ADR ou constituição.
+
+## Execução do ciclo 072 — 2026-11-19T04:22:55Z (append-only)
+
+- Unidade: 1 agente, branch `feature/072-verified-state-refresh`, sem worktree nova; o worktree `feature/071-dead-auth-service` permanece intocável.
+- Assess 5 (intake/research/define/shape/decide com `go (scoped)`), spec/clarify/plan/checklist (revisado)/tasks/analyze/converge; R3 zero perguntas.
+- `analyze.md` READ-ONLY: 1ª execução `{"artifacts":11,"errors":[],"fr":5,"go":true,"nv_marked":true,"sc":4,"tasks":10}`, exit 0 — nenhuma correção de fonte necessária.
+- Apêndices datados em `OBJETIVO.md`, `ROADMAP.md`, `docs/PROGRESSO.md`, `docs/research/index.md`, `index.md`; prefixos pré-existentes registrados por sha256/bytes antes da edição.
+- **[NV]** CI futura, Forgejo, produção e aprovações; merge não realizado neste ciclo.
+
+### Correção append-only de contagem — 2026-11-19T04:23:44Z (ciclo 072)
+
+A nota de execução registrou contagens medidas antes da materialização dos
+artefatos 072. Estado final por `find`: specs 62, assessments 59, validations
+58, releases 58, bugs 4, research 137 (138 com `index.md`). Nenhuma linha
+anterior foi alterada.
+
+## Entrega e fechamento — 2026-11-19T04:36:59Z (ciclo 072; append-only)
+
+- PR **#295** aberto às `04:35:22Z` via `gh` (CLI autoritativa do alvo; `fj` não usado — constituição v1.3.0 §VI): https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/295 — base `dev`, head `feature/072-verified-state-refresh`. **Sem merge, auto-merge, force-push ou deleção de branches.**
+- 21 commits convencionais, um arquivo por commit; diff do ciclo = 21 arquivos / 626 inserções / 0 deleções. HEAD final da feature `a30f8730a` após `merge --no-ff` de `github/dev@983e4f316` (ciclo 071) para resolver conflito **aditivo** em `STATE.md`: ambos os apêndices (071 e 072) preservados; nenhum trabalho alheio reescrito ou renumerado.
+- Verificação ao vivo via `gh` às `04:36:44Z`: `state=OPEN`, `mergeable=MERGEABLE`, `mergeStateStatus=BLOCKED`, `reviewDecision=""`, checks obrigatórios `pending`. Nenhum check obrigatório verde foi observado nesta sessão; merge permanece **[NV]**/não autorizado.
+- Gates locais: `check_gate_integrity.py` PASS (4 checks, 8 pisos/51); fmt/clippy/deny/build exit 0; `cargo test --workspace` 105 passed / 55 ignored / 0 failed; frontend check 0 erros, lint ok, 42/42 testes, build exit 0; append-only 6/6 prefixos intactos; índice research 137/137.
+- Diagnósticos da factory executados de HEAD limpo `ee71d8db` e removidos: `check_production_gate.py`/`hub_docs_gate.py`/`pytest -q`/completeness/DAG/unicidade classificados **N/A** (gate de hub, convenção de slugs, duplicatas legadas); `check_converge_append_only.py` PASS com baseline bootstrapado.
+- Dívidas: leg `rbac` no CI (exige aprov maintainer), emenda constitucional (maintainer), duplicatas T-ID legadas (histórico protegido); CI final, Forgejo, aprovações, produção e merge: **[NV]**.
+- Próximo 80/20: normalizar prefixos de ciclo nos títulos sem prefixo de `docs/research/index.md` `(2×5)/(4×1)=2.50` — maior candidato autônomo restante; a leg RBAC pontua mais, porém depende de maintainer.
 ## Fechamento pós-merge — 2026-11-19T04:29:52Z (ciclo 071; append-only)
 
 - PR **#293** `MERGED` ao vivo às `04:29:52Z`; merge commit `983e4f3163ff378aed6efa4e7de52ffb52ac5f59`. `mergeStateStatus=CLEAN` confirmado antes do merge (após reexecução do smoke informativo de browser, que havia falhado por expectativa de seed `Welcome to Acme Corporation` e passou no rerun).
@@ -509,3 +543,11 @@ Verificador isolado: `PASS-WITH-NITS` (nit de contagem corrigido por esta nota).
 - Verificador isolado `PASS-WITH-NITS`; nit de contagem (10, não 11 arquivos/commits) corrigido por notas append-only; `fmt` RED corrigido com `cargo fmt --all`.
 - **Concorrência:** outra sessão mantém o ciclo 072 em voo no checkout compartilhado (6 arquivos modificados + `specs/072-*`/`assessments/072-*` não rastreados). O `git merge --ff-only` local foi abortado pelo git; **nada foi tocado**. `dev` local permanece em `cdf50eaff` enquanto `github/dev` está em `983e4f316` — divergência apenas de ponteiro local, sem trabalho perdido.
 - Fábrica fonte `409b76cc3effa56d716d0e9d88e7c3bbe19c2b21`; nada transplantado. CI futura, Forgejo, produção e aprovações: **[NV]**.
+
+## Waiver de aprovador distinto — 2026-11-19T04:45:08Z (append-only)
+
+- O SE autorizou **explicitamente** às `04:44Z` o fechamento dos PRs #294 e #295 com exceção à portaria de aprovador distinto. Motivo verificado: `gh api repos/MDMV-Laboratorio-de-Solucoes-Digitais/flora/collaborators` retorna apenas `lfgranja`, que é o autor de ambos os PRs — não existe aprovador distinto no repositório.
+- Antes de qualquer merge, `gh pr view` às `04:43:32Z` confirmou `state=OPEN`, `mergeable=MERGEABLE`, `mergeStateStatus=CLEAN` para #294 e `UNSTABLE` para #295; após babysitting, o último `e2e-browser` de #295 passou e o status virou `CLEAN` (`04:43:32Z`). Checks required observados ao vivo: `frontend-build`, `rust-build`, `db-tests`, `dependency-review` — todos `pass`.
+- PR **#294** mesclado às `04:44:19Z` (merge commit `407d26ddce414ad88e3eb6daf0e6bf104dfdf029`) com o waiver registrado na mensagem do merge; sem `--admin`, sem `--auto`, sem `--delete-branch`, sem force-push.
+- O merge de `dev` na feature 072 reconcilou os apêndices 071 e 072 em `STATE.md` preservando ambos; nenhum trabalho alheio foi reescrito ou renumerado.
+- Esta nota é a decisão do SE registrada no repositório; nenhum agente emitiu aprovação simulada. Merge de #295 executado somente após esta reconciliação e revalidação dos checks.

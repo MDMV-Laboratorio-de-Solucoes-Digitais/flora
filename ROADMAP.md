@@ -246,3 +246,16 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 - O intervalo verificado neste repositório chega ao ciclo 067; o cabeçalho histórico "ciclos 011–046" permanece como registro da data em que foi escrito.
 - Ciclo 068: documentação de estado atualizada por `find`; sem mudança em roadmap estratégico, gates, required checks ou produção.
 - **[NV]** CI/PRs futuros, Forgejo e produção; merge apenas após CI verde observada ao vivo (ADR-0003).
+
+## Estado verificado — 2026-11-19T04:22:55Z (ciclo 072; append-only)
+
+- Âncora de início `dev@cdf50eaff`; `check_gate_integrity.py` PASS com 4 required checks e 8 pisos / 51 às `04:14:31Z`.
+- Intervalo verificado ampliado para `specs/001`–`specs/070` (61 diretórios); assessments 58, validations 57, releases 57, bugs 4, research 137 (sem `index.md`).
+- Ciclos 069 e 070 estão fechados; o cabeçalho histórico “ciclos 011–046” e a nota 01:58Z permanecem como registro das respectivas datas.
+- **Fora do roadmap:** leg RBAC no CI (aprov maintainer) e emenda constitucional (maintainer) continuam escaladas **[NV]**.
+
+### Correção append-only — 2026-11-19T04:23:44Z (ciclo 072)
+
+O intervalo 001–070 da nota `04:22:55Z` permanece; as contagens finais após
+artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
+4 bugs / 137 research (138 com `index.md`). Nada acima foi reescrito.

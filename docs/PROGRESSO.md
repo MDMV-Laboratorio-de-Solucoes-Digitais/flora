@@ -147,3 +147,18 @@ artefatos do ciclo 068. Após a criação deles, `find` na worktree final conta:
 **55 diretórios**, `docs/research/` **137 arquivos** (sem `index.md`). As cifras
 anteriores permanecem como registro histórico do momento da medição; nenhuma
 linha foi reescrita.
+
+## Estado verificado — 2026-11-19T04:22:55Z (ciclo 072; append-only)
+
+- **Âncora de início:** `dev@cdf50eaff`; gate do alvo `python3 scripts/ci/check_gate_integrity.py` PASS às `04:14:31Z` — `gate-integrity: PASS`, 4 checks, `all 8 db contract floors intact (51 total)`, exit 0.
+- **Contagens por `find` neste checkout:** `specs/` 61 diretórios, assessments 58, validations 57, releases 57, bugs 4, `docs/research/` 137 arquivos sem `index.md` (138 com índice). Intervalo 001–070.
+- **Ciclo 069:** índice de research verificado 137 arquivos / 137 links / `missing=[]`; dívida 047+ estava fechada por evidência, não reaberta.
+- **Ciclo 070:** 3 contratos DB-gated de RBAC aprovados em R4, release `0.2.3` proposta; o CI ainda não os executa (sem leg `rbac`) — exige aprov maintainer, **[NV]**.
+- As notas 01:58Z e 02:10Z acima são histórico; nenhuma linha foi reescrita. **[NV]** para CI futuro, Forgejo, produção e aprovações.
+
+### Correção append-only — 2026-11-19T04:23:44Z (ciclo 072)
+
+O snapshot `04:22:55Z` foi medido antes dos artefatos 072. Estado final:
+`specs/` 62, assessments 59, validations 58, releases 58, bugs 4, research
+137 sem `index.md` (138 com índice). Notas 01:58Z/02:10Z e a nota 04:22:55Z
+permanecem intactas; apenas acréscimos.
