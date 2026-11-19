@@ -473,3 +473,28 @@ Nenhuma lógica, teste ou gate foi alterado.
 - Evidência central: 3 contratos RBAC passam com Postgres descartável, falham fechado sem env e detectam mutação da asserção cross-org (`CROSS-ORG ROLE LEAK`). Nenhum handler, workflow, gate, piso, ADR ou constituição alterado.
 - Dívida registrada: CI não executa estes contratos (sem leg `rbac` em `rust.yml` + `FLOORS` + ADRs) — exige aprov maintainer, **[NV]**. Emenda da constituição, Forgejo, produção e aprovações: **[NV]**.
 - Fábrica fonte `5cc29f8738b4d9c79ac4c451a6ab0c9ebb62f351` (mutou desde `03f2741`); 9 stashes/27 linhas dirty **não transplantadas**.
+
+## Decisão 80/20 (modo autônomo) — 2026-11-19T04:22:55Z (registrada antes do BLOCO 6)
+
+- Critério `E = (impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador explícito por candidato.
+- **Escolhido: 072 — refresh verificado de estado (ciclos 069/070).** `(2×5)/(2×1) = 5.00`.
+- Evidência determinística: últimas notas “Estado verificado” em 01:58Z (ciclo 068); contagens reais 61 specs / 58 assessments / 57 validations / 57 releases / 4 bugs / 137 research; 069 e 070 fechados sem nota nos quatro documentos âncora.
+- Ranqueamento: leg RBAC `(5×5)/(2×2)=6.25` **excluída** — dívida registrada exige aprov maintainer; emenda constitucional `(3×5)/(1×2)=7.50` **excluída** — exige maintainer; renomeação de 124 títulos `(2×5)/(4×1)=2.50`; stub `AuthService` `(2×5)/(2×2)=2.50`; duplicatas T-ID `(2×5)/(4×3)=0.83` — histórico protegido, não renumerado.
+- Âncora: `feature.json`/`check-prerequisites.sh --json` apontavam `051-dead-invite-ui` no início; `create-new-feature.sh --dry-run --number 072` retornou `FEATURE_NUM=072`; 071 está reservado no worktree alheio. Divergência registrada, sem reescrita.
+- HEAD da factory como fonte: `ee71d8db0a2ba34ef9fc9486f8d18915282beda1` — lido via `git show`/`git ls-tree`; trabalho em voo da factory **não transplantado**. Gate da factory não importado (BLOCO 0.a); CLI de PR do alvo é `gh` (constituição v1.3.0 §VI), não `fj`.
+- Escopo: documentação âncora + artefatos do ciclo + STATE.md. Sem código, workflow, gate, piso, ADR ou constituição.
+
+## Execução do ciclo 072 — 2026-11-19T04:22:55Z (append-only)
+
+- Unidade: 1 agente, branch `feature/072-verified-state-refresh`, sem worktree nova; o worktree `feature/071-dead-auth-service` permanece intocável.
+- Assess 5 (intake/research/define/shape/decide com `go (scoped)`), spec/clarify/plan/checklist (revisado)/tasks/analyze/converge; R3 zero perguntas.
+- `analyze.md` READ-ONLY: 1ª execução `{"artifacts":11,"errors":[],"fr":5,"go":true,"nv_marked":true,"sc":4,"tasks":10}`, exit 0 — nenhuma correção de fonte necessária.
+- Apêndices datados em `OBJETIVO.md`, `ROADMAP.md`, `docs/PROGRESSO.md`, `docs/research/index.md`, `index.md`; prefixos pré-existentes registrados por sha256/bytes antes da edição.
+- **[NV]** CI futura, Forgejo, produção e aprovações; merge não realizado neste ciclo.
+
+### Correção append-only de contagem — 2026-11-19T04:23:44Z (ciclo 072)
+
+A nota de execução registrou contagens medidas antes da materialização dos
+artefatos 072. Estado final por `find`: specs 62, assessments 59, validations
+58, releases 58, bugs 4, research 137 (138 com `index.md`). Nenhuma linha
+anterior foi alterada.
