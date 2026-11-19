@@ -439,3 +439,28 @@ Item pendente autorizado: C6 (desenho de canário RLS, sem produção).
 - Evidência central: `docs/research/index.md` tem 137 arquivos / 137 links / `missing=[]` — a dívida 047+ era falsa; o resíduo é apenas de prefixo de ciclo nos títulos, não corrigido por inferência.
 - Fábrica fonte `03f274148a5e3afd6970eb02aa4577e4a4bfba43` — lida, nunca modificada; 9 stashes/2 worktrees em voo **não transplantados**.
 - Dívidas: contrato RBAC vácuo e stub `AuthService` (2.50 cada), duplicatas legadas de T-ID (0.83), renomeação de títulos sem prefixo de ciclo; emenda da constituição escalada **[NV]** (aprov maintainer). CI futura, Forgejo, produção e aprovações: **[NV]**.
+## Decisão 80/20 (modo autônomo) — 2026-11-19T02:58Z (registrada antes do BLOCO 6)
+
+- Critério `E = (impacto × confiança) ÷ (esforço × risco)`, escalas 1–5, denominador explícito por candidato.
+- **Escolhido: 070 — substituir o contrato RBAC vácuo por contratos DB-gated reais.** `(3×5)/(3×2) = 2.50`.
+- Evidência: `flora-tests/src/contract/rbac.rs:3-7` contém apenas `Ok(())`; os handlers de `flora-api/src/routes/rbac.rs:168-320` são reais desde o ciclo 066 (`RoleWrite || OrgAdmin`, built-ins imutáveis, escopo pela sessão). Padrão a seguir: `flora-tests/src/contract/workspace.rs` (contratos `#[ignore]` + env `FLORA_DATABASE__POSTGRES_URL`, fail-closed desde o ciclo 059). Postgres local disponível (`pg_isready` OK).
+- Ranqueamento: AuthService stub `(2×5)/(2×2)=2.50` (empate, menor impacto); renomeação de 124 títulos `(2×5)/(4×1)=2.50` (maior esforço, sem ganho de correção); duplicatas T-ID `(2×5)/(4×3)=0.83`; emenda constitucional `(3×5)/(1×2)=7.50` escalada **[NV]** por aprov maintainer. CI não é candidato: 0 PRs abertos e `dev == github/dev@0c7890ef4`.
+- Âncora: `feature.json` (runtime/gitignored) congela `specs/051-dead-invite-ui`; `check-prerequisites.sh --json` retorna 051 com `AVAILABLE_DOCS:[]`. `NNN = máximo(specs)+1 = 070` por `--dry-run`. O branch `feature/070-state-closure` da sessão anterior foi bookkeeping sem `specs/070-*`; esta é a primeira spec 070 — divergência registrada, sem renumerar trabalho alheio.
+- HEAD da factory como fonte: `5cc29f8738b4d9c79ac4c451a6ab0c9ebb62f351` (mutou desde `03f2741`; 9 stashes/27 linhas dirty **não transplantadas**); scripts SDD materializados apenas em `/tmp/opencode/sdd-checks3`.
+- Escopo: 1 arquivo de teste (`flora-tests/src/contract/rbac.rs`) + artefatos do ciclo + `STATE.md`. Sem mudança de comportamento em produção, workflows, gates, ADRs ou constituição.
+
+## Execução do ciclo 070 — 2026-11-19T03:02Z (append-only)
+
+- Unidade: 1 agente + worktree `.specify/queue/worktrees/rbac-contract` + branch `feature/070-rbac-contract`; ledger `active` registrado.
+- Entregável: `flora-tests/src/contract/rbac.rs` — stub `Ok(())` substituído por 3 contratos DB-gated (`db_rbac_list_scoped_to_session_org`, `db_rbac_create_requires_role_write_and_uses_session_org`, `db_rbac_builtin_immutable_custom_patchable`).
+- Evidência: 3 passed com `FLORA_DATABASE__POSTGRES_URL=.../flora_070_rbac_verify` (Postgres 18.6 descartável, criado por esta sessão); sem env → `FAILED` com `bail!` (fail-closed); mutação da asserção cross-org → `CROSS-ORG ROLE LEAK` (teste sensível), fonte restaurada e 3 passed novamente.
+- Lints do alvo (`unused_results=deny`) reprovaram 2 resultados descartados; corrigidos com `let _membership`/`let _session` — nenhum lint relaxado.
+- Nenhuma alteração em produção, workflows, gates, pisos, ADRs ou constituição. Dívida registrada: CI não executa estes contratos (sem leg `rbac` em `rust.yml`), exigindo ciclo de governança separado **[NV]**.
+- **[NV]** CI futura, Forgejo, produção e aprovações; merge deliberado somente após CI verde observada ao vivo (ADR-0003).
+
+### Correção de redação (append-only) — 2026-11-19T03:08Z
+
+O verificador isolado apontou nit textual: `db_state()` usa
+`ok_or_else(|| anyhow::anyhow!(...))?` (fail-closed equivalente a `bail!`), não `bail!`.
+A linha de execução acima permanece como registro histórico; esta nota a corrige.
+Nenhuma lógica, teste ou gate foi alterado.
