@@ -637,3 +637,12 @@ anterior foi alterada.
 - Verificação: `bun pm ls shadcn-svelte` → 1.8.1; `bun run shadcn-svelte --help` exit 0 (nenhum subcomando executado); `bun install --frozen-lockfile --dry-run` exit 0; Prettier/check/lint/42 testes/build green; gate PASS; `analyze` `artifacts=11, errors=[], fr=5, sc=4, tasks=5, go=true`; verificador isolado `ShadcnVerifier`: **PASS**; R4 aprovado; R7 `0.2.9→0.3.0`.
 - PR **#303** aberto às `21:20:20Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/303 — 17 arquivos, 625 inserções. Sem merge, auto-merge, force-push ou deleção de branches.
 - **[NV]** uso futuro do CLI, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: leg RBAC depende de maintainer; OTLP/Tauri exigem ADR e aprovador.
+
+## Execução e entrega — 2026-11-19T21:41:35Z (ciclo 080; append-only)
+
+- Atualização da nota 079: PR **#303** foi `MERGED` às `21:27:18Z`; merge commit `e3944e962`; `dev` local = `github/dev@e3944e962` antes deste ciclo. A nota `21:20:31Z` permanece como registro da abertura.
+- Auditoria com 3 scouts em paralelo ranqueou: flag OIDC morta **15,0**; `.env.example` obsoleto 10,0; `cssVariables`/docs 5,0; duplicação lucide 2,50; OTLP 1,25 (registry 0.33.1 compatível, mas falta receptor/dono G1 e há risco de `multiple_crate_versions = deny` + `dependency-review`). leg RBAC/Tauri dependem de maintainer.
+- Entregável: `flora-core/src/config/oidc.rs` −3 linhas (doc + campo `local_fallback_enabled` + default `true`), zero leitores em Rust, sem `deny_unknown_fields` (env legada ignorada por serde). `.env.example`, auth, ADRs, workflows, gate e lockfile intactos.
+- Verificação: `grep` zero; fmt/check/clippy/deny/build/test (105 passed/0 failed) + gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador isolado `OidcFlagVerifier`: **PASS**; R4 aprovado; R7 `0.3.0→0.3.1`.
+- PR **#304** aberto às `21:41:25Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/304 — 16 arquivos, 611 inserções/3 deleções. Sem merge, auto-merge, force-push ou deleção de branches.
+- **[NV]** consumidores externos de config serializada, CI do PR, Forgejo, produção e aprovações. Próximo 80/20: `.env.example` com chaves OIDC sem leitor (10,0) e `cssVariables` inválido no schema (5,0), ambos autônomos; leg RBAC depende de maintainer.
