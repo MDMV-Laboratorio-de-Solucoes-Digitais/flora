@@ -3,8 +3,7 @@
 	"style": "default",
 	"tailwind": {
 		"css": "src/routes/layout.css",
-		"baseColor": "zinc",
-		"cssVariables": true
+		"baseColor": "zinc"
 	},
 	"aliases": {
 		"components": "$lib/components",
