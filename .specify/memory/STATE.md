@@ -500,3 +500,12 @@ removidas) e **10 commits `refactor`**, não 11 — a cifra anterior estava erra
 arquivo faltou ou sobrou. `cargo fmt --all -- --check` ficou RED após a remoção dos imports
 e foi corrigido com `cargo fmt --all` + commit `style(rust)`; fmt/clippy agora exit 0.
 Verificador isolado: `PASS-WITH-NITS` (nit de contagem corrigido por esta nota).
+
+## Fechamento pós-merge — 2026-11-19T04:29:52Z (ciclo 071; append-only)
+
+- PR **#293** `MERGED` ao vivo às `04:29:52Z`; merge commit `983e4f3163ff378aed6efa4e7de52ffb52ac5f59`. `mergeStateStatus=CLEAN` confirmado antes do merge (após reexecução do smoke informativo de browser, que havia falhado por expectativa de seed `Welcome to Acme Corporation` e passou no rerun).
+- Checks required ao vivo: `frontend-build`, `rust-build`, `db-tests`, `dependency-review` pass. Sem auto-merge, force-push ou aprovação simulada.
+- Entrega: remoção completa do stub `AuthService` — `grep` zero, `cargo check/test` e gates verdes; `ServiceUnavailable`, `AuthProvider` e `UserInfo` preservados. Nenhum handler/workflow/gate/migration/ADR/constituição alterado.
+- Verificador isolado `PASS-WITH-NITS`; nit de contagem (10, não 11 arquivos/commits) corrigido por notas append-only; `fmt` RED corrigido com `cargo fmt --all`.
+- **Concorrência:** outra sessão mantém o ciclo 072 em voo no checkout compartilhado (6 arquivos modificados + `specs/072-*`/`assessments/072-*` não rastreados). O `git merge --ff-only` local foi abortado pelo git; **nada foi tocado**. `dev` local permanece em `cdf50eaff` enquanto `github/dev` está em `983e4f316` — divergência apenas de ponteiro local, sem trabalho perdido.
+- Fábrica fonte `409b76cc3effa56d716d0e9d88e7c3bbe19c2b21`; nada transplantado. CI futura, Forgejo, produção e aprovações: **[NV]**.
