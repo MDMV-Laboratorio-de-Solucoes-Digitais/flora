@@ -10,7 +10,7 @@ use flora_core::repositories::{
     PgTaskRepository, PgUserRepository, PgWorkspaceRepository,
 };
 use flora_core::services::{
-    AuthService, ChannelService, FileService, MessageService, NotificationService,
+    ChannelService, FileService, MessageService, NotificationService,
     OrganizationService, RbacService, SessionService, TaskService, WorkspaceService,
 };
 use flora_core::{PgPool, config::Config};
@@ -26,8 +26,6 @@ pub struct AppState {
     pub db_pool: Arc<PgPool>,
     /// Application configuration.
     pub config: Arc<Config>,
-    /// Authentication service.
-    pub auth_service: Arc<AuthService>,
     /// RBAC service.
     pub rbac_service: Arc<RbacService>,
     /// Session service.
@@ -94,8 +92,6 @@ impl AppState {
             Arc::new(PgNotificationRepository::new(db_pool.clone()));
 
         // Initialize services
-        let auth_service = Arc::new(AuthService::new());
-
         let rbac_service = Arc::new(RbacService::new(
             Arc::clone(&role_repo),
             Arc::clone(&membership_repo),
@@ -181,7 +177,6 @@ impl AppState {
         Ok(Self {
             db_pool: Arc::new(db_pool),
             config: Arc::new(config),
-            auth_service,
             rbac_service,
             session_service,
             organization_service,
