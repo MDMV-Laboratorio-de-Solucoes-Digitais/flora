@@ -745,3 +745,19 @@ anterior foi alterada.
 - **Evidência local:** gate dinâmico `python3 scripts/ci/check_gate_integrity.py` → **PASS** `all 10 db contract floors intact (58 total)`, exit 0; `python3 -m py_compile scripts/ci/check_gate_integrity.py` → exit 0. R4/R7: artefatos do ciclo 088 em materialização no snapshot 11:06Z; nenhum validation/release pré-existente tocado.
 - **Contagens (snapshot 11:06Z, antes da materialização dos artefatos 088):** `specs/` 77, `.specify/assessments/` 74, `.specify/validations/` 73, `.specify/releases/` 73, `.specify/bugs/` 4, `docs/research/` 137 sem `index.md` (138 com ele). `find` no checkout confirma 78/75 (incluindo spec/assessment 088 em curso), 73/73/4 e research 138 = 137 + `index.md`. Histórico preservado; cifras anteriores são do momento da medição.
 - **[NV]** CI do PR, merge, produção/Forgejo e aprovações ao vivo: reconsultar antes de qualquer decisão de merge.
+
+## Atualização — ciclo 089 (2026-11-20; append-only)
+
+- **Âncora:** branch `feature/089-forgejo-mirror-sync` @ `15203ee78`; `.specify/feature.json` → `specs/089-forgejo-mirror-sync`. Estado remoto/Forgejo/CI ao vivo: **[NV]**; todas as notas anteriores intactas. Registro canônico em `docs/governance/2026-11-20-089-decisoes-governanca.md` (novo, append-only).
+- **(a) Gate autoritativo — decisão explícita do SE:** os 4 scripts SDD da factory (`check_sdd_completeness.py`, `check_converge_append_only.py`, `check_task_id_uniqueness.py`, `check_work_order_dag.py`) **NÃO** são gate do alvo; falham por baseline legada da hub (75 specs), não são regressão. Gate é `python3 scripts/ci/check_gate_integrity.py` (oráculo dinâmico 088, 10 legs / 58 pisos). Nenhum script SDD promovido a required check.
+- **(b) Branch protection — escopo mínimo:** PAT fine-grained `Administration: read` **somente** no repo `flora`; `GITHUB_TOKEN` **não serve** (sem escopo Admin). Secret sugerido `FLORA_BRANCH_PROTECTION_TOKEN`. Nenhuma credencial copiada/exposta. **[NV]** provisionamento e leitura ao vivo.
+- **(c) Advisories:** bump `rustls` `0.23.43→0.23.46` resolve **4 advisories canônicos** (`Cargo.lock` ainda em `0.23.43`). Recomendação registrada; **não promover gate ainda**. **[NV]** aplicação do bump.
+- **(d) Deploy Flora→Coolify:** executado pela ligação MDMV-Autonoma — app `Flora-Staging`, deployment `44djh8p8owth5buhmcvgpilb`, commit `15203ee78`, health `200`, rollback image `b1dafae3…`. Fora do gate de merge (ADR-0003). **[NV]** mensageria cross-session: reconsultar estado real antes de promoção/rollback.
+- **(e) Ciclo 089 — espelho Forgejo:** origem `https://forgejo.mdmv.qzz.io/MDMV/flora-workspace.git`; `origin/dev` = `f12a328c` é ancestral de `dev` (fast-forward); job de espelho **não** é required check (ADR-0003).
+- Nenhum validation/release/código/workflow/gate/migration/ADR/constituição tocado; nenhuma linha histórica reescrita. **[NV]** remoto Forgejo, job de espelho e proteção ao vivo.
+
+### Execução verificada do espelho — 2026-11-20T13:02Z
+
+- Workflow `.github/workflows/mirror-to-forgejo.yml` criado (event-driven, `permissions: {}`, secrets `FORGEJO_USER`/`FORGEJO_TOKEN`, sem force/mirror, job não required); parse YAML OK (`jobs=['mirror']`, `on push dev/main + tags v*`).
+- Sincronização manual imediata executada com `git push origin refs/heads/dev:refs/heads/dev`: **`f12a328c4..15203ee78 dev -> dev`**, exit 0. Ancestralidade confirmada por `git merge-base --is-ancestor origin/dev dev` antes do push; nenhum force-push.
+- **[NV]** provisionamento dos secrets no GitHub e execução futura do job; a configuração automática depende de `FORGEJO_USER`/`FORGEJO_TOKEN` com `write:repository` apenas em `MDMV/flora-workspace`.
