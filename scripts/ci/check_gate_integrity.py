@@ -54,6 +54,10 @@ FLOORS = {
 
 JOB_RE = re.compile(r"^  ([A-Za-z0-9][A-Za-z0-9_-]*):\s*$")
 
+# A CI db leg: `run_leg <label> <filter> <floor>`. Horizontal whitespace only so
+# the regex never swallows newlines and accidentally spans multiple lines.
+LEG_RE = re.compile(r"^[ \t]*run_leg[ \t]+(\S+)[ \t]+(\S+)[ \t]+(\d+)[ \t]*$", re.M)
+
 
 def _jobs(text: str) -> dict[str, list[str]]:
     lines = text.splitlines()
@@ -115,11 +119,61 @@ def main(argv: list[str] | None = None) -> int:
             failures.append(f"rust.yml: missing '{need}' (the cycle-036 gate fix regressed)")
         else:
             checks.append(f"rust.yml contains '{need}'")
-    for label, floor in FLOORS.items():
-        if not re.search(rf"run_leg\s+{label}\s+contract::\w+(?:::\w+)*::db_\s+{floor}\b", rust):
-            failures.append(f"rust.yml: db floor for {label} ({floor}) missing or changed")
-    if all(not any(f"db floor for {l}" in f for f in failures) for l in FLOORS):
-        checks.append(f"all {len(FLOORS)} db contract floors intact ({sum(FLOORS.values())} total)")
+    floor_failures: list[str] = []
+    # 088: dynamic oracle. The floors must match the tests libtest actually
+    # discovers, not just a number copied into rust.yml. Only stdout is parsed
+    # for test names: cargo may emit warnings on stderr.
+    proc = subprocess.run(
+        ["cargo", "test", "-p", "flora-tests", "--", "--ignored", "--list"],
+        cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    if proc.returncode != 0:
+        detail = proc.stderr.strip().splitlines()
+        tail = detail[-1] if detail else "no stderr output"
+        floor_failures.append(f"cargo --ignored --list failed (rc={proc.returncode}): {tail}")
+
+    ignored: list[str] = []
+    for raw in proc.stdout.splitlines():
+        line = raw.strip()
+        if line.endswith(": test"):
+            ignored.append(line[: -len(": test")])
+    if not ignored:
+        floor_failures.append("cargo --ignored --list discovered no tests (empty oracle)")
+
+    legs = [(m.group(1), m.group(2), int(m.group(3))) for m in LEG_RE.finditer(rust)]
+    if not legs:
+        floor_failures.append("rust.yml: no run_leg <label> <filter> <floor> invocations found")
+
+    seen: dict[str, int] = {}
+    for label, filter_, floor in legs:
+        if label not in FLOORS:
+            floor_failures.append(f"rust.yml: run_leg label {label!r} is not in FLOORS")
+            continue
+        seen[label] = seen.get(label, 0) + 1
+        expected = FLOORS[label]
+        if floor != expected:
+            floor_failures.append(
+                f"rust.yml: db floor for {label} is {floor}, FLOORS says {expected}"
+            )
+        # startswith is intentional: a prefix filter covers its submodules.
+        count = sum(1 for name in ignored if name.startswith(filter_))
+        if count != expected:
+            floor_failures.append(
+                f"rust.yml:db-tests:{label}: {count} ignored tests match {filter_!r}, "
+                f"floor is {expected}"
+            )
+    for label in FLOORS:
+        if seen.get(label, 0) != 1:
+            floor_failures.append(
+                f"rust.yml: expected exactly one run_leg for {label!r}, found {seen.get(label, 0)}"
+            )
+
+    if floor_failures:
+        failures.extend(floor_failures)
+    else:
+        checks.append(
+            f"all {len(FLOORS)} db contract floors intact ({sum(FLOORS.values())} total)"
+        )
 
     if args.remote:
         repo = subprocess.run(
