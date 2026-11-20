@@ -19,7 +19,7 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@internationalized/date": "^3.12.3",
-		"@lucide/svelte": "^1.33.0",
+		"@lucide/svelte": "1.33.0",
 		"@playwright/test": "^1.60.0",
 		"@sveltejs/adapter-node": "^5.5.4",
 		"@sveltejs/kit": "^2.63.0",
@@ -50,7 +50,6 @@
 	"dependencies": {
 		"bits-ui": "^2.19.0",
 		"clsx": "^2.1.1",
-		"lucide-svelte": "^1.0.1",
 		"tailwind-merge": "^3.6.0"
 	}
 }
