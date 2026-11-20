@@ -1,0 +1,23 @@
+name: Branch Protection Audit (daily, advisory)
+# 091: deterministic daily audit of the required status contexts on dev/main.
+# Advisory only -- NOT a required check. The script fails (non-zero) when the
+# live contexts diverge from the ADR-0003 set of four, so drift is visible but
+# does not gate merges. The PAT is exposed solely as GH_TOKEN in the audit step
+# env (consumed by `gh`); it is never placed in a URL, argument or log line.
+on:
+  schedule:
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  branch-protection-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Audit required contexts on dev/main
+        env:
+          GH_TOKEN: ${{ secrets.FLORA_BRANCH_PROTECTION_TOKEN }}
+        run: python3 scripts/ci/check_gate_integrity.py --remote
