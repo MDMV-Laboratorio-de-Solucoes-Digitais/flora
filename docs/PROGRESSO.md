@@ -191,3 +191,7 @@ permanecem intactas; apenas acréscimos.
 
 - SE substituiu a regra de merge com aprovador distinto/revisão deliberada por: CI/CD GREEN basta para merge autônomo em `dev/`; se não inspirar confiança, o 80/20 imediato é reforçar o CI/CD até inspirar. Emenda em `docs/adr/0003-autonomous-merge-under-deterministic-gates.md` (Status `Accepted`), prevalecendo sobre cláusulas anteriores de aprovação.
 - Âncora: `feature/085-local-first-seed` @ `2a9b7e76b`; PR #309. As notas "sem merge" das `09:34Z` permanecem como histórico, não autoritativas. Nenhum código/gate/workflow tocado.
+
+### Merge autônomo #309 — 2026-11-20T09:49:31Z
+
+- PR #309 mesclado em `dev/` sob a regra CI/CD GREEN; merge commit `f350b2774`. Gate `check_gate_integrity.py` PASS no HEAD mesclado; 4 required checks veridos ao vivo antes do merge; `dev` local alinhado. Sem auto-merge/force-push/deleção de branch. **[NV]** produção/Forgejo/aprovações fora do gate.
