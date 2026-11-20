@@ -209,3 +209,12 @@ permanecem intactas; apenas acréscimos.
 - **Evidência:** gate `all 10 db contract floors intact (58 total)` exit 0; `--list` → 4; leg `--ignored --test-threads=1` → 4 passed/4. R4 aprovado; R7 registrado. Nenhum validation/release tocado.
 - **Contagens (snapshot 2026-11-20T10:50Z):** `specs/` 76, `.specify/assessments/` 73, `.specify/validations/` 72, `.specify/releases/` 72, `.specify/bugs/` 4, `docs/research/` 137 sem `index.md` (138 com ele). Apêndice append-only; cifras antigas permanecem como registro histórico do momento da medição.
 - **[NV]** CI do PR, merge, produção/Forgejo e aprovações ao vivo: reconsultar antes de qualquer decisão de merge.
+
+## Estado verificado — 2026-11-20T11:06Z (ciclo 088; append-only)
+
+- **Âncora:** `.specify/feature.json` → `specs/088-dynamic-gate-oracle`; branch `feature/088-dynamic-gate-oracle` @ `cbc885383`. Estado remoto/CI/PR ao vivo: **[NV]**; cabeçalho histórico `:1` e todas as notas anteriores intactas.
+- **Causa raiz recorrente:** o guarda `scripts/ci/check_gate_integrity.py` era um espelho entre `FLOORS` e as legs `run_leg` do `rust.yml`: duas listas escritas à mão, sem visão da workspace de testes. Os `#[ignore]` esquecidos em 086 (RBAC) e 087 (bootstrap) passaram batido por esse motivo.
+- **Oráculo dinâmico:** `LEG_RE` extrai as 10 legs `run_leg <label> <filter> <floor>`; `cargo test -p flora-tests -- --ignored --list` descobre os testes (stdout); contagem por `startswith(filter_)`, exatamente uma leg por label e piso igual à contagem. Divergência (rc != 0, lista vazia, label desconhecido, piso/contagem diferentes, leg duplicada) falha fechado.
+- **Evidência local:** gate `all 10 db contract floors intact (58 total)` → exit 0; `python3 -m py_compile` → exit 0; diff 1 arquivo (`scripts/ci/check_gate_integrity.py`, `+59/−5`). R4/R7 em materialização no snapshot 11:06Z; nenhum validation/release existente tocado.
+- **Contagens (snapshot 11:06Z):** `specs/` 77, `.specify/assessments/` 74, `.specify/validations/` 73, `.specify/releases/` 73, `.specify/bugs/` 4, `docs/research/` 137 sem `index.md` (138 com ele). `find` no checkout confirma 78/75 (incluindo spec/assessment 088 em curso), 73/73/4 e research 138 = 137 + `index.md`. Apêndice append-only; cifras antigas permanecem como registro do momento da medição.
+- **[NV]** CI do PR, merge, produção/Forgejo e aprovações ao vivo: reconsultar antes de qualquer decisão de merge.
