@@ -266,3 +266,7 @@ permanecem intactas; apenas acréscimos.
 - **Produção:** app e DNS prontos; deploy condicionado à promoção de `main` (PR #318), fora do gate de merge (ADR-0003). Nenhum deploy/promoção executado; **[NV]** estado ao vivo de Coolify, FQDN e revisão.
 - **Advisories:** decisão 089/091/092 mantida — **sem promoção** de checagem de advisories a required check. Gate segue `python3 scripts/ci/check_gate_integrity.py` com os 4 required checks da ADR-0003; `dependency-review` permanece required e a correção é via versões corrigidas, não por flexibilização. Scripts SDD fora de gate e de relatórios (089/091).
 - **Escopo:** apêndice datado; nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou produção alterado por esta nota; nenhuma credencial exposta. **[NV]** CI, proteção, deploy, Forgejo e aprovações ao vivo.
+
+### Promoção e deploy — 2026-11-20T20:38Z
+
+- PR #318 mesclado; `main=761539b9f`. 4 required checks verdes no head promovido; espelho Forgejo de `main` sincronizado. App produção `9q3wuuwkur2kl27py0si785n`, FQDN `https://flora.mdmv.qzz.io`, DNS ativo. Deploy em curso; health e commit efetivo **[NV]** até confirmação.
