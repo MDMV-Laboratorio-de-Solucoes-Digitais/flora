@@ -694,3 +694,11 @@ anterior foi alterada.
 - Commits: `9b43766531` (código/testes) e `b6b35b3db2` (documentação/artefatos/aparato). PR **#309** aberto às `03:26:56Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/309 — sem merge, auto-merge, force-push ou deleção.
 - Scripts SDD da factory executados com `--root .`: `FAIL` por dívida legada em 75 specs (não introduzida neste ciclo); gate do alvo PASS. Aviso do push sobre 29 vulnerabilidades Dependabot no branch default é preexistente **[NV]**.
 - **[NV]** CI do PR, aprovação de maintainer, merge, Forgejo, produção, verificação de e-mail (FR-012 aceita só em instalação vazia), carga/concorrência em produção. Próximo 80/20: nenhum candidato autônomo seguro restante; RBAC no CI, emenda constitucional, Tauri e OTLP dependem de maintainer/SE.
+
+## Revalidação determinística — 2026-11-20T09:34:46Z
+
+- Blocos 0.a/0.b/1/2/3 reexecutados: alvo ativo confirmado (`projetos/flora`, cwd decoy sem `.specify/`), gate PASS, codegraph sincronizado, 2 candidatos Archify válidos e nenhum HTML stale.
+- PR **#309** `OPEN`, `MERGEABLE`, 12 check-runs concluídos (11 success + 1 skipped), `reviewDecision` vazio, zero reviews. Proteção `dev` via `gh api`: 4 checks obrigatórios, `enforce_admins=true`, `required_pull_request_reviews=null`.
+- Decisão: **sem merge**. A policy explícita deste prompt exige aprovador distinto e revisão deliberada; isso não é observável com zero reviews, e autor não pode aprovar o próprio PR. Nenhum auto-merge/force-push/deleção.
+- `[NV]` parcialmente resolvido: CI checks e proteção de `dev` observados ao vivo via `gh`. Permanecem `[NV]`: aprovação de maintainer, merge/produção, Forgejo, segurança da cadeia de dependências e carga.
+- Contagens: specs 75, assessments 72, validations 71, releases 71, bugs 4, research 137/138. Scripts SDD da factory seguem `FAIL` por baseline legada (não regressão 085). Próximo 80/20: nenhum candidato autônomo seguro; depende de maintainer/SE.

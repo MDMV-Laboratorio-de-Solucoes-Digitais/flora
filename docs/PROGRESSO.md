@@ -179,3 +179,10 @@ permanecem intactas; apenas acréscimos.
 - **Exceção FR-012:** o bootstrap não verifica posse do e-mail; aplica-se somente a instalação vazia (zero organizações não-sistema). Registrada em `docs/governance/2026-11-20-085-fr-012-bootstrap-sem-verificacao-email.md`, na spec e no contrato.
 - **Histórico:** cifras anteriores (59/61/62/69/72 etc.) e todas as notas 2026-11-18/19 permanecem intactas — são registros do momento da medição; nenhuma linha foi reescrita. Checklist `security.md` segue com 12 itens reviewer-owned pendentes, sem marcação `[x]`.
 - **[NV]** CI futuro, Forgejo, produção e aprovações ao vivo: reconsultar antes de qualquer merge.
+
+### Revalidação determinística — 2026-11-20T09:34Z
+
+- Gate autoritativo PASS; `gh pr checks 309` mostra 11 `pass` + 1 `skipping`, sem pendências; `reviewDecision` vazio e zero reviews. Proteção de `dev`: 4 required checks, `enforce_admins=true`, nenhum review obrigatório.
+- Contagens recontadas: specs 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem `index.md` (138 com ele). Cifras 70/70 anteriores preservadas como registro do snapshot 03:27Z.
+- Não existe documento literal “GDD” no repo; o checklist de qualidade `specs/085-local-first-seed/checklists/security.md` permanece reviewer-owned (12 itens `[ ]`), conforme semaphore de implement. Nenhum marcador foi alterado.
+- Scripts SDD da factory em `ee71d8db` com `--root .`: os 4 continuam `FAIL` por dívida legada em 75 specs (baseline da hub, não aplicável ao alvo). Nenhum registro novo do ciclo 085; gate do alvo PASS. **[NV]** produção/Forgejo/aprovação de maintainer.

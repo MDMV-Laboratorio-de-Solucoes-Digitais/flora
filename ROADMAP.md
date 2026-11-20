@@ -267,3 +267,9 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Ciclo 085 concluído localmente: bootstrap one-time com E2E real `201` → `409` e `GET /api/v1/tasks` `200` com token; rota pública documentada em `specs/085-local-first-seed/contracts/bootstrap.md`. Sem mudança no roadmap estratégico.
 - **Exceção FR-012 (registrada):** bootstrap sem verificação de e-mail, somente em instalação vazia; nota em `docs/governance/2026-11-20-085-fr-012-bootstrap-sem-verificacao-email.md`.
 - **Fora do roadmap / [NV]:** leg RBAC no CI (aprov maintainer), emenda constitucional, CI futuro, Forgejo e produção; merge apenas após CI verde observada ao vivo.
+
+### Revalidação determinística — 2026-11-20T09:34Z
+
+- Gate PASS e PR #309 com checks verdes, sem conflitos; branch `feature/085-local-first-seed` é a única não mesclada em `dev`.
+- Contagens atuais: specs 75, assessments 72, validations **71**, releases **71**, bugs 4; research 137/138.
+- Mesmo com `required_pull_request_reviews=null` na proteção de `dev`, a regra explícita deste prompt exige aprovador distinto; ausência de reviews mantém o PR aberto, sem auto-merge/force-push.
