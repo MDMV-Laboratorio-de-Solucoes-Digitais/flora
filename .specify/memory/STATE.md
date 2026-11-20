@@ -797,3 +797,9 @@ anterior foi alterada.
 - **Produção:** app de produção e DNS prontos; deploy depende de `main` promovido (PR #318). Fora do gate de merge (ADR-0003); nenhum deploy executado por esta nota. **[NV]** estado ao vivo de Coolify/FQDN/revisão.
 - **Gate advisory:** decisão 089/091/092 reafirmada — **sem promoção** de checagem de advisories a required check. `dependency-review` já é um dos 4 required checks; a correção é adotar as versões corrigidas, não relaxar o gate. Única autoridade: `python3 scripts/ci/check_gate_integrity.py`; nenhum script SDD promovido (089/091).
 - **Escopo:** apenas apêndices em `STATE.md`/`PROGRESSO.md` e o novo documento de governança. Nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou produção alterado por esta nota; nenhuma credencial exposta. **[NV]** CI/proteção/deploy/Forgejo/aprovações ao vivo.
+
+### Promoção dev→main e deploy — 2026-11-20T20:38Z
+
+- PR **#318** (`dev→main`) mesclado às **20:38:11Z**; merge commit `761539b9ffa7ecd4c395942e10b8ecf7e483fefd`. `main` passou a ser a linha de produção autorizada pelo SE. Rollback = reverter o merge commit, sem force-push.
+- Rollup verde no head `378c4b8cd`: 4 required checks (`frontend-build`, `rust-build`, `db-tests`, `dependency-review`) aprovados; `e2e-browser` e `supply-chain-vet` informativos verdes; `mirror` em `main` concluído com sucesso (`44813149647`). `dependency-review` limpo após o ciclo 093.
+- App de produção Flora no Coolify: UUID `9q3wuuwkur2kl27py0si785n`, branch `main`, FQDN `https://flora.mdmv.qzz.io`; DNS A `flora.mdmv.qzz.io` criado e verificado publicamente (Cloudflare proxy). Deploy disparado pelo agente de ligação da MDMV-Autonoma; status final e `/health` **[NV]** até confirmação.
