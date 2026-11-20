@@ -259,3 +259,11 @@ Itens “verificados” exigem evidência executada; caso contrário marcar NV.
 O intervalo 001–070 da nota `04:22:55Z` permanece; as contagens finais após
 artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 4 bugs / 137 research (138 com `index.md`). Nada acima foi reescrito.
+
+## Estado verificado — 2026-11-20 (ciclo 085; append-only)
+
+- Âncora `feature/085-local-first-seed@38184fa50`; `check_gate_integrity.py` PASS (4 required checks, 8 pisos / 51).
+- Contagens atuais por `find`: `specs/` 75 diretórios, assessments 72, validations 70, releases 70, bugs 4, research 137 (138 com `index.md`). Cabeçalho histórico “ciclos 011–046” e notas 01:58Z / 04:22:55Z / 23:12Z permanecem intactos.
+- Ciclo 085 concluído localmente: bootstrap one-time com E2E real `201` → `409` e `GET /api/v1/tasks` `200` com token; rota pública documentada em `specs/085-local-first-seed/contracts/bootstrap.md`. Sem mudança no roadmap estratégico.
+- **Exceção FR-012 (registrada):** bootstrap sem verificação de e-mail, somente em instalação vazia; nota em `docs/governance/2026-11-20-085-fr-012-bootstrap-sem-verificacao-email.md`.
+- **Fora do roadmap / [NV]:** leg RBAC no CI (aprov maintainer), emenda constitucional, CI futuro, Forgejo e produção; merge apenas após CI verde observada ao vivo.
