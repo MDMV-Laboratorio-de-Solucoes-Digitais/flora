@@ -725,3 +725,13 @@ anterior foi alterada.
 - **Correção durante verificação:** primeiro filtro `contract::rbac::db_` casou 0 testes; substituído por `contract::rbac::db::db_` após `cargo test -- --list`. Leg local: **3 passed**. Gate: **9 legs / 54 pisos**, PASS.
 - Gate autoritativo PASS, `cargo test --workspace` verde, `git diff --check` limpo; artefatos R1/R4/R7 criados (decision go, spec, plan, tasks 6/6, validate aprovado, release `0.4.0→0.4.1`). Sem código de produto tocado.
 - Próximo: PR, CI green e merge autônomo sob ADR-0003 emendada; sem aprovação humana. **[NV]** produção/Forgejo/dependências.
+
+## Atualização — ciclo 087 (2026-11-20T10:50Z; append-only)
+
+- **Âncora:** `.specify/feature.json` → `specs/087-bootstrap-ci-leg`; branch `feature/087-bootstrap-ci-leg` @ `367a50e79`. Identidade resolvida por `feature.json`, nunca por nome de branch. CI/remoto ao vivo: **[NV]**.
+- **Gap P0 fechado (fora do gate até este ciclo):** 4 contratos `#[ignore]` em `flora-tests/src/contract/bootstrap.rs` (`contract::bootstrap::tests::db_`) nunca eram exercitados no CI. Adicionado `run_leg bootstrap contract::bootstrap::tests::db_ 4` em `.github/workflows/rust.yml` e `"bootstrap": 4` em `scripts/ci/check_gate_integrity.py`.
+- **Diff mínimo:** 2 arquivos / 2 linhas alteradas (`+1` em cada, `0−`); nenhum teste, gate adicional ou código de produto tocado; `git diff --check` limpo.
+- **Correção do filtro após mismatch de regex:** o filtro longo `...::db_bootstrap_` casava 0 testes e não satisfazia a regex do guarda (`:118`); substituído por `contract::bootstrap::tests::db_`, que cobre os mesmos 4 testes e casa a regex existente sem relaxá-la. `cargo test -p flora-tests -- --list | grep 'contract::bootstrap::tests::db_' | wc -l` → 4.
+- **Evidência:** gate `all 10 db contract floors intact (58 total)` → exit 0; leg `cargo test -p flora-tests contract::bootstrap::tests::db_ -- --ignored --test-threads=1` → 4 passed/4. R4 aprovado; R7 registrado.
+- **Contagens (snapshot 2026-11-20T10:50Z, antes da materialização dos artefatos 087):** `specs/` 76, `.specify/assessments/` 73, `.specify/validations/` 72, `.specify/releases/` 72, `.specify/bugs/` 4, `docs/research/` 137 sem `index.md` (138 com ele). Histórico preservado; cifras anteriores são do momento da medição; nenhum validation/release reescrito.
+- **[NV]** CI do PR, merge, produção/Forgejo e aprovações ao vivo: reconsultar antes de qualquer decisão de merge.
