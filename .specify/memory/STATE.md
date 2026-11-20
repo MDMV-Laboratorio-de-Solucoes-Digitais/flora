@@ -717,3 +717,11 @@ anterior foi alterada.
 - Evidência pré-merge: 4 runs do HEAD `c7d9668f2` concluídos com sucesso; 2 execuções de cada required check (`frontend-build`, `rust-build`, `db-tests`, `dependency-review` — uma `success`, uma `skipping` PR-only), `e2e-browser` e `supply-chain-vet` informativos verdes; `gh api branches/dev/protection` com `strict=true`, 4 contexts e `enforce_admins=true`; `check_gate_integrity.py` PASS.
 - Nenhum auto-merge, force-push, deleção de branch ou approval fabricado. Branch `feature/085-local-first-seed` preservada.
 - **[NV]** restante: produção/Forgejo, segurança de dependências e aprovações fora do gate; próximo 80/20 continua sem candidato autônomo seguro além de reforçar CI/CD se ele deixar de inspirar confiança.
+
+## Ciclo 086 — reforço do CI/CD (leg RBAC) — 2026-11-20T10:30Z
+
+- **Âncora:** `.specify/feature.json` → `specs/086-rbac-ci-leg`; branch `feature/086-rbac-ci-leg` a partir de `dev@9b05abb9d`. Factory-fonte `ee71d8db` (HEAD atual `b1deab15f`, sujo, não transplantado).
+- **Gap fechado:** 3 contratos `#[ignore]` em `flora-tests/src/contract/rbac.rs` nunca rodavam no CI. Adicionado `run_leg rbac contract::rbac::db::db_ 3` em `.github/workflows/rust.yml:115` e `"rbac": 3` em `scripts/ci/check_gate_integrity.py:51`.
+- **Correção durante verificação:** primeiro filtro `contract::rbac::db_` casou 0 testes; substituído por `contract::rbac::db::db_` após `cargo test -- --list`. Leg local: **3 passed**. Gate: **9 legs / 54 pisos**, PASS.
+- Gate autoritativo PASS, `cargo test --workspace` verde, `git diff --check` limpo; artefatos R1/R4/R7 criados (decision go, spec, plan, tasks 6/6, validate aprovado, release `0.4.0→0.4.1`). Sem código de produto tocado.
+- Próximo: PR, CI green e merge autônomo sob ADR-0003 emendada; sem aprovação humana. **[NV]** produção/Forgejo/dependências.
