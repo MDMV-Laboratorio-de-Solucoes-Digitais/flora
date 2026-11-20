@@ -186,3 +186,8 @@ permanecem intactas; apenas acréscimos.
 - Contagens recontadas: specs 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem `index.md` (138 com ele). Cifras 70/70 anteriores preservadas como registro do snapshot 03:27Z.
 - Não existe documento literal “GDD” no repo; o checklist de qualidade `specs/085-local-first-seed/checklists/security.md` permanece reviewer-owned (12 itens `[ ]`), conforme semaphore de implement. Nenhum marcador foi alterado.
 - Scripts SDD da factory em `ee71d8db` com `--root .`: os 4 continuam `FAIL` por dívida legada em 75 specs (baseline da hub, não aplicável ao alvo). Nenhum registro novo do ciclo 085; gate do alvo PASS. **[NV]** produção/Forgejo/aprovação de maintainer.
+
+### Decisão do SE — 2026-11-20 (append-only)
+
+- SE substituiu a regra de merge com aprovador distinto/revisão deliberada por: CI/CD GREEN basta para merge autônomo em `dev/`; se não inspirar confiança, o 80/20 imediato é reforçar o CI/CD até inspirar. Emenda em `docs/adr/0003-autonomous-merge-under-deterministic-gates.md` (Status `Accepted`), prevalecendo sobre cláusulas anteriores de aprovação.
+- Âncora: `feature/085-local-first-seed` @ `2a9b7e76b`; PR #309. As notas "sem merge" das `09:34Z` permanecem como histórico, não autoritativas. Nenhum código/gate/workflow tocado.

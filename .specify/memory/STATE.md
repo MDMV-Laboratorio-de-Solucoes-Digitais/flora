@@ -702,3 +702,11 @@ anterior foi alterada.
 - Decisão: **sem merge**. A policy explícita deste prompt exige aprovador distinto e revisão deliberada; isso não é observável com zero reviews, e autor não pode aprovar o próprio PR. Nenhum auto-merge/force-push/deleção.
 - `[NV]` parcialmente resolvido: CI checks e proteção de `dev` observados ao vivo via `gh`. Permanecem `[NV]`: aprovação de maintainer, merge/produção, Forgejo, segurança da cadeia de dependências e carga.
 - Contagens: specs 75, assessments 72, validations 71, releases 71, bugs 4, research 137/138. Scripts SDD da factory seguem `FAIL` por baseline legada (não regressão 085). Próximo 80/20: nenhum candidato autônomo seguro; depende de maintainer/SE.
+
+## Decisão do SE — merge autônomo sob CI/CD GREEN — 2026-11-20 (append-only)
+
+- **Decisão (SE, 2026-11-20):** substituída a regra "Merge requer check obrigatório verde observado, aprovador distinto e revisão deliberada..." por "O CI/CD GREEN deve nos fornecer confiança suficiente para fazer merge para dev/ de forma autônoma sem necessidade de aprovação. Caso o CI/CD não inspire confiança, o próximo 80/20 IMEDIATO é reforçar o CI/CD até garantir confiança para conduzir o merge para dev/ sem necessidade de aprovação." Registrada como Emenda 2026-11-20 em `docs/adr/0003-autonomous-merge-under-deterministic-gates.md` (Status `Accepted` inalterado).
+- **Prevalência:** a nova regra prevalece sobre qualquer cláusula anterior de aprovador distinto/revisão deliberada. A decisão "sem merge" da revalidação `2026-11-20T09:34:46Z` (linha 702) e exigências equivalentes em `docs/PROGRESSO.md` seguem como histórico, mas não são mais autoritativas para decisões de merge.
+- **Âncora:** branch `feature/085-local-first-seed` @ HEAD `2a9b7e76b`; PR **#309** — https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/309 — 12 check-runs concluídos (11 success + 1 skipped), zero reviews ao registrá-la.
+- **Consequência operacional:** com CI/CD GREEN observado, conduzir merge autônomo para `dev/` sem aguardar aprovação de aprovador distinto/revisão deliberada. Se o CI/CD não inspirar confiança, o próximo 80/20 IMEDIATO é reforçar o CI/CD até inspirar confiança — não escalar para aprovador humano.
+- **Escopo:** apenas documentação de governança/estado; nenhum código, workflow, gate ou check alterado; nenhum merge/auto-merge realizado nesta nota.

@@ -33,3 +33,16 @@ O proprietário determinou que push, PR e merge **nunca** devem ser decisões hu
 ## Verificação
 
 Evidência em `.specify/bugs/rust-toolchain-pin-bump-1-98-1/test.md` e no log do PR: contagens de testes por leg, nomes de check no rollup e configuração de proteção via `gh api`. Itens não executados são marcados `NV`, nunca reivindicados como verdes.
+
+## Emenda 2026-11-20 — confirmação do SE
+
+Decisão do proprietário (SE) em 2026-11-20, registrada literalmente. Esta emenda prevalece sobre qualquer cláusula anterior que exija aprovador distinto ou revisão deliberada como condição de merge.
+
+- **Regra antiga (substituída):** "Merge requer check obrigatório verde observado, aprovador distinto e revisão deliberada..."
+- **Regra nova (vigente):** "O CI/CD GREEN deve nos fornecer confiança suficiente para fazer merge para dev/ de forma autônoma sem necessidade de aprovação. Caso o CI/CD não inspire confiança, o próximo 80/20 IMEDIATO é reforçar o CI/CD até garantir confiança para conduzir o merge para dev/ sem necessidade de aprovação."
+
+A regra nova prevalece sobre qualquer cláusula anterior de aprovador distinto/revisão deliberada — incluindo a decisão "sem merge" registrada em `.specify/memory/STATE.md` na revalidação de `2026-11-20T09:34:46Z` e exigências equivalentes em `docs/PROGRESSO.md` na mesma data. Esses registros permanecem como histórico, mas deixam de ser autoritativos para decisões de merge.
+
+Reforço operacional: **CI/CD GREEN é suficiente** para conduzir o merge para `dev/` de forma autônoma, sem aprovação. Se o CI/CD **não inspirar confiança**, o próximo 80/20 **IMEDIATO** é reforçar o CI/CD até que ele inspire confiança suficiente para conduzir o merge para `dev/` sem necessidade de aprovação — não escalar para aprovação humana.
+
+- **Status inalterado:** Accepted. A Decisão e as Consequências acima permanecem; apenas a condição de aprovador/revisão é superada por esta emenda.
