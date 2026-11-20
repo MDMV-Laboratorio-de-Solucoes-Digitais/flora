@@ -761,3 +761,11 @@ anterior foi alterada.
 - Workflow `.github/workflows/mirror-to-forgejo.yml` criado (event-driven, `permissions: {}`, secrets `FORGEJO_USER`/`FORGEJO_TOKEN`, sem force/mirror, job não required); parse YAML OK (`jobs=['mirror']`, `on push dev/main + tags v*`).
 - Sincronização manual imediata executada com `git push origin refs/heads/dev:refs/heads/dev`: **`f12a328c4..15203ee78 dev -> dev`**, exit 0. Ancestralidade confirmada por `git merge-base --is-ancestor origin/dev dev` antes do push; nenhum force-push.
 - **[NV]** provisionamento dos secrets no GitHub e execução futura do job; a configuração automática depende de `FORGEJO_USER`/`FORGEJO_TOKEN` com `write:repository` apenas em `MDMV/flora-workspace`.
+
+## Ciclo 090 — bump de segurança rustls — 2026-11-20T15:05Z
+
+- **Âncora:** `.specify/feature.json` → `specs/090-rustls-security-bump`; branch `feature/090-rustls-security-bump` a partir de `dev@824ba00e9`. Factory-fonte `ee71d8db` (atual `b1deab15f`, sujo, não transplantado).
+- **Mudança:** `Cargo.lock` `rustls 0.23.43 → 0.23.46` (`cargo update -p rustls --precise 0.23.46 --offline`) e `supply-chain/config.toml:1116` exemption ajustada para `0.23.46`/`safe-to-deploy`. Manifest `Cargo.toml:189` inalterado (`rustls = "0.23"`). O cargo normalizou uma aresta de `getrandom` em `tempfile` sem trocar versões.
+- **Advisories fechados:** RUSTSEC-2026-0285/0346/0348/0349 (4 canônicos; 2 medium + 2 low); bônus 0347. Nenhum critical/high. Sem promoção de `cargo deny advisories` a required check, conforme decisão 089.
+- **Verificação:** gate PASS `all 10 db contract floors intact (58 total)` (offline, exit 0); `cargo test --workspace` 0 falhas; `cargo deny check bans licenses sources` → `bans ok, licenses ok, sources ok`; `cargo vet --locked --no-minimize-exemptions` → `Vetting Succeeded (424 exempted)`. `git diff --check` limpo. Scripts SDD da factory seguem FAIL por baseline legada — não são gate (decisão 089).
+- R4 aprovado; R7 `0.4.4→0.4.5` com rollback restaurando lock/exemption. **[NV]** CI do PR, merge, contagem viva de alerts e produção.

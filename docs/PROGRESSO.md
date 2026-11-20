@@ -233,3 +233,8 @@ permanecem intactas; apenas acréscimos.
 
 - Workflow `.github/workflows/mirror-to-forgejo.yml` criado e parseado com sucesso; evento `push` em `dev`/`main`/tags `v*`, `permissions: {}`, segredos via `env`, guarda de ancestralidade e push sem force.
 - Espelho sincronizado agora: `f12a328c4..15203ee78 dev -> dev` (exit 0, fast-forward). **[NV]** secrets e próximas execuções do job.
+
+### Ciclo 090 — bump rustls 0.23.46 — 2026-11-20T15:05Z
+
+- Atualização cirúrgica de `Cargo.lock` (`rustls 0.23.43→0.23.46`) e da exemption cargo-vet correspondente; manifest inalterado. Fecha 4 advisories canônicos (2 medium, 2 low), sem critical/high.
+- Gates locais verdes: gate 10 legs/58, `cargo test --workspace`, `cargo deny check bans licenses sources`, `cargo vet --locked` e `git diff --check`. R4 aprovado; R7 `0.4.4→0.4.5`. **[NV]** CI do PR/merge/produção.
