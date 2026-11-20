@@ -327,3 +327,18 @@ artefatos do ciclo 072. Estado final verificado por `find`: `specs/` **62
 diretórios**, assessments **59**, validations **58**, releases **58**, bugs
 **4**, research **137** arquivos sem `index.md` (138 com ele). A nota anterior
 permanece como registro do momento da medição; nenhuma linha foi reescrita.
+
+## Estado verificado — 2026-11-20 (ciclo 085; append-only)
+
+- **Âncora:** `feature/085-local-first-seed@38184fa50`; gate autoritativo local PASS (4 required checks, 8 pisos / 51).
+- **Contagens por `find`:** `specs/` 75 diretórios, `.specify/assessments/` 72, `.specify/validations/` 70, `.specify/releases/` 70, `.specify/bugs/` 4, `docs/research/` 137 sem `index.md` (138 com ele).
+- **Ciclo 085:** first-seed local one-time bootstrap concluído com evidência local — clippy/contratos/vitest validados e E2E real `POST /api/v1/bootstrap` → `201`, segunda chamada → `409`, `GET /api/v1/tasks` com token → `200`. Fluxo de login OIDC existente permanece inalterado (`SC-005`).
+- **FR-012:** exceção documentada — sem verificação de e-mail no bootstrap, exclusivamente em instalação vazia; ver `docs/governance/2026-11-20-085-fr-012-bootstrap-sem-verificacao-email.md`.
+- **Histórico preservado:** citações 001–033 e cifras 55/54, 58/57, 59/58, 61/62/69/72 permanecem como registro das respectivas datas; esta nota apenas as sucede.
+- **[NV]** CI futura, Forgejo, produção e aprovações; nenhuma afirmação sobre estado remoto ao vivo.
+
+### Revalidação determinística — 2026-11-20T09:34Z
+
+- Alvo operacional confirmado: `/home/luis/development/MDMV/projetos/flora`; cwd `Arquivados/flora` é decoy sem `.specify/`. Gate `check_gate_integrity.py` PASS; PR #309 com 12 check-runs concluídos (11 success, 1 skipped) e `mergeable=clean`.
+- Contagens recontadas: `specs/` 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem índice (138 com ele). As cifras 70/70 acima são do snapshot 03:27Z e permanecem como histórico.
+- Proteção de `dev` verificada via `gh api`: 4 checks obrigatórios, `enforce_admins=true`, `required_pull_request_reviews=null`. A policy deste prompt ainda exige aprovador distinto; como não há reviews, merge não foi realizado. **[NV]** produção/Forgejo.

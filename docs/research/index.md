@@ -214,3 +214,11 @@ CI/remoto/produção: **[NV]**.
 ### Estado verificado — 2026-11-19T23:12Z (ciclo 083; append-only)
 
 Âncora local: base `33d174095` no snapshot 23:11Z; o cabeçalho histórico `2026-11-19T01:58Z` (`:3`) permanece intacto. Gate determinístico local `python3 scripts/ci/check_gate_integrity.py` → **PASS** (4 checks), evidência de `2026-11-19T23:11Z`. Contagens por `find` neste checkout (`2026-11-19T23:11Z`): `specs/` 72, `.specify/assessments/` 69, `.specify/validations/` 68, `.specify/releases/` 68, `.specify/bugs/` 4, `docs/adr/` 6; este diretório segue com 138 arquivos `.md` (137 sem `index.md`). Cobertura 137/137 links, `missing=[]`, herdada da verificação do ciclo 069 (`:186`), não reaberta. Escopo restrito aos dois apêndices em EOF; notas anteriores preservadas, nenhum link reescrito. Resíduo de rastreabilidade: títulos sem prefixo de ciclo exigem inferência e não foram renomeados. Estado remoto/CI/PR/produção: **[NV]**.
+
+### Estado verificado — 2026-11-20 (ciclo 085; append-only)
+
+Contagens locais por `find` (`2026-11-20`): `specs/` 75 diretórios, `.specify/assessments/` 72, `.specify/validations/` 70, `.specify/releases/` 70, `.specify/bugs/` 4, `docs/adr/` 6; este diretório segue com **137** arquivos sem `index.md` (**138** com ele). Cobertura 137/137 links (`missing=[]`), herdada da verificação do ciclo 069 (`:186`), não reaberta. Ciclo 085 concluído com evidência local (gate PASS; clippy/contratos/vitest; E2E bootstrap `201`/`409` e `GET /api/v1/tasks` `200`); exceção FR-012 registrada em `docs/governance/2026-11-20-085-fr-012-bootstrap-sem-verificacao-email.md` — sem verificação de e-mail, somente em instalação vazia. Cabeçalho `2026-11-19T01:58Z` (`:3`) e notas anteriores preservados; nenhum link reescrito. **[NV]** CI futuro, Forgejo e produção.
+
+### Revalidação — 2026-11-20T09:34Z
+
+Recontagem: `specs/` 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem `index.md` (138 com ele); cobertura 137/137 links preservada. Nenhum link reescrito. **[NV]** CI futuro/produção/Forgejo.

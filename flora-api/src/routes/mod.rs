@@ -3,6 +3,7 @@
 use axum::{Router, routing::get};
 
 pub mod auth;
+pub mod bootstrap;
 pub mod channels;
 pub mod files;
 pub mod health;
@@ -27,6 +28,8 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/llms.txt", get(health::llms_txt))
         // Auth routes (no auth required for login/callback; auth required for logout/refresh)
         .nest("/api/v1/auth", auth::create_auth_router())
+        // One-time public bootstrap for an empty installation (no auth required)
+        .nest("/api/v1", bootstrap::create_bootstrap_router())
         // Protected API routes (require a verified session Bearer token;
         // organization context comes from the session, not a request header)
         .nest("/api/v1/organizations", org::create_org_router())

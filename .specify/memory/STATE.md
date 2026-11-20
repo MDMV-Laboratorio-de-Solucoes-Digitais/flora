@@ -682,3 +682,31 @@ anterior foi alterada.
 - Verificação: grep zero, `bun pm ls` → 1.33.0, frozen-lockfile/check/lint/42 testes/build/gate green; `analyze` `artifacts=11, errors=[], fr=5, sc=4, tasks=5, go=true`; `LucideVerifier`: PASS-WITH-NITS (churn do lock corrigido por `LockFix`), `DiffCheck`: 6 paths/14 símbolos/4 componentes `/icons/*` intactos; R4 aprovado; R7 `0.3.4→0.3.5`.
 - PR **#308** aberto às `00:24:49Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/308 — 21 arquivos, 772 inserções/21 deleções. Conduzir merge após checks verdes, sob autorização do prompt.
 - Encerramento do backlog autônomo: após este ciclo não restam candidatos seguros executáveis sem maintainer — leg RBAC (6,25), emenda constitucional (7,50), Tauri (3,75) e OTLP (1,25–1,67) dependem de aprovação/receptor; duplicatas T-ID são histórico protegido. Manter [NV] para remoto/produção/aprovações.
+
+## Execução e entrega — 2026-11-20T03:27:30Z (ciclo 085; append-only)
+
+- Âncora real: `.specify/feature.json` → `specs/085-local-first-seed`; branch `feature/085-local-first-seed` criada a partir de `dev@38184fa50`. HEAD da factory usado como fonte do aparato: `ee71d8db0a2ba34ef9fc9486f8d18915282beda1` (HEAD atual `b1deab15f`, sujo, não transplantado).
+- Gate autoritativo do alvo (Bloco 0.a): `python3 scripts/ci/check_gate_integrity.py` → **PASS** (4 required contexts, 8 pisos/51 contratos). Provider GitHub Actions; CLI `gh`. `check_production_gate.py`, `hub_docs_gate.py` e `pytest`: **N/A** no alvo.
+- Herança (Bloco 0.b): zero PRs abertos antes do ciclo; 14 branches já integradas em `dev`; worktree `feature/073-state-closure` preservada e limpa; `origin/dev` (Forgejo) é espelho defasado — não usado para merge.
+- Decisão 80/20: única pendência autônoma era o First Seed Journey inutilizável sem IdP (erro `redirect_uri is not allowed` silencioso, depois visível). Implementado `POST /api/v1/bootstrap` one-time, atômico, com guarda de organizações não-sistema, emissão de sessão e UI ligada ao botão "Sprout Workspace".
+- Verificação: baseline TDD vermelho (módulo ausente) → 4 contratos DB + 4 Vitest verdes; `fmt`, `clippy -D warnings`, `cargo test --workspace` (105/59), `svelte-check`, `lint`, `build` e gate PASS. E2E real: 201 → 409 → `/tasks` 200; UI: bootstrap → `Main Workspace` → tarefa criada. Verificador isolado: 3 achados corrigidos (prefixo da rota, topologia de teste, `sub` no contrato).
+- R4 aprovado em `.specify/validations/085-local-first-seed/validate.md`; R7 `0.3.5→0.4.0` com changelog/rollback em `.specify/releases/085-local-first-seed/release.md`; `converge.md` sem novas tarefas. 23/23 tarefas marcadas.
+- Commits: `9b43766531` (código/testes) e `b6b35b3db2` (documentação/artefatos/aparato). PR **#309** aberto às `03:26:56Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/309 — sem merge, auto-merge, force-push ou deleção.
+- Scripts SDD da factory executados com `--root .`: `FAIL` por dívida legada em 75 specs (não introduzida neste ciclo); gate do alvo PASS. Aviso do push sobre 29 vulnerabilidades Dependabot no branch default é preexistente **[NV]**.
+- **[NV]** CI do PR, aprovação de maintainer, merge, Forgejo, produção, verificação de e-mail (FR-012 aceita só em instalação vazia), carga/concorrência em produção. Próximo 80/20: nenhum candidato autônomo seguro restante; RBAC no CI, emenda constitucional, Tauri e OTLP dependem de maintainer/SE.
+
+## Revalidação determinística — 2026-11-20T09:34:46Z
+
+- Blocos 0.a/0.b/1/2/3 reexecutados: alvo ativo confirmado (`projetos/flora`, cwd decoy sem `.specify/`), gate PASS, codegraph sincronizado, 2 candidatos Archify válidos e nenhum HTML stale.
+- PR **#309** `OPEN`, `MERGEABLE`, 12 check-runs concluídos (11 success + 1 skipped), `reviewDecision` vazio, zero reviews. Proteção `dev` via `gh api`: 4 checks obrigatórios, `enforce_admins=true`, `required_pull_request_reviews=null`.
+- Decisão: **sem merge**. A policy explícita deste prompt exige aprovador distinto e revisão deliberada; isso não é observável com zero reviews, e autor não pode aprovar o próprio PR. Nenhum auto-merge/force-push/deleção.
+- `[NV]` parcialmente resolvido: CI checks e proteção de `dev` observados ao vivo via `gh`. Permanecem `[NV]`: aprovação de maintainer, merge/produção, Forgejo, segurança da cadeia de dependências e carga.
+- Contagens: specs 75, assessments 72, validations 71, releases 71, bugs 4, research 137/138. Scripts SDD da factory seguem `FAIL` por baseline legada (não regressão 085). Próximo 80/20: nenhum candidato autônomo seguro; depende de maintainer/SE.
+
+## Decisão do SE — merge autônomo sob CI/CD GREEN — 2026-11-20 (append-only)
+
+- **Decisão (SE, 2026-11-20):** substituída a regra "Merge requer check obrigatório verde observado, aprovador distinto e revisão deliberada..." por "O CI/CD GREEN deve nos fornecer confiança suficiente para fazer merge para dev/ de forma autônoma sem necessidade de aprovação. Caso o CI/CD não inspire confiança, o próximo 80/20 IMEDIATO é reforçar o CI/CD até garantir confiança para conduzir o merge para dev/ sem necessidade de aprovação." Registrada como Emenda 2026-11-20 em `docs/adr/0003-autonomous-merge-under-deterministic-gates.md` (Status `Accepted` inalterado).
+- **Prevalência:** a nova regra prevalece sobre qualquer cláusula anterior de aprovador distinto/revisão deliberada. A decisão "sem merge" da revalidação `2026-11-20T09:34:46Z` (linha 702) e exigências equivalentes em `docs/PROGRESSO.md` seguem como histórico, mas não são mais autoritativas para decisões de merge.
+- **Âncora:** branch `feature/085-local-first-seed` @ HEAD `2a9b7e76b`; PR **#309** — https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/309 — 12 check-runs concluídos (11 success + 1 skipped), zero reviews ao registrá-la.
+- **Consequência operacional:** com CI/CD GREEN observado, conduzir merge autônomo para `dev/` sem aguardar aprovação de aprovador distinto/revisão deliberada. Se o CI/CD não inspirar confiança, o próximo 80/20 IMEDIATO é reforçar o CI/CD até inspirar confiança — não escalar para aprovador humano.
+- **Escopo:** apenas documentação de governança/estado; nenhum código, workflow, gate ou check alterado; nenhum merge/auto-merge realizado nesta nota.

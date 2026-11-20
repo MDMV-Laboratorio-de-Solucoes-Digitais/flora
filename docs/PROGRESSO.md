@@ -170,3 +170,24 @@ permanecem intactas; apenas acréscimos.
 - **Contagens por `find` (`2026-11-19T23:11Z`, neste checkout):** `specs/` 72, `.specify/assessments/` 69, `.specify/validations/` 68, `.specify/releases/` 68, `.specify/bugs/` 4, `docs/research/` 138 arquivos `.md` (137 sem `index.md`), `docs/adr/` 6.
 - **Escopo:** apenas apêndices datados no EOF de `docs/PROGRESSO.md` e `docs/research/index.md`; nenhum outro arquivo alterado.
 - **Histórico:** notas `:3`, `:151`, `:159` e `:159-164` intactas; cifras antigas são do momento da medição.
+
+## Estado verificado — 2026-11-20 (ciclo 085; append-only)
+
+- **Âncora:** branch `feature/085-local-first-seed`, commit local `38184fa50`; gate determinístico `python3 scripts/ci/check_gate_integrity.py` → **PASS** (4 required checks, 8 pisos / 51), medido neste checkout.
+- **Contagens por `find` (2026-11-20, neste checkout):** `specs/` **75** diretórios, `.specify/assessments/` **72**, `.specify/validations/` **70**, `.specify/releases/` **70**, `.specify/bugs/` **4**, `docs/research/` **137** arquivos sem `index.md` (**138** com ele).
+- **Ciclo 085 concluído com evidência local:** clippy, contratos e vitest validados; E2E real `POST /api/v1/bootstrap` → `201`, segunda chamada → `409`, `GET /api/v1/tasks` com token → `200`. Contrato da rota pública: `specs/085-local-first-seed/contracts/bootstrap.md`; nota de arquitetura: `docs/architecture/2026-11-20-085-sem-html-stale-bootstrap.md`.
+- **Exceção FR-012:** o bootstrap não verifica posse do e-mail; aplica-se somente a instalação vazia (zero organizações não-sistema). Registrada em `docs/governance/2026-11-20-085-fr-012-bootstrap-sem-verificacao-email.md`, na spec e no contrato.
+- **Histórico:** cifras anteriores (59/61/62/69/72 etc.) e todas as notas 2026-11-18/19 permanecem intactas — são registros do momento da medição; nenhuma linha foi reescrita. Checklist `security.md` segue com 12 itens reviewer-owned pendentes, sem marcação `[x]`.
+- **[NV]** CI futuro, Forgejo, produção e aprovações ao vivo: reconsultar antes de qualquer merge.
+
+### Revalidação determinística — 2026-11-20T09:34Z
+
+- Gate autoritativo PASS; `gh pr checks 309` mostra 11 `pass` + 1 `skipping`, sem pendências; `reviewDecision` vazio e zero reviews. Proteção de `dev`: 4 required checks, `enforce_admins=true`, nenhum review obrigatório.
+- Contagens recontadas: specs 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem `index.md` (138 com ele). Cifras 70/70 anteriores preservadas como registro do snapshot 03:27Z.
+- Não existe documento literal “GDD” no repo; o checklist de qualidade `specs/085-local-first-seed/checklists/security.md` permanece reviewer-owned (12 itens `[ ]`), conforme semaphore de implement. Nenhum marcador foi alterado.
+- Scripts SDD da factory em `ee71d8db` com `--root .`: os 4 continuam `FAIL` por dívida legada em 75 specs (baseline da hub, não aplicável ao alvo). Nenhum registro novo do ciclo 085; gate do alvo PASS. **[NV]** produção/Forgejo/aprovação de maintainer.
+
+### Decisão do SE — 2026-11-20 (append-only)
+
+- SE substituiu a regra de merge com aprovador distinto/revisão deliberada por: CI/CD GREEN basta para merge autônomo em `dev/`; se não inspirar confiança, o 80/20 imediato é reforçar o CI/CD até inspirar. Emenda em `docs/adr/0003-autonomous-merge-under-deterministic-gates.md` (Status `Accepted`), prevalecendo sobre cláusulas anteriores de aprovação.
+- Âncora: `feature/085-local-first-seed` @ `2a9b7e76b`; PR #309. As notas "sem merge" das `09:34Z` permanecem como histórico, não autoritativas. Nenhum código/gate/workflow tocado.

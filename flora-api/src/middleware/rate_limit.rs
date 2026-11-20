@@ -2,6 +2,7 @@
 //!
 //! Per T014 & FR-020:
 //! - 5 login attempts/minute per IP
+//! - 5 bootstrap attempts/minute per IP
 //! - 20 token refreshes/minute per user/IP
 //! - 10 invite acceptances/hour per IP
 //! - 100 requests/minute default for general endpoints
@@ -134,6 +135,7 @@ enum RateLimitClass {
     Login,
     Refresh,
     Invite,
+    Bootstrap,
     General,
 }
 
@@ -142,7 +144,9 @@ enum RateLimitClass {
 /// Matching by suffix covers the mounted `/api/v1/...` routes and legacy paths
 /// without the prefix. See `routes::mod::create_router` for the mounted prefixes.
 fn classify_endpoint(path: &str) -> RateLimitClass {
-    if path.ends_with("/auth/login") {
+    if path.ends_with("/bootstrap") {
+        RateLimitClass::Bootstrap
+    } else if path.ends_with("/auth/login") {
         RateLimitClass::Login
     } else if path.ends_with("/auth/refresh") {
         RateLimitClass::Refresh
@@ -186,6 +190,7 @@ pub async fn rate_limit_middleware(
     // Determine limit and window based on endpoint (FR-020)
     let (key, limit, window_secs) = match classify_endpoint(path) {
         RateLimitClass::Login => (format!("login:{ip}"), 5, 60),
+        RateLimitClass::Bootstrap => (format!("bootstrap:{ip}"), 5, 60),
         RateLimitClass::Refresh => {
             let user_key = req
                 .headers()
