@@ -803,3 +803,13 @@ anterior foi alterada.
 - PR **#318** (`dev→main`) mesclado às **20:38:11Z**; merge commit `761539b9ffa7ecd4c395942e10b8ecf7e483fefd`. `main` passou a ser a linha de produção autorizada pelo SE. Rollback = reverter o merge commit, sem force-push.
 - Rollup verde no head `378c4b8cd`: 4 required checks (`frontend-build`, `rust-build`, `db-tests`, `dependency-review`) aprovados; `e2e-browser` e `supply-chain-vet` informativos verdes; `mirror` em `main` concluído com sucesso (`44813149647`). `dependency-review` limpo após o ciclo 093.
 - App de produção Flora no Coolify: UUID `9q3wuuwkur2kl27py0si785n`, branch `main`, FQDN `https://flora.mdmv.qzz.io`; DNS A `flora.mdmv.qzz.io` criado e verificado publicamente (Cloudflare proxy). Deploy disparado pelo agente de ligação da MDMV-Autonoma; status final e `/health` **[NV]** até confirmação.
+
+## Atualização — ciclo 094 (2026-11-20; append-only)
+
+- **Âncora:** branch `feature/094-visao-so-pme` @ `fd25d8f8b`; `.specify/feature.json` → `specs/094-visao-so-pme`. Todas as notas 2026-11-18/19/20 e o registro 093 intactos; apenas acréscimo no EOF. Registro canônico: `docs/governance/2026-11-20-094-visao-so-pme-integracoes.md` (novo).
+- **Visão SO PME — diretriz NÃO-normativa:** registrada como nota de governança, sem emenda constitucional, gate, workflow, migration ou código. O gate segue `python3 scripts/ci/check_gate_integrity.py` sob ADR-0003, sem required check novo.
+- **Mapa:** Coolify e Forgejo implementados e verificados; Grafana+VictoriaMetrics e Uptime Kuma deferidos, sem materialização no alvo; agents Autonoma e dark-factory como ligação documental; agents marketing, monetization e seller ausentes no alvo, com estado fora do alvo **[NV]**.
+- **Produção observada:** `/health` **200**; deploy **finished 21:23:59Z** no commit `cee7b0cda`; app `9q3wuuwkur2kl27py0si785n`, FQDN `https://flora.mdmv.qzz.io`. A nota de 20:38Z ("deploy em curso, health [NV] até confirmação") permanece como registro do momento da medição. Deploy fora do gate de merge (ADR-0003).
+- **Forgejo:** refs do espelho `https://forgejo.mdmv.qzz.io/MDMV/flora-workspace.git` sincronizados; job `mirror` informativo, não required (ADR-0003).
+- **Advisories de runtime:** **0**. Decisão 089/091/092/093 reafirmada: sem promoção de checagem de advisories a required check; único gate é `check_gate_integrity.py`.
+- **Escopo:** apenas apêndices em `STATE.md`/`PROGRESSO.md` e o novo documento de governança. Nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou deploy alterado por esta nota; nenhuma credencial exposta. **[NV]** CI, proteção, deploy futuro, Forgejo e aprovações ao vivo: reconsultar antes de agir.

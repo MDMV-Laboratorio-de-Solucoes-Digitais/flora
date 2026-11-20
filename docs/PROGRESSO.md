@@ -270,3 +270,12 @@ permanecem intactas; apenas acréscimos.
 ### Promoção e deploy — 2026-11-20T20:38Z
 
 - PR #318 mesclado; `main=761539b9f`. 4 required checks verdes no head promovido; espelho Forgejo de `main` sincronizado. App produção `9q3wuuwkur2kl27py0si785n`, FQDN `https://flora.mdmv.qzz.io`, DNS ativo. Deploy em curso; health e commit efetivo **[NV]** até confirmação.
+
+## Estado verificado — 2026-11-20 (ciclo 094; append-only)
+
+- **Âncora:** branch `feature/094-visao-so-pme` @ `fd25d8f8b`; `.specify/feature.json` → `specs/094-visao-so-pme`. Cabeçalho `:1` e todas as notas 2026-11-18/19/20 intactas; apenas acréscimo no EOF. Registro canônico: `docs/governance/2026-11-20-094-visao-so-pme-integracoes.md` (novo).
+- **Produção observada:** app `9q3wuuwkur2kl27py0si785n`, FQDN `https://flora.mdmv.qzz.io`, `/health` **200**, deploy **finished 21:23:59Z** no commit `cee7b0cda`. A nota de 20:38Z registrou "deploy em curso, health [NV] até confirmação" no momento da medição; permanece como histórico. Fora do gate de merge (ADR-0003).
+- **Forgejo:** refs do espelho sincronizados; job `mirror` informativo, não required (ADR-0003).
+- **Advisories de runtime:** **0**. Decisão 089/091/092/093 reafirmada: sem promoção a required check. Gate inalterado: `python3 scripts/ci/check_gate_integrity.py` (oráculo dinâmico 088), 4 required checks da ADR-0003.
+- **Diretriz SO PME:** nota de governança NÃO-normativa, sem emenda constitucional, gate, workflow, migration ou código. Mapa: Coolify/Forgejo implementados e verificados; Grafana+VictoriaMetrics/Uptime Kuma deferidos; agents Autonoma/dark-factory como ligação documental; marketing/monetization/seller ausentes no alvo **[NV]**.
+- **Escopo:** apêndice datado; nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou deploy alterado por esta nota; nenhuma credencial exposta. **[NV]** CI futuro, proteção, deploy, Forgejo e aprovações ao vivo: reconsultar antes de agir.
