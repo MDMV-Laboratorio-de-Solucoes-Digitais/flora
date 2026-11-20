@@ -1,0 +1,88 @@
+name: Mirror to Forgejo
+
+# Event-driven, one-way mirror of dev/main and v* tags to Forgejo.
+# This job is deliberately NOT a required check (ADR-0003): it runs on push
+# only, and its name is not part of the protected-branch required check set.
+on:
+  push:
+    branches:
+      - dev
+      - main
+    tags:
+      - 'v*'
+
+permissions: {}
+
+# Serialize per ref; never cancel an in-flight, non-forced mirror push.
+concurrency:
+  group: mirror-to-forgejo-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    env:
+      # Infrastructure URL (not a secret): no credentials are ever embedded here.
+      FORGEJO_REMOTE: https://forgejo.mdmv.qzz.io/MDMV/flora-workspace.git
+    steps:
+      - name: Checkout (full history for the ancestry guard)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Mirror ref to Forgejo
+        # Secrets and event metadata travel through env, never interpolated into
+        # the script body or the remote URL (keeps the token out of logs/URLs).
+        env:
+          FORGEJO_USER: ${{ secrets.FORGEJO_USER }}
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          # Fail closed: a missing secret must never result in a silent no-op.
+          if [ -z "${FORGEJO_USER:-}" ] || [ -z "${FORGEJO_TOKEN:-}" ]; then
+            echo "::error::FORGEJO_USER and FORGEJO_TOKEN secrets are required to mirror to Forgejo." >&2
+            exit 1
+          fi
+
+          # Remote URL carries no credentials; auth is a Basic extra header so
+          # the token never appears in a URL, argument list echoed to logs.
+          git remote add forgejo "$FORGEJO_REMOTE"
+          AUTH_B64="$(printf '%s:%s' "$FORGEJO_USER" "$FORGEJO_TOKEN" | base64 -w0)"
+          # %/*/* strips "/MDMV/flora-workspace.git" -> host prefix for the header.
+          git config --local "http.${FORGEJO_REMOTE%/*/*}/.extraHeader" "AUTHORIZATION: Basic ${AUTH_B64}"
+          unset AUTH_B64
+
+          # Refresh remote-tracking refs for the only branches ever mirrored.
+          # A missing/unfetchable branch is tolerated here; the ancestry guard
+          # below fails closed when the target branch ref is unavailable.
+          for branch in dev main; do
+            git fetch forgejo "refs/heads/${branch}:refs/remotes/forgejo/${branch}" || true
+          done
+
+          case "$REF_TYPE" in
+            branch)
+              # Defense in depth: the trigger already limits this to dev/main.
+              case "$REF_NAME" in
+                dev|main) ;;
+                *) echo "::error::Refusing to mirror branch '$REF_NAME'." >&2; exit 1 ;;
+              esac
+              # Fail-closed fast-forward guard: pushes are never forced or mirrored.
+              git merge-base --is-ancestor "forgejo/${REF_NAME}" HEAD
+              git push forgejo "HEAD:refs/heads/${REF_NAME}"
+              ;;
+            tag)
+              case "$REF_NAME" in
+                v*) ;;
+                *) echo "::error::Refusing to mirror tag '$REF_NAME'." >&2; exit 1 ;;
+              esac
+              git push forgejo "refs/tags/${REF_NAME}:refs/tags/${REF_NAME}"
+              ;;
+            *)
+              echo "::error::Unsupported ref type '$REF_TYPE'." >&2
+              exit 1
+              ;;
+          esac
