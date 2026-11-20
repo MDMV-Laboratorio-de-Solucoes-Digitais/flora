@@ -673,3 +673,12 @@ anterior foi alterada.
 - Verificação: `+8/−0` e `+4/−0`, prefixos byte-idênticos por `cmp`, 137/137 links `missing=[]`/`extra=[]`, gate PASS; `analyze` `artifacts=11, errors=[], fr=4, sc=4, tasks=4, go=true`; verificador `DocsVerifier`: **PASS**; R4 aprovado; R7 `0.3.3→0.3.4`.
 - PR **#307** aberto às `23:38:40Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/307 — 17 arquivos, 706 inserções. Autorização de merge fornecida pelo SE neste prompt; conduzir após checks verdes.
 - **[NV]** remoto/CI/PR/aprovações/produção nos apêndices; resolver ao vivo o que for verificável (gh/API) e manter [NV] o que depender de produção/maintainer. Próximo 80/20: duplicação lucide (2,50) — único candidato autônomo restante; leg RBAC/Tauri/OTLP/emenda dependem de maintainer/SE.
+
+## Execução e entrega — 2026-11-20T00:25:05Z (ciclo 084; append-only)
+
+- Atualização da nota 083: PR **#307** foi `MERGED` às `23:44:58Z`; merge commit `9da1aaea6`; `dev` local = `github/dev@9da1aaea6` antes deste ciclo. A nota `23:38:51Z` permanece como registro da abertura.
+- [NV] parcialmente resolvido ao vivo: `gh api` confirmou required contexts `frontend-build/rust-build/db-tests/dependency-review` em `dev` e `main`; `fj repo view` confirmou Forgejo `0 issues/0 PRs/0 releases`; `git ls-remote origin` mostrou mirror defasado (`dev@f12a328c`). Produção/aprovações/CI futuro seguem [NV].
+- Decisão 80/20 `(1×5)/(2×1)=2,50` — consolidar ícones Lucide em `@lucide/svelte@1.33.0` (pin aprovado; latest 1.76.0 registrado como upgrade [NV]): 3 imports/14 símbolos migrados, `lucide-svelte` removido de `package.json`/`bun.lock`/`package-lock.json` sem churn.
+- Verificação: grep zero, `bun pm ls` → 1.33.0, frozen-lockfile/check/lint/42 testes/build/gate green; `analyze` `artifacts=11, errors=[], fr=5, sc=4, tasks=5, go=true`; `LucideVerifier`: PASS-WITH-NITS (churn do lock corrigido por `LockFix`), `DiffCheck`: 6 paths/14 símbolos/4 componentes `/icons/*` intactos; R4 aprovado; R7 `0.3.4→0.3.5`.
+- PR **#308** aberto às `00:24:49Z` via `gh` para `dev/`: https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/308 — 21 arquivos, 772 inserções/21 deleções. Conduzir merge após checks verdes, sob autorização do prompt.
+- Encerramento do backlog autônomo: após este ciclo não restam candidatos seguros executáveis sem maintainer — leg RBAC (6,25), emenda constitucional (7,50), Tauri (3,75) e OTLP (1,25–1,67) dependem de aprovação/receptor; duplicatas T-ID são histórico protegido. Manter [NV] para remoto/produção/aprovações.

@@ -16,7 +16,7 @@
 		PanelRightClose,
 		PanelRightOpen,
 		Sparkles
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input';
 	import SearchBox from '$lib/components/search/SearchBox.svelte';
 	import { Button } from '$lib/components/ui/button';

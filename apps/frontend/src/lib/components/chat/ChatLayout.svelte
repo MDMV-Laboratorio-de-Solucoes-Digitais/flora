@@ -7,7 +7,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import ThreadReply from './thread/ThreadReply.svelte';
 	import { tick } from 'svelte';
-	import { Send, Sparkles } from 'lucide-svelte';
+	import { Send, Sparkles } from '@lucide/svelte';
 
 	let { channelId = '' } = $props<{ channelId?: string }>();
 

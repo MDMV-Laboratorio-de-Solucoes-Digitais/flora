@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search } from 'lucide-svelte';
+	import { Search } from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input';
 	import { ApiClient } from '$lib/api/client';
 	import type { SearchResponse, SearchResult } from '$lib/types/models';
