@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import tailwindcss from '@tailwindcss/vite';
@@ -8,6 +10,7 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit({
+			preprocess: vitePreprocess(),
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
 				runes: ({ filename }) =>
@@ -16,6 +19,11 @@ export default defineConfig({
 			adapter: adapter()
 		})
 	],
+	resolve: {
+		alias: {
+			$lib: fileURLToPath(new URL('src/lib', import.meta.url))
+		}
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

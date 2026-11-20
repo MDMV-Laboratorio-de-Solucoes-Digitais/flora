@@ -1,6 +1,10 @@
 {
-	"extends": "./.svelte-kit/tsconfig.json",
+	"extends": "$app/tsconfig",
 	"compilerOptions": {
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"]
+		},
 		"rewriteRelativeImportExtensions": true,
 		"allowJs": true,
 		"checkJs": true,
@@ -12,10 +16,12 @@
 		"strict": true,
 		"noImplicitAny": true,
 		"moduleResolution": "bundler"
-	}
-	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
-	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
+	},
+	"include": ["src", "test", "*"],
+	"exclude": ["src/service-worker"]
+	// SvelteKit 3 no longer generates $lib; the alias is declared explicitly above
+	// and mirrored by resolve.alias in vite.config.ts. Paths without baseUrl are
+	// resolved relative to this tsconfig file.
 	//
-	// To make changes to top-level options such as include and exclude, we recommend extending
-	// the generated config; see https://svelte.dev/docs/kit/configuration#typescript
+	// include/exclude follow https://svelte.dev/docs/kit/migrating-to-sveltekit-3#app-tsconfig
 }
