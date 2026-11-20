@@ -195,3 +195,8 @@ permanecem intactas; apenas acréscimos.
 ### Merge autônomo #309 — 2026-11-20T09:49:31Z
 
 - PR #309 mesclado em `dev/` sob a regra CI/CD GREEN; merge commit `f350b2774`. Gate `check_gate_integrity.py` PASS no HEAD mesclado; 4 required checks veridos ao vivo antes do merge; `dev` local alinhado. Sem auto-merge/force-push/deleção de branch. **[NV]** produção/Forgejo/aprovações fora do gate.
+
+### Ciclo 086 — leg RBAC no CI — 2026-11-20T10:30Z
+
+- Reforço de CI exigido pela nova regra: 3 contratos RBAC antes invisíveis no CI passaram a rodar no job `db-tests` (`run_leg rbac contract::rbac::db::db_ 3`).
+- `check_gate_integrity.py` agora verifica 9 legs / 54 pisos; gate PASS; leg local 3/3; workspace tests verdes. R4 aprovado; R7 `0.4.0→0.4.1`. **[NV]** CI do PR, merge, produção/Forgejo.
