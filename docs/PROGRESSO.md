@@ -200,3 +200,12 @@ permanecem intactas; apenas acréscimos.
 
 - Reforço de CI exigido pela nova regra: 3 contratos RBAC antes invisíveis no CI passaram a rodar no job `db-tests` (`run_leg rbac contract::rbac::db::db_ 3`).
 - `check_gate_integrity.py` agora verifica 9 legs / 54 pisos; gate PASS; leg local 3/3; workspace tests verdes. R4 aprovado; R7 `0.4.0→0.4.1`. **[NV]** CI do PR, merge, produção/Forgejo.
+
+## Estado verificado — 2026-11-20T10:50Z (ciclo 087; append-only)
+
+- **Âncora:** `.specify/feature.json` → `specs/087-bootstrap-ci-leg`; branch `feature/087-bootstrap-ci-leg` @ `367a50e79`. Estado remoto/CI ao vivo: **[NV]**; cabeçalho histórico `:3` e todas as notas anteriores intactas.
+- **P0 bootstrap fora do gate:** 4 contratos `#[ignore]` em `flora-tests/src/contract/bootstrap.rs` nunca rodavam no CI. Agora cobertos por `run_leg bootstrap contract::bootstrap::tests::db_ 4` em `rust.yml` e `"bootstrap": 4` em `check_gate_integrity.py` — 2 arquivos / 2 linhas alteradas (`+1`/arquivo, `0−`), `git diff --check` limpo.
+- **Filtro corrigido após regex mismatch:** `...::db_bootstrap_` casava 0 testes e era rejeitado pela regex do guarda (`:118`); trocado por `contract::bootstrap::tests::db_` (4 testes, regex existente preservada).
+- **Evidência:** gate `all 10 db contract floors intact (58 total)` exit 0; `--list` → 4; leg `--ignored --test-threads=1` → 4 passed/4. R4 aprovado; R7 registrado. Nenhum validation/release tocado.
+- **Contagens (snapshot 2026-11-20T10:50Z):** `specs/` 76, `.specify/assessments/` 73, `.specify/validations/` 72, `.specify/releases/` 72, `.specify/bugs/` 4, `docs/research/` 137 sem `index.md` (138 com ele). Apêndice append-only; cifras antigas permanecem como registro histórico do momento da medição.
+- **[NV]** CI do PR, merge, produção/Forgejo e aprovações ao vivo: reconsultar antes de qualquer decisão de merge.
