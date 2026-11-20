@@ -4,6 +4,7 @@
 //! These will compile only when .specify/contracts/ has content.
 
 pub mod auth;
+pub mod bootstrap;
 pub mod files;
 pub mod messaging;
 pub mod notifications;
