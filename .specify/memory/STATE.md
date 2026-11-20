@@ -710,3 +710,10 @@ anterior foi alterada.
 - **Âncora:** branch `feature/085-local-first-seed` @ HEAD `2a9b7e76b`; PR **#309** — https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/309 — 12 check-runs concluídos (11 success + 1 skipped), zero reviews ao registrá-la.
 - **Consequência operacional:** com CI/CD GREEN observado, conduzir merge autônomo para `dev/` sem aguardar aprovação de aprovador distinto/revisão deliberada. Se o CI/CD não inspirar confiança, o próximo 80/20 IMEDIATO é reforçar o CI/CD até inspirar confiança — não escalar para aprovador humano.
 - **Escopo:** apenas documentação de governança/estado; nenhum código, workflow, gate ou check alterado; nenhum merge/auto-merge realizado nesta nota.
+
+## Merge autônomo #309 — 2026-11-20T09:49:31Z
+
+- PR **#309** mesclado em `dev/` via `gh pr merge 309 --merge`, sob a nova regra de CI/CD GREEN (sem aprovador distinto). Merge commit: `f350b2774a071603428bd5340551813ca6aa6634`. `dev` local = `github/dev@f350b2774` após `git merge --ff-only`.
+- Evidência pré-merge: 4 runs do HEAD `c7d9668f2` concluídos com sucesso; 2 execuções de cada required check (`frontend-build`, `rust-build`, `db-tests`, `dependency-review` — uma `success`, uma `skipping` PR-only), `e2e-browser` e `supply-chain-vet` informativos verdes; `gh api branches/dev/protection` com `strict=true`, 4 contexts e `enforce_admins=true`; `check_gate_integrity.py` PASS.
+- Nenhum auto-merge, force-push, deleção de branch ou approval fabricado. Branch `feature/085-local-first-seed` preservada.
+- **[NV]** restante: produção/Forgejo, segurança de dependências e aprovações fora do gate; próximo 80/20 continua sem candidato autônomo seguro além de reforçar CI/CD se ele deixar de inspirar confiança.
