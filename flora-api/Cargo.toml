@@ -1,0 +1,71 @@
+# =========================================================================
+# Flora API - Axum HTTP Server
+# AGPL-3.0-or-later
+# =========================================================================
+
+[package]
+name = "flora-api"
+version.workspace = true
+description = "Flora Workspace HTTP API Server"
+repository.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "flora-api"
+path = "src/main.rs"
+
+[lib]
+name = "flora_api"
+path = "src/lib.rs"
+
+[dependencies]
+# --- Internal crates ---
+flora-core.workspace = true
+flora-messaging.workspace = true
+flora-search.workspace = true
+
+# --- Workspace dependencies ---
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+axum = { workspace = true, features = ["ws", "multipart"] }
+tower.workspace = true
+tower-http.workspace = true
+sqlx.workspace = true
+redis.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+bytes.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+tower-service.workspace = true
+mime.workspace = true
+mime_guess.workspace = true
+tokio-util = { version = "0.7", features = ["io"] }
+axum-extra.workspace = true
+jsonwebtoken.workspace = true
+url.workspace = true
+anyhow.workspace = true
+base64.workspace = true
+reqwest.workspace = true
+serde_urlencoded.workspace = true
+
+[dev-dependencies]
+wiremock.workspace = true
+tokio-test.workspace = true
+tower.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+
+[features]
+default = []

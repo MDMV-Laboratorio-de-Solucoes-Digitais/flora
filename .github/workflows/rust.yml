@@ -1,0 +1,210 @@
+name: Rust CI
+on: [push, pull_request]
+
+concurrency:
+  group: rust-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update
+          rustup default 1.98.1
+          rustup component add rustfmt clippy
+          rustc --version
+          cargo --version
+      # 026/029: Seed verification gate (ADR-0001). Strict clippy covers all targets;
+      # test-only `expect_used` is scoped at module level, not suppressed globally.
+      - name: Format check
+        run: cargo fmt --all -- --check
+      - name: Clippy (strict, all targets)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@cargo-deny
+      - name: Supply-chain policy (bans, licenses, sources)
+        run: cargo deny check bans licenses sources
+      - name: Build
+        run: cargo build --workspace
+      - name: Test
+        run: cargo test --workspace
+      # 038: guard the autonomous merge gate itself (ADR-0003). Runs in an existing
+      # required job so the required check name does not change (no protection deadlock).
+      - name: Gate integrity (required checks / floors / no vacuity)
+        run: python3 scripts/ci/check_gate_integrity.py
+
+  db-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      FLORA_DATABASE__POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/flora
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flora
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update
+          rustup default 1.98.1
+          rustup component add rustfmt clippy
+          rustc --version
+          cargo --version
+      # 037: a filtered `cargo test` that matches zero tests still exits 0.
+      # Each leg therefore sums the libtest "N passed" counters and fails below a floor.
+      # Floors = number of discovered `#[ignore]` tests per filter (cargo test -- --list).
+      - name: Run DB-backed contract tests (minimum-passed floors)
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_leg() {
+            local label="$1" filter="$2" floor="$3" log passed
+            : "${FLORA_DATABASE__POSTGRES_URL:?FLORA_DATABASE__POSTGRES_URL must be set for db-tests}"
+            : "${DATABASE_URL:?DATABASE_URL must be set for db-tests}"
+            log="$(mktemp)"
+            echo "== $label: $filter (floor $floor) =="
+            cargo test -p flora-tests "$filter" -- --ignored --test-threads=1 2>&1 | tee "$log"
+            passed="$(awk '
+              /^test result:/ {
+                for (i = 1; i <= NF; i++)
+                  if ($i == "passed;") { sum += $(i - 1); break }
+              }
+              END { print sum + 0 }
+            ' "$log")"
+            echo "$label: passed=$passed floor=$floor"
+            [ "$passed" -ge "$floor" ]
+          }
+          run_leg auth          contract::auth::db_          13
+          run_leg messaging     contract::messaging::db_      4
+          run_leg websocket     contract::websocket::db_      8
+          run_leg search        contract::search::db_         8
+          run_leg notifications contract::notifications::db_  5
+          run_leg files         contract::files::db_          6
+          run_leg tasks         contract::tasks::db::db_      4
+          run_leg workspace     contract::workspace::db::db_  3
+          run_leg rbac          contract::rbac::db::db_     3
+          run_leg bootstrap     contract::bootstrap::tests::db_ 4
+
+  # 028: FASE 0 closure — informational supply-chain gates. Neither blocks merges yet;
+  # promotion to required checks requires CODEOWNERS and a review window (Fatia B).
+  supply-chain-vet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo-vet
+        uses: taiki-e/install-action@cargo-vet
+      - name: Vet (informational, Fatia A)
+        run: cargo vet --locked --no-minimize-exemptions
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency review (PR diff only)
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          fail-on-scopes: runtime
+          license-check: false
+          warn-only: false
+
+  # 030: one Chromium smoke. Informational (non-required); the injected session
+  # jti is single-use, so Playwright runs with retries: 0 and workers: 1.
+  e2e-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      FLORA_DATABASE__POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/flora
+      FLORA_APP__JWT_SECRET: dev-only-32+char-random-string-for-browser-e2e
+      FLORA_APP__SESSION_TTL_SECS: '3600'
+      FLORA_SEARCH__ENABLED: 'false'
+      FLORA_MESSAGING__ENABLED: 'false'
+      VITE_API_URL: http://127.0.0.1:3000
+      E2E_API_ORIGIN: http://127.0.0.1:3000
+      E2E_FRONTEND_ORIGIN: http://127.0.0.1:4173
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update
+          rustup default 1.98.1
+          rustup component add clippy
+      - uses: oven-sh/setup-bun@v2
+      - name: Install frontend dependencies
+        working-directory: apps/frontend
+        run: bun install
+      - name: Build API and gated session minter
+        run: |
+          cargo build -p flora-api
+          cargo clippy -p flora-core --bin flora-mint-session --features dev-mint -- -D warnings
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+        working-directory: apps/frontend
+      - name: Run browser smoke
+        working-directory: apps/frontend
+        run: bun run test:e2e
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 3

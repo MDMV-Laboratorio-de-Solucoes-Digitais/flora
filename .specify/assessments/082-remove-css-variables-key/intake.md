@@ -1,0 +1,13 @@
+# Intake: remover a chave `cssVariables` de `components.json`
+
+- **Slug**: 082-remove-css-variables-key · **Capturado**: 2026-11-19T22:31Z
+- **Origem**: dados de research locais cruzados com documentação e schema oficiais do shadcn-svelte. `.specify/memory/STATE.md:626,644` e `.specify/assessments/078-shadcn-config-paths/{research,concept,decision}.md` registram `cssVariables` como "não declarado no schema", preservado em 078 por escolha de escopo mínimo; a auditoria de 080/081 ranqueou `cssVariables` em 5,0 (`STATE.md:644`). Nenhum pedido novo do usuário neste ciclo: sucessor direto de 078 (caminhos de `components.json`) e 079 (instalação do CLI), agora com `shadcn-svelte@1.8.1` presente no checkout (`apps/frontend/package.json:39`).
+- **Alvo**: branch `feature/082-remove-css-variables-key`, HEAD-base `8f24519fe`; gate PASS; zero PRs. Fronteira: exatamente os 5 artefatos `.specify/assessments/082-remove-css-variables-key/`; a edição futura de `apps/frontend/components.json` é o objeto avaliado, não parte desta escrita.
+
+## Ideia
+
+`apps/frontend/components.json:7` declara `"cssVariables": true` dentro de `tailwind`. O schema oficial `https://shadcn-svelte.com/schema.json` (acessado 2026-11-19) declara `tailwind.properties = {css, baseColor, config}`, `tailwind.required = ["css","baseColor"]` e `tailwind.additionalProperties = false`: `cssVariables` não existe em nenhum nível do schema e, por isso, invalida validação estrita. O CLI instalado `shadcn-svelte@1.8.1` usa Zod `$strip` (`apps/frontend/node_modules/shadcn-svelte/dist/schema-Bq2uExa4.d.mts:407-414`, `index-Ch0UJ9Cm.d.mts:13-16`) e silenciosamente descarta a chave; nenhum consumidor local a lê (varredura determinística) e nenhum script/CI lê `components.json`. A correção é de contrato/metadados, sem efeito de runtime.
+
+## Por que agora
+
+Candidato 082 eleito pelo 80/20 com **E=(2×5)/(1×1)=5,0** — valor 2 (elimina chave inválida sob validação estrita do schema, sem mudar comportamento), confiança 5 (evidência local integral: linha colada, schema oficial com URL e data de acesso, parser Zod do CLI instalado, varredura de consumidores com resultado zero), esforço 1 (1 linha removida, 1 vírgula ajustada, 1 arquivo), risco 1 (nenhum runtime, gate ou CI lê o arquivo; o CLI já descarta a chave). Alternativas do ciclo: flag OIDC morta 15,0 (feita em 080), limpeza das chaves OIDC em `.env.example` 10,0 (feita em 081), `cssVariables` 5,0 (esta), duplicação lucide 2,50, OTLP 1,25 (`.specify/memory/STATE.md:644`). A edição não toca `style` (declarado no schema, apenas deprecado em v4), `baseColor`, `$schema`, `aliases`, gate, ADRs, specs numeradas nem worktree espelho — tudo é citado, não editado.

@@ -1,0 +1,40 @@
+# cargo-deny policy for Flora (Seed/AGPL-3.0-or-later).
+# Keep it small and explicit: the goal is a deterministic CI gate, not a
+# bespoke legal review of every transitive dependency.
+
+[graph]
+targets = []
+all-features = false
+
+[advisories]
+version = 2
+ignore = []
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+
+[licenses]
+version = 2
+confidence-threshold = 0.8
+allow = [
+    "AGPL-3.0",
+    "AGPL-3.0-or-later",
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "MPL-2.0",
+    "Unlicense",
+    "CC0-1.0",
+    "Zlib",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+]
+exceptions = []
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

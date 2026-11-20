@@ -1,0 +1,1 @@
+{"scenario_id":"zero-tests-match-fails","expected_exit":1,"stdout_contains":["auth: passed=0 floor=12"]}

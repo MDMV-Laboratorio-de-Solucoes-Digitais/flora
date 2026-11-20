@@ -1,0 +1,87 @@
+# Flora local development dependencies (Seed baseline, 016-C operability)
+# Lean core profile (default): postgres only (+ run API with `cargo run -p flora-api`)
+# Optional profiles: `realtime` (valkey), `search` (meilisearch)
+# Examples:
+#   docker compose up -d
+#   docker compose --profile realtime up -d
+#   docker compose --profile search up -d
+#   docker compose --profile realtime --profile search up -d
+# Seed data (optional, after migrations): PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d flora -f dev-seed.sql
+
+services:
+  postgres:
+    # PostgreSQL 18+ required: init migration uses uuidv7() defaults (native in PG18)
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: flora
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # PostgreSQL 18+ image expects a mount at /var/lib/postgresql (stores data in versioned subdir)
+      - flora_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d flora"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Guardrails for ~2 vCPU / 4 GB Seed hosts (enforcement depends on runtime; verify with `docker stats`)
+    mem_limit: 1g
+    cpus: "1.00"
+
+  valkey:
+    profiles: ["realtime"]
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - flora_valkey_data:/data
+    command:
+      [
+        "valkey-server",
+        "--appendonly",
+        "yes",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "noeviction",
+      ]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 384m
+    cpus: "0.50"
+
+  meilisearch:
+    profiles: ["search"]
+    image: getmeili/meilisearch:v1.12
+    restart: unless-stopped
+    environment:
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+      # Dev-only master key (change for non-local use)
+      MEILI_MASTER_KEY: dev-meilisearch-master-key
+      # Conservative hints for small VPS (not hard caps)
+      MEILI_MAX_INDEXING_MEMORY: 256Mb
+      MEILI_MAX_INDEXING_THREADS: "1"
+    ports:
+      - "127.0.0.1:7700:7700"
+    volumes:
+      - flora_meili_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    mem_limit: 768m
+    cpus: "0.75"
+
+volumes:
+  flora_postgres_data:
+  flora_valkey_data:
+  flora_meili_data:
