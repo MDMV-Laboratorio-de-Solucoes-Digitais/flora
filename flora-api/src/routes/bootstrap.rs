@@ -9,13 +9,13 @@
 use axum::{
     Router,
     extract::State,
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, header},
     response::Json,
-    routing::post,
+    routing::{get, post},
 };
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Postgres, Transaction};
+use sqlx::{Executor, Postgres, Transaction};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
@@ -39,6 +39,13 @@ pub struct BootstrapRequest {
     pub admin_password: String,
 }
 
+/// Public, read-only signal consumed by the login screen.
+#[derive(Debug, Serialize)]
+pub struct BootstrapStatusResponse {
+    /// `true` only while no non-system organization exists.
+    pub available: bool,
+}
+
 /// Successful response of `POST /bootstrap`.
 #[derive(Debug, Serialize)]
 pub struct BootstrapResponse {
@@ -56,7 +63,27 @@ pub struct BootstrapResponse {
 
 /// Creates the `/bootstrap` sub-router (mounted at `/api/v1/bootstrap`).
 pub fn create_bootstrap_router() -> Router<AppState> {
-    Router::new().route("/bootstrap", post(bootstrap))
+    Router::new()
+        .route("/bootstrap", post(bootstrap))
+        .route("/bootstrap/status", get(bootstrap_status))
+}
+
+/// `GET /bootstrap/status` — public UX signal, never an authorization decision.
+///
+/// The authoritative guard remains the advisory transaction lock plus the
+/// atomic count inside `POST /bootstrap`. `Cache-Control: no-store` prevents
+/// proxies and browsers from serving a stale answer; the body intentionally
+/// carries only the boolean (no counts, e-mails or other installation data).
+async fn bootstrap_status(
+    State(state): State<AppState>,
+) -> Result<(HeaderMap, Json<BootstrapStatusResponse>)> {
+    let available = installation_is_empty(state.db_pool.as_ref()).await?;
+    let mut headers = HeaderMap::new();
+    let _ = headers.insert(
+        header::CACHE_CONTROL,
+        header::HeaderValue::from_static("no-store"),
+    );
+    Ok((headers, Json(BootstrapStatusResponse { available })))
 }
 
 /// Validates the payload and returns the normalized name, slug and e-mail.
@@ -235,6 +262,23 @@ async fn insert_session(tx: &mut Transaction<'_, Postgres>, session: &Session) -
     Ok(())
 }
 
+/// Checks the same criterion as the authoritative `POST /bootstrap` guard:
+/// zero organizations other than the built-in system organization. Orphan
+/// users/workspaces do not change the answer. Callers decide whether the
+/// query must run inside a transaction under the advisory lock.
+async fn installation_is_empty<'e, E>(db: E) -> Result<bool>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    let org_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM organizations \
+         WHERE id <> '00000000-0000-0000-0000-000000000000'",
+    )
+    .fetch_one(db)
+    .await?;
+    Ok(org_count == 0)
+}
+
 /// `POST /bootstrap` — initializes an empty installation atomically.
 ///
 /// # Errors
@@ -277,14 +321,7 @@ async fn bootstrap(
         .bind(BOOTSTRAP_LOCK_KEY)
         .execute(&mut *tx)
         .await?;
-
-    let org_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM organizations \
-         WHERE id <> '00000000-0000-0000-0000-000000000000'",
-    )
-    .fetch_one(&mut *tx)
-    .await?;
-    if org_count > 0 {
+    if !installation_is_empty(&mut *tx).await? {
         return Err(Error::DuplicateEntry(
             "bootstrap already completed".to_owned(),
         ));
