@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { API_BASE_URL } from '$lib/api/client';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -14,7 +15,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { authState } from '$lib/state/AuthState.svelte';
 
-	let isSetup = $state(false);
+	let canBootstrap = $state(false);
 	let workspaceName = $state('Flora');
 	let adminEmail = $state('admin@flora.local');
 	let adminPassword = $state('');
@@ -22,6 +23,26 @@
 	let password = $state('');
 	let errorMessage = $state<string | null>(null);
 	let isSubmitting = $state(false);
+
+	onMount(() => {
+		void (async () => {
+			try {
+				const response = await fetch(`${API_BASE_URL}/api/v1/bootstrap/status`);
+				if (!response.ok) {
+					canBootstrap = false;
+					return;
+				}
+				const data: unknown = await response.json();
+				canBootstrap =
+					typeof data === 'object' &&
+					data !== null &&
+					(data as { available?: unknown }).available === true;
+			} catch (error_) {
+				globalThis.console?.error('Falha ao consultar status da instalação', error_);
+				canBootstrap = false;
+			}
+		})();
+	});
 
 	type ErrorBody = { error?: unknown; field?: unknown };
 
@@ -138,7 +159,8 @@
 				const body = await readError(response);
 				switch (response.status) {
 					case 409: {
-						errorMessage = 'Este workspace já foi configurado.';
+						canBootstrap = false;
+						errorMessage = 'Este workspace já foi configurado. Faça login para continuar.';
 						break;
 					}
 					case 422: {
@@ -172,14 +194,14 @@
 	}
 
 	function toggleSetup() {
-		isSetup = !isSetup;
+		canBootstrap = !canBootstrap;
 		errorMessage = null;
 	}
 </script>
 
 <div class="flex h-screen items-center justify-center bg-muted/40 p-4">
 	<Card class="w-full max-w-md shadow-lg">
-		{#if isSetup}
+		{#if canBootstrap}
 			<CardHeader class="space-y-1 text-center">
 				<CardTitle class="text-2xl font-bold tracking-tight">Primeira configuração</CardTitle>
 				<CardDescription>Plante as raízes do seu novo workspace Flora.</CardDescription>
@@ -235,12 +257,14 @@
 				<Button variant="outline" class="w-full" onclick={handleSso} disabled={isSubmitting}
 					>Entrar com SSO</Button
 				>
-				<div class="mt-4 text-center text-sm text-muted-foreground">
-					É uma instalação nova?
-					<button onclick={toggleSetup} class="text-primary underline-offset-4 hover:underline">
-						Fazer primeira configuração
-					</button>
-				</div>
+				{#if canBootstrap}
+					<div class="mt-4 text-center text-sm text-muted-foreground">
+						É uma instalação nova?
+						<button onclick={toggleSetup} class="text-primary underline-offset-4 hover:underline">
+							Fazer primeira configuração
+						</button>
+					</div>
+				{/if}
 			</CardFooter>
 		{/if}
 		{#if errorMessage}

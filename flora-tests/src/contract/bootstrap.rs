@@ -105,6 +105,17 @@ mod tests {
             .await?)
     }
 
+    async fn get(router: Router, uri: &str) -> anyhow::Result<Response> {
+        Ok(router
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(uri)
+                    .body(Body::empty())?,
+            )
+            .await?)
+    }
+
     async fn json_body(response: Response) -> anyhow::Result<Value> {
         let bytes = to_bytes(response.into_body(), usize::MAX).await?;
         Ok(serde_json::from_slice(&bytes)?)
@@ -366,6 +377,98 @@ mod tests {
         let mut missing_user = config;
         missing_user.bootstrap.admin_email = Some("ninguem@exemplo.test".to_owned());
         let _state = AppState::new(pool.clone(), missing_user).await?;
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_is_public_available_and_has_no_store_header() -> anyhow::Result<()>
+    {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+
+        // No Authorization header: the status endpoint must be public.
+        let response = get(router(state), "/api/v1/bootstrap/status").await?;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response
+                .headers()
+                .get("cache-control")
+                .and_then(|value| value.to_str().ok()),
+            Some("no-store")
+        );
+
+        let body = json_body(response).await?;
+        assert_eq!(body["available"], true);
+        assert_eq!(
+            body.as_object().map(serde_json::Map::len),
+            Some(1),
+            "status must not leak counts or e-mails: {body}"
+        );
+        assert!(body.get("organizations").is_none());
+        assert!(body.get("admin_email").is_none());
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_becomes_unavailable_after_bootstrap_and_conflict()
+    -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+        let app = router(state);
+
+        let first = post(app.clone(), body("Primeira Org", "first@example.test")).await?;
+        assert_eq!(first.status(), StatusCode::CREATED);
+
+        let conflict = post(app.clone(), body("Segunda Org", "second@example.test")).await?;
+        assert_eq!(conflict.status(), StatusCode::CONFLICT);
+        assert_eq!(json_body(conflict).await?["error"], "conflict");
+
+        let status = get(app, "/api/v1/bootstrap/status").await?;
+        assert_eq!(status.status(), StatusCode::OK);
+        assert_eq!(json_body(status).await?["available"], false);
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_is_unavailable_with_preexisting_organization() -> anyhow::Result<()>
+    {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+        let pool = (*state.db_pool).clone();
+        let _existing = PgOrganizationRepository::new(pool)
+            .create(Organization::new("Existente", "existente"))
+            .await?;
+
+        let status = get(router(state), "/api/v1/bootstrap/status").await?;
+        assert_eq!(status.status(), StatusCode::OK);
+        assert_eq!(json_body(status).await?["available"], false);
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_ignores_orphan_users() -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+        let pool = (*state.db_pool).clone();
+        let _orphan = PgUserRepository::new(pool)
+            .create(User::new("orfao@example.test", "Órfão"))
+            .await?;
+
+        let status = get(router(state), "/api/v1/bootstrap/status").await?;
+        assert_eq!(status.status(), StatusCode::OK);
+        assert_eq!(json_body(status).await?["available"], true);
 
         db.cleanup().await?;
         Ok(())
