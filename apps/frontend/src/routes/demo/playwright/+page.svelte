@@ -1,1 +1,5 @@
-<h1>Playwright e2e test demo</h1>
+<script lang="ts">
+	import { t } from '$lib/i18n';
+</script>
+
+<h1>{t['demo.playwrightTitle']}</h1>

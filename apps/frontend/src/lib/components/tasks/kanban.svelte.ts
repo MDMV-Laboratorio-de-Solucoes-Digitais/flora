@@ -1,4 +1,5 @@
 import type { BoardTask } from './types';
+import { t } from '$lib/i18n';
 
 /** Canonical backend status values (flora-core/src/models/task.rs). */
 export const BOARD_STATUSES = ['Todo', 'InProgress', 'Done'] as const;
@@ -10,9 +11,9 @@ export type BoardStatus = (typeof BOARD_STATUSES)[number];
  * independent of Svelte rendering.
  */
 export const BOARD_COLUMNS: ReadonlyArray<{ id: string; title: string; status: BoardStatus }> = [
-	{ id: 'todo', title: 'To Do', status: 'Todo' },
-	{ id: 'in-progress', title: 'In Progress', status: 'InProgress' },
-	{ id: 'done', title: 'Done', status: 'Done' }
+	{ id: 'todo', title: t['kanban.todo'], status: 'Todo' },
+	{ id: 'in-progress', title: t['kanban.inProgress'], status: 'InProgress' },
+	{ id: 'done', title: t['kanban.done'], status: 'Done' }
 ];
 
 /** Group tasks by column. Tasks with unknown status (e.g. Archived) are omitted. */

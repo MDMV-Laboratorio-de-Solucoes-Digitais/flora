@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { format, t } from '$lib/i18n';
 
 	let name = $state('');
 	let isSubmitting = $state(false);
@@ -18,7 +19,7 @@
 				method: 'POST',
 				body: JSON.stringify({ name })
 			});
-			successMessage = `Created organization: ${name}`;
+			successMessage = format('org.created', { name });
 			name = '';
 		} catch (error) {
 			logger.error('organization', 'Failed to create organization', undefined, error as Error);
@@ -30,8 +31,8 @@
 
 <div class="space-y-4 rounded-lg border p-6 shadow-sm">
 	<div class="space-y-2">
-		<h2 class="text-2xl font-bold tracking-tight">Create Organization</h2>
-		<p class="text-sm text-muted-foreground">Set up a new organization.</p>
+		<h2 class="text-2xl font-bold tracking-tight">{t['org.managerTitle']}</h2>
+		<p class="text-sm text-muted-foreground">{t['org.managerDescription']}</p>
 	</div>
 
 	{#if successMessage}
@@ -39,9 +40,9 @@
 	{/if}
 
 	<div class="space-y-2">
-		<Label for="org-name">Organization Name</Label>
-		<Input id="org-name" bind:value={name} placeholder="Acme Corp" />
+		<Label for="org-name">{t['org.managerName']}</Label>
+		<Input id="org-name" bind:value={name} placeholder={t['common.organizationPlaceholder']} />
 	</div>
 
-	<Button disabled={isSubmitting} onclick={createOrganization}>Create</Button>
+	<Button disabled={isSubmitting} onclick={createOrganization}>{t['org.create']}</Button>
 </div>

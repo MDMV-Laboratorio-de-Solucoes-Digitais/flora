@@ -9,6 +9,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { apiErrorMessage, t } from '$lib/i18n';
 
 	type Workspace = { id: string; name: string };
 
@@ -52,7 +53,7 @@
 			await loadWorkspaces();
 			await loadChannels();
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Failed to load channels';
+			errorMessage = apiErrorMessage(error, 'error.loadChannels');
 		} finally {
 			isLoading = false;
 		}
@@ -65,7 +66,7 @@
 		try {
 			await loadChannels();
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Failed to load channels';
+			errorMessage = apiErrorMessage(error, 'error.loadChannels');
 		}
 	}
 
@@ -87,7 +88,7 @@
 			selectedChannelId = channel.id;
 			newChannelName = '';
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Failed to create channel';
+			errorMessage = apiErrorMessage(error, 'error.createChannel');
 		} finally {
 			isSaving = false;
 		}
@@ -111,13 +112,13 @@
 <div class="flex h-full flex-col gap-4 p-6">
 	<div class="flex flex-wrap items-end justify-between gap-4">
 		<div>
-			<h1 class="text-2xl font-bold tracking-tight">Channels</h1>
+			<h1 class="text-2xl font-bold tracking-tight">{t['channels.title']}</h1>
 			<p class="text-sm text-muted-foreground">
-				Workspace → channel → message (REST slice). Select a workspace and channel to chat.
+				{t['channels.description']}
 			</p>
 		</div>
 		<div class="min-w-56">
-			<Label for="workspace">Workspace</Label>
+			<Label for="workspace">{t['channels.workspace']}</Label>
 			<select
 				id="workspace"
 				class="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
@@ -126,7 +127,7 @@
 				disabled={isLoading || workspaces.length === 0}
 			>
 				{#if workspaces.length === 0}
-					<option value="">No workspaces</option>
+					<option value="">{t['channels.noWorkspaces']}</option>
 				{:else}
 					{#each workspaces as workspace (workspace.id)}
 						<option value={workspace.id}>{workspace.name}</option>
@@ -147,12 +148,12 @@
 	<div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
 		<section class="flex min-h-0 flex-col rounded-md border bg-card">
 			<div class="border-b p-3">
-				<Label for="new-channel">New channel</Label>
+				<Label for="new-channel">{t['channels.newChannel']}</Label>
 				<div class="mt-2 flex gap-2">
 					<Input
 						id="new-channel"
 						bind:value={newChannelName}
-						placeholder="e.g. general"
+						placeholder={t['channels.namePlaceholder']}
 						disabled={!selectedWorkspaceId || isSaving}
 						onkeydown={(event_) => event_.key === 'Enter' && createChannel()}
 					/>
@@ -160,15 +161,15 @@
 						onclick={createChannel}
 						disabled={!selectedWorkspaceId || !newChannelName.trim() || isSaving}
 					>
-						Create
+						{t['channels.create']}
 					</Button>
 				</div>
 			</div>
 			<div class="flex-1 overflow-y-auto p-2">
 				{#if isLoading}
-					<p class="p-2 text-sm text-muted-foreground">Loading…</p>
+					<p class="p-2 text-sm text-muted-foreground">{t['channels.loading']}</p>
 				{:else if channels.length === 0}
-					<p class="p-2 text-sm text-muted-foreground">No channels yet.</p>
+					<p class="p-2 text-sm text-muted-foreground">{t['channels.empty']}</p>
 				{:else}
 					<div class="space-y-1">
 						{#each channels as channel (channel.id)}
@@ -192,7 +193,7 @@
 			<div class="flex h-full flex-col">
 				<div class="border-b px-4 py-3">
 					<h2 class="font-semibold">
-						{selectedChannel ? `# ${selectedChannel.name}` : 'No channel selected'}
+						{selectedChannel ? `# ${selectedChannel.name}` : t['channels.noneSelected']}
 					</h2>
 				</div>
 				<div class="min-h-0 flex-1">

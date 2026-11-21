@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { authState } from '$lib/state/AuthState.svelte';
+import { t, type TranslationKey } from '$lib/i18n';
 import { page } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -44,6 +45,9 @@ function callTo(spy: FetchSpy, path: string, isExact = false): [unknown, Request
 function wasStatusFetched(spy: FetchSpy): boolean {
 	return spy.mock.calls.some(([url]) => String(url).includes(STATUS_PATH));
 }
+function errorMessagePattern(key: TranslationKey): RegExp {
+	return new RegExp(t[key].replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), 'i');
+}
 
 describe('(auth)/+page.svelte — login local em pt-BR', () => {
 	beforeEach(() => {
@@ -71,9 +75,9 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 		});
 
 		render(LoginPage);
-		await page.getByPlaceholder('voce@exemplo.com').fill('luis.granja@mdmv.com.br');
-		await page.getByPlaceholder('Senha').fill('senha-muito-forte-123');
-		await page.getByRole('button', { name: 'Entrar' }).click();
+		await page.getByPlaceholder(t['auth.login.emailPlaceholder']).fill('luis.granja@mdmv.com.br');
+		await page.getByPlaceholder(t['auth.login.passwordPlaceholder']).fill('senha-muito-forte-123');
+		await page.getByRole('button', { name: t['auth.login.submit'] }).click();
 
 		await vi.waitFor(() => expect(authState.token).toBe('jwt-local'));
 		expect(authState.isAuthenticated).toBe(true);
@@ -96,13 +100,29 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 		});
 
 		render(LoginPage);
-		await page.getByPlaceholder('voce@exemplo.com').fill('luis.granja@mdmv.com.br');
-		await page.getByPlaceholder('Senha').fill('senha-errada-123');
-		await page.getByRole('button', { name: 'Entrar' }).click();
+		await page.getByPlaceholder(t['auth.login.emailPlaceholder']).fill('luis.granja@mdmv.com.br');
+		await page.getByPlaceholder(t['auth.login.passwordPlaceholder']).fill('senha-errada-123');
+		await page.getByRole('button', { name: t['auth.login.submit'] }).click();
 
-		await expect.element(page.getByText(/e-mail ou senha incorretos/i)).toBeInTheDocument();
+		await expect
+			.element(page.getByText(errorMessagePattern('error.invalidCredentials')))
+			.toBeInTheDocument();
 		expect(authState.isAuthenticated).toBe(false);
 		expect(goto).not.toHaveBeenCalled();
+	});
+
+	it('mostra mensagem pt-BR quando o provedor OIDC falha', async () => {
+		stubFetch((url) => {
+			if (url.includes(STATUS_PATH)) return statusResponse(false);
+			return jsonResponse({ error: 'oidc_error' }, 400);
+		});
+
+		render(LoginPage);
+		await page.getByRole('button', { name: t['auth.login.submit'] }).click();
+
+		await expect
+			.element(page.getByText(errorMessagePattern('error.oidcUnavailable')))
+			.toBeInTheDocument();
 	});
 
 	it('explica a limitação de tentativas em pt-BR', async () => {
@@ -112,9 +132,11 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 		});
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Entrar' }).click();
+		await page.getByRole('button', { name: t['auth.login.submit'] }).click();
 
-		await expect.element(page.getByText(/muitas tentativas/i)).toBeInTheDocument();
+		await expect
+			.element(page.getByText(errorMessagePattern('error.rateLimited')))
+			.toBeInTheDocument();
 	});
 
 	it('explica falhas de conexão em pt-BR', async () => {
@@ -124,10 +146,10 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 		});
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Entrar' }).click();
+		await page.getByRole('button', { name: t['auth.login.submit'] }).click();
 
 		await expect
-			.element(page.getByText(/não foi possível conectar ao servidor/i))
+			.element(page.getByText(errorMessagePattern('error.serverUnavailable')))
 			.toBeInTheDocument();
 	});
 
@@ -147,9 +169,11 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 		});
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Fazer primeira configuração' }).click();
-		await page.getByPlaceholder('Mínimo de 15 caracteres').fill('SenhaAdministrador@123');
-		await page.getByRole('button', { name: 'Criar workspace' }).click();
+		await page.getByRole('button', { name: t['auth.login.firstSetup'] }).click();
+		await page
+			.getByPlaceholder(t['auth.setup.adminPasswordPlaceholder'])
+			.fill('SenhaAdministrador@123');
+		await page.getByRole('button', { name: t['auth.setup.submit'] }).click();
 
 		await vi.waitFor(() => expect(authState.organizationId).toBe('org-teste'));
 		expect(authState.isAuthenticated).toBe(true);
@@ -173,17 +197,35 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 		});
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Fazer primeira configuração' }).click();
-		await page.getByPlaceholder('Mínimo de 15 caracteres').fill('SenhaAdministrador@123');
-		await page.getByRole('button', { name: 'Criar workspace' }).click();
+		await page.getByRole('button', { name: t['auth.login.firstSetup'] }).click();
+		await page
+			.getByPlaceholder(t['auth.setup.adminPasswordPlaceholder'])
+			.fill('SenhaAdministrador@123');
+		await page.getByRole('button', { name: t['auth.setup.submit'] }).click();
 
-		await expect.element(page.getByText(/workspace já foi configurado/i)).toBeInTheDocument();
+		await expect.element(page.getByText(errorMessagePattern('error.conflict'))).toBeInTheDocument();
 		await expect
-			.element(page.getByRole('button', { name: 'Fazer primeira configuração' }))
+			.element(page.getByRole('button', { name: t['auth.login.firstSetup'] }))
 			.not.toBeInTheDocument();
 		expect(authState.isAuthenticated).toBe(false);
 		expect(goto).not.toHaveBeenCalled();
 		expect(wasStatusFetched(fetchSpy)).toBe(true);
+	});
+
+	it('explica em pt-BR a senha inválida do administrador', async () => {
+		stubFetch((url) => {
+			if (url.includes(STATUS_PATH)) return statusResponse(true);
+			return jsonResponse({ error: 'validation', field: 'admin_password' }, 422);
+		});
+
+		render(LoginPage);
+		await page.getByRole('button', { name: t['auth.login.firstSetup'] }).click();
+		await page.getByPlaceholder(t['auth.setup.adminPasswordPlaceholder']).fill('curta');
+		await page.getByRole('button', { name: t['auth.setup.submit'] }).click();
+
+		await expect
+			.element(page.getByText(errorMessagePattern('error.adminPasswordValidation')))
+			.toBeInTheDocument();
 	});
 
 	it('mostra o link de primeira configuração somente quando a instalação está vazia', async () => {
@@ -195,7 +237,7 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 		render(LoginPage);
 
 		await expect
-			.element(page.getByRole('button', { name: 'Fazer primeira configuração' }))
+			.element(page.getByRole('button', { name: t['auth.login.firstSetup'] }))
 			.toBeInTheDocument();
 		await vi.waitFor(() => expect(wasStatusFetched(fetchSpy)).toBe(true));
 		const [url, init] = callTo(fetchSpy, STATUS_PATH);
@@ -214,7 +256,7 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 
 		await vi.waitFor(() => expect(wasStatusFetched(fetchSpy)).toBe(true));
 		await expect
-			.element(page.getByRole('button', { name: 'Fazer primeira configuração' }))
+			.element(page.getByRole('button', { name: t['auth.login.firstSetup'] }))
 			.not.toBeInTheDocument();
 	});
 
@@ -230,7 +272,7 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 
 			await vi.waitFor(() => expect(wasStatusFetched(fetchSpy)).toBe(true));
 			await expect
-				.element(page.getByRole('button', { name: 'Fazer primeira configuração' }))
+				.element(page.getByRole('button', { name: t['auth.login.firstSetup'] }))
 				.not.toBeInTheDocument();
 		}
 	);
@@ -245,7 +287,7 @@ describe('(auth)/+page.svelte — login local em pt-BR', () => {
 
 		await vi.waitFor(() => expect(wasStatusFetched(fetchSpy)).toBe(true));
 		await expect
-			.element(page.getByRole('button', { name: 'Fazer primeira configuração' }))
+			.element(page.getByRole('button', { name: t['auth.login.firstSetup'] }))
 			.not.toBeInTheDocument();
 	});
 });

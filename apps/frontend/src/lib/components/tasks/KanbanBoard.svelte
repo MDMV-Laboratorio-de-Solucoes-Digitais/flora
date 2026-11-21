@@ -2,6 +2,7 @@
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { groupByStatus, isValidMove } from './kanban.svelte';
 	import type { BoardTask } from './types';
+	import { t } from '$lib/i18n';
 
 	/**
 	 * Minimum real Kanban board. Controlled component: the parent owns the task
@@ -55,7 +56,7 @@
 			ondragover={handleDragOver}
 			ondrop={(event) => handleDrop(event, col.status)}
 			role="region"
-			aria-label="{col.title} column"
+			aria-label={`${t['kanban.column']} ${col.title}`}
 		>
 			<div class="mb-3 flex items-center justify-between px-1">
 				<h3 class="font-semibold">{col.title}</h3>
