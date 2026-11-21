@@ -374,3 +374,10 @@ permanecem intactas; apenas acréscimos.
 - Ciclo 103 corrigiu RBAC de `POST /api/v1/workspaces`: papel carregado no tenant da sessão, regra `WorkspaceWrite|WorkspaceAdmin`, 403 opaco; Admin preservado. Artefatos em `specs/103-workspace-create-rbac`, `.specify/assessments/103...`, `.specify/validations/103.../validate.md` (R4 APROVADO), `.specify/releases/103.../release.md` (R7), `docs/governance/2026-11-21-103-workspace-create-rbac.md`.
 - Gates: `check_gate_integrity.py` PASS (10 legs / 77 pisos), fmt/check/clippy exit 0, 2 testes unitários do helper RBAC, medição HTTP ReadOnly=403/Admin=201.
 - Roteiro: item 8 depende de `FLORA_STORAGE__LOCAL_PATH` gravável; item 6 (DMs) é placeholder; itens 6/8 UI/12 seguem **[NV]** no staging real.
+
+## Estado verificado — 2026-11-21 (ciclo 104 e merge 103)
+
+- PR #344 (ciclo 103) mesclado em `dev` às 23:14:46Z (`70babde31`); PR #343 mesclado às 23:03:13Z (`adec2d32`). Nenhum PR aberto.
+- Ciclo 104: e-mail real da sessão exibido na navegação via `emailFromToken` (fail-closed) + `$derived`; 7 testes novos (49/49 no total), check/lint ok, medição em navegador real.
+- Artefatos: `specs/104-session-identity/*`, `.specify/assessments/104-session-identity/*`, `.specify/validations/104-session-identity/validate.md` (R4 APROVADO), `.specify/releases/104-session-identity/release.md` (R7), `docs/governance/2026-11-21-104-session-identity.md`.
+- Dívidas: autoria no chat, DMs placeholder, UI de arquivos ausente; **[NV]** no staging real e no CI remoto.
