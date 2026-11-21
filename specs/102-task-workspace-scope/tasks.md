@@ -5,7 +5,7 @@
 
 **Date**: 2026-11-21
 
-**Format**: `[ID] Description` — T001..T008 em aberto (**fila a executar**); gates do alvo **[NV]** até o handoff.
+**Format**: `[ID] Description` — T001..T008 (fila original; execução registrada no status abaixo); gates do alvo **PASS** no handoff.
 **Status de execução (2026-11-21):** T001–T005 e T007–T008 executados e verificados; T006 substituído por teste unitário puro + medição ao vivo da API (justificativa em `analyze.md`/`converge.md`). Os `[ ]` abaixo permanecem como registro da fila original, não como estado corrente.
 
 ## Phase 1 — Diagnóstico e artefatos de assessoria

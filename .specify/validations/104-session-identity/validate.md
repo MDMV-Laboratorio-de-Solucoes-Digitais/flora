@@ -16,7 +16,7 @@
 ### Critérios de sucesso
 
 - **SC-001** e-mail real exibido na sessão autenticada — **PASS**.
-- **SC-002** token ausente/malformado / payload sem e-mail → fallback pt-BR — **PASS** (7 casos unitários).
+- **SC-002** token ausente/malformado / payload sem e-mail → fallback pt-BR — **PASS** (casos fail-closed em 2 blocos de teste, 13 asserções negativas).
 - **SC-003** nenhum uso do valor para autorização e nenhuma mudança de backend/gate/i18n — **PASS**.
 
 ### [NV]

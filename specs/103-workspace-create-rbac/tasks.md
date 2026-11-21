@@ -5,7 +5,7 @@
 
 **Date**: 2026-11-21
 
-**Format**: `[ID] Description` — T001..T008 em aberto (**fila a executar**); gates do alvo **[NV]** até o handoff.
+**Format**: `[ID] Description` — T001..T008 (fila original; execução registrada no status abaixo); gates do alvo **PASS** no handoff.
 **Status de execução (2026-11-21):** T001–T003 e T005–T008 executados/verificados; T004 (contrato DB-gated adicional) substituído por testes unitários + HTTP ao vivo para preservar os pisos do gate. Os `[ ]` abaixo são a fila original, não o estado corrente.
 
 ## Phase 1 — Diagnóstico e artefatos de assessoria
