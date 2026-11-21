@@ -12,6 +12,7 @@ mod tests {
     use flora_api::routes::bootstrap::create_bootstrap_router;
     use flora_api::state::AppState;
     use flora_core::config::Config;
+    use flora_core::config::bootstrap::BootstrapConfig;
     use flora_core::migrations::run_migrations;
     use flora_core::models::{Organization, User};
     use flora_core::repositories::{
