@@ -353,3 +353,9 @@ permanecem intactas; apenas acréscimos.
 - Deploy da API `pxx1xjtk6ssikhw08o3j8dsq` **finished**; `/` **200**, `/tasks` **200**, `/config.js` **200**, API `/health` **200**, `/api/v1/bootstrap/status` → `available=false`.
 - PRs #329/#331/#332/#335/#336/#338/#339 mesclados; `main=2f53abd58`. Gate final PASS (77 floors), CI verde em todos os PRs finais, e2e browser passou, `AGENTS.md` versionado.
 - **[NV] remanescente:** E2E autenticado em navegador com a conta real; variáveis de recuperação temporária ainda ativas no Coolify e devem ser removidas/rotacionadas após confirmação do usuário.
+
+## Estado verificado — 2026-11-21T13:36:02Z (complementar)
+
+- E-mail real da conta: `founder@mdmv.com.br`; login local com esse e-mail e a senha temporária retornou **200** e emitiu `session_token`. `luis.granja@mdmv.com.br` não é o e-mail persistido.
+- First Seed Journey: não aparece na página inicial (`grep -c "Primeira configuração" = 0`); `bootstrap/status` → `available=false`.
+- Nenhuma alteração de código; apenas diagnóstico e recomendação de uso/rotação da credencial temporária.
