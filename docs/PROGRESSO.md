@@ -359,3 +359,11 @@ permanecem intactas; apenas acréscimos.
 - E-mail real da conta: `founder@mdmv.com.br`; login local com esse e-mail e a senha temporária retornou **200** e emitiu `session_token`. `luis.granja@mdmv.com.br` não é o e-mail persistido.
 - First Seed Journey: não aparece na página inicial (`grep -c "Primeira configuração" = 0`); `bootstrap/status` → `available=false`.
 - Nenhuma alteração de código; apenas diagnóstico e recomendação de uso/rotação da credencial temporária.
+
+## Estado verificado — 2026-11-21 (roteiro de staging + ciclo 102)
+
+- PR #342 (roteiro de testes em staging zerado) mesclado em `dev` às 22:15:32Z; nenhum PR aberto. Gate do alvo PASS (10 legs / 77 pisos) antes e depois do ciclo 102.
+- Roteiro executado em staging local zerado (URLs/credenciais do staging real não entregues — **[NV]** no FQDN): cenários 0–5, 7, 9 e verificações de API para 10/11. Itens 6, 8 e 12 permanecem **[NV]** por ausência de fixture/UI/comandos de reset.
+- Ciclo 102 corrigiu o escopo de tarefas por workspace: `specs/102-task-workspace-scope` (spec/plan/tasks/analyze/converge), `.specify/assessments/102...` (go), `.specify/validations/102.../validate.md` (R4 APROVADO), `.specify/releases/102.../release.md` (R7), `docs/governance/2026-11-21-102-task-workspace-scope.md`.
+- Verificação: Vitest 45/45, fmt/check/clippy/svelte-check/lint/build exit 0; API e UI medidas ao vivo em navegador real (headless Chromium), com capturas em `/tmp/flora-qa-*`.
+- Dívida restante: identidade do usuário hardcoded na navegação/chat; próximo candidato do BLOCO 5.
