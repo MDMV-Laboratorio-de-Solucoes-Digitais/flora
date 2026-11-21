@@ -932,3 +932,12 @@ anterior foi alterada.
 - **Gates 104:** Vitest 49/49 (14 arquivos), `bun run check` 0 erros, prettier/eslint exit 0 nos arquivos alterados após correções de `unicorn/prefer-code-point`, `prefer-split-limit`, `prefer-string-repeat` e `max-nested-calls`; navegador real confirmou a identidade. Gate do alvo PASS (10 legs / 77 pisos).
 - **Dívida remanescente:** autoria das mensagens no chat ainda exibe `Usuário <id>` — exige lookup de usuários, fora de escopo. DMs são placeholder e a UI de arquivos não existe — **[NV]**/dívidas.
 - **[NV]:** staging real (URLs/credenciais não entregues), CI remota do PR 104, branch protection e deploy.
+
+### Fechamento final — 2026-11-21T23:28:33Z (append-only)
+
+- **PR #345 mesclado** em `dev` às **23:28:33Z**, merge commit `3062ad719090835b215ef2d2e2892bc1bb34fb2f`. Checks obrigatórios observados ao vivo via `gh pr checks 345 --watch`: `db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = **pass**. `github/dev` = `3062ad719`; **nenhum PR aberto**.
+- **PRs mesclados nesta sessão:** #342 (`22:15:32Z`, `ae8632e10`), #343 (`23:03:13Z`, `adec2d32`), #344 (`23:14:46Z`, `70babde31`), #345 (`23:28:33Z`, `3062ad719`). Conflitos: nenhum (`mergeStateStatus=CLEAN` em todos). Branch `feature/073-state-closure` e demais branches de terceiros intactos.
+- **Gates finais:** `python3 scripts/ci/check_gate_integrity.py` **PASS** (`exit=0`, 4 required checks, 10 legs / 77 pisos), reexecutado após cada ciclo; `cargo fmt/check/clippy` exit 0; Vitest 49/49; `bun run check` 0 erros; prettier/eslint exit 0 nos arquivos alterados. `git diff --check` limpo, árvore de trabalho limpa antes de cada commit.
+- **Roteiro:** executado em staging local zerado (Postgres 18 isolado + API/frontend no HEAD do alvo) com browser real e capturas em `/tmp/flora-qa-*`. Cenários 0–5, 7, 9 e verificações de API para 8/10/11 executados; itens 6 (DMs — placeholder), 8 UI (sem rota de arquivos) e 12 (comandos de reset do staging real) permanecem **[NV]**/dívida.
+- **Factory:** HEAD `b1deab15f482dd85871cd6c6a857ad710b89e2a6`, lida como fonte, jamais modificada; nada transplantado da árvore suja. Âncora final do alvo: `feature.json` → `specs/104-session-identity`.
+- **[NV] remanescente:** FQDN/credenciais do staging real da MDMV-Autonoma, CI/proteção/deploy após o último merge, e implementação de DMs/UI de arquivos/autoria no chat (novos ciclos exigem priorização de produto).
