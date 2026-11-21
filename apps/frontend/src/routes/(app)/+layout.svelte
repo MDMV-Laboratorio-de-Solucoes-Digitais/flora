@@ -22,8 +22,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { t } from '$lib/i18n';
+	import { emailFromToken } from '$lib/utils/jwt';
 
 	let { children } = $props();
+	const userEmail = $derived(emailFromToken(authState.token) ?? t['nav.userEmail']);
 
 	// App state
 	let isSidebarOpen = $state(true);
@@ -179,10 +181,12 @@
 							</div>
 							{#if isSidebarOpen}
 								<div class="ml-2 flex flex-col items-start overflow-hidden text-sm">
-									<span class="w-full truncate font-medium">{t['nav.userName']}</span>
-									<span class="w-full truncate text-xs text-muted-foreground"
-										>{t['nav.userEmail']}</span
+									<span class="w-full truncate font-medium"
+										>{userEmail === t['nav.userEmail']
+											? t['nav.userName']
+											: userEmail.split('@', 1)[0]}</span
 									>
+									<span class="w-full truncate text-xs text-muted-foreground">{userEmail}</span>
 								</div>
 							{/if}
 						</Button>
