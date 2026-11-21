@@ -367,3 +367,10 @@ permanecem intactas; apenas acréscimos.
 - Ciclo 102 corrigiu o escopo de tarefas por workspace: `specs/102-task-workspace-scope` (spec/plan/tasks/analyze/converge), `.specify/assessments/102...` (go), `.specify/validations/102.../validate.md` (R4 APROVADO), `.specify/releases/102.../release.md` (R7), `docs/governance/2026-11-21-102-task-workspace-scope.md`.
 - Verificação: Vitest 45/45, fmt/check/clippy/svelte-check/lint/build exit 0; API e UI medidas ao vivo em navegador real (headless Chromium), com capturas em `/tmp/flora-qa-*`.
 - Dívida restante: identidade do usuário hardcoded na navegação/chat; próximo candidato do BLOCO 5.
+
+## Estado verificado — 2026-11-21 (ciclo 103 e merge 102)
+
+- PR #343 (ciclo 102) mesclado em `dev` às 23:03:13Z (`adec2d32`); PR #342 mesclado às 22:15:32Z (`ae8632e10`). Nenhum PR aberto.
+- Ciclo 103 corrigiu RBAC de `POST /api/v1/workspaces`: papel carregado no tenant da sessão, regra `WorkspaceWrite|WorkspaceAdmin`, 403 opaco; Admin preservado. Artefatos em `specs/103-workspace-create-rbac`, `.specify/assessments/103...`, `.specify/validations/103.../validate.md` (R4 APROVADO), `.specify/releases/103.../release.md` (R7), `docs/governance/2026-11-21-103-workspace-create-rbac.md`.
+- Gates: `check_gate_integrity.py` PASS (10 legs / 77 pisos), fmt/check/clippy exit 0, 2 testes unitários do helper RBAC, medição HTTP ReadOnly=403/Admin=201.
+- Roteiro: item 8 depende de `FLORA_STORAGE__LOCAL_PATH` gravável; item 6 (DMs) é placeholder; itens 6/8 UI/12 seguem **[NV]** no staging real.

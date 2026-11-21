@@ -914,3 +914,12 @@ anterior foi alterada.
 - **Gates:** `check_gate_integrity.py` **PASS** (`exit=0`, 10 legs / 77 pisos) antes e depois do patch; `cargo fmt/check/clippy` exit 0; Vitest 45/45; svelte-check 0 erros; lint exit 0; build frontend exit 0.
 - **Escopo:** nenhum gate/required check/ADR/constituição/schema/migration/RBAC/flag tocado; nenhuma credencial real registrada. Factory lida em `b1deab15f482dd85871cd6c6a857ad710b89e2a6`, nada transplantado; worktree `feature/073-state-closure` intacto.
 - **[NV]:** CI/PR/merge/deploy/Coolify/Forgejo e execução do roteiro no FQDN de staging — reconsultar ao vivo antes de qualquer decisão.
+
+## Atualização — ciclo 103 e merge do ciclo 102 (2026-11-21; append-only)
+
+- **PR #343 mesclado** em `dev` às **23:03:13Z**, merge commit `adec2d32fa`; checks obrigatórios verificados ao vivo (`db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = pass). Nenhum PR aberto após o merge.
+- **Âncora 103:** `.specify/feature.json` → `specs/103-workspace-create-rbac`; branch `feature/103-workspace-create-rbac` @ `14cb336173` (base: commits do ciclo 102). Notas anteriores preservadas; registro canônico: `docs/governance/2026-11-21-103-workspace-create-rbac.md` (novo).
+- **Bug corrigido (103):** item 11 do roteiro — papel `SomenteLeituraQA` (`permissions=[]`) criava workspace (`POST /api/v1/workspaces` → 201). `create_workspace` agora carrega o papel no org da sessão e exige `WorkspaceWrite|WorkspaceAdmin`, negando com 403 opaco; Admin segue com 201. Helper puro `can_create_workspace` com 2 testes unitários; nenhum `#[ignore]` novo (pisos do gate preservados).
+- **Gates 103:** `check_gate_integrity.py` PASS (10 legs / 77 pisos); fmt/check/clippy exit 0; `cargo test -p flora-api workspace::tests` 2 passed. Medição HTTP local: ReadOnly 403 / Admin 201.
+- **Roteiro — itens adicionais medidos:** item 8 (upload/download) funcionou após configurar `FLORA_STORAGE__LOCAL_PATH` — com o default `/var/flora/storage` o upload retornou 500 por permissão (configuração de ambiente, não código); item 10 (notificação de atribuição) confirmado via API; item 11 (RBAC) revelou o bug 103; item 6 (DMs) é placeholder hardcoded (`dms/+page.svelte:9`), não implementado — **[NV]**/dívida.
+- **[NV]:** staging real (URLs/credenciais não entregues), CI remota do PR 103, branch protection, deploy e UI de arquivos (rota inexistente no frontend).
