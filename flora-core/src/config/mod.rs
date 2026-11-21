@@ -4,6 +4,7 @@
 //! All values are validated at startup.
 
 pub mod app;
+pub mod bootstrap;
 pub mod database;
 pub mod messaging;
 pub mod oidc;
@@ -18,6 +19,8 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     /// Application-level settings.
     pub app: app::AppConfig,
+    /// Startup administrator password configuration.
+    pub bootstrap: bootstrap::BootstrapConfig,
     /// Database connection settings.
     pub database: database::DatabaseConfig,
     /// OIDC provider configuration.
@@ -55,6 +58,7 @@ impl Config {
     /// Returns an error if any configuration value fails validation.
     pub fn validate(&self) -> Result<(), crate::Error> {
         self.app.validate()?;
+        self.bootstrap.validate()?;
         self.database.validate()?;
         self.oidc.validate()?;
         self.storage.validate()?;

@@ -12,7 +12,7 @@ function jsonResponse(body: unknown, status: number): Response {
 	return Response.json(body, { status });
 }
 
-describe('(auth)/+page.svelte — login failure feedback', () => {
+describe('(auth)/+page.svelte — login local em pt-BR', () => {
 	beforeEach(() => {
 		authState.logout();
 		localStorage.clear();
@@ -23,33 +23,82 @@ describe('(auth)/+page.svelte — login failure feedback', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('shows the API error when the login flow cannot start', async () => {
+	it('envia e-mail e senha para o endpoint local e guarda a sessão', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(
+				jsonResponse(
+					{
+						session_token: 'jwt-local',
+						expires_in: 3600,
+						user_id: 'user-teste',
+						next_step: 'select_or_create_organization'
+					},
+					200
+				)
+			)
+		);
+
+		render(LoginPage);
+		await page.getByPlaceholder('voce@exemplo.com').fill('luis.granja@mdmv.com.br');
+		await page.getByPlaceholder('Senha').fill('senha-muito-forte-123');
+		await page.getByRole('button', { name: 'Entrar' }).click();
+
+		await vi.waitFor(() => expect(authState.token).toBe('jwt-local'));
+		expect(authState.isAuthenticated).toBe(true);
+		expect(localStorage.getItem('flora.auth.v1')).toContain('jwt-local');
+		expect(goto).toHaveBeenCalledWith('/select-org');
+
+		const [url, init] = vi.mocked(fetch).mock.calls[0];
+		expect(String(url)).toContain('/api/v1/auth/password/login');
+		expect(init?.method).toBe('POST');
+		expect(JSON.parse(String(init?.body))).toEqual({
+			email: 'luis.granja@mdmv.com.br',
+			password: 'senha-muito-forte-123'
+		});
+	});
+
+	it('mostra mensagem genérica em pt-BR para credenciais inválidas', async () => {
 		vi.stubGlobal(
 			'fetch',
 			vi
 				.fn()
 				.mockResolvedValue(
-					jsonResponse({ error: 'oidc_error', message: 'redirect_uri is not allowed' }, 503)
+					jsonResponse({ error: 'invalid_credentials', message: 'Invalid credentials' }, 401)
 				)
 		);
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Sign In' }).click();
+		await page.getByPlaceholder('voce@exemplo.com').fill('luis.granja@mdmv.com.br');
+		await page.getByPlaceholder('Senha').fill('senha-errada-123');
+		await page.getByRole('button', { name: 'Entrar' }).click();
 
-		await expect.element(page.getByText(/unable to start sign-in/i)).toBeInTheDocument();
-		await expect.element(page.getByText(/redirect_uri is not allowed/i)).toBeInTheDocument();
+		await expect.element(page.getByText(/e-mail ou senha incorretos/i)).toBeInTheDocument();
+		expect(authState.isAuthenticated).toBe(false);
+		expect(goto).not.toHaveBeenCalled();
 	});
 
-	it('explains rate limiting instead of failing silently', async () => {
+	it('explica a limitação de tentativas em pt-BR', async () => {
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'rate_limited' }, 429)));
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Sign In' }).click();
+		await page.getByRole('button', { name: 'Entrar' }).click();
 
-		await expect.element(page.getByText(/too many attempts/i)).toBeInTheDocument();
+		await expect.element(page.getByText(/muitas tentativas/i)).toBeInTheDocument();
 	});
 
-	it('bootstraps a fresh workspace and stores the returned session', async () => {
+	it('explica falhas de conexão em pt-BR', async () => {
+		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+		render(LoginPage);
+		await page.getByRole('button', { name: 'Entrar' }).click();
+
+		await expect
+			.element(page.getByText(/não foi possível conectar ao servidor/i))
+			.toBeInTheDocument();
+	});
+
+	it('cria um workspace e envia a senha do administrador', async () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn().mockResolvedValue(
@@ -67,8 +116,9 @@ describe('(auth)/+page.svelte — login failure feedback', () => {
 		);
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Start First Seed Journey' }).click();
-		await page.getByRole('button', { name: 'Sprout Workspace' }).click();
+		await page.getByRole('button', { name: 'Fazer primeira configuração' }).click();
+		await page.getByPlaceholder('Mínimo de 15 caracteres').fill('SenhaAdministrador@123');
+		await page.getByRole('button', { name: 'Criar workspace' }).click();
 
 		await vi.waitFor(() => expect(authState.organizationId).toBe('org-teste'));
 		expect(authState.isAuthenticated).toBe(true);
@@ -80,28 +130,27 @@ describe('(auth)/+page.svelte — login failure feedback', () => {
 		expect(init?.method).toBe('POST');
 		expect(JSON.parse(String(init?.body))).toEqual({
 			organization_name: 'Flora',
-			admin_email: 'admin@flora.local'
+			admin_email: 'admin@flora.local',
+			admin_password: 'SenhaAdministrador@123'
 		});
 	});
 
-	it('shows a conflict when the workspace was already bootstrapped', async () => {
+	it('mostra conflito em pt-BR quando o workspace já existe', async () => {
 		vi.stubGlobal(
 			'fetch',
 			vi
 				.fn()
 				.mockResolvedValue(
-					jsonResponse(
-						{ error: 'conflict', message: 'duplicate entry: bootstrap already completed' },
-						409
-					)
+					jsonResponse({ error: 'conflict', message: 'bootstrap already completed' }, 409)
 				)
 		);
 
 		render(LoginPage);
-		await page.getByRole('button', { name: 'Start First Seed Journey' }).click();
-		await page.getByRole('button', { name: 'Sprout Workspace' }).click();
+		await page.getByRole('button', { name: 'Fazer primeira configuração' }).click();
+		await page.getByPlaceholder('Mínimo de 15 caracteres').fill('SenhaAdministrador@123');
+		await page.getByRole('button', { name: 'Criar workspace' }).click();
 
-		await expect.element(page.getByText(/bootstrap already completed/i)).toBeInTheDocument();
+		await expect.element(page.getByText(/workspace já foi configurado/i)).toBeInTheDocument();
 		expect(authState.isAuthenticated).toBe(false);
 		expect(goto).not.toHaveBeenCalled();
 	});

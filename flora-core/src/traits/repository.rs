@@ -31,6 +31,17 @@ pub trait UserRepository: Send + Sync + std::fmt::Debug {
 
     /// Deactivate a user (soft delete).
     async fn deactivate(&self, id: Uuid) -> crate::Result<()>;
+
+    /// Stores an Argon2id hash only when the user has no local password yet.
+    ///
+    /// Returns `true` when the hash was stored; `false` when the user is
+    /// unknown or already has a password.
+    async fn set_password_hash_if_absent(
+        &self,
+        id: Uuid,
+        password_hash: &str,
+        updated_at: DateTime<Utc>,
+    ) -> crate::Result<bool>;
 }
 
 /// Repository trait for Organization operations.
