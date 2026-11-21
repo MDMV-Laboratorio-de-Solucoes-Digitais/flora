@@ -43,6 +43,7 @@
 			organizations = await ApiClient.request<Organization[]>('/api/v1/organizations');
 		} catch (error_) {
 			errorMessage = apiErrorMessage(error_, 'error.loadOrganizations');
+		} finally {
 			isLoading = false;
 		}
 	}
@@ -63,6 +64,7 @@
 			await goto('/tasks');
 		} catch (error_) {
 			errorMessage = apiErrorMessage(error_, 'error.selectOrganization');
+		} finally {
 			isSubmitting = false;
 		}
 	}
@@ -82,6 +84,7 @@
 			await selectOrganization(created.id);
 		} catch (error_) {
 			errorMessage = apiErrorMessage(error_, 'error.createOrganization');
+		} finally {
 			isSubmitting = false;
 		}
 	}
