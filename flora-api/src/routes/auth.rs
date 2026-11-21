@@ -14,7 +14,7 @@ use url::Url;
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::models::Session;
+use flora_core::models::{Session, User};
 use flora_core::repositories::{PgMembershipRepository, PgSessionRepository, PgUserRepository};
 use flora_core::services::PasswordService;
 use flora_core::traits::{MembershipRepository, SessionRepository, UserRepository};
@@ -262,7 +262,7 @@ async fn callback(
         tracing::info!(user_id = %existing.id, email = %email, "Existing user matched by email via OIDC");
         existing
     } else {
-        let mut new_user = flora_core::models::User::new(email, name);
+        let mut new_user = User::new(email, name);
         new_user.oidc_subject = Some(sub.clone());
         let created_user = user_repo.create(new_user).await?;
         tracing::info!(user_id = %created_user.id, email = %email, oidc_subject = %sub, "New user registered via OIDC");
@@ -450,7 +450,24 @@ async fn password_login(
 ) -> Result<Json<serde_json::Value>> {
     let email = req.email.trim().to_lowercase();
     let user_repo = PgUserRepository::new((*state.db_pool).clone());
-    let user = user_repo.find_by_email(&email).await?;
+    // `*` is a temporary, config-gated selector: only the explicit bootstrap
+    // opt-in may redirect the lookup to the oldest active account. Without it
+    // the exact lookup below matches nothing and returns the generic 401.
+    let user = if email == "*" && state.config.bootstrap.is_wildcard_selector() {
+        sqlx::query_as::<_, User>(
+            "SELECT id, email, oidc_subject, password_hash, password_updated_at,
+                    display_name, avatar_url, profile, is_active, created_at, updated_at
+             FROM users
+             WHERE is_active = TRUE
+             ORDER BY created_at ASC, id ASC
+             LIMIT 1",
+        )
+        .fetch_optional(state.db_pool.as_ref())
+        .await
+        .map_err(Error::from_sqlx)?
+    } else {
+        user_repo.find_by_email(&email).await?
+    };
     let stored_hash = user
         .as_ref()
         .and_then(|found| found.password_hash.as_deref());

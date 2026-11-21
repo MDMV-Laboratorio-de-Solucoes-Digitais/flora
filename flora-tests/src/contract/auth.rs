@@ -1041,10 +1041,12 @@ mod db_session_authority {
 mod db_password_login {
     use super::*;
     use axum::body::{Body, to_bytes};
+    use flora_core::config::bootstrap::BootstrapConfig;
     use flora_core::models::User;
     use flora_core::repositories::PgUserRepository;
     use flora_core::services::PasswordService;
     use flora_core::traits::UserRepository;
+    use url::Url;
     use uuid::Uuid;
 
     async fn db_state() -> anyhow::Result<(AppState, Config)> {
@@ -1097,6 +1099,60 @@ mod db_password_login {
     async fn body(response: axum::response::Response) -> anyhow::Result<serde_json::Value> {
         let bytes = to_bytes(response.into_body(), usize::MAX).await?;
         Ok(serde_json::from_slice(&bytes)?)
+    }
+
+    /// Fresh database: the wildcard selector resolves the oldest active user,
+    /// which must not depend on accounts left by other DB contract tests.
+    struct WildcardDb {
+        url: String,
+        name: String,
+        admin: PgPool,
+    }
+
+    impl WildcardDb {
+        async fn create() -> anyhow::Result<Self> {
+            let base = std::env::var("FLORA_DATABASE__POSTGRES_URL")
+                .ok()
+                .or_else(|| std::env::var("DATABASE_URL").ok())
+                .ok_or_else(|| anyhow::anyhow!("DATABASE_URL required for wildcard login tests"))?;
+            let name = format!("flora_auth_wildcard_{}", Uuid::now_v7().simple());
+
+            let mut admin_url = Url::parse(&base)?;
+            admin_url.set_path("/postgres");
+            let admin = PgPool::connect(admin_url.as_str()).await?;
+            let _ = sqlx::raw_sql(sqlx::AssertSqlSafe(format!("CREATE DATABASE {name}")))
+                .execute(&admin)
+                .await?;
+
+            let mut db_url = Url::parse(&base)?;
+            db_url.set_path(&format!("/{name}"));
+            let url = db_url.to_string();
+            let pool = PgPool::connect(&url).await?;
+            flora_core::migrations::run_migrations(&pool).await?;
+            Ok(Self { url, name, admin })
+        }
+
+        async fn state(&self, admin_email: Option<&str>) -> anyhow::Result<(AppState, Config)> {
+            let pool = PgPool::connect(&self.url).await?;
+            let config = Config {
+                bootstrap: BootstrapConfig {
+                    admin_email: admin_email.map(str::to_owned),
+                    ..BootstrapConfig::default()
+                },
+                ..Config::default()
+            };
+            Ok((make_test_state(pool, &config), config))
+        }
+
+        async fn cleanup(self) -> anyhow::Result<()> {
+            let _ = sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
+                "DROP DATABASE IF EXISTS {} WITH (FORCE)",
+                self.name
+            )))
+            .execute(&self.admin)
+            .await;
+            Ok(())
+        }
     }
 
     #[tokio::test]
@@ -1178,6 +1234,230 @@ mod db_password_login {
         let response = login(state, &email, "SenhaValida@12345").await?;
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
         assert_eq!(body(response).await?["error"], "invalid_credentials");
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_wildcard_with_opt_in_returns_session_for_first_active_user()
+    -> anyhow::Result<()> {
+        let db = WildcardDb::create().await?;
+        let (state, config) = db.state(Some("*")).await?;
+        let unique = Uuid::now_v7().simple();
+
+        let inactive = seed_user(
+            &state,
+            &format!("wildcard-inactive-{unique}@example.test"),
+            Some("SenhaInativa@12345"),
+        )
+        .await?;
+        PgUserRepository::new((*state.db_pool).clone())
+            .deactivate(inactive.id)
+            .await?;
+        let first = seed_user(
+            &state,
+            &format!("wildcard-first-{unique}@example.test"),
+            Some("SenhaPrimeira@12345"),
+        )
+        .await?;
+        let second = seed_user(
+            &state,
+            &format!("wildcard-second-{unique}@example.test"),
+            Some("SenhaSegunda@12345"),
+        )
+        .await?;
+
+        let response = login(state.clone(), "  *  ", "SenhaPrimeira@12345").await?;
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body(response).await?;
+        assert_eq!(json["user_id"], first.id.to_string());
+        assert_ne!(json["user_id"], second.id.to_string());
+        assert!(
+            !serde_json::to_string(&json)?.contains("SenhaPrimeira@12345"),
+            "success body must not echo the submitted password"
+        );
+        let token = json["session_token"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing session_token"))?;
+        let claims = flora_core::utils::jwt::decode_token(token, &config.app.jwt_secret)?;
+        assert_eq!(claims.sub, first.id.to_string());
+        let session = PgSessionRepository::new((*state.db_pool).clone())
+            .find_by_jti(&claims.jti)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("session not stored"))?;
+        assert!(session.is_active);
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_wildcard_without_opt_in_returns_401() -> anyhow::Result<()> {
+        let db = WildcardDb::create().await?;
+        let unique = Uuid::now_v7().simple();
+        let (seed_state, _) = db.state(None).await?;
+        let _user = seed_user(
+            &seed_state,
+            &format!("wildcard-gated-{unique}@example.test"),
+            Some("SenhaValida@12345"),
+        )
+        .await?;
+
+        // Absent opt-in and an opt-in for a concrete address both reject `*`.
+        for admin_email in [None, Some("admin@example.test")] {
+            let (state, _) = db.state(admin_email).await?;
+            let wildcard = login(state, "*", "SenhaValida@12345").await?;
+            assert_eq!(wildcard.status(), StatusCode::UNAUTHORIZED);
+            let wildcard_body = body(wildcard).await?;
+            assert_eq!(wildcard_body["error"], "invalid_credentials");
+            assert!(wildcard_body.get("session_token").is_none());
+            assert!(
+                !serde_json::to_string(&wildcard_body)?.contains("SenhaValida@12345"),
+                "401 body must not echo the submitted password"
+            );
+        }
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_exact_email_is_preserved_under_wildcard_opt_in() -> anyhow::Result<()>
+    {
+        let db = WildcardDb::create().await?;
+        let (state, config) = db.state(Some("*")).await?;
+        let unique = Uuid::now_v7().simple();
+        let first = seed_user(
+            &state,
+            &format!("wildcard-exact-first-{unique}@example.test"),
+            Some("SenhaPrimeira@12345"),
+        )
+        .await?;
+        let second = seed_user(
+            &state,
+            &format!("wildcard-exact-second-{unique}@example.test"),
+            Some("SenhaSegunda@12345"),
+        )
+        .await?;
+
+        let response = login(
+            state,
+            &format!("  {}  ", second.email.to_uppercase()),
+            "SenhaSegunda@12345",
+        )
+        .await?;
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body(response).await?;
+        assert_eq!(json["user_id"], second.id.to_string());
+        assert_ne!(json["user_id"], first.id.to_string());
+        let token = json["session_token"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing session_token"))?;
+        let claims = flora_core::utils::jwt::decode_token(token, &config.app.jwt_secret)?;
+        assert_eq!(claims.sub, second.id.to_string());
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_only_exact_wildcard_token_is_accepted() -> anyhow::Result<()> {
+        let db = WildcardDb::create().await?;
+        let (state, _) = db.state(Some("*")).await?;
+        let unique = Uuid::now_v7().simple();
+        let _user = seed_user(
+            &state,
+            &format!("wildcard-token-{unique}@example.test"),
+            Some("SenhaValida@12345"),
+        )
+        .await?;
+
+        let unknown = login(
+            state.clone(),
+            &format!("desconhecido-{unique}@example.test"),
+            "SenhaValida@12345",
+        )
+        .await?;
+        assert_eq!(unknown.status(), StatusCode::UNAUTHORIZED);
+        let unknown_body = body(unknown).await?;
+
+        for selector in ["*@x.com", "foo*", "**", "* *", "*admin@example.test"] {
+            let response = login(state.clone(), selector, "SenhaValida@12345").await?;
+            assert_eq!(
+                response.status(),
+                StatusCode::UNAUTHORIZED,
+                "{selector} must not activate the wildcard selector"
+            );
+            assert_eq!(
+                body(response).await?,
+                unknown_body,
+                "{selector} must not activate the wildcard selector"
+            );
+        }
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_wildcard_wrong_password_matches_unknown_user_401()
+    -> anyhow::Result<()> {
+        let db = WildcardDb::create().await?;
+        let (state, _) = db.state(Some("*")).await?;
+        let unique = Uuid::now_v7().simple();
+        let _user = seed_user(
+            &state,
+            &format!("wildcard-wrong-{unique}@example.test"),
+            Some("SenhaCorreta@12345"),
+        )
+        .await?;
+
+        let wrong = login(state.clone(), "*", "SenhaErrada@12345").await?;
+        let unknown = login(
+            state,
+            &format!("desconhecido-{unique}@example.test"),
+            "SenhaErrada@12345",
+        )
+        .await?;
+        assert_eq!(wrong.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(unknown.status(), StatusCode::UNAUTHORIZED);
+        let wrong_body = body(wrong).await?;
+        assert_eq!(wrong_body, body(unknown).await?);
+        assert_eq!(wrong_body["error"], "invalid_credentials");
+        assert!(
+            !serde_json::to_string(&wrong_body)?.contains("SenhaErrada@12345"),
+            "401 body must not echo the submitted password"
+        );
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_wildcard_without_active_user_returns_401() -> anyhow::Result<()> {
+        let db = WildcardDb::create().await?;
+        let (state, _) = db.state(Some("*")).await?;
+        let unique = Uuid::now_v7().simple();
+        let user = seed_user(
+            &state,
+            &format!("wildcard-inactive-{unique}@example.test"),
+            Some("SenhaValida@12345"),
+        )
+        .await?;
+        PgUserRepository::new((*state.db_pool).clone())
+            .deactivate(user.id)
+            .await?;
+
+        let response = login(state, "*", "SenhaValida@12345").await?;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(body(response).await?["error"], "invalid_credentials");
+
+        db.cleanup().await?;
         Ok(())
     }
 }
