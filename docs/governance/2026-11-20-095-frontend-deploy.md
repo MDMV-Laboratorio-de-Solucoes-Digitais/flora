@@ -42,3 +42,10 @@ Validação a executar, nesta ordem, antes de declarar concluído:
 ## Histórico e escopo
 
 Documento novo e append-only. Nenhuma linha de `STATE.md`, `PROGRESSO.md`, ADRs, constituição, validations ou releases foi reescrita. Nenhuma credencial foi copiada ou exposta. Afirmações sobre estado remoto/Coolify/DNS/CI não remediadas nesta nota permanecem **[NV]** até reconsulta ao vivo.
+
+## (e) Fechamento verificado — 2026-11-21T00:15:48Z
+
+- PRs **#324**, **#325** e **#326** mesclados em `dev`; head local `aa1f01b8a`. O workflow `docker-frontend.yml` publica a imagem e aciona o webhook; a etapa temporária de visibilidade GHCR foi removida porque a API GitHub retorna 404 para pacotes de organização.
+- A imagem GHCR permaneceu privada (`401` no pull do Coolify). O app `Flora Web` (UUID `uvykanlrkyp5dzrkktaj5bup`) foi reconfigurado para **buildar direto do Git**: repositório `MDMV-Laboratorio-de-Solucoes-Digitais/flora.git`, branch `dev`, `base_directory=/apps/frontend`, `dockerfile_location=/Dockerfile`, porta 3000, FQDN `https://flora.mdmv.qzz.io`, `FLORA_API_BASE_URL=https://flora-api.mdmv.qzz.io`. Deploy `kwzqvvvkeldq2zmyxa12fu3g` **finished**.
+- API migrou para `https://flora-api.mdmv.qzz.io` com CORS `https://flora.mdmv.qzz.io`. Medição final: frontend `/`, `/tasks`, `/config.js` → **200**; API `/health`, `/llms.txt` → **200**; preflight CORS → **200**; página inicial renderizada em navegador real.
+- **[NV] remanescente:** fluxo E2E autenticado e healthcheck do Coolify (`unknown`, sem health check configurado). Rollback = reapontar o FQDN para a origem/imagem anterior, sem force-push.

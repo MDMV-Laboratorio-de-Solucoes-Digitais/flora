@@ -288,3 +288,10 @@ permanecem intactas; apenas acréscimos.
 - **Decisão:** imagem `flora-web` a partir de `apps/frontend/Dockerfile`, publicada por workflow manual; `flora.mdmv.qzz.io` para o frontend; API em `flora-api.mdmv.qzz.io`; `FLORA_API_BASE_URL` gera `config.js` no entrypoint; CORS da API (`FLORA_APP__CORS_ORIGINS`) deve incluir a origem do frontend. Deploy fora do gate de merge (ADR-0003); nada disso executado por esta nota.
 - **[NV] até deploy final:** imagem, app/DNS da API, CORS em produção e medição pós-deploy. Próximos passos de validação: gate `check_gate_integrity.py` + `git diff --check`; build local do container e `GET /`, `/tasks`, `/config.js`; publicar via workflow manual; apontar FQDN para `flora-web`; validar API e CORS no FQDN novo; medir `/`, `/tasks`, `/health` e fluxo no browser; registrar nova nota append-only. Rollback = reapontar FQDN para a imagem anterior, sem force-push.
 - **Escopo:** apêndice datado; nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou deploy alterado por esta nota; nenhuma credencial exposta. **[NV]** CI futuro, proteção, Coolify, Forgejo e aprovações ao vivo: reconsultar antes de agir.
+
+## Estado verificado — 2026-11-21T00:15:48Z (ciclo 095; append-only)
+
+- Frontend em produção: `https://flora.mdmv.qzz.io/` **200**, `/tasks` **200**, `/config.js` **200** apontando para `https://flora-api.mdmv.qzz.io`. Página inicial renderizada com "Welcome to Flora", campos Email/Senha e "Sign In".
+- API em origem separada: `https://flora-api.mdmv.qzz.io/health` **200**, `/llms.txt` **200**; preflight CORS de `https://flora.mdmv.qzz.io` **200** com `access-control-allow-origin` correto.
+- Deploy Coolify `kwzqvvvkeldq2zmyxa12fu3g` **finished** no commit `eea32bdd12ba48222a81990f0f1efd5212520a3b`; app `Flora Web` `uvykanlrkyp5dzrkktaj5bup` builda do Git (`dev`, `/apps/frontend`, `apps/frontend/Dockerfile`), porta 3000.
+- PRs #324, #325 e #326 mesclados em `dev`; head `aa1f01b8a`. Gate do alvo PASS; CI verde nos três PRs; build local validado. **[NV]:** E2E autenticado e healthcheck do Coolify não exercitados.
