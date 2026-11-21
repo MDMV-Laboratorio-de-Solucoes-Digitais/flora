@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::models::{CreateWorkspaceInput, UpdateWorkspaceInput, Workspace};
+use flora_core::models::{CreateWorkspaceInput, Permission, Role, UpdateWorkspaceInput, Workspace};
 use flora_core::repositories::{PgMembershipRepository, PgRoleRepository};
 use flora_core::traits::{MembershipRepository, RoleRepository};
 
@@ -35,6 +35,12 @@ pub struct CreateWorkspaceRequest {
     pub name: String,
     /// Optional description.
     pub description: Option<String>,
+}
+
+/// Authorization rule shared by `POST /workspaces` and its unit tests.
+fn can_create_workspace(role: &Role) -> bool {
+    role.has_permission(Permission::WorkspaceWrite)
+        || role.has_permission(Permission::WorkspaceAdmin)
 }
 
 /// Response body for a workspace.
@@ -129,12 +135,20 @@ async fn create_workspace(
     })?;
     let user_id = auth.user_id;
 
-    // Verify user has permission to create workspaces in this org
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
-    let _membership = membership_repo
+    let membership = membership_repo
         .find_by_user_and_organization(user_id, org_id)
         .await?
         .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let role = role_repo
+        .find_by_id_and_organization(membership.role_id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
+    if !can_create_workspace(&role) {
+        return Err(Error::Forbidden("Insufficient permissions".to_string()));
+    }
 
     let input = CreateWorkspaceInput {
         name: req.name,
@@ -218,8 +232,8 @@ async fn update_workspace(
         .find_by_id_and_organization(membership.role_id, org_id)
         .await?
         .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
-    if !role.has_permission(flora_core::models::Permission::WorkspaceWrite)
-        && !role.has_permission(flora_core::models::Permission::WorkspaceAdmin)
+    if !role.has_permission(Permission::WorkspaceWrite)
+        && !role.has_permission(Permission::WorkspaceAdmin)
     {
         return Err(Error::Forbidden("Insufficient permissions".to_string()));
     }
@@ -266,7 +280,7 @@ async fn delete_workspace(
         .find_by_id_and_organization(membership.role_id, org_id)
         .await?
         .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
-    if !role.has_permission(flora_core::models::Permission::WorkspaceAdmin) {
+    if !role.has_permission(Permission::WorkspaceAdmin) {
         return Err(Error::Forbidden("Insufficient permissions".to_string()));
     }
 
@@ -324,4 +338,36 @@ async fn switch_workspace(
         name: workspace.name,
         message: "Workspace context switched successfully".to_string(),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use flora_core::models::Role;
+    use uuid::Uuid;
+
+    use super::can_create_workspace;
+
+    fn role_with(permissions: &[&str]) -> Role {
+        let mut role = Role::new(Uuid::now_v7(), "test-role");
+        role.permissions = serde_json::json!(permissions);
+        role
+    }
+
+    #[test]
+    fn test_allows_wildcard_admin_and_explicit_write() {
+        assert!(can_create_workspace(&role_with(&["*"])));
+        assert!(can_create_workspace(&role_with(&["workspace:write"])));
+        assert!(can_create_workspace(&role_with(&["workspace:admin"])));
+        assert!(can_create_workspace(&role_with(&["WorkspaceWrite"])));
+    }
+
+    #[test]
+    fn test_denies_empty_and_unrelated_permissions() {
+        assert!(!can_create_workspace(&role_with(&[])));
+        assert!(!can_create_workspace(&role_with(&[
+            "workspace:read",
+            "task:write"
+        ])));
+        assert!(!can_create_workspace(&role_with(&["WorkspaceRead"])));
+    }
 }
