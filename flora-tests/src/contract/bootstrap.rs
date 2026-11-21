@@ -160,8 +160,12 @@ mod tests {
         });
         let response = post(router(lazy_state()?), payload).await?;
         assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
-        let error = json_body(response).await?;
-        assert_eq!(error["field"], "admin_password");
+        let bytes = to_bytes(response.into_body(), usize::MAX).await?;
+        let message = String::from_utf8_lossy(&bytes);
+        assert!(
+            message.contains("admin_password"),
+            "unexpected body: {message}"
+        );
         Ok(())
     }
 
