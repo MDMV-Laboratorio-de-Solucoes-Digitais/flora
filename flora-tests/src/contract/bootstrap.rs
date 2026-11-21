@@ -337,7 +337,7 @@ mod tests {
     }
     #[tokio::test]
     #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
-    async fn db_startup_password_applies_only_to_users_without_hash() -> anyhow::Result<()> {
+    async fn db_startup_password_overwrites_existing_hash() -> anyhow::Result<()> {
         let db = TestDb::create().await?;
         let pool = PgPool::connect(&db.url).await?;
         let email = "luis.granja@mdmv.com.br";
@@ -356,27 +356,49 @@ mod tests {
 
         let _state = AppState::new(pool.clone(), config.clone()).await?;
         let repo = PgUserRepository::new(pool.clone());
-        let hash = repo
+        let first_hash = repo
             .find_by_email(email)
             .await?
             .and_then(|found| found.password_hash)
             .ok_or_else(|| anyhow::anyhow!("startup password was not applied"))?;
-        assert!(hash.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"));
-        assert!(PasswordService::shared().verify("SenhaInicial@12345", &hash));
+        assert!(first_hash.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"));
+        assert!(PasswordService::shared().verify("SenhaInicial@12345", &first_hash));
 
+        // An existing hash must not block recovery: a different configured
+        // password replaces it and the previous password stops working.
         let mut second_startup = config.clone();
         second_startup.bootstrap.admin_password = Some("SenhaNova@12345".to_owned());
-        let _state = AppState::new(pool.clone(), second_startup).await?;
-        let unchanged = repo
+        let _state = AppState::new(pool.clone(), second_startup.clone()).await?;
+        let overwritten = repo
             .find_by_email(email)
             .await?
             .and_then(|found| found.password_hash)
             .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
-        assert_eq!(unchanged, hash);
+        assert_ne!(overwritten, first_hash);
+        assert!(PasswordService::shared().verify("SenhaNova@12345", &overwritten));
+        assert!(!PasswordService::shared().verify("SenhaInicial@12345", &overwritten));
 
+        // Re-running with the same credentials is idempotent: the salted hash
+        // may change, but the configured password keeps working and no error
+        // is raised.
+        let _state = AppState::new(pool.clone(), second_startup).await?;
+        let repeated = repo
+            .find_by_email(email)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
+        assert!(PasswordService::shared().verify("SenhaNova@12345", &repeated));
+
+        // A missing target is a no-op: the real administrator is untouched.
         let mut missing_user = config;
         missing_user.bootstrap.admin_email = Some("ninguem@exemplo.test".to_owned());
         let _state = AppState::new(pool.clone(), missing_user).await?;
+        let untouched = repo
+            .find_by_email(email)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
+        assert_eq!(untouched, repeated);
 
         db.cleanup().await?;
         Ok(())
