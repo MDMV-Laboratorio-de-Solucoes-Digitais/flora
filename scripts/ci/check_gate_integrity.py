@@ -40,7 +40,7 @@ ALLOWED_JOB_IF = {
 }
 
 FLOORS = {
-    "auth": 13,
+    "auth": 17,
     "messaging": 4,
     "websocket": 8,
     "search": 8,
@@ -49,7 +49,7 @@ FLOORS = {
     "tasks": 4,
     "workspace": 3,
     "rbac": 3,
-    "bootstrap": 4,
+    "bootstrap": 5,
 }
 
 JOB_RE = re.compile(r"^  ([A-Za-z0-9][A-Za-z0-9_-]*):\s*$")

@@ -12,10 +12,14 @@ mod tests {
     use flora_api::routes::bootstrap::create_bootstrap_router;
     use flora_api::state::AppState;
     use flora_core::config::Config;
+    use flora_core::config::bootstrap::BootstrapConfig;
     use flora_core::migrations::run_migrations;
-    use flora_core::models::Organization;
-    use flora_core::repositories::{PgOrganizationRepository, PgSessionRepository};
-    use flora_core::traits::{OrganizationRepository, SessionRepository};
+    use flora_core::models::{Organization, User};
+    use flora_core::repositories::{
+        PgOrganizationRepository, PgSessionRepository, PgUserRepository,
+    };
+    use flora_core::services::PasswordService;
+    use flora_core::traits::{OrganizationRepository, SessionRepository, UserRepository};
     use flora_core::utils::jwt::decode_token;
     use serde_json::{Value, json};
     use sqlx::PgPool;
@@ -76,9 +80,16 @@ mod tests {
             .nest("/api/v1", create_bootstrap_router())
             .with_state(state)
     }
-
     fn body(name: &str, email: &str) -> Value {
-        json!({ "organization_name": name, "admin_email": email })
+        body_with_password(name, email, "SenhaAdministrador@123")
+    }
+
+    fn body_with_password(name: &str, email: &str, password: &str) -> Value {
+        json!({
+            "organization_name": name,
+            "admin_email": email,
+            "admin_password": password
+        })
     }
 
     async fn post(router: Router, payload: Value) -> anyhow::Result<Response> {
@@ -133,6 +144,52 @@ mod tests {
         }
     }
 
+    fn lazy_state() -> anyhow::Result<AppState> {
+        let pool = PgPool::connect_lazy("postgresql://localhost/flora_test")?;
+        Ok(crate::contract::auth::make_test_state(
+            pool,
+            &Config::default(),
+        ))
+    }
+
+    #[tokio::test]
+    async fn bootstrap_rejects_missing_admin_password() -> anyhow::Result<()> {
+        let payload = json!({
+            "organization_name": "Minha Organização",
+            "admin_email": "admin@example.test"
+        });
+        let response = post(router(lazy_state()?), payload).await?;
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        let bytes = to_bytes(response.into_body(), usize::MAX).await?;
+        let message = String::from_utf8_lossy(&bytes);
+        assert!(
+            message.contains("admin_password"),
+            "unexpected body: {message}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn bootstrap_rejects_admin_password_outside_length_bounds() -> anyhow::Result<()> {
+        let state = lazy_state()?;
+        let too_short = post(
+            router(state.clone()),
+            body_with_password("Org", "admin@example.test", "curta"),
+        )
+        .await?;
+        assert_eq!(too_short.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(json_body(too_short).await?["field"], "admin_password");
+
+        let too_long = post(
+            router(state),
+            body_with_password("Org", "admin@example.test", &"x".repeat(1025)),
+        )
+        .await?;
+        assert_eq!(too_long.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(json_body(too_long).await?["field"], "admin_password");
+        Ok(())
+    }
+
     #[tokio::test]
     #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
     async fn db_bootstrap_creates_org_admin_role_membership_workspace_and_session()
@@ -178,6 +235,18 @@ mod tests {
             .ok_or_else(|| anyhow::anyhow!("session not found for jti"))?;
         assert!(session.is_active);
         assert_eq!(session.organization_id.to_string(), org_id);
+
+        let stored: (Option<String>, Option<chrono::DateTime<chrono::Utc>>) =
+            sqlx::query_as("SELECT password_hash, password_updated_at FROM users WHERE id = $1")
+                .bind(Uuid::parse_str(user_id)?)
+                .fetch_one(&pool)
+                .await?;
+        let hash = stored
+            .0
+            .ok_or_else(|| anyhow::anyhow!("bootstrap admin password hash was not stored"))?;
+        assert!(hash.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"));
+        assert!(stored.1.is_some());
+        assert!(PasswordService::shared().verify("SenhaAdministrador@123", &hash));
 
         db.cleanup().await?;
         Ok(())
@@ -252,6 +321,52 @@ mod tests {
             1
         );
         assert_eq!(count(&db, "organizations").await?, 1);
+        db.cleanup().await?;
+        Ok(())
+    }
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_startup_password_applies_only_to_users_without_hash() -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let pool = PgPool::connect(&db.url).await?;
+        let email = "luis.granja@mdmv.com.br";
+        let user = PgUserRepository::new(pool.clone())
+            .create(User::new(email, "Luis Granja"))
+            .await?;
+        assert!(user.password_hash.is_none());
+
+        let config = Config {
+            bootstrap: BootstrapConfig {
+                admin_email: Some(email.to_owned()),
+                admin_password: Some("SenhaInicial@12345".to_owned()),
+            },
+            ..Config::default()
+        };
+
+        let _state = AppState::new(pool.clone(), config.clone()).await?;
+        let repo = PgUserRepository::new(pool.clone());
+        let hash = repo
+            .find_by_email(email)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("startup password was not applied"))?;
+        assert!(hash.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"));
+        assert!(PasswordService::shared().verify("SenhaInicial@12345", &hash));
+
+        let mut second_startup = config.clone();
+        second_startup.bootstrap.admin_password = Some("SenhaNova@12345".to_owned());
+        let _state = AppState::new(pool.clone(), second_startup).await?;
+        let unchanged = repo
+            .find_by_email(email)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
+        assert_eq!(unchanged, hash);
+
+        let mut missing_user = config;
+        missing_user.bootstrap.admin_email = Some("ninguem@exemplo.test".to_owned());
+        let _state = AppState::new(pool.clone(), missing_user).await?;
+
         db.cleanup().await?;
         Ok(())
     }

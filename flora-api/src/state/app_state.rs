@@ -90,6 +90,12 @@ impl AppState {
             Arc::new(PgFileRepository::new(db_pool.clone()));
         let notification_repo: Arc<dyn flora_core::traits::NotificationRepository + Send + Sync> =
             Arc::new(PgNotificationRepository::new(db_pool.clone()));
+        let _applied = flora_core::config::bootstrap::apply_startup_password(
+            &db_pool,
+            &config.bootstrap,
+            flora_core::services::PasswordService::shared(),
+        )
+        .await?;
 
         // Initialize services
         let rbac_service = Arc::new(RbacService::new(

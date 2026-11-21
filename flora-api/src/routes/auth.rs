@@ -16,6 +16,7 @@ use uuid::Uuid;
 use flora_core::error::{Error, Result};
 use flora_core::models::Session;
 use flora_core::repositories::{PgMembershipRepository, PgSessionRepository, PgUserRepository};
+use flora_core::services::PasswordService;
 use flora_core::traits::{MembershipRepository, SessionRepository, UserRepository};
 use flora_core::utils::jwt::{FloraClaims, encode_token};
 use flora_core::utils::pkce::{derive_s256_challenge, generate_code_verifier, generate_state};
@@ -37,6 +38,15 @@ pub struct AuthQuery {
 pub struct RefreshRequest {
     /// The session token to refresh.
     pub session_token: String,
+}
+
+/// Request body for local password login.
+#[derive(Debug, Deserialize)]
+pub struct PasswordLoginRequest {
+    /// E-mail of the local account.
+    pub email: String,
+    /// Plaintext password to verify.
+    pub password: String,
 }
 
 /// Request body for selecting an organization context.
@@ -70,6 +80,7 @@ pub struct ErrorResponse {
 pub fn create_auth_router() -> Router<AppState> {
     Router::new()
         .route("/login", get(login))
+        .route("/password/login", post(password_login))
         .route("/callback", get(callback))
         .route("/logout", post(logout))
         .route("/refresh", post(refresh))
@@ -427,4 +438,55 @@ pub struct OidcCallbackParams {
     pub state: Option<String>,
     /// The original redirect URI used for authorization (validated against stored transaction).
     pub redirect_uri: Option<String>,
+}
+
+/// `POST /auth/password/login` — local fallback when no `IdP` is available.
+///
+/// Returns the same session payload as the OIDC callback. Unknown users,
+/// users without a local password and wrong passwords all return the same 401.
+async fn password_login(
+    State(state): State<AppState>,
+    Json(req): Json<PasswordLoginRequest>,
+) -> Result<Json<serde_json::Value>> {
+    let email = req.email.trim().to_lowercase();
+    let user_repo = PgUserRepository::new((*state.db_pool).clone());
+    let user = user_repo.find_by_email(&email).await?;
+    let stored_hash = user
+        .as_ref()
+        .and_then(|found| found.password_hash.as_deref());
+    let password_ok = PasswordService::shared().verify_or_dummy(&req.password, stored_hash);
+    if !password_ok || user.as_ref().is_none_or(|found| !found.is_active) {
+        return Err(Error::InvalidCredentials);
+    }
+    let user = user.ok_or(Error::InvalidCredentials)?;
+
+    let session_repo = PgSessionRepository::new((*state.db_pool).clone());
+    let jti = Uuid::now_v7().to_string();
+    let ttl = state.config.app.session_ttl_secs;
+    let now = chrono::Utc::now();
+    let expires_at = now + chrono::Duration::seconds(ttl.cast_signed());
+    let session = Session {
+        id: Uuid::now_v7(),
+        user_id: user.id,
+        organization_id: Uuid::nil(),
+        jti: jti.clone(),
+        refresh_token_id: None,
+        client_ip: None,
+        user_agent: None,
+        expires_at,
+        last_activity_at: now,
+        is_active: true,
+        created_at: now,
+        updated_at: now,
+    };
+    let _session = session_repo.create(session).await?;
+
+    let claims = FloraClaims::new(user.id, jti, Uuid::nil(), &user.email, ttl);
+    let jwt = encode_token(&claims, &state.config.app.jwt_secret);
+    Ok(Json(serde_json::json!({
+        "session_token": jwt,
+        "expires_in": ttl,
+        "user_id": user.id.to_string(),
+        "next_step": "select_or_create_organization"
+    })))
 }

@@ -20,6 +20,7 @@ use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
 use flora_core::models::{Membership, Organization, Role, Session, User, Workspace};
+use flora_core::services::PasswordService;
 use flora_core::utils::jwt::{FloraClaims, encode_token};
 
 use super::AppState;
@@ -34,6 +35,8 @@ pub struct BootstrapRequest {
     pub organization_name: String,
     /// E-mail of the initial administrator (normalized to lowercase).
     pub admin_email: String,
+    /// Password for the initial administrator (15..1024 characters).
+    pub admin_password: String,
 }
 
 /// Successful response of `POST /bootstrap`.
@@ -126,6 +129,7 @@ async fn insert_tenant(
     tx: &mut Transaction<'_, Postgres>,
     org: &Organization,
     user: &User,
+    password_hash: &str,
     role: &Role,
     membership: &Membership,
     workspace: &Workspace,
@@ -144,13 +148,14 @@ async fn insert_tenant(
     .await?;
 
     let _ = sqlx::query(
-        "INSERT INTO users (id, email, oidc_subject, display_name, avatar_url, profile,
-                            is_active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+        "INSERT INTO users (id, email, oidc_subject, password_hash, password_updated_at,
+                            display_name, avatar_url, profile, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10)",
     )
     .bind(user.id)
     .bind(&user.email)
     .bind(&user.oidc_subject)
+    .bind(password_hash)
     .bind(&user.display_name)
     .bind(&user.avatar_url)
     .bind(&user.profile)
@@ -242,6 +247,8 @@ async fn bootstrap(
     Json(payload): Json<BootstrapRequest>,
 ) -> Result<(StatusCode, Json<BootstrapResponse>)> {
     let (name, slug, email) = validate_request(&payload)?;
+    PasswordService::validate_password(&payload.admin_password, "admin_password")?;
+    let password_hash = PasswordService::shared().hash(&payload.admin_password)?;
     let ttl = state.config.app.session_ttl_secs;
     let jti = Uuid::now_v7().to_string();
     let expires_at = Utc::now() + Duration::seconds(i64::try_from(ttl).unwrap_or(3_600));
@@ -283,7 +290,16 @@ async fn bootstrap(
         ));
     }
 
-    insert_tenant(&mut tx, &org, &user, &role, &membership, &workspace).await?;
+    insert_tenant(
+        &mut tx,
+        &org,
+        &user,
+        &password_hash,
+        &role,
+        &membership,
+        &workspace,
+    )
+    .await?;
     insert_session(&mut tx, &session).await?;
     tx.commit().await?;
 
