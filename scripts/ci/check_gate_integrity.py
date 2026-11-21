@@ -40,7 +40,7 @@ ALLOWED_JOB_IF = {
 }
 
 FLOORS = {
-    "auth": 17,
+    "auth": 23,
     "messaging": 4,
     "websocket": 8,
     "search": 8,

@@ -104,7 +104,7 @@ jobs:
             echo "$label: passed=$passed floor=$floor"
             [ "$passed" -ge "$floor" ]
           }
-          run_leg auth          contract::auth::db_          17
+          run_leg auth          contract::auth::db_          23
           run_leg messaging     contract::messaging::db_      4
           run_leg websocket     contract::websocket::db_      8
           run_leg search        contract::search::db_         8

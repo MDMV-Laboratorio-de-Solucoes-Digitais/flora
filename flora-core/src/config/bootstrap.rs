@@ -53,7 +53,11 @@ impl BootstrapConfig {
     }
 
     /// Whether the selector is exactly `*` after trimming.
-    fn is_wildcard_selector(&self) -> bool {
+    ///
+    /// Public so the API can gate the temporary `*` login selector on the
+    /// same opt-in used by startup password recovery.
+    #[must_use]
+    pub fn is_wildcard_selector(&self) -> bool {
         self.admin_email
             .as_deref()
             .is_some_and(|email| email.trim() == "*")
