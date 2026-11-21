@@ -8,6 +8,7 @@
 	import ThreadReply from './thread/ThreadReply.svelte';
 	import { tick } from 'svelte';
 	import { Send, Sparkles } from '@lucide/svelte';
+	import { apiErrorMessage, format, t } from '$lib/i18n';
 
 	let { channelId = '' } = $props<{ channelId?: string }>();
 
@@ -49,7 +50,7 @@
 			wsClient.setActiveChannel(id);
 			await scrollToBottom();
 		} catch (error) {
-			loadError = error instanceof Error ? error.message : 'Failed to load messages';
+			loadError = apiErrorMessage(error, 'error.loadMessages');
 			logger.error('chat', 'Failed to fetch messages', { channelId: id }, error as Error);
 			messageStore.clear();
 			wsClient.lastKnownMessageId = null;
@@ -79,7 +80,7 @@
 			newMessage = '';
 			await scrollToBottom();
 		} catch (error) {
-			loadError = error instanceof Error ? error.message : 'Failed to send message';
+			loadError = apiErrorMessage(error, 'error.sendMessage');
 			logger.error('chat', 'Failed to send message', { channelId }, error as Error);
 		} finally {
 			isSending = false;
@@ -101,11 +102,11 @@
 				<div
 					class="mt-20 flex h-full flex-col items-center justify-center space-y-3 text-muted-foreground"
 				>
-					<p>Select a channel to view messages.</p>
+					<p>{t['chat.selectChannel']}</p>
 				</div>
 			{:else if isLoading}
 				<div class="mt-20 flex h-full items-center justify-center text-muted-foreground">
-					Loading messages…
+					{t['chat.loading']}
 				</div>
 			{:else if loadError}
 				<div
@@ -125,9 +126,9 @@
 
 							<div class="min-w-0 flex-1">
 								<div class="mb-1 flex items-baseline space-x-2">
-									<span class="text-[15px] font-semibold text-foreground"
-										>User {message.authorId.slice(0, 8)}</span
-									>
+									<span class="text-[15px] font-semibold text-foreground">
+										{format('chat.author', { id: message.authorId.slice(0, 8) })}
+									</span>
 									<span class="text-xs text-muted-foreground"
 										>{new Date(message.createdAt).toLocaleTimeString([], {
 											hour: '2-digit',
@@ -138,7 +139,8 @@
 										<span
 											class="inline-flex items-center gap-1 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
 										>
-											<Sparkles class="h-3 w-3" /> AI
+											<Sparkles class="h-3 w-3" />
+											{t['chat.aiBadge']}
 										</span>
 									{/if}
 								</div>
@@ -160,9 +162,9 @@
 												</div>
 												<div class="flex-1">
 													<div class="flex items-baseline space-x-2">
-														<span class="text-sm font-semibold"
-															>User {reply.authorId.slice(0, 8)}</span
-														>
+														<span class="text-sm font-semibold">
+															{format('chat.author', { id: reply.authorId.slice(0, 8) })}
+														</span>
 														<span class="text-[10px] text-muted-foreground"
 															>{new Date(reply.createdAt).toLocaleTimeString([], {
 																hour: '2-digit',
@@ -192,7 +194,7 @@
 						<div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
 							<Send class="h-6 w-6 opacity-50" />
 						</div>
-						<p>No messages yet.</p>
+						<p>{t['chat.empty']}</p>
 					</div>
 				{/if}
 			{/if}
@@ -205,7 +207,7 @@
 		>
 			<textarea
 				bind:value={newMessage}
-				placeholder={channelId ? 'Write a message…' : 'Select a channel first'}
+				placeholder={channelId ? t['chat.writePlaceholder'] : t['chat.selectFirst']}
 				class="min-h-[60px] w-full resize-none scrollbar-thin bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none"
 				onkeydown={(event) => {
 					if (event.key !== 'Enter' || event.shiftKey) return;
@@ -222,7 +224,7 @@
 					class="h-8 gap-1.5 px-3"
 				>
 					<Send class="h-3.5 w-3.5" />
-					Send
+					{t['chat.send']}
 				</Button>
 			</div>
 		</div>

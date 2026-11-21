@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { apiErrorMessage, t } from '$lib/i18n';
 
 	type Organization = {
 		id: string;
@@ -41,8 +42,7 @@
 		try {
 			organizations = await ApiClient.request<Organization[]>('/api/v1/organizations');
 		} catch (error_) {
-			errorMessage = (error_ as Error).message || 'Failed to load organizations';
-		} finally {
+			errorMessage = apiErrorMessage(error_, 'error.loadOrganizations');
 			isLoading = false;
 		}
 	}
@@ -62,8 +62,7 @@
 			authState.setOrganization(response.session_token, response.organization_id);
 			await goto('/tasks');
 		} catch (error_) {
-			errorMessage = (error_ as Error).message || 'Failed to select organization';
-		} finally {
+			errorMessage = apiErrorMessage(error_, 'error.selectOrganization');
 			isSubmitting = false;
 		}
 	}
@@ -82,8 +81,7 @@
 			);
 			await selectOrganization(created.id);
 		} catch (error_) {
-			errorMessage = (error_ as Error).message || 'Failed to create organization';
-		} finally {
+			errorMessage = apiErrorMessage(error_, 'error.createOrganization');
 			isSubmitting = false;
 		}
 	}
@@ -103,9 +101,9 @@
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
 	<div>
-		<h1 class="text-2xl font-bold">Select organization</h1>
+		<h1 class="text-2xl font-bold">{t['org.selectTitle']}</h1>
 		<p class="text-sm text-muted-foreground">
-			Choose an organization to scope your session before using workspaces and tasks.
+			{t['org.selectDescription']}
 		</p>
 	</div>
 
@@ -118,11 +116,11 @@
 	{/if}
 
 	<div class="space-y-3 rounded-lg border p-4">
-		<h2 class="font-semibold">Your organizations</h2>
+		<h2 class="font-semibold">{t['org.yourOrganizations']}</h2>
 		{#if isLoading}
-			<p class="text-sm text-muted-foreground">Loading...</p>
+			<p class="text-sm text-muted-foreground">{t['org.loading']}</p>
 		{:else if organizations.length === 0}
-			<p class="text-sm text-muted-foreground">No organizations found. Create one below.</p>
+			<p class="text-sm text-muted-foreground">{t['org.empty']}</p>
 		{:else}
 			<div class="space-y-2">
 				{#each organizations as org (org.id)}
@@ -134,7 +132,7 @@
 							</div>
 						</div>
 						<Button disabled={isSubmitting} onclick={() => selectOrganization(org.id)}
-							>Select</Button
+							>{t['org.select']}</Button
 						>
 					</div>
 				{/each}
@@ -143,20 +141,24 @@
 	</div>
 
 	<div class="space-y-4 rounded-lg border p-4">
-		<h2 class="font-semibold">Create organization</h2>
+		<h2 class="font-semibold">{t['org.createTitle']}</h2>
 		<div class="space-y-2">
-			<Label for="org-name">Name</Label>
-			<Input id="org-name" bind:value={createName} placeholder="Acme Corp" />
+			<Label for="org-name">{t['org.name']}</Label>
+			<Input
+				id="org-name"
+				bind:value={createName}
+				placeholder={t['common.organizationPlaceholder']}
+			/>
 		</div>
 		<div class="space-y-2">
-			<Label for="org-slug">Slug</Label>
-			<Input id="org-slug" bind:value={createSlug} placeholder="acme-corp" />
+			<Label for="org-slug">{t['org.slug']}</Label>
+			<Input id="org-slug" bind:value={createSlug} placeholder={t['common.slugPlaceholder']} />
 		</div>
 		<Button
 			disabled={isSubmitting || !createName.trim() || !createSlug.trim()}
 			onclick={createAndSelect}
 		>
-			Create and select
+			{t['org.createAndSelect']}
 		</Button>
 	</div>
 </div>

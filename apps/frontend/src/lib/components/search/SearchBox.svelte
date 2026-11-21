@@ -4,6 +4,7 @@
 	import { ApiClient } from '$lib/api/client';
 	import type { SearchResponse, SearchResult } from '$lib/types/models';
 	import { normalizeSearchQuery, resultTypeLabel } from '$lib/utils/search';
+	import { apiErrorMessage, format, t } from '$lib/i18n';
 
 	let { debounceMs = 250 }: { debounceMs?: number } = $props();
 
@@ -35,7 +36,7 @@
 					if (isCancelled) return;
 					results = [];
 					status = 'error';
-					errorMessage = error instanceof Error ? error.message : 'Search failed.';
+					errorMessage = apiErrorMessage(error, 'error.searchFailed');
 				}
 			})();
 		}, debounceMs);
@@ -52,8 +53,8 @@
 	<Input
 		type="search"
 		bind:value={query}
-		aria-label="Search messages, tasks, and files"
-		placeholder="Search messages, tasks, files..."
+		aria-label={t['search.ariaLabel']}
+		placeholder={t['search.placeholder']}
 		class="w-full bg-muted/50 pl-9 focus-visible:bg-background"
 		onkeydown={(event) => {
 			if (event.key === 'Escape') query = '';
@@ -73,15 +74,15 @@
 					class="border-b px-3 py-2 text-xs text-muted-foreground"
 				>
 					{#if status === 'loading'}
-						Searching…
+						{t['search.searching']}
 					{:else if results.length === 0}
-						No results for “{normalizeSearchQuery(query)}”.
+						{format('search.noResults', { query: normalizeSearchQuery(query) })}
 					{:else}
-						{results.length} {results.length === 1 ? 'result' : 'results'}
+						{results.length} {t[results.length === 1 ? 'search.result_one' : 'search.result_other']}
 					{/if}
 				</p>
 				{#if results.length > 0}
-					<ul class="max-h-80 overflow-auto py-1" aria-label="Search results">
+					<ul class="max-h-80 overflow-auto py-1" aria-label={t['search.resultsLabel']}>
 						{#each results as result (result.type + ':' + result.id)}
 							<li class="px-3 py-2 text-sm hover:bg-muted/50">
 								<span

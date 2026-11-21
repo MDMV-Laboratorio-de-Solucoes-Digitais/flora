@@ -4,6 +4,7 @@
 	import { authState } from '$lib/state/AuthState.svelte';
 	import { logger } from '$lib/utils/logger';
 	import { ApiClient } from '$lib/api/client';
+	import { t } from '$lib/i18n';
 
 	onMount(async () => {
 		const parameters = new URLSearchParams(location.search);
@@ -66,5 +67,5 @@
 </script>
 
 <div class="flex h-screen items-center justify-center">
-	<p class="animate-pulse text-muted-foreground">Authenticating...</p>
+	<p class="animate-pulse text-muted-foreground">{t['auth.callback.authenticating']}</p>
 </div>
