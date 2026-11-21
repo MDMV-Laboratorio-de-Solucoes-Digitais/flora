@@ -24,6 +24,7 @@ jobs:
           FORGEJO_TOKEN: ${{ secrets.MDMV_STATUS_TOKEN }}
           GH_REPO: MDMV-Laboratorio-de-Solucoes-Digitais/flora
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
           FORGEJO_API: https://forgejo.mdmv.qzz.io/api/v1/repos/MDMV/flora-workspace
         run: |
           python - <<'PY'
@@ -34,6 +35,7 @@ jobs:
 
           required = ["db-tests", "rust-build", "e2e-browser", "supply-chain-vet"]
           sha = os.environ["HEAD_SHA"].strip()
+          base_sha = os.environ.get("BASE_SHA", sha).strip()
           gh_repo = os.environ["GH_REPO"].strip()
           forgejo_api = os.environ["FORGEJO_API"].strip().rstrip("/")
 
@@ -66,23 +68,36 @@ jobs:
                       "Authorization": f"token {os.environ['FORGEJO_TOKEN']}",
                       "Content-Type": "application/json",
                       "Accept": "application/json",
+                      "User-Agent": "mdmv-github-evidence",
                   },
               )
               with urllib.request.urlopen(req, timeout=30) as resp:
                   return resp.status
 
           try:
-              data = get_json(
-                  f"https://api.github.com/repos/{gh_repo}/commits/{sha}/check-runs?per_page=100",
-                  os.environ["GH_TOKEN"],
-              )
               runs = {}
-              for run in data.get("check_runs", []):
-                  name = run.get("name")
-                  if name in required:
-                      prev = runs.get(name)
-                      if prev is None or (run.get("started_at") or "") > (prev.get("started_at") or ""):
-                          runs[name] = run
+              evidence_sha = sha
+              for candidate in dict.fromkeys([sha, base_sha]):
+                  try:
+                      data = get_json(
+                          f"https://api.github.com/repos/{gh_repo}/commits/{candidate}/check-runs?per_page=100",
+                          os.environ["GH_TOKEN"],
+                      )
+                  except urllib.error.HTTPError as exc:
+                      if exc.code in (404, 422):
+                          continue
+                      raise
+                  found = {}
+                  for run in data.get("check_runs", []):
+                      name = run.get("name")
+                      if name in required:
+                          prev = found.get(name)
+                          if prev is None or (run.get("started_at") or "") > (prev.get("started_at") or ""):
+                              found[name] = run
+                  if found:
+                      runs = found
+                      evidence_sha = candidate
+                      break
               verdicts = {}
               for name in required:
                   run = runs.get(name)
@@ -95,15 +110,12 @@ jobs:
               ok = all(v == "success" for v in verdicts.values())
               target = next(
                   (r.get("html_url") for r in runs.values() if r.get("html_url")),
-                  f"https://github.com/{gh_repo}/commit/{sha}",
+                  f"https://github.com/{gh_repo}/commit/{evidence_sha}",
               )
               summary = ", ".join(f"{k}={v}" for k, v in verdicts.items())
-              status_code = post_status(
-                  "success" if ok else "failure",
-                  f"GitHub checks: {summary}",
-                  target,
-              )
-              print(f"context=github-actions state={'success' if ok else 'failure'} status_http={status_code} {summary}")
+              description = f"GitHub checks ({evidence_sha[:12]}): {summary}"
+              status_code = post_status("success" if ok else "failure", description, target)
+              print(f"context=github-actions state={'success' if ok else 'failure'} status_http={status_code} evidence={evidence_sha[:12]} {summary}")
           except Exception as exc:
               # Fail closed: publish a failure status, but do not echo token/header values.
               message = f"evidence_unavailable:{type(exc).__name__}"
