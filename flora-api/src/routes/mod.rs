@@ -29,7 +29,7 @@ pub fn create_router(app_state: AppState) -> Router {
         // Auth routes (no auth required for login/callback; auth required for logout/refresh)
         .nest("/api/v1/auth", auth::create_auth_router())
         // Local password fallback (POST /auth/password/login) lives in the same router.
-        // One-time public bootstrap for an empty installation (no auth required)
+        // Public bootstrap: one-time first-seed POST + read-only GET status (no auth required)
         .nest("/api/v1", bootstrap::create_bootstrap_router())
         // Protected API routes (require a verified session Bearer token;
         // organization context comes from the session, not a request header)

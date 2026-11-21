@@ -1,7 +1,9 @@
 //! Startup bootstrap configuration for the local admin password.
 //!
 //! `FLORA_BOOTSTRAP__ADMIN_EMAIL` and `FLORA_BOOTSTRAP__ADMIN_PASSWORD` are
-//! applied at startup only to an existing user whose `password_hash` is NULL.
+//! temporary recovery credentials: when both are set, they overwrite the
+//! configured administrator's password hash on EVERY startup, even if a hash
+//! already exists. Remove both variables after the password has been recovered.
 //! The secret is never logged.
 
 use std::fmt;
@@ -21,7 +23,7 @@ pub struct BootstrapConfig {
     /// E-mail of the existing administrator account.
     #[serde(default)]
     pub admin_email: Option<String>,
-    /// Initial local password; never serialized or logged.
+    /// Temporary recovery password; never serialized or logged.
     #[serde(default, skip_serializing)]
     pub admin_password: Option<String>,
 }
@@ -79,7 +81,14 @@ impl BootstrapConfig {
     }
 }
 
-/// Applies the configured password to an existing user without a hash.
+/// Overwrites the configured administrator's password hash on every startup.
+///
+/// Both recovery variables must be present and the e-mail must match an existing
+/// user. The password is validated before any database write, and neither the
+/// password nor the resulting hash is logged.
+///
+/// Returns `true` when the hash was written, `false` when recovery was not
+/// configured or the e-mail matched no user.
 ///
 /// # Errors
 ///
@@ -105,16 +114,20 @@ pub async fn apply_startup_password(
         );
         return Ok(false);
     };
-    if user.password_hash.is_some() {
-        return Ok(false);
-    }
-
+    // Recovery must replace an existing hash as well; the conditional repository
+    // helper would silently skip exactly the accounts that need recovery.
     let hash = password_service.hash(password)?;
-    let applied = repo
-        .set_password_hash_if_absent(user.id, &hash, Utc::now())
-        .await?;
+    let result =
+        sqlx::query("UPDATE users SET password_hash = $2, password_updated_at = $3 WHERE id = $1")
+            .bind(user.id)
+            .bind(&hash)
+            .bind(Utc::now())
+            .execute(pool)
+            .await
+            .map_err(Error::from_sqlx)?;
+    let applied = result.rows_affected() > 0;
     if applied {
-        tracing::info!(user_id = %user.id, "Startup administrator password applied");
+        tracing::info!(user_id = %user.id, "Startup administrator password overwritten");
     }
     Ok(applied)
 }

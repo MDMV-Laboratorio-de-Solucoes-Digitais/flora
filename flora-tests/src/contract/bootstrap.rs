@@ -105,6 +105,17 @@ mod tests {
             .await?)
     }
 
+    async fn get(router: Router, uri: &str) -> anyhow::Result<Response> {
+        Ok(router
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(uri)
+                    .body(Body::empty())?,
+            )
+            .await?)
+    }
+
     async fn json_body(response: Response) -> anyhow::Result<Value> {
         let bytes = to_bytes(response.into_body(), usize::MAX).await?;
         Ok(serde_json::from_slice(&bytes)?)
@@ -326,7 +337,7 @@ mod tests {
     }
     #[tokio::test]
     #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
-    async fn db_startup_password_applies_only_to_users_without_hash() -> anyhow::Result<()> {
+    async fn db_startup_password_overwrites_existing_hash() -> anyhow::Result<()> {
         let db = TestDb::create().await?;
         let pool = PgPool::connect(&db.url).await?;
         let email = "luis.granja@mdmv.com.br";
@@ -345,27 +356,141 @@ mod tests {
 
         let _state = AppState::new(pool.clone(), config.clone()).await?;
         let repo = PgUserRepository::new(pool.clone());
-        let hash = repo
+        let first_hash = repo
             .find_by_email(email)
             .await?
             .and_then(|found| found.password_hash)
             .ok_or_else(|| anyhow::anyhow!("startup password was not applied"))?;
-        assert!(hash.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"));
-        assert!(PasswordService::shared().verify("SenhaInicial@12345", &hash));
+        assert!(first_hash.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"));
+        assert!(PasswordService::shared().verify("SenhaInicial@12345", &first_hash));
 
+        // An existing hash must not block recovery: a different configured
+        // password replaces it and the previous password stops working.
         let mut second_startup = config.clone();
         second_startup.bootstrap.admin_password = Some("SenhaNova@12345".to_owned());
-        let _state = AppState::new(pool.clone(), second_startup).await?;
-        let unchanged = repo
+        let _state = AppState::new(pool.clone(), second_startup.clone()).await?;
+        let overwritten = repo
             .find_by_email(email)
             .await?
             .and_then(|found| found.password_hash)
             .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
-        assert_eq!(unchanged, hash);
+        assert_ne!(overwritten, first_hash);
+        assert!(PasswordService::shared().verify("SenhaNova@12345", &overwritten));
+        assert!(!PasswordService::shared().verify("SenhaInicial@12345", &overwritten));
 
+        // Re-running with the same credentials is idempotent: the salted hash
+        // may change, but the configured password keeps working and no error
+        // is raised.
+        let _state = AppState::new(pool.clone(), second_startup).await?;
+        let repeated = repo
+            .find_by_email(email)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
+        assert!(PasswordService::shared().verify("SenhaNova@12345", &repeated));
+
+        // A missing target is a no-op: the real administrator is untouched.
         let mut missing_user = config;
         missing_user.bootstrap.admin_email = Some("ninguem@exemplo.test".to_owned());
         let _state = AppState::new(pool.clone(), missing_user).await?;
+        let untouched = repo
+            .find_by_email(email)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
+        assert_eq!(untouched, repeated);
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_is_public_available_and_has_no_store_header() -> anyhow::Result<()>
+    {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+
+        // No Authorization header: the status endpoint must be public.
+        let response = get(router(state), "/api/v1/bootstrap/status").await?;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response
+                .headers()
+                .get("cache-control")
+                .and_then(|value| value.to_str().ok()),
+            Some("no-store")
+        );
+
+        let body = json_body(response).await?;
+        assert_eq!(body["available"], true);
+        assert_eq!(
+            body.as_object().map(serde_json::Map::len),
+            Some(1),
+            "status must not leak counts or e-mails: {body}"
+        );
+        assert!(body.get("organizations").is_none());
+        assert!(body.get("admin_email").is_none());
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_becomes_unavailable_after_bootstrap_and_conflict()
+    -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+        let app = router(state);
+
+        let first = post(app.clone(), body("Primeira Org", "first@example.test")).await?;
+        assert_eq!(first.status(), StatusCode::CREATED);
+
+        let conflict = post(app.clone(), body("Segunda Org", "second@example.test")).await?;
+        assert_eq!(conflict.status(), StatusCode::CONFLICT);
+        assert_eq!(json_body(conflict).await?["error"], "conflict");
+
+        let status = get(app, "/api/v1/bootstrap/status").await?;
+        assert_eq!(status.status(), StatusCode::OK);
+        assert_eq!(json_body(status).await?["available"], false);
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_is_unavailable_with_preexisting_organization() -> anyhow::Result<()>
+    {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+        let pool = (*state.db_pool).clone();
+        let _existing = PgOrganizationRepository::new(pool)
+            .create(Organization::new("Existente", "existente"))
+            .await?;
+
+        let status = get(router(state), "/api/v1/bootstrap/status").await?;
+        assert_eq!(status.status(), StatusCode::OK);
+        assert_eq!(json_body(status).await?["available"], false);
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_bootstrap_status_ignores_orphan_users() -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let (state, _config) = db.state().await?;
+        let pool = (*state.db_pool).clone();
+        let _orphan = PgUserRepository::new(pool)
+            .create(User::new("orfao@example.test", "Órfão"))
+            .await?;
+
+        let status = get(router(state), "/api/v1/bootstrap/status").await?;
+        assert_eq!(status.status(), StatusCode::OK);
+        assert_eq!(json_body(status).await?["available"], true);
 
         db.cleanup().await?;
         Ok(())
