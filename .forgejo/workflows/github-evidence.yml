@@ -1,0 +1,116 @@
+name: GitHub Actions evidence (light gate)
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+concurrency:
+  group: github-evidence-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  github-actions:
+    name: github-actions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: python:3.12-slim
+    steps:
+      - name: Publish GitHub check evidence as a Forgejo commit status
+        env:
+          GH_TOKEN: ${{ secrets.GH_EVIDENCE_TOKEN }}
+          FORGEJO_TOKEN: ${{ secrets.MDMV_STATUS_TOKEN }}
+          GH_REPO: MDMV-Laboratorio-de-Solucoes-Digitais/flora
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          FORGEJO_API: https://forgejo.mdmv.qzz.io/api/v1/repos/MDMV/flora-workspace
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          required = ["db-tests", "rust-build", "e2e-browser", "supply-chain-vet"]
+          sha = os.environ["HEAD_SHA"].strip()
+          gh_repo = os.environ["GH_REPO"].strip()
+          forgejo_api = os.environ["FORGEJO_API"].strip().rstrip("/")
+
+          def get_json(url, token):
+              req = urllib.request.Request(
+                  url,
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "User-Agent": "mdmv-github-evidence",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  return json.load(resp)
+
+          def post_status(state, description, target_url):
+              body = json.dumps(
+                  {
+                      "state": state,
+                      "context": "github-actions",
+                      "description": description[:1000],
+                      "target_url": target_url,
+                  }
+              ).encode()
+              req = urllib.request.Request(
+                  f"{forgejo_api}/statuses/{sha}",
+                  data=body,
+                  method="POST",
+                  headers={
+                      "Authorization": f"token {os.environ['FORGEJO_TOKEN']}",
+                      "Content-Type": "application/json",
+                      "Accept": "application/json",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  return resp.status
+
+          try:
+              data = get_json(
+                  f"https://api.github.com/repos/{gh_repo}/commits/{sha}/check-runs?per_page=100",
+                  os.environ["GH_TOKEN"],
+              )
+              runs = {}
+              for run in data.get("check_runs", []):
+                  name = run.get("name")
+                  if name in required:
+                      prev = runs.get(name)
+                      if prev is None or (run.get("started_at") or "") > (prev.get("started_at") or ""):
+                          runs[name] = run
+              verdicts = {}
+              for name in required:
+                  run = runs.get(name)
+                  if run is None:
+                      verdicts[name] = "missing"
+                  elif run.get("status") != "completed":
+                      verdicts[name] = run.get("status", "unknown")
+                  else:
+                      verdicts[name] = run.get("conclusion", "unknown")
+              ok = all(v == "success" for v in verdicts.values())
+              target = next(
+                  (r.get("html_url") for r in runs.values() if r.get("html_url")),
+                  f"https://github.com/{gh_repo}/commit/{sha}",
+              )
+              summary = ", ".join(f"{k}={v}" for k, v in verdicts.items())
+              status_code = post_status(
+                  "success" if ok else "failure",
+                  f"GitHub checks: {summary}",
+                  target,
+              )
+              print(f"context=github-actions state={'success' if ok else 'failure'} status_http={status_code} {summary}")
+          except Exception as exc:
+              # Fail closed: publish a failure status, but do not echo token/header values.
+              message = f"evidence_unavailable:{type(exc).__name__}"
+              try:
+                  code = post_status("failure", message, f"https://github.com/{gh_repo}/commit/{sha}")
+                  print(f"context=github-actions state=failure status_http={code} {message}")
+              except Exception as inner:
+                  print(f"cannot_publish_status:{type(inner).__name__}")
+              raise
+          PY
