@@ -346,3 +346,10 @@ permanecem intactas; apenas acréscimos.
 - **Decisão:** permitir `email='*'` (exatamente `*`) no corpo de `POST /api/v1/auth/password/login` somente quando `FLORA_BOOTSTRAP__ADMIN_EMAIL` também for `*` (opt-in temporário já ativo). Nesse modo a rota resolve o primeiro usuário ativo (`created_at ASC, id ASC`, sem filtro de role/sistema) e valida a senha contra o hash dele; sem opt-in, `email='*'` é rejeitado, a busca por e-mail segue inalterada e OIDC continua primário. Sem segredo/hash em log ou resposta; env temporárias removidas da app Coolify após login confirmado.
 - **Gate:** `python3 scripts/ci/check_gate_integrity.py` **PASS** registrado no diagnóstico do alvo; reexecutar no checkout final. Fora do gate de merge (ADR-0003); nenhum required check novo.
 - **Histórico/escopo:** apêndice datado; nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou deploy alterado por esta nota; nenhuma credencial copiada ou exposta. **[NV] até deploy final:** aplicação da mudança, deploy da API, login wildcard com a credencial de recuperação, remoção das env, `/health`/CORS e CI/proteção/Coolify/Forgejo/aprovações ao vivo.
+
+## Estado verificado — 2026-11-21T13:25:33Z (fechamento)
+
+- Login local em produção: `POST /api/v1/auth/password/login` com `email="*"` retornou **200** e emitiu `session_token`; `next_step=select_or_create_organization`. Frontend pt-BR ativo: `lang="pt-BR"`, rótulos "Entrar", "E-mail", "Senha".
+- Deploy da API `pxx1xjtk6ssikhw08o3j8dsq` **finished**; `/` **200**, `/tasks` **200**, `/config.js` **200**, API `/health` **200**, `/api/v1/bootstrap/status` → `available=false`.
+- PRs #329/#331/#332/#335/#336/#338/#339 mesclados; `main=2f53abd58`. Gate final PASS (77 floors), CI verde em todos os PRs finais, e2e browser passou, `AGENTS.md` versionado.
+- **[NV] remanescente:** E2E autenticado em navegador com a conta real; variáveis de recuperação temporária ainda ativas no Coolify e devem ser removidas/rotacionadas após confirmação do usuário.
