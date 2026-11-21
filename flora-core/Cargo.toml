@@ -32,6 +32,8 @@ tracing-subscriber.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 async-trait.workspace = true
+argon2 = { version = "0.5.3", features = ["std"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
 validator.workspace = true
 bytes.workspace = true
 futures.workspace = true

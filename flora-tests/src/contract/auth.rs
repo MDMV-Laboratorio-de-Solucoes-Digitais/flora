@@ -1035,3 +1035,149 @@ mod db_session_authority {
         Ok(())
     }
 }
+
+/// DB-backed tests for the local `POST /auth/password/login` fallback.
+#[cfg(test)]
+mod db_password_login {
+    use super::*;
+    use axum::body::{Body, to_bytes};
+    use flora_core::models::User;
+    use flora_core::repositories::PgUserRepository;
+    use flora_core::services::PasswordService;
+    use flora_core::traits::UserRepository;
+    use uuid::Uuid;
+
+    async fn db_state() -> anyhow::Result<(AppState, Config)> {
+        let url = std::env::var("FLORA_DATABASE__POSTGRES_URL")
+            .ok()
+            .or_else(|| std::env::var("DATABASE_URL").ok())
+            .ok_or_else(|| anyhow::anyhow!("DATABASE_URL required for password login tests"))?;
+        let pool = PgPool::connect(&url).await?;
+        flora_core::migrations::run_migrations(&pool).await?;
+        let config = Config::default();
+        let state = make_test_state(pool, &config);
+        Ok((state, config))
+    }
+
+    async fn seed_user(
+        state: &AppState,
+        email: &str,
+        password: Option<&str>,
+    ) -> anyhow::Result<User> {
+        let repo = PgUserRepository::new((*state.db_pool).clone());
+        let user = repo.create(User::new(email, "Password Test")).await?;
+        if let Some(password) = password {
+            let hash = PasswordService::shared().hash(password)?;
+            anyhow::ensure!(
+                repo.set_password_hash_if_absent(user.id, &hash, chrono::Utc::now())
+                    .await?,
+                "password hash should have been stored"
+            );
+        }
+        Ok(user)
+    }
+
+    async fn login(
+        state: AppState,
+        email: &str,
+        password: &str,
+    ) -> anyhow::Result<axum::response::Response> {
+        let router = axum::Router::new()
+            .nest("/auth", create_auth_router())
+            .with_state(state);
+        let payload = serde_json::json!({ "email": email, "password": password });
+        let request = http::Request::builder()
+            .method("POST")
+            .uri("/auth/password/login")
+            .header("content-type", "application/json")
+            .body(Body::from(serde_json::to_vec(&payload)?))?;
+        Ok(ServiceExt::oneshot(router, request).await?)
+    }
+
+    async fn body(response: axum::response::Response) -> anyhow::Result<serde_json::Value> {
+        let bytes = to_bytes(response.into_body(), usize::MAX).await?;
+        Ok(serde_json::from_slice(&bytes)?)
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_returns_a_fresh_session() -> anyhow::Result<()> {
+        let (state, config) = db_state().await?;
+        let unique = Uuid::now_v7().simple();
+        let email = format!("password-{unique}@example.test");
+        let user = seed_user(&state, &email, Some("senha-valida-123")).await?;
+
+        let response = login(state.clone(), &email, "senha-valida-123").await?;
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body(response).await?;
+        assert_eq!(json["user_id"], user.id.to_string());
+        assert_eq!(json["expires_in"], config.app.session_ttl_secs);
+        assert_eq!(json["next_step"], "select_or_create_organization");
+        let token = json["session_token"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing session_token"))?;
+        let claims = flora_core::utils::jwt::decode_token(token, &config.app.jwt_secret)?;
+        assert_eq!(claims.sub, user.id.to_string());
+        let session = PgSessionRepository::new((*state.db_pool).clone())
+            .find_by_jti(&claims.jti)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("session not stored"))?;
+        assert!(session.is_active);
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_returns_the_same_401_for_wrong_password_and_unknown_user()
+    -> anyhow::Result<()> {
+        let (state, _config) = db_state().await?;
+        let unique = Uuid::now_v7().simple();
+        let email = format!("password-fail-{unique}@example.test");
+        let _user = seed_user(&state, &email, Some("senha-valida-123")).await?;
+
+        let wrong = login(state.clone(), &email, "senha-errada-123").await?;
+        let unknown = login(
+            state,
+            &format!("desconhecido-{unique}@example.test"),
+            "senha-errada-123",
+        )
+        .await?;
+        assert_eq!(wrong.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(unknown.status(), StatusCode::UNAUTHORIZED);
+        let wrong_body = body(wrong).await?;
+        let unknown_body = body(unknown).await?;
+        assert_eq!(wrong_body, unknown_body);
+        assert_eq!(wrong_body["error"], "invalid_credentials");
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_rejects_users_without_a_password() -> anyhow::Result<()> {
+        let (state, _config) = db_state().await?;
+        let unique = Uuid::now_v7().simple();
+        let email = format!("oidc-only-{unique}@example.test");
+        let _user = seed_user(&state, &email, None).await?;
+
+        let response = login(state, &email, "senha-errada-123").await?;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(body(response).await?["error"], "invalid_credentials");
+        Ok(())
+    }
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_password_login_rejects_inactive_account() -> anyhow::Result<()> {
+        let (state, _config) = db_state().await?;
+        let unique = Uuid::now_v7().simple();
+        let email = format!("password-inactive-{unique}@example.test");
+        let user = seed_user(&state, &email, Some("SenhaValida@12345")).await?;
+        PgUserRepository::new((*state.db_pool).clone())
+            .deactivate(user.id)
+            .await?;
+
+        let response = login(state, &email, "SenhaValida@12345").await?;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(body(response).await?["error"], "invalid_credentials");
+        Ok(())
+    }
+}

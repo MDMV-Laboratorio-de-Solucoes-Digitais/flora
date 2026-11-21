@@ -133,6 +133,7 @@ impl Default for RateLimiterState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum RateLimitClass {
     Login,
+    PasswordLogin,
     Refresh,
     Invite,
     Bootstrap,
@@ -146,6 +147,8 @@ enum RateLimitClass {
 fn classify_endpoint(path: &str) -> RateLimitClass {
     if path.ends_with("/bootstrap") {
         RateLimitClass::Bootstrap
+    } else if path.ends_with("/auth/password/login") {
+        RateLimitClass::PasswordLogin
     } else if path.ends_with("/auth/login") {
         RateLimitClass::Login
     } else if path.ends_with("/auth/refresh") {
@@ -189,6 +192,7 @@ pub async fn rate_limit_middleware(
 
     // Determine limit and window based on endpoint (FR-020)
     let (key, limit, window_secs) = match classify_endpoint(path) {
+        RateLimitClass::PasswordLogin => (format!("password_login:{ip}"), 5, 60),
         RateLimitClass::Login => (format!("login:{ip}"), 5, 60),
         RateLimitClass::Bootstrap => (format!("bootstrap:{ip}"), 5, 60),
         RateLimitClass::Refresh => {
@@ -228,6 +232,22 @@ mod tests {
             RateLimitClass::Login
         );
         assert_eq!(classify_endpoint("/auth/login"), RateLimitClass::Login);
+    }
+
+    #[test]
+    fn classifies_password_login_paths_before_oidc_login() {
+        assert_eq!(
+            classify_endpoint("/api/v1/auth/password/login"),
+            RateLimitClass::PasswordLogin
+        );
+        assert_eq!(
+            classify_endpoint("/auth/password/login"),
+            RateLimitClass::PasswordLogin
+        );
+        assert_eq!(
+            classify_endpoint("/api/v1/auth/login"),
+            RateLimitClass::Login
+        );
     }
 
     #[test]

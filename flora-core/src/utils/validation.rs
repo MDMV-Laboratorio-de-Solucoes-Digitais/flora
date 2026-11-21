@@ -5,6 +5,10 @@ use validator::ValidationError;
 /// Validates an email format.
 ///
 /// Returns `Ok(())` if the email is valid, otherwise returns a `ValidationError`.
+///
+/// # Errors
+///
+/// Returns a `ValidationError` when the address is empty or malformed.
 pub fn validate_email(email: &str) -> Result<(), ValidationError> {
     let email = email.trim();
     if email.is_empty() {
@@ -21,7 +25,9 @@ pub fn validate_email(email: &str) -> Result<(), ValidationError> {
     }
 
     // Simple regex-like check for valid email format
-    let at_pos = email.find('@').unwrap();
+    let at_pos = email
+        .find('@')
+        .ok_or_else(|| ValidationError::new("invalid email format"))?;
     let local = &email[..at_pos];
     let domain = &email[at_pos + 1..];
 
@@ -56,6 +62,10 @@ pub fn validate_email(email: &str) -> Result<(), ValidationError> {
 /// - At least one lowercase letter
 /// - At least one digit
 /// - At least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)
+///
+/// # Errors
+///
+/// Returns a `ValidationError` when any complexity requirement is unmet.
 pub fn validate_password(password: &str) -> Result<(), ValidationError> {
     if password.len() < 8 {
         return Err(ValidationError::new(
@@ -107,6 +117,10 @@ pub fn validate_password(password: &str) -> Result<(), ValidationError> {
 }
 
 /// Validates that a string is not empty and within a length range.
+///
+/// # Errors
+///
+/// Returns a `ValidationError` when the value is outside the given bounds.
 pub fn validate_length(
     value: &str,
     field_name: &str,
@@ -115,16 +129,18 @@ pub fn validate_length(
 ) -> Result<(), ValidationError> {
     let len = value.chars().count();
     if len < min {
-        return Err(ValidationError::new(&format!(
-            "{} must be at least {} characters",
-            field_name, min
+        let mut error = ValidationError::new("length");
+        error.message = Some(std::borrow::Cow::Owned(format!(
+            "{field_name} must be at least {min} characters"
         )));
+        return Err(error);
     }
     if len > max {
-        return Err(ValidationError::new(&format!(
-            "{} must be at most {} characters",
-            field_name, max
+        let mut error = ValidationError::new("length");
+        error.message = Some(std::borrow::Cow::Owned(format!(
+            "{field_name} must be at most {max} characters"
         )));
+        return Err(error);
     }
     Ok(())
 }

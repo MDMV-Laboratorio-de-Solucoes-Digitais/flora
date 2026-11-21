@@ -104,7 +104,7 @@ jobs:
             echo "$label: passed=$passed floor=$floor"
             [ "$passed" -ge "$floor" ]
           }
-          run_leg auth          contract::auth::db_          13
+          run_leg auth          contract::auth::db_          17
           run_leg messaging     contract::messaging::db_      4
           run_leg websocket     contract::websocket::db_      8
           run_leg search        contract::search::db_         8
@@ -113,7 +113,7 @@ jobs:
           run_leg tasks         contract::tasks::db::db_      4
           run_leg workspace     contract::workspace::db::db_  3
           run_leg rbac          contract::rbac::db::db_     3
-          run_leg bootstrap     contract::bootstrap::tests::db_ 4
+          run_leg bootstrap     contract::bootstrap::tests::db_ 5
 
   # 028: FASE 0 closure — informational supply-chain gates. Neither blocks merges yet;
   # promotion to required checks requires CODEOWNERS and a review window (Fatia B).

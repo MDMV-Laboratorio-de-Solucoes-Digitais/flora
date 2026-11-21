@@ -18,6 +18,12 @@ pub struct User {
     pub email: String,
     /// OIDC subject identifier (e. g., from Zitadel).
     pub oidc_subject: Option<String>,
+    /// Argon2id PHC hash for local password login; `None` for OIDC-only users.
+    #[serde(skip_serializing)]
+    pub password_hash: Option<String>,
+    /// Last time the local password was set or rotated.
+    #[serde(skip_serializing)]
+    pub password_updated_at: Option<DateTime<Utc>>,
     /// Display name (from OIDC profile or manual).
     pub display_name: String,
     /// Avatar URL (from OIDC or uploaded).
@@ -47,6 +53,8 @@ impl User {
             is_active: true,
             created_at: now,
             updated_at: now,
+            password_hash: None,
+            password_updated_at: None,
         }
     }
 
@@ -79,4 +87,17 @@ pub struct UpdateUserInput {
     pub display_name: Option<String>,
     /// Updated avatar URL.
     pub avatar_url: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::User;
+
+    #[test]
+    fn password_fields_are_not_serialized() {
+        let user = User::new("admin@example.test", "Admin");
+        let value = serde_json::to_value(user).unwrap_or_default();
+        assert!(value.get("password_hash").is_none());
+        assert!(value.get("password_updated_at").is_none());
+    }
 }
