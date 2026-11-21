@@ -923,3 +923,12 @@ anterior foi alterada.
 - **Gates 103:** `check_gate_integrity.py` PASS (10 legs / 77 pisos); fmt/check/clippy exit 0; `cargo test -p flora-api workspace::tests` 2 passed. Medição HTTP local: ReadOnly 403 / Admin 201.
 - **Roteiro — itens adicionais medidos:** item 8 (upload/download) funcionou após configurar `FLORA_STORAGE__LOCAL_PATH` — com o default `/var/flora/storage` o upload retornou 500 por permissão (configuração de ambiente, não código); item 10 (notificação de atribuição) confirmado via API; item 11 (RBAC) revelou o bug 103; item 6 (DMs) é placeholder hardcoded (`dms/+page.svelte:9`), não implementado — **[NV]**/dívida.
 - **[NV]:** staging real (URLs/credenciais não entregues), CI remota do PR 103, branch protection, deploy e UI de arquivos (rota inexistente no frontend).
+
+## Atualização — ciclo 104 e merge do ciclo 103 (2026-11-21; append-only)
+
+- **PR #344 mesclado** em `dev` às **23:14:46Z**, merge commit `70babde31`; checks obrigatórios verificados ao vivo (`db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = pass). Nenhum PR aberto após o merge.
+- **Âncora 104:** `.specify/feature.json` → `specs/104-session-identity`; branch `feature/104-session-identity` @ `23ff4bc809`. Registro canônico: `docs/governance/2026-11-21-104-session-identity.md` (novo). Notas anteriores intactas.
+- **Correção 104:** rodapé da navegação passou a exibir o e-mail real da sessão (`qa-admin` / `qa-admin@flora.test`) via helper puro `emailFromToken` (base64url/UTF-8, fail-closed) e `$derived` no layout. Nenhum backend/gate/i18n novo; valor nunca usado para autorização.
+- **Gates 104:** Vitest 49/49 (14 arquivos), `bun run check` 0 erros, prettier/eslint exit 0 nos arquivos alterados após correções de `unicorn/prefer-code-point`, `prefer-split-limit`, `prefer-string-repeat` e `max-nested-calls`; navegador real confirmou a identidade. Gate do alvo PASS (10 legs / 77 pisos).
+- **Dívida remanescente:** autoria das mensagens no chat ainda exibe `Usuário <id>` — exige lookup de usuários, fora de escopo. DMs são placeholder e a UI de arquivos não existe — **[NV]**/dívidas.
+- **[NV]:** staging real (URLs/credenciais não entregues), CI remota do PR 104, branch protection e deploy.
