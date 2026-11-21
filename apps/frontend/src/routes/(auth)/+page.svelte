@@ -74,12 +74,11 @@
 				{ id: data.user_id },
 				data.organization_id ?? null
 			);
-			await goto(
-				data.next_step === 'select_or_create_organization' ? '/select-org' : '/tasks'
-			);
+			await goto(data.next_step === 'select_or_create_organization' ? '/select-org' : '/tasks');
 		} catch (error_) {
 			globalThis.console?.error('Falha ao entrar', error_);
-			errorMessage = 'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
+			errorMessage =
+				'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -114,7 +113,8 @@
 			location.assign(String(data.authorization_url));
 		} catch (error_) {
 			globalThis.console?.error('Falha ao iniciar SSO', error_);
-			errorMessage = 'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
+			errorMessage =
+				'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -136,12 +136,23 @@
 			});
 			if (!response.ok) {
 				const body = await readError(response);
-				errorMessage =
-					response.status === 409
-						? 'Este workspace já foi configurado.'
-						: response.status === 422 && body.field === 'admin_password'
-							? 'A senha do administrador deve atender aos requisitos de complexidade (15 a 1024 caracteres).'
-							: 'Não foi possível criar o workspace. Verifique os dados e tente novamente.';
+				switch (response.status) {
+					case 409: {
+						errorMessage = 'Este workspace já foi configurado.';
+						break;
+					}
+					case 422: {
+						errorMessage =
+							body.field === 'admin_password'
+								? 'A senha do administrador deve atender aos requisitos de complexidade (15 a 1024 caracteres).'
+								: 'Verifique os dados informados.';
+						break;
+					}
+					default: {
+						errorMessage =
+							'Não foi possível criar o workspace. Verifique os dados e tente novamente.';
+					}
+				}
 				return;
 			}
 			const data = await response.json();
@@ -153,7 +164,8 @@
 			await goto('/tasks');
 		} catch (error_) {
 			globalThis.console?.error('Falha ao criar workspace', error_);
-			errorMessage = 'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
+			errorMessage =
+				'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
 		} finally {
 			isSubmitting = false;
 		}
