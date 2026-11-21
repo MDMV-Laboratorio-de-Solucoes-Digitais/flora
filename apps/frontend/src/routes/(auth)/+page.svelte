@@ -46,16 +46,26 @@
 			});
 			if (!response.ok) {
 				const body = await readError(response);
-				errorMessage =
-					response.status === 401
-						? 'E-mail ou senha incorretos.'
-						: response.status === 429
-							? 'Muitas tentativas. Aguarde um momento e tente novamente.'
-							: response.status === 422
-								? 'Verifique os dados informados.'
-								: body.error === 'oidc_error'
-									? 'O provedor de identidade não está disponível no momento.'
-									: 'Não foi possível entrar. Tente novamente.';
+				switch (response.status) {
+					case 401: {
+						errorMessage = 'E-mail ou senha incorretos.';
+						break;
+					}
+					case 429: {
+						errorMessage = 'Muitas tentativas. Aguarde um momento e tente novamente.';
+						break;
+					}
+					case 422: {
+						errorMessage = 'Verifique os dados informados.';
+						break;
+					}
+					default: {
+						errorMessage =
+							body.error === 'oidc_error'
+								? 'O provedor de identidade não está disponível no momento.'
+								: 'Não foi possível entrar. Tente novamente.';
+					}
+				}
 				return;
 			}
 			const data = await response.json();

@@ -234,7 +234,7 @@ mod tests {
 
         let stored: (Option<String>, Option<chrono::DateTime<chrono::Utc>>) =
             sqlx::query_as("SELECT password_hash, password_updated_at FROM users WHERE id = $1")
-                .bind(user_id)
+                .bind(Uuid::parse_str(user_id)?)
                 .fetch_one(&pool)
                 .await?;
         let hash = stored
@@ -331,10 +331,12 @@ mod tests {
             .await?;
         assert!(user.password_hash.is_none());
 
-        let mut config = Config::default();
-        config.bootstrap = BootstrapConfig {
-            admin_email: Some(email.to_owned()),
-            admin_password: Some("SenhaInicial@12345".to_owned()),
+        let config = Config {
+            bootstrap: BootstrapConfig {
+                admin_email: Some(email.to_owned()),
+                admin_password: Some("SenhaInicial@12345".to_owned()),
+            },
+            ..Config::default()
         };
 
         let _state = AppState::new(pool.clone(), config.clone()).await?;
