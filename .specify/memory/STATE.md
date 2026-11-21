@@ -897,3 +897,9 @@ anterior foi alterada.
 - **Endpoints:** `https://flora.mdmv.qzz.io/` **200**, `/tasks` **200**, `/config.js` **200**, `https://flora-api.mdmv.qzz.io/health` **200**, `GET /api/v1/bootstrap/status` → `{"available":false}` (bootstrap já consumido; link First Seed escondido).
 - **Gates:** `check_gate_integrity.py` **PASS** (`exit=0`, 10 legs / 77 floors), CI verde em todos os PRs finais, clippy workspace `exit=0`, 36 testes unitários, e2e browser passou. `AGENTS.md` reescrito a partir de 4 pesquisas paralelas e versionado.
 - **Pendência humana restante:** as variáveis temporárias `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` e `FLORA_BOOTSTRAP__ADMIN_PASSWORD` permanecem na API Coolify para permitir login sem saber o e-mail real; remover/rodar rotação após o usuário confirmar acesso e trocar a senha. Browser E2E autenticado com a conta real não foi executado — **[NV]**; a autenticação via API foi medida com token emitido.
+
+### Verificação complementar — 2026-11-21T13:36:02Z (append-only)
+
+- **E-mail real da conta criada:** `founder@mdmv.com.br` (lido da claim `email` do JWT já emitido no navegador, sem expor o token). `POST /api/v1/auth/password/login` com esse e-mail e a senha temporária retornou **200**, `session_token` presente, `next_step=select_or_create_organization`, `user_id=01a1fb7f-958c-73f7-a79d-3d8f908c3ebb`. O e-mail `luis.granja@mdmv.com.br` informado pelo usuário não corresponde à conta persistida.
+- **First Seed Journey:** HTML do FQDN não contém “Primeira configuração” (`grep -c = 0`) e `GET /api/v1/bootstrap/status` retorna `{"available":false}` — link apresentado apenas em instalação limpa, conforme ciclo 097.
+- **Sem mudança de código:** diagnóstico conduzido por leitura de produção e do JWT de sessão; nenhum gate/workflow/contrato alterado. Recomendação ao usuário: entrar com `founder@mdmv.com.br` + senha temporária; após confirmação, rotacionar senha e remover `FLORA_BOOTSTRAP__ADMIN_*` do Coolify.
