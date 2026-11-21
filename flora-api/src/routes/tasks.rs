@@ -2,7 +2,7 @@
 
 use axum::{
     Router,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
     routing::{delete, get, patch, post},
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::models::{Notification, NotificationType, Task, TaskStatus};
+use flora_core::models::{Notification, NotificationType, Pagination, Task, TaskStatus};
 use flora_core::repositories::{
     PgMembershipRepository, PgNotificationRepository, PgTaskRepository,
 };
@@ -21,6 +21,14 @@ use std::str::FromStr;
 use crate::AppState;
 use crate::extractors::AuthExtractor;
 use crate::tenant::{ensure_user_in_org, ensure_workspace_in_org};
+
+/// Query parameters for `GET /tasks`. Omitting the workspace keeps the legacy
+/// organization-wide view; supplying it scopes the list to that workspace.
+#[derive(Debug, Deserialize)]
+pub struct ListTasksQuery {
+    /// Workspace selected in the UI; validated against the session organization.
+    pub workspace_id: Option<Uuid>,
+}
 
 /// Request body for creating a task.
 #[derive(Debug, Deserialize)]
@@ -132,6 +140,7 @@ impl From<Task> for TaskResponse {
 async fn list_tasks(
     State(state): State<AppState>,
     auth: AuthExtractor,
+    Query(query): Query<ListTasksQuery>,
 ) -> Result<Json<Vec<TaskResponse>>> {
     let org_id = auth.require_org().map_err(|(_s, m)| Error::Validation {
         field: "organization_id".to_string(),
@@ -147,15 +156,19 @@ async fn list_tasks(
 
     let task_repo = PgTaskRepository::new((*state.db_pool).clone());
 
-    let page = task_repo
-        .find_by_assignee_id(
-            user_id,
-            flora_core::models::Pagination {
-                limit: 50,
-                offset: 0,
-            },
-        )
-        .await?;
+    let pagination = Pagination {
+        limit: 50,
+        offset: 0,
+    };
+    let page = if let Some(workspace_id) = query.workspace_id {
+        ensure_workspace_in_org(&state, org_id, workspace_id).await?;
+        state
+            .task_service
+            .list_tasks(workspace_id, pagination, None, Some(user_id))
+            .await?
+    } else {
+        task_repo.find_by_assignee_id(user_id, pagination).await?
+    };
 
     let tasks: Vec<TaskResponse> = page
         .items

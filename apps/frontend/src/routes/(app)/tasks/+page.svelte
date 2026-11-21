@@ -8,6 +8,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import KanbanBoard from '$lib/components/tasks/KanbanBoard.svelte';
 	import { statusPatchBody, statusPatchEndpoint } from '$lib/components/tasks/status-patch.svelte';
+	import { tasksEndpoint } from '$lib/components/tasks/tasks-query';
 	import { apiErrorMessage, format, t } from '$lib/i18n';
 
 	type Workspace = { id: string; name: string };
@@ -50,7 +51,7 @@
 	}
 
 	async function loadTasks() {
-		tasks = await ApiClient.request<ApiTask[]>('/api/v1/tasks');
+		tasks = await ApiClient.request<ApiTask[]>(tasksEndpoint(selectedWorkspaceId));
 	}
 
 	async function refresh() {
@@ -112,10 +113,19 @@
 		}
 	}
 
-	function onWorkspaceChange(event: Event) {
+	async function onWorkspaceChange(event: Event) {
 		const value = (event.currentTarget as HTMLSelectElement).value;
 		selectedWorkspaceId = value;
 		authState.setWorkspace(value || null);
+		errorMessage = '';
+		isLoading = true;
+		try {
+			await loadTasks();
+		} catch (error_) {
+			errorMessage = apiErrorMessage(error_, 'error.loadTasks');
+		} finally {
+			isLoading = false;
+		}
 	}
 
 	onMount(async () => {
