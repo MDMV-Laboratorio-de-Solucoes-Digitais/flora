@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FileAttachment } from '$lib/types/models';
+	import { t } from '$lib/i18n';
 
 	let { file } = $props<{ file: FileAttachment }>();
 
@@ -20,5 +21,7 @@
 	<div class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 		{file.fileName}
 	</div>
-	<a href={getDownloadUrl()} class="text-blue-500 hover:underline" download> Download </a>
+	<a href={getDownloadUrl()} class="text-blue-500 hover:underline" download>
+		{t['file.download']}
+	</a>
 </div>

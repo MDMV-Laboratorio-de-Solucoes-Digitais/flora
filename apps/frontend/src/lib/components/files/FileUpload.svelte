@@ -3,6 +3,7 @@
 	import { logger } from '$lib/utils/logger';
 	import { ApiClient } from '$lib/api/client';
 	import type { FileAttachment } from '$lib/types/models';
+	import { t } from '$lib/i18n';
 
 	let { onUploadComplete, workspaceId } = $props<{
 		onUploadComplete?: (file: FileAttachment) => void;
@@ -17,11 +18,11 @@
 			errorMessage = '';
 			const file = input.files[0];
 			if (!isValidFileSize(file.size)) {
-				errorMessage = 'File too large. Maximum size is 50MB.';
+				errorMessage = t['file.tooLarge'];
 				return;
 			}
 			if (!workspaceId) {
-				errorMessage = 'Workspace is required before uploading files.';
+				errorMessage = t['file.workspaceRequired'];
 				return;
 			}
 			// Implement RustFS upload
@@ -47,7 +48,7 @@
 				input.value = '';
 			} catch (error) {
 				logger.error('FileUpload', 'Upload failed', undefined, error as Error);
-				errorMessage = 'Upload failed.';
+				errorMessage = t['file.uploadFailed'];
 			}
 		}
 	}

@@ -4,7 +4,10 @@
 //! temporary recovery credentials: when both are set, they overwrite the
 //! configured administrator's password hash on EVERY startup, even if a hash
 //! already exists. Remove both variables after the password has been recovered.
-//! The secret is never logged.
+//!
+//! Setting `FLORA_BOOTSTRAP__ADMIN_EMAIL` to exactly `*` is an explicit,
+//! temporary recovery opt-in: it targets the first active user
+//! (`ORDER BY created_at ASC, id ASC LIMIT 1`) when the address is unknown.
 
 use std::fmt;
 
@@ -13,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 use crate::error::{Error, Result};
+use crate::models::User;
 use crate::repositories::PgUserRepository;
 use crate::services::PasswordService;
 use crate::traits::UserRepository;
@@ -48,12 +52,20 @@ impl BootstrapConfig {
         self.admin_email.is_some() && self.admin_password.is_some()
     }
 
+    /// Whether the selector is exactly `*` after trimming.
+    fn is_wildcard_selector(&self) -> bool {
+        self.admin_email
+            .as_deref()
+            .is_some_and(|email| email.trim() == "*")
+    }
+
     /// Validates the startup credentials without revealing their values.
     ///
     /// # Errors
     ///
     /// Returns a configuration error for incomplete credentials, an invalid
-    /// e-mail, or a password outside 15..1024 characters.
+    /// e-mail/selector (only an exact address or `*` is accepted), or a
+    /// password outside 15..1024 characters.
     pub fn validate(&self) -> Result<()> {
         match (self.admin_email.as_deref(), self.admin_password.as_deref()) {
             (None, None) => Ok(()),
@@ -65,14 +77,16 @@ impl BootstrapConfig {
             )),
             (Some(email), Some(password)) => {
                 let email = email.trim();
-                let valid = email.len() <= 255
-                    && !email.chars().any(char::is_whitespace)
-                    && email.split_once('@').is_some_and(|(local, domain)| {
-                        !local.is_empty() && !domain.is_empty() && domain.contains('.')
-                    });
+                let valid = self.is_wildcard_selector()
+                    || (email.len() <= 255
+                        && !email.chars().any(char::is_whitespace)
+                        && email.split_once('@').is_some_and(|(local, domain)| {
+                            !local.is_empty() && !domain.is_empty() && domain.contains('.')
+                        }));
                 if !valid {
                     return Err(Error::Configuration(
-                        "FLORA_BOOTSTRAP__ADMIN_EMAIL must be a valid e-mail address".to_owned(),
+                        "FLORA_BOOTSTRAP__ADMIN_EMAIL must be a valid e-mail address or '*'"
+                            .to_owned(),
                     ));
                 }
                 PasswordService::validate_password(password, "admin_password")
@@ -83,8 +97,9 @@ impl BootstrapConfig {
 
 /// Overwrites the configured administrator's password hash on every startup.
 ///
-/// Both recovery variables must be present and the e-mail must match an existing
-/// user. The password is validated before any database write, and neither the
+/// Both recovery variables must be present. `ADMIN_EMAIL` is either an exact
+/// address or `*` (explicit temporary opt-in targeting the first active user).
+/// The password is validated before any database write, and neither the
 /// password nor the resulting hash is logged.
 ///
 /// Returns `true` when the hash was written, `false` when recovery was not
@@ -108,10 +123,34 @@ pub async fn apply_startup_password(
     let email = email.trim().to_lowercase();
 
     let repo = PgUserRepository::new(pool.clone());
-    let Some(user) = repo.find_by_email(&email).await? else {
-        tracing::warn!(
-            "FLORA_BOOTSTRAP__ADMIN_EMAIL does not match an existing user; startup password skipped"
-        );
+    // `*` is an explicit opt-in for an unknown e-mail: target the oldest active
+    // account instead of guessing an address. Exact e-mails keep the precise
+    // lookup and warn when no user matches.
+    let user = if config.is_wildcard_selector() {
+        sqlx::query_as::<_, User>(
+            "SELECT id, email, oidc_subject, password_hash, password_updated_at,
+                    display_name, avatar_url, profile, is_active, created_at, updated_at
+             FROM users
+             WHERE is_active = TRUE
+             ORDER BY created_at ASC, id ASC
+             LIMIT 1",
+        )
+        .fetch_optional(pool)
+        .await
+        .map_err(Error::from_sqlx)?
+    } else {
+        repo.find_by_email(&email).await?
+    };
+    let Some(user) = user else {
+        if config.is_wildcard_selector() {
+            tracing::warn!(
+                "FLORA_BOOTSTRAP__ADMIN_EMAIL='*' matched no active user; startup password skipped"
+            );
+        } else {
+            tracing::warn!(
+                "FLORA_BOOTSTRAP__ADMIN_EMAIL does not match an existing user; startup password skipped"
+            );
+        }
         return Ok(false);
     };
     // Recovery must replace an existing hash as well; the conditional repository
@@ -165,5 +204,72 @@ mod tests {
         assert!(config.is_configured());
         assert!(config.validate().is_ok());
         assert!(!format!("{config:?}").contains("SenhaForte@12345"));
+    }
+
+    #[test]
+    fn wildcard_selector_is_accepted_and_redacts_password() {
+        let config = BootstrapConfig {
+            admin_email: Some("*".to_owned()),
+            admin_password: Some("SenhaForte@12345".to_owned()),
+        };
+        assert!(config.is_configured());
+        assert!(config.validate().is_ok());
+        assert!(!format!("{config:?}").contains("SenhaForte@12345"));
+    }
+
+    #[test]
+    fn only_exact_wildcard_token_activates_selection() {
+        let wildcard = BootstrapConfig {
+            admin_email: Some("  *  ".to_owned()),
+            admin_password: Some("SenhaForte@12345".to_owned()),
+        };
+        assert!(wildcard.is_wildcard_selector());
+
+        for selector in [
+            "*@x.com",
+            "foo*",
+            "**",
+            "admin@example.test",
+            "*admin@example.test",
+        ] {
+            let config = BootstrapConfig {
+                admin_email: Some(selector.to_owned()),
+                admin_password: Some("SenhaForte@12345".to_owned()),
+            };
+            assert!(
+                !config.is_wildcard_selector(),
+                "{selector} must not activate the wildcard selector"
+            );
+        }
+
+        // Typo-like tokens are rejected by validation: no exact lookup, no fallback.
+        let typo = BootstrapConfig {
+            admin_email: Some("foo*".to_owned()),
+            admin_password: Some("SenhaForte@12345".to_owned()),
+        };
+        assert!(typo.validate().is_err());
+    }
+
+    #[test]
+    fn invalid_password_is_rejected_before_any_write() {
+        let config = BootstrapConfig {
+            admin_email: Some("*".to_owned()),
+            admin_password: Some("curta".to_owned()),
+        };
+        assert!(config.validate().is_err());
+    }
+
+    #[expect(
+        clippy::expect_used,
+        reason = "serializing this plain config is infallible in this unit test"
+    )]
+    #[test]
+    fn serialized_config_never_contains_password() {
+        let config = BootstrapConfig {
+            admin_email: Some("*".to_owned()),
+            admin_password: Some("SenhaForte@12345".to_owned()),
+        };
+        let serialized = serde_json::to_string(&config).expect("serialization must succeed");
+        assert!(!serialized.contains("SenhaForte@12345"));
     }
 }

@@ -2,6 +2,7 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { authState } from '$lib/state/AuthState.svelte';
+	import { t } from '$lib/i18n';
 
 	let { children } = $props();
 
@@ -18,18 +19,18 @@
 {#if authState.isInvalidated}
 	<div class="session-lock-overlay">
 		<div class="session-lock-modal">
-			<h2>Access Revoked</h2>
-			<p>You have been removed from this workspace.</p>
+			<h2>{t['session.accessRevoked']}</h2>
+			<p>{t['session.removed']}</p>
 		</div>
 	</div>
 {:else if authState.isSessionLocked}
 	<div class="session-lock-overlay">
 		<div class="session-lock-modal">
-			<h2>Session Expired</h2>
+			<h2>{t['session.expired']}</h2>
 			<p>
-				Your session has expired. You are in read-only mode for 5 minutes before automatic logout.
+				{t['session.readOnlyNotice']}
 			</p>
-			<button onclick={() => authState.logout()}>Logout Now</button>
+			<button onclick={() => authState.logout()}>{t['session.logoutNow']}</button>
 		</div>
 	</div>
 {/if}

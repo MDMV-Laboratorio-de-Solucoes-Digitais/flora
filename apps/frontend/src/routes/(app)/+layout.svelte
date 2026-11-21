@@ -21,6 +21,7 @@
 	import SearchBox from '$lib/components/search/SearchBox.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { t } from '$lib/i18n';
 
 	let { children } = $props();
 
@@ -99,7 +100,7 @@
 					>
 						F
 					</div>
-					<span>Flora</span>
+					<span>{t['app.name']}</span>
 				</div>
 			{/if}
 			<Button
@@ -126,7 +127,7 @@
 						href="/channels"
 					>
 						<Hash class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
-						{#if isSidebarOpen}<span>Channels</span>{/if}
+						{#if isSidebarOpen}<span>{t['nav.channels']}</span>{/if}
 					</Button>
 					<Button
 						variant="ghost"
@@ -134,7 +135,7 @@
 						href="/dms"
 					>
 						<MessageSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
-						{#if isSidebarOpen}<span>DMs</span>{/if}
+						{#if isSidebarOpen}<span>{t['nav.directMessages']}</span>{/if}
 					</Button>
 					<Button
 						variant="ghost"
@@ -142,7 +143,7 @@
 						href="/tasks"
 					>
 						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
-						{#if isSidebarOpen}<span>Tasks</span>{/if}
+						{#if isSidebarOpen}<span>{t['nav.tasks']}</span>{/if}
 					</Button>
 				</div>
 			</div>
@@ -152,10 +153,10 @@
 					<h3
 						class="mb-2 px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
 					>
-						Channels
+						{t['nav.channels']}
 					</h3>
 					<p class="px-3 text-xs text-muted-foreground">
-						Open Channels to browse workspace channels.
+						{t['nav.channelsHint']}
 					</p>
 				</div>
 			{/if}
@@ -178,21 +179,23 @@
 							</div>
 							{#if isSidebarOpen}
 								<div class="ml-2 flex flex-col items-start overflow-hidden text-sm">
-									<span class="w-full truncate font-medium">User Name</span>
-									<span class="w-full truncate text-xs text-muted-foreground">user@flora.app</span>
+									<span class="w-full truncate font-medium">{t['nav.userName']}</span>
+									<span class="w-full truncate text-xs text-muted-foreground"
+										>{t['nav.userEmail']}</span
+									>
 								</div>
 							{/if}
 						</Button>
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end" class="w-56">
-					<DropdownMenu.Label>My Account</DropdownMenu.Label>
+					<DropdownMenu.Label>{t['nav.myAccount']}</DropdownMenu.Label>
 					<DropdownMenu.Separator />
 					<DropdownMenu.Item>
 						{#snippet child({ props })}
 							<a href="/settings" {...props}>
 								<Settings class="mr-2 h-4 w-4" />
-								<span>Settings</span>
+								<span>{t['nav.settings']}</span>
 							</a>
 						{/snippet}
 					</DropdownMenu.Item>
@@ -203,7 +206,7 @@
 						}}
 					>
 						<LogOut class="mr-2 h-4 w-4" />
-						<span>Log out</span>
+						<span>{t['nav.logout']}</span>
 					</DropdownMenu.Item>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
@@ -225,7 +228,7 @@
 					variant="ghost"
 					size="icon"
 					onclick={() => (isRightPanelOpen = !isRightPanelOpen)}
-					title={isRightPanelOpen ? 'Close AI Panel' : 'Open AI Panel'}
+					title={isRightPanelOpen ? t['nav.closeAiPanel'] : t['nav.openAiPanel']}
 					class={isRightPanelOpen ? 'bg-muted text-primary' : ''}
 				>
 					{#if isRightPanelOpen}
@@ -252,7 +255,7 @@
 					<div class="flex h-12 items-center justify-between border-b bg-muted/30 px-4">
 						<div class="flex items-center gap-2 text-sm font-semibold text-primary">
 							<Sparkles class="h-4 w-4" />
-							AI Insight Panel
+							{t['ai.panelTitle']}
 						</div>
 						<Button
 							variant="ghost"
@@ -267,12 +270,12 @@
 						<div class="mb-4 rounded-full bg-primary/10 p-3">
 							<Sparkles class="h-6 w-6 text-primary" />
 						</div>
-						<h3 class="mb-1 text-sm font-medium">How can I help you today?</h3>
+						<h3 class="mb-1 text-sm font-medium">{t['ai.welcome']}</h3>
 						<p class="mb-4 text-xs text-muted-foreground">
-							Ask me to summarize discussions, generate tasks, or find documents.
+							{t['ai.welcomeHint']}
 						</p>
 						<div class="w-full">
-							<Input placeholder="Ask AI..." class="w-full" />
+							<Input placeholder={t['ai.askPlaceholder']} class="w-full" />
 						</div>
 					</div>
 				</aside>

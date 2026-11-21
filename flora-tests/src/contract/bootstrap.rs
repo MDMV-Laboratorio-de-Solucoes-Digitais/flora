@@ -9,10 +9,11 @@ mod tests {
     use axum::body::{Body, to_bytes};
     use axum::http::{Method, Request, StatusCode};
     use axum::response::Response;
+    use flora_api::routes::auth::create_auth_router;
     use flora_api::routes::bootstrap::create_bootstrap_router;
     use flora_api::state::AppState;
     use flora_core::config::Config;
-    use flora_core::config::bootstrap::BootstrapConfig;
+    use flora_core::config::bootstrap::{BootstrapConfig, apply_startup_password};
     use flora_core::migrations::run_migrations;
     use flora_core::models::{Organization, User};
     use flora_core::repositories::{
@@ -399,6 +400,198 @@ mod tests {
             .and_then(|found| found.password_hash)
             .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
         assert_eq!(untouched, repeated);
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_startup_password_wildcard_targets_first_active_user() -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let pool = PgPool::connect(&db.url).await?;
+        let repo = PgUserRepository::new(pool.clone());
+
+        // Oldest account is inactive: the wildcard selector must skip it.
+        let inactive = repo
+            .create(User::new("inativo@exemplo.test", "Inativo"))
+            .await?;
+        repo.deactivate(inactive.id).await?;
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+
+        let first = repo
+            .create(User::new("primeiro@exemplo.test", "Primeiro"))
+            .await?;
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        let second = repo
+            .create(User::new("segundo@exemplo.test", "Segundo"))
+            .await?;
+
+        let config = Config {
+            bootstrap: BootstrapConfig {
+                admin_email: Some("*".to_owned()),
+                admin_password: Some("SenhaCoringa@12345".to_owned()),
+            },
+            ..Config::default()
+        };
+        let state = AppState::new(pool.clone(), config).await?;
+
+        let applied = repo
+            .find_by_id(first.id)
+            .await?
+            .and_then(|user| user.password_hash)
+            .ok_or_else(|| {
+                anyhow::anyhow!("wildcard password was not applied to the first active user")
+            })?;
+        assert!(PasswordService::shared().verify("SenhaCoringa@12345", &applied));
+        assert!(
+            repo.find_by_id(second.id)
+                .await?
+                .and_then(|user| user.password_hash)
+                .is_none()
+        );
+        assert!(
+            repo.find_by_id(inactive.id)
+                .await?
+                .and_then(|user| user.password_hash)
+                .is_none()
+        );
+
+        // The recovered password must actually unlock local login with the
+        // real e-mail of the selected account.
+        let response = Router::new()
+            .nest("/auth", create_auth_router())
+            .with_state(state)
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/auth/password/login")
+                    .header("content-type", "application/json")
+                    .body(Body::from(serde_json::to_vec(&json!({
+                        "email": "primeiro@exemplo.test",
+                        "password": "SenhaCoringa@12345",
+                    }))?))?,
+            )
+            .await?;
+        assert_eq!(response.status(), StatusCode::OK);
+        let payload = json_body(response).await?;
+        assert!(payload["session_token"].as_str().is_some());
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_startup_password_exact_email_still_applies() -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let pool = PgPool::connect(&db.url).await?;
+        let repo = PgUserRepository::new(pool.clone());
+        let first = repo
+            .create(User::new("primeiro@exemplo.test", "Primeiro"))
+            .await?;
+        let target = repo.create(User::new("alvo@exemplo.test", "Alvo")).await?;
+
+        let config = Config {
+            bootstrap: BootstrapConfig {
+                admin_email: Some("alvo@exemplo.test".to_owned()),
+                admin_password: Some("SenhaExata@12345".to_owned()),
+            },
+            ..Config::default()
+        };
+        let _state = AppState::new(pool.clone(), config).await?;
+
+        let hash = repo
+            .find_by_id(target.id)
+            .await?
+            .and_then(|user| user.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("exact e-mail password was not applied"))?;
+        assert!(PasswordService::shared().verify("SenhaExata@12345", &hash));
+        assert!(
+            repo.find_by_id(first.id)
+                .await?
+                .and_then(|user| user.password_hash)
+                .is_none()
+        );
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_startup_password_missing_email_is_noop() -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let pool = PgPool::connect(&db.url).await?;
+        let repo = PgUserRepository::new(pool.clone());
+        let user = repo.create(User::new("real@exemplo.test", "Real")).await?;
+        assert!(user.password_hash.is_none());
+
+        let exact = Config {
+            bootstrap: BootstrapConfig {
+                admin_email: Some("real@exemplo.test".to_owned()),
+                admin_password: Some("SenhaAtual@12345".to_owned()),
+            },
+            ..Config::default()
+        };
+        let _state = AppState::new(pool.clone(), exact).await?;
+        let before = repo
+            .find_by_id(user.id)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("initial password was not applied"))?;
+
+        let missing = Config {
+            bootstrap: BootstrapConfig {
+                admin_email: Some("ausente@exemplo.test".to_owned()),
+                admin_password: Some("SenhaErrada@12345".to_owned()),
+            },
+            ..Config::default()
+        };
+        let _state = AppState::new(pool.clone(), missing.clone()).await?;
+        let applied =
+            apply_startup_password(&pool, &missing.bootstrap, PasswordService::shared()).await?;
+        assert!(!applied, "unknown e-mail must be a no-op");
+        let after = repo
+            .find_by_id(user.id)
+            .await?
+            .and_then(|found| found.password_hash)
+            .ok_or_else(|| anyhow::anyhow!("stored password hash disappeared"))?;
+        assert_eq!(after, before);
+        assert!(PasswordService::shared().verify("SenhaAtual@12345", &after));
+        assert!(!PasswordService::shared().verify("SenhaErrada@12345", &after));
+
+        db.cleanup().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL"]
+    async fn db_startup_password_wildcard_without_active_user_is_noop() -> anyhow::Result<()> {
+        let db = TestDb::create().await?;
+        let pool = PgPool::connect(&db.url).await?;
+        let repo = PgUserRepository::new(pool.clone());
+        let user = repo
+            .create(User::new("unico@exemplo.test", "Unico"))
+            .await?;
+        repo.deactivate(user.id).await?;
+
+        let config = Config {
+            bootstrap: BootstrapConfig {
+                admin_email: Some("*".to_owned()),
+                admin_password: Some("SenhaSemAtivo@12345".to_owned()),
+            },
+            ..Config::default()
+        };
+        let applied =
+            apply_startup_password(&pool, &config.bootstrap, PasswordService::shared()).await?;
+        assert!(!applied, "no active user must be a no-op");
+        assert!(
+            repo.find_by_id(user.id)
+                .await?
+                .and_then(|found| found.password_hash)
+                .is_none()
+        );
 
         db.cleanup().await?;
         Ok(())

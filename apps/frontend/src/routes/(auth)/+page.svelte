@@ -14,6 +14,7 @@
 	} from '$lib/components/ui/card';
 	import { Label } from '$lib/components/ui/label';
 	import { authState } from '$lib/state/AuthState.svelte';
+	import { backendErrorMessage, t, type BackendErrorBody } from '$lib/i18n';
 
 	let canBootstrap = $state(false);
 	let workspaceName = $state('Flora');
@@ -44,12 +45,10 @@
 		})();
 	});
 
-	type ErrorBody = { error?: unknown; field?: unknown };
-
-	async function readError(response: Response): Promise<ErrorBody> {
+	async function readError(response: Response): Promise<BackendErrorBody> {
 		try {
 			const body: unknown = await response.json();
-			return body && typeof body === 'object' ? (body as ErrorBody) : {};
+			return body && typeof body === 'object' ? (body as BackendErrorBody) : {};
 		} catch {
 			return {};
 		}
@@ -66,27 +65,11 @@
 				body: JSON.stringify({ email, password })
 			});
 			if (!response.ok) {
-				const body = await readError(response);
-				switch (response.status) {
-					case 401: {
-						errorMessage = 'E-mail ou senha incorretos.';
-						break;
-					}
-					case 429: {
-						errorMessage = 'Muitas tentativas. Aguarde um momento e tente novamente.';
-						break;
-					}
-					case 422: {
-						errorMessage = 'Verifique os dados informados.';
-						break;
-					}
-					default: {
-						errorMessage =
-							body.error === 'oidc_error'
-								? 'O provedor de identidade não está disponível no momento.'
-								: 'Não foi possível entrar. Tente novamente.';
-					}
-				}
+				errorMessage = backendErrorMessage(
+					await readError(response),
+					response.status,
+					'error.loginFailed'
+				);
 				return;
 			}
 			const data = await response.json();
@@ -98,8 +81,7 @@
 			await goto(data.next_step === 'select_or_create_organization' ? '/select-org' : '/tasks');
 		} catch (error_) {
 			globalThis.console?.error('Falha ao entrar', error_);
-			errorMessage =
-				'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
+			errorMessage = t['error.serverUnavailable'];
 		} finally {
 			isSubmitting = false;
 		}
@@ -115,16 +97,13 @@
 				`${API_BASE_URL}/api/v1/auth/login?redirect_uri=${encodeURIComponent(redirectUri)}`
 			);
 			if (!response.ok) {
-				await readError(response);
-				errorMessage =
-					response.status === 429
-						? 'Muitas tentativas. Aguarde um momento e tente novamente.'
-						: 'Não foi possível iniciar o login com SSO.';
+				const body = await readError(response);
+				errorMessage = backendErrorMessage(body, response.status, 'error.ssoFailed');
 				return;
 			}
 			const data = await response.json();
 			if (!data.authorization_url) {
-				errorMessage = 'O provedor de identidade não retornou uma URL de autorização.';
+				errorMessage = t['error.oidcNoAuthorizationUrl'];
 				return;
 			}
 			if (typeof sessionStorage !== 'undefined' && data.state) {
@@ -134,8 +113,7 @@
 			location.assign(String(data.authorization_url));
 		} catch (error_) {
 			globalThis.console?.error('Falha ao iniciar SSO', error_);
-			errorMessage =
-				'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
+			errorMessage = t['error.serverUnavailable'];
 		} finally {
 			isSubmitting = false;
 		}
@@ -157,24 +135,8 @@
 			});
 			if (!response.ok) {
 				const body = await readError(response);
-				switch (response.status) {
-					case 409: {
-						canBootstrap = false;
-						errorMessage = 'Este workspace já foi configurado. Faça login para continuar.';
-						break;
-					}
-					case 422: {
-						errorMessage =
-							body.field === 'admin_password'
-								? 'A senha do administrador deve atender aos requisitos de complexidade (15 a 1024 caracteres).'
-								: 'Verifique os dados informados.';
-						break;
-					}
-					default: {
-						errorMessage =
-							'Não foi possível criar o workspace. Verifique os dados e tente novamente.';
-					}
-				}
+				if (response.status === 409) canBootstrap = false;
+				errorMessage = backendErrorMessage(body, response.status, 'error.bootstrapFailed');
 				return;
 			}
 			const data = await response.json();
@@ -186,8 +148,7 @@
 			await goto('/tasks');
 		} catch (error_) {
 			globalThis.console?.error('Falha ao criar workspace', error_);
-			errorMessage =
-				'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.';
+			errorMessage = t['error.serverUnavailable'];
 		} finally {
 			isSubmitting = false;
 		}
@@ -203,65 +164,83 @@
 	<Card class="w-full max-w-md shadow-lg">
 		{#if canBootstrap}
 			<CardHeader class="space-y-1 text-center">
-				<CardTitle class="text-2xl font-bold tracking-tight">Primeira configuração</CardTitle>
-				<CardDescription>Plante as raízes do seu novo workspace Flora.</CardDescription>
+				<CardTitle class="text-2xl font-bold tracking-tight">{t['auth.setup.title']}</CardTitle>
+				<CardDescription>{t['auth.setup.description']}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-4">
 				<div class="grid gap-2">
-					<Label for="workspaceName">Nome do workspace</Label>
-					<Input id="workspaceName" bind:value={workspaceName} placeholder="Minha equipe" />
+					<Label for="workspaceName">{t['auth.setup.workspaceName']}</Label>
+					<Input
+						id="workspaceName"
+						bind:value={workspaceName}
+						placeholder={t['auth.setup.workspacePlaceholder']}
+					/>
 				</div>
 				<div class="grid gap-2">
-					<Label for="adminEmail">E-mail do administrador</Label>
+					<Label for="adminEmail">{t['auth.setup.adminEmail']}</Label>
 					<Input
 						id="adminEmail"
 						type="email"
 						bind:value={adminEmail}
-						placeholder="admin@exemplo.com"
+						placeholder={t['auth.setup.adminEmailPlaceholder']}
 					/>
 				</div>
 				<div class="grid gap-2">
-					<Label for="adminPassword">Senha do administrador</Label>
+					<Label for="adminPassword">{t['auth.setup.adminPassword']}</Label>
 					<Input
 						id="adminPassword"
 						type="password"
 						bind:value={adminPassword}
 						minlength={15}
-						placeholder="Mínimo de 15 caracteres"
+						placeholder={t['auth.setup.adminPasswordPlaceholder']}
 					/>
 				</div>
 			</CardContent>
 			<CardFooter class="flex flex-col gap-2">
 				<Button class="w-full" onclick={handleBootstrap} disabled={isSubmitting}
-					>Criar workspace</Button
+					>{t['auth.setup.submit']}</Button
 				>
-				<Button variant="ghost" class="w-full" onclick={toggleSetup}>Voltar para o login</Button>
+				<Button variant="ghost" class="w-full" onclick={toggleSetup}
+					>{t['auth.setup.backToLogin']}</Button
+				>
 			</CardFooter>
 		{:else}
 			<CardHeader class="space-y-1 text-center">
-				<CardTitle class="text-2xl font-bold tracking-tight">Bem-vindo ao Flora</CardTitle>
-				<CardDescription>Entre com seu e-mail e senha para acessar seu workspace.</CardDescription>
+				<CardTitle class="text-2xl font-bold tracking-tight">{t['auth.login.title']}</CardTitle>
+				<CardDescription>{t['auth.login.description']}</CardDescription>
 			</CardHeader>
 			<CardContent class="grid gap-4">
 				<div class="grid gap-2">
-					<Label for="loginEmail">E-mail</Label>
-					<Input id="loginEmail" type="email" bind:value={email} placeholder="voce@exemplo.com" />
+					<Label for="loginEmail">{t['auth.login.email']}</Label>
+					<Input
+						id="loginEmail"
+						type="email"
+						bind:value={email}
+						placeholder={t['auth.login.emailPlaceholder']}
+					/>
 				</div>
 				<div class="grid gap-2">
-					<Label for="loginPassword">Senha</Label>
-					<Input id="loginPassword" type="password" bind:value={password} placeholder="Senha" />
+					<Label for="loginPassword">{t['auth.login.password']}</Label>
+					<Input
+						id="loginPassword"
+						type="password"
+						bind:value={password}
+						placeholder={t['auth.login.passwordPlaceholder']}
+					/>
 				</div>
 			</CardContent>
 			<CardFooter class="flex flex-col gap-2">
-				<Button class="w-full" onclick={handleLogin} disabled={isSubmitting}>Entrar</Button>
+				<Button class="w-full" onclick={handleLogin} disabled={isSubmitting}
+					>{t['auth.login.submit']}</Button
+				>
 				<Button variant="outline" class="w-full" onclick={handleSso} disabled={isSubmitting}
-					>Entrar com SSO</Button
+					>{t['auth.login.sso']}</Button
 				>
 				{#if canBootstrap}
 					<div class="mt-4 text-center text-sm text-muted-foreground">
-						É uma instalação nova?
+						{t['auth.login.newInstall']}
 						<button onclick={toggleSetup} class="text-primary underline-offset-4 hover:underline">
-							Fazer primeira configuração
+							{t['auth.login.firstSetup']}
 						</button>
 					</div>
 				{/if}

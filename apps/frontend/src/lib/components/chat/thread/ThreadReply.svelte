@@ -4,6 +4,7 @@
 	import { logger } from '$lib/utils/logger';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { t } from '$lib/i18n';
 
 	let { parentMessageId, channelId, onSent } = $props<{
 		parentMessageId: string;
@@ -44,11 +45,11 @@
 	<Input
 		class="h-8 text-sm"
 		bind:value={replyContent}
-		placeholder="Reply to thread..."
+		placeholder={t['chat.replyPlaceholder']}
 		onkeydown={(event_: KeyboardEvent) => event_.key === 'Enter' && sendReply()}
 		disabled={isSubmitting || !channelId}
 	/>
 	<Button size="sm" class="h-8" onclick={sendReply} disabled={isSubmitting || !channelId}
-		>Reply</Button
+		>{t['chat.reply']}</Button
 	>
 </div>

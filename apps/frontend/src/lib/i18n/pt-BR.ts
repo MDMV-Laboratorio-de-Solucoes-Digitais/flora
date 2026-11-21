@@ -1,0 +1,188 @@
+/**
+ * Todas as strings visíveis da interface em português brasileiro.
+ *
+ * O objeto é achatado (chaves com pontos, sem aninhamento) para que qualquer
+ * componente possa usar `t['chave']` diretamente. Termos técnicos consagrados
+ * (API, REST, OIDC, OAuth, JWT, SSO, IA/AI, slug, workspace, Playwright, e2e)
+ * mantêm a forma original; os valores de status da API nunca são traduzidos.
+ */
+export const t = {
+	// Exemplos genéricos
+	'common.organizationPlaceholder': 'Empresa Exemplo',
+	'common.slugPlaceholder': 'empresa-exemplo',
+
+	// Aplicação e sessão
+	'app.name': 'Flora',
+	'session.accessRevoked': 'Acesso revogado',
+	'session.removed': 'Você foi removido deste workspace.',
+	'session.expired': 'Sessão expirada',
+	'session.readOnlyNotice':
+		'Sua sessão expirou. Você está no modo somente leitura por 5 minutos antes do encerramento automático da sessão.',
+	'session.logoutNow': 'Sair agora',
+
+	// Autenticação — primeira configuração
+	'auth.setup.title': 'Primeira configuração',
+	'auth.setup.description': 'Plante as raízes do seu novo workspace Flora.',
+	'auth.setup.workspaceName': 'Nome do workspace',
+	'auth.setup.workspacePlaceholder': 'Minha equipe',
+	'auth.setup.adminEmail': 'E-mail do administrador',
+	'auth.setup.adminEmailPlaceholder': 'admin@exemplo.com',
+	'auth.setup.adminPassword': 'Senha do administrador',
+	'auth.setup.adminPasswordPlaceholder': 'Mínimo de 15 caracteres',
+	'auth.setup.submit': 'Criar workspace',
+	'auth.setup.backToLogin': 'Voltar para o login',
+
+	// Autenticação — login
+	'auth.login.title': 'Bem-vindo ao Flora',
+	'auth.login.description': 'Entre com seu e-mail e senha para acessar seu workspace.',
+	'auth.login.email': 'E-mail',
+	'auth.login.emailPlaceholder': 'voce@exemplo.com',
+	'auth.login.password': 'Senha',
+	'auth.login.passwordPlaceholder': 'Senha',
+	'auth.login.submit': 'Entrar',
+	'auth.login.sso': 'Entrar com SSO',
+	'auth.login.newInstall': 'É uma instalação nova?',
+	'auth.login.firstSetup': 'Fazer primeira configuração',
+	'auth.callback.authenticating': 'Autenticando...',
+
+	// Navegação / layout do app
+	'nav.channels': 'Canais',
+	'nav.directMessages': 'Mensagens diretas',
+	'nav.tasks': 'Tarefas',
+	'nav.channelsHint': 'Abra Canais para navegar pelos canais do workspace.',
+	'nav.userName': 'Nome do usuário',
+	'nav.userEmail': 'usuario@flora.app',
+	'nav.myAccount': 'Minha conta',
+	'nav.settings': 'Configurações',
+	'nav.logout': 'Sair',
+	'nav.closeAiPanel': 'Fechar painel de IA',
+	'nav.openAiPanel': 'Abrir painel de IA',
+	'ai.panelTitle': 'Painel de insights de IA',
+	'ai.welcome': 'Como posso ajudar você hoje?',
+	'ai.welcomeHint': 'Peça para resumir discussões, gerar tarefas ou encontrar documentos.',
+	'ai.askPlaceholder': 'Pergunte à IA...',
+
+	// Canais e mensagens
+	'channels.title': 'Canais',
+	'channels.description':
+		'Workspace → canal → mensagem (fatia REST). Selecione um workspace e um canal para conversar.',
+	'channels.workspace': 'Workspace',
+	'channels.noWorkspaces': 'Nenhum workspace',
+	'channels.newChannel': 'Novo canal',
+	'channels.namePlaceholder': 'ex.: geral',
+	'channels.create': 'Criar',
+	'channels.loading': 'Carregando…',
+	'channels.empty': 'Nenhum canal ainda.',
+	'channels.noneSelected': 'Nenhum canal selecionado',
+	'dms.title': 'Mensagens diretas',
+	'chat.selectChannel': 'Selecione um canal para ver as mensagens.',
+	'chat.loading': 'Carregando mensagens…',
+	'chat.author': 'Usuário {id}',
+	'chat.aiBadge': 'IA',
+	'chat.empty': 'Nenhuma mensagem ainda.',
+	'chat.writePlaceholder': 'Escreva uma mensagem…',
+	'chat.selectFirst': 'Selecione um canal primeiro',
+	'chat.send': 'Enviar',
+	'chat.replyPlaceholder': 'Responder ao tópico...',
+	'chat.reply': 'Responder',
+
+	// Busca
+	'search.ariaLabel': 'Buscar mensagens, tarefas e arquivos',
+	'search.placeholder': 'Buscar mensagens, tarefas, arquivos...',
+	'search.searching': 'Buscando…',
+	'search.noResults': 'Nenhum resultado para “{query}”.',
+	'search.result_one': 'resultado',
+	'search.result_other': 'resultados',
+	'search.resultsLabel': 'Resultados da busca',
+	'search.type.message': 'Mensagem',
+	'search.type.task': 'Tarefa',
+	'search.type.file': 'Arquivo',
+
+	// Arquivos
+	'file.download': 'Baixar',
+	'file.tooLarge': 'Arquivo muito grande. O tamanho máximo é 50 MB.',
+	'file.workspaceRequired': 'É necessário selecionar um workspace antes de enviar arquivos.',
+	'file.uploadFailed': 'Falha no envio.',
+
+	// Organizações e workspaces
+	'org.selectTitle': 'Selecionar organização',
+	'org.selectDescription':
+		'Escolha uma organização para definir o escopo da sua sessão antes de usar workspaces e tarefas.',
+	'org.yourOrganizations': 'Suas organizações',
+	'org.loading': 'Carregando...',
+	'org.empty': 'Nenhuma organização encontrada. Crie uma abaixo.',
+	'org.select': 'Selecionar',
+	'org.createTitle': 'Criar organização',
+	'org.name': 'Nome',
+	'org.slug': 'Slug',
+	'org.createAndSelect': 'Criar e selecionar',
+	'org.managerTitle': 'Criar organização',
+	'org.managerDescription': 'Configure uma nova organização.',
+	'org.managerName': 'Nome da organização',
+	'org.created': 'Organização criada: {name}',
+	'org.create': 'Criar',
+	'workspace.createTitle': 'Criar workspace',
+	'workspace.createDescription': 'Configure um novo workspace para sua equipe.',
+	'workspace.name': 'Nome do workspace',
+	'workspace.create': 'Criar',
+
+	// Configurações
+	'settings.title': 'Configurações e administração',
+
+	// Tarefas e quadro Kanban
+	'tasks.title': 'Tarefas',
+	'tasks.description':
+		'Fluxo mínimo: selecione um workspace, crie uma tarefa e liste as tarefas do responsável.',
+	'tasks.refresh': 'Atualizar',
+	'tasks.createPanelTitle': 'Workspace e criação de tarefa',
+	'tasks.workspace': 'Workspace',
+	'tasks.noWorkspaces': 'Nenhum workspace disponível',
+	'tasks.titleLabel': 'Título',
+	'tasks.titlePlaceholder': 'Título da tarefa',
+	'tasks.descriptionLabel': 'Descrição (opcional)',
+	'tasks.descriptionPlaceholder': 'Descrição',
+	'tasks.assignToMe': 'Atribuir a mim (recomendado para aparecer na lista do responsável)',
+	'tasks.create': 'Criar tarefa',
+	'tasks.created': 'Tarefa criada: {title}',
+	'tasks.listTitle': 'Tarefas (filtradas por responsável na organização)',
+	'tasks.loading': 'Carregando...',
+	'tasks.empty': 'Nenhuma tarefa encontrada para o responsável/organização atual.',
+	'tasks.unsupportedStatus': 'Status não suportado: {status}',
+	'kanban.column': 'Coluna',
+	'kanban.todo': 'A fazer',
+	'kanban.inProgress': 'Em andamento',
+	'kanban.done': 'Concluído',
+	'kanban.filters': 'Filtros',
+
+	// Erros do backend (códigos e fallbacks por status HTTP)
+	'error.invalidCredentials': 'E-mail ou senha incorretos.',
+	'error.rateLimited': 'Muitas tentativas. Aguarde um momento e tente novamente.',
+	'error.validation': 'Verifique os dados informados.',
+	'error.adminPasswordValidation':
+		'A senha do administrador deve atender aos requisitos de complexidade (15 a 1024 caracteres).',
+	'error.oidcUnavailable': 'O provedor de identidade não está disponível no momento.',
+	'error.oidcNoAuthorizationUrl': 'O provedor de identidade não retornou uma URL de autorização.',
+	'error.conflict': 'Este workspace já foi configurado. Faça login para continuar.',
+	'error.loginFailed': 'Não foi possível entrar. Tente novamente.',
+	'error.ssoFailed': 'Não foi possível iniciar o login com SSO.',
+	'error.bootstrapFailed':
+		'Não foi possível criar o workspace. Verifique os dados e tente novamente.',
+	'error.serverUnavailable':
+		'Não foi possível conectar ao servidor. Verifique se a API está em execução e tente novamente.',
+	'error.loadChannels': 'Falha ao carregar canais',
+	'error.createChannel': 'Falha ao criar canal',
+	'error.loadOrganizations': 'Falha ao carregar organizações',
+	'error.selectOrganization': 'Falha ao selecionar organização',
+	'error.createOrganization': 'Falha ao criar organização',
+	'error.loadTasks': 'Falha ao carregar tarefas/workspaces',
+	'error.createTask': 'Falha ao criar tarefa',
+	'error.changeTaskStatus': 'Falha ao alterar o status da tarefa',
+	'error.loadMessages': 'Falha ao carregar mensagens',
+	'error.sendMessage': 'Falha ao enviar mensagem',
+	'error.searchFailed': 'Falha na busca.',
+
+	// Demonstração
+	'demo.playwrightTitle': 'Demonstração de teste e2e com Playwright'
+} as const;
+
+export type TranslationKey = keyof typeof t;

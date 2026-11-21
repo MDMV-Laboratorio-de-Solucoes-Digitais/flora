@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { t } from '$lib/i18n';
 
 	let name = $state('');
 	let isSubmitting = $state(false);
@@ -28,13 +29,17 @@
 
 <div class="space-y-4 rounded-lg border p-6 shadow-sm">
 	<div class="space-y-2">
-		<h2 class="text-2xl font-bold tracking-tight">Create Workspace</h2>
-		<p class="text-sm text-muted-foreground">Set up a new workspace for your team.</p>
+		<h2 class="text-2xl font-bold tracking-tight">{t['workspace.createTitle']}</h2>
+		<p class="text-sm text-muted-foreground">{t['workspace.createDescription']}</p>
 	</div>
 
 	<div class="space-y-2">
-		<Label for="workspace-name">Workspace Name</Label>
-		<Input id="workspace-name" bind:value={name} placeholder="Acme Corp" />
+		<Label for="workspace-name">{t['workspace.name']}</Label>
+		<Input
+			id="workspace-name"
+			bind:value={name}
+			placeholder={t['common.organizationPlaceholder']}
+		/>
 	</div>
-	<Button disabled={isSubmitting} onclick={createWorkspace}>Create</Button>
+	<Button disabled={isSubmitting} onclick={createWorkspace}>{t['workspace.create']}</Button>
 </div>
