@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { t } from '../../src/lib/i18n/pt-BR';
 
 const SEARCH_ROUTE = /\/api\/v1\/search(?:\?|$)/;
 
@@ -23,11 +24,11 @@ test.describe('Search UI', () => {
 		);
 
 		await page.goto('/channels');
-		const box = page.getByRole('searchbox', { name: 'Search messages, tasks, and files' });
+		const box = page.getByRole('searchbox', { name: t['search.ariaLabel'] });
 		await box.fill('dashboard');
 
-		await expect(page.getByText('1 result')).toBeVisible();
-		await expect(page.getByText('Task', { exact: true })).toBeVisible();
+		await expect(page.getByText(`1 ${t['search.result_one']}`)).toBeVisible();
+		await expect(page.getByText(t['search.type.task'], { exact: true })).toBeVisible();
 		await expect(page.getByText('Design new dashboard UI')).toBeVisible();
 	});
 
@@ -41,9 +42,7 @@ test.describe('Search UI', () => {
 		);
 
 		await page.goto('/channels');
-		await page
-			.getByRole('searchbox', { name: 'Search messages, tasks, and files' })
-			.fill('nothing');
-		await expect(page.getByText(/No results for/)).toBeVisible();
+		await page.getByRole('searchbox', { name: t['search.ariaLabel'] }).fill('nothing');
+		await expect(page.getByText(t['search.noResults'].replace('{query}', 'nothing'))).toBeVisible();
 	});
 });
