@@ -1035,3 +1035,17 @@ anterior foi alterada.
 - **Entrega:** piloto em `flora-core/src/models/role.rs` (42 mutantes: 39 caught, 1 missed, 2 unviable); correção de `#!`→`//!` em `workspace_service.rs`; correção de bug real de dedup em `Role::add_permission` (`Some(&perm_str)` → `Some(perm_str.as_str())`) e teste `add_permission_is_idempotent`.
 - **Evidência:** `cargo test -p flora-core` 56 passed; mutante focalizado 1/1 caught; fmt/clippy exit 0; gate PASS (10 legs / 77 pisos).
 - **[NV]**: aplicação em todo o workspace e job de CI não autorizados.
+
+## Decisão 80/20 — ciclo 111 (2026-11-22, append-only)
+
+- **Critério**: `impacto × confiança × (6−esforço) × (6−risco)`, cada fator 1–5, denominador 625. Ordena a fila; não declara conclusão.
+- **F9 (axe-core/WCAG 2.2 AA)**: 4×5×(6−3)×(6−2) = **240/625**. F12 (medir fração determinística) 128/625; F5 (stubs DTU) 36/625.
+- **Escolha**: F9 — autorização do SE para instalar dependências de dev já concedida; evidência primária no assessment (FR-06/FR-08), risco contido em job informativo (`e2e-browser` advisory), nenhum required check alterado.
+- **Herança**: 0 stashes; worktree órfã `feature/073-state-closure` (heartbeat 19/11) revalidada como mergeada e removida; único PR aberto (#356, `dev→main`) permanece escalado ao SE — competência humana.
+
+## Ciclo 111 — auditoria WCAG 2.2 AA (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/111-wcag-axe`; branch `feature/111-wcag-axe` @ `8c47dd637`; F9 ADAPT (240/625).
+- **Entrega**: `@axe-core/playwright@4.14.0` + lockfiles; `tests/e2e/accessibility.e2e.ts` em `/tasks` e `/channels` com tags WCAG 2.0/2.1/2.2 A+AA.
+- **Evidência**: `bun run check` 4886 arquivos/0 erros; prettier OK; gate PASS (10 legs / 77 pisos). R4 APROVADO PARA CI; R7 registrado.
+- **[NV]**: e2e local não concluído (4 timeouts, 12/13 GiB RAM, swap cheio); job advisory `e2e-browser` no CI é a autoridade da varredura.

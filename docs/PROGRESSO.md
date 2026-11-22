@@ -433,3 +433,9 @@ permanecem intactas; apenas acréscimos.
 
 - F6 concluído: piloto de mutação revelou bug real de dedup em `Role::add_permission`; 42 mutantes medidos, 56 testes, gate PASS (10 legs / 77 pisos).
 - Artefatos: `specs/110-mutation-pilot/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-110-mutation-pilot.md`.
+
+## Estado verificado — 2026-11-22 (ciclo 111)
+
+- F9 entregue: axe-core em testes e2e de `/tasks` e `/channels`; nenhum required check alterado.
+- Verificado: `bun run check` 0 erros, prettier OK, gate PASS (10 legs / 77 pisos).
+- **[NV]**: execução local do e2e bloqueada por RAM; CI advisory decide. Artefatos: `specs/111-wcag-axe/*` e `docs/governance/2026-11-22-111-wcag-axe.md`.
