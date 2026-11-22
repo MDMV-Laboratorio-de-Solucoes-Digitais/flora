@@ -66,3 +66,7 @@ secrets:  0 occurrences in stdout/stderr/fixtures
 ## Recommendation
 
 Bug **aberto até que o round-trip acima seja executado na implementação do ciclo 106**. Este artefato registra apenas o plano: nenhum teste, build, gate ou validação ao vivo foi executado aqui, e nenhuma credencial foi lida ou registrada.
+
+### Execução (2026-11-22, append-only)
+
+O plano acima foi executado no ciclo 106: `specs/106-hitl-receipt-port/analyze.md` registra round-trip 2 passed com assinatura conferida. Reexecução determinística em 2026-11-22: `cargo test -p flora-api hitl_receipt` → **2 passed**, exit 0. **[NV]**: consumo ao vivo pela Autônoma em produção.
