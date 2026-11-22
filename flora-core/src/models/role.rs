@@ -320,3 +320,64 @@ mod tests {
         assert!(!role.has_permission(Permission::OrgRead));
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use proptest::prelude::*;
+    use std::str::FromStr;
+
+    use super::{Permission, Role, legacy_permission_name};
+    use uuid::Uuid;
+
+    const PERMISSIONS: &[Permission] = &[
+        Permission::OrgRead,
+        Permission::OrgWrite,
+        Permission::OrgAdmin,
+        Permission::WorkspaceRead,
+        Permission::WorkspaceWrite,
+        Permission::WorkspaceAdmin,
+        Permission::ChannelRead,
+        Permission::ChannelWrite,
+        Permission::ChannelDelete,
+        Permission::MessageRead,
+        Permission::MessageWrite,
+        Permission::MessageEdit,
+        Permission::MessageDelete,
+        Permission::TaskRead,
+        Permission::TaskWrite,
+        Permission::TaskAssign,
+        Permission::TaskDelete,
+        Permission::FileRead,
+        Permission::FileWrite,
+        Permission::FileDelete,
+        Permission::SearchGlobal,
+        Permission::NotificationRead,
+        Permission::RoleRead,
+        Permission::RoleWrite,
+        Permission::MemberRead,
+        Permission::MemberInvite,
+        Permission::MemberRemove,
+    ];
+
+    proptest! {
+        #[test]
+        fn permission_display_fromstr_roundtrip(
+            permission in prop::sample::select(PERMISSIONS.to_vec())
+        ) {
+            prop_assert_eq!(Permission::from_str(&permission.to_string()), Ok(permission));
+        }
+
+        #[test]
+        fn arbitrary_string_never_grants_permission(
+            permission in prop::sample::select(PERMISSIONS.to_vec()),
+            junk in any::<String>(),
+        ) {
+            prop_assume!(junk != "*"
+                && junk != permission.to_string()
+                && junk != legacy_permission_name(permission));
+            let mut role = Role::new(Uuid::now_v7(), "Proptest");
+            role.permissions = serde_json::json!([junk]);
+            prop_assert!(!role.has_permission(permission));
+        }
+    }
+}

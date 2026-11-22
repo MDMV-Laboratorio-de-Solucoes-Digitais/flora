@@ -1007,3 +1007,11 @@ anterior foi alterada.
 - PR #355 (dev→main direto) estava `DIRTY/CONFLICTING` e `mirror=fail`; foi **fechado** e substituído pelo #356, cuja branch `fix/promo-355-conflict` mergeia `main` em `dev` preservando o release #339 e os 52 commits de `dev`. Resolução: versão mais recente de dev em `auth.rs`/contratos; apêndices append-only de ambos os lados em `STATE.md`/`PROGRESSO.md`.
 - **Ação pendente do SWE**: decidir merge de #356 em `main` e subsequente deploy. Não foi mesclado por esta sessão; nenhum auto-merge, force-push ou reescrita.
 - **[NV]**: `mirror=fail` no PR #355 (Forgejo mirror advisory; log não acessível aqui), deploy/produção e aprovação final de release.
+
+## Ciclo 108 — proptest (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/108-proptest-invariants`; branch `feature/108-proptest-invariants` @ `d79238dc6`; decisão F7 do assessment.
+- **Entrega:** quatro proptests em `flora-core` — round-trip `Permission`, não-concessão por string arbitrária, limites de `Pagination` e seletor wildcard com `trim()`.
+- **Evidência:** `cargo test -p flora-core` → 55 passed; `PROPTEST_CASES=500` → 4 passed; fmt/check/clippy exit 0; gate PASS (10 legs / 77 pisos).
+- **Correções:** `prop_assert!` com struct literal trocado por variável; `prop_filter` sem escopo substituído por `prop_assume!`; clippy `map_or`.
+- **[NV]**: nenhuma mudança de produção; cobertura é evidência local.

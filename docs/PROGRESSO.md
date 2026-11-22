@@ -414,3 +414,8 @@ permanecem intactas; apenas acréscimos.
 
 - ADR 0008 registra o deferimento de Zitadel/passkey com quatro gates de reentrada e sem promessa de não-repúdio.
 - INBOX do SE integralmente atendido: recebimento confirmado, D15 e D11 implementados e mesclados, MINOR documentado.
+
+## Estado verificado — 2026-11-22 (ciclo 108)
+
+- F7 concluído: quatro proptests em `flora-core`, 55 testes e 500 casos por propriedade, gate PASS (10 legs / 77 pisos).
+- Artefatos: `specs/108-proptest-invariants/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-108-proptest-invariants.md`.
