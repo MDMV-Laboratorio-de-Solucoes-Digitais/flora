@@ -1,4 +1,4 @@
-#! Workspace service — business logic for workspace management.
+//! Workspace service — business logic for workspace management.
 
 use std::sync::Arc;
 use uuid::Uuid;

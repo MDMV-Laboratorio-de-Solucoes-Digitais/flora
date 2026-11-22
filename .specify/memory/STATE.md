@@ -1028,3 +1028,10 @@ anterior foi alterada.
 - Os dois eixos antes **[NV]** foram entregues em 2026-11-22: `auditoria-imutabilidade-flora.md` (AUD-01…17) e `alternativas-premissas-flora.md` (O1–O7/P1–P6/J1–J6). Assessment passa a **11 eixos / 188 decisões**.
 - Notas anteriores que diziam "dois eixos não entregues por rate-limit" permanecem como registro histórico; a correção é este acréscimo append-only.
 - **[NV] remanescente**: apenas os detalhes marcados nos próprios relatórios (RustFS WORM, restore drill, cotação, idiomas es/fr/de/zh/ja), staging real, CI/deploy e promoção #356.
+
+## Ciclo 110 — piloto de mutation testing (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/110-mutation-pilot`; branch `feature/110-mutation-pilot` @ `f12571cf4`; decisão F6 com autorização do SE para usar ferramenta já instalada (`cargo-mutants 27.1.0`, sem instalação nova).
+- **Entrega:** piloto em `flora-core/src/models/role.rs` (42 mutantes: 39 caught, 1 missed, 2 unviable); correção de `#!`→`//!` em `workspace_service.rs`; correção de bug real de dedup em `Role::add_permission` (`Some(&perm_str)` → `Some(perm_str.as_str())`) e teste `add_permission_is_idempotent`.
+- **Evidência:** `cargo test -p flora-core` 56 passed; mutante focalizado 1/1 caught; fmt/clippy exit 0; gate PASS (10 legs / 77 pisos).
+- **[NV]**: aplicação em todo o workspace e job de CI não autorizados.

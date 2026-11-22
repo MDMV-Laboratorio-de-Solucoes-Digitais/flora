@@ -50,7 +50,7 @@ impl Role {
     pub fn add_permission(&mut self, permission: Permission) {
         let perm_str = permission.to_string();
         if let Some(arr) = self.permissions.as_array_mut()
-            && !arr.iter().any(|v| v.as_str() == Some(&perm_str))
+            && !arr.iter().any(|v| v.as_str() == Some(perm_str.as_str()))
         {
             arr.push(serde_json::json!(perm_str));
         }
@@ -318,6 +318,15 @@ mod tests {
         assert!(role.has_permission(Permission::OrgRead));
         role.permissions = serde_json::json!(["task:write"]);
         assert!(!role.has_permission(Permission::OrgRead));
+    }
+
+    #[test]
+    fn add_permission_is_idempotent() {
+        let mut role = Role::new(Uuid::now_v7(), "Test");
+        role.add_permission(Permission::TaskWrite);
+        role.add_permission(Permission::TaskWrite);
+        assert_eq!(role.permissions.as_array().map(Vec::len), Some(1));
+        assert!(role.has_permission(Permission::TaskWrite));
     }
 }
 
