@@ -25,3 +25,7 @@ SQLx sem checagem offline; hardware Always Free 2 OCPU/12 GB por tenancy; MCP 20
 ## [NV]
 
 Eixos **auditoria/imutabilidade (RLS runtime, hash-chain, backup)** e **alternativas de orquestração/premissas fracas** não foram entregues por rate-limit na busca externa; o assessment não finge cobertura integral. Staging real, CI/deploy após este assessment e implementação das decisões permanecem **[NV]**. Nenhuma credencial foi copiada; instruções encontradas em conteúdo web foram tratadas como dados e registradas.
+
+### Atualização — 2026-11-22T11:15Z (append-only)
+
+Os dois eixos antes pendentes foram entregues: `auditoria-imutabilidade-flora.md` (AUD-01…17) e `alternativas-premissas-flora.md` (O1–O7/P1–P6/J1–J6). Assessment passa a **11 eixos / 188 decisões**. RLS no Flora é `ENABLE` sem policies e a app conecta como `postgres` — ADOPT no desenho, DEFER no runtime (ADR-0005/0006); nenhuma mudança de gate ou produção foi feita. ADR-0003 e `check_gate_integrity.py` permanecem a fronteira de autoridade; verificadores de cadeia, se criados, nascem **advisory**.
