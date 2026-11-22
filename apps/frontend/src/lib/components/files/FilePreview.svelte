@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { FileAttachment } from '$lib/types/models';
+	import { API_BASE_URL } from '$lib/api/client';
 	import { t } from '$lib/i18n';
 
 	let { file } = $props<{ file: FileAttachment }>();
 
 	function getDownloadUrl() {
-		return `/api/v1/files/download/${file.id}`;
+		return `${API_BASE_URL}/api/v1/files/download/${file.id}`;
 	}
 </script>
 

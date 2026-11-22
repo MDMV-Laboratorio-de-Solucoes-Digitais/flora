@@ -346,3 +346,90 @@ permanecem intactas; apenas acréscimos.
 - **Decisão:** permitir `email='*'` (exatamente `*`) no corpo de `POST /api/v1/auth/password/login` somente quando `FLORA_BOOTSTRAP__ADMIN_EMAIL` também for `*` (opt-in temporário já ativo). Nesse modo a rota resolve o primeiro usuário ativo (`created_at ASC, id ASC`, sem filtro de role/sistema) e valida a senha contra o hash dele; sem opt-in, `email='*'` é rejeitado, a busca por e-mail segue inalterada e OIDC continua primário. Sem segredo/hash em log ou resposta; env temporárias removidas da app Coolify após login confirmado.
 - **Gate:** `python3 scripts/ci/check_gate_integrity.py` **PASS** registrado no diagnóstico do alvo; reexecutar no checkout final. Fora do gate de merge (ADR-0003); nenhum required check novo.
 - **Histórico/escopo:** apêndice datado; nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou deploy alterado por esta nota; nenhuma credencial copiada ou exposta. **[NV] até deploy final:** aplicação da mudança, deploy da API, login wildcard com a credencial de recuperação, remoção das env, `/health`/CORS e CI/proteção/Coolify/Forgejo/aprovações ao vivo.
+
+## Estado verificado — 2026-11-21T13:25:33Z (fechamento)
+
+- Login local em produção: `POST /api/v1/auth/password/login` com `email="*"` retornou **200** e emitiu `session_token`; `next_step=select_or_create_organization`. Frontend pt-BR ativo: `lang="pt-BR"`, rótulos "Entrar", "E-mail", "Senha".
+- Deploy da API `pxx1xjtk6ssikhw08o3j8dsq` **finished**; `/` **200**, `/tasks` **200**, `/config.js` **200**, API `/health` **200**, `/api/v1/bootstrap/status` → `available=false`.
+- PRs #329/#331/#332/#335/#336/#338/#339 mesclados; `main=2f53abd58`. Gate final PASS (77 floors), CI verde em todos os PRs finais, e2e browser passou, `AGENTS.md` versionado.
+- **[NV] remanescente:** E2E autenticado em navegador com a conta real; variáveis de recuperação temporária ainda ativas no Coolify e devem ser removidas/rotacionadas após confirmação do usuário.
+
+## Estado verificado — 2026-11-21T13:36:02Z (complementar)
+
+- E-mail real da conta: `founder@mdmv.com.br`; login local com esse e-mail e a senha temporária retornou **200** e emitiu `session_token`. `luis.granja@mdmv.com.br` não é o e-mail persistido.
+- First Seed Journey: não aparece na página inicial (`grep -c "Primeira configuração" = 0`); `bootstrap/status` → `available=false`.
+- Nenhuma alteração de código; apenas diagnóstico e recomendação de uso/rotação da credencial temporária.
+
+## Estado verificado — 2026-11-21 (roteiro de staging + ciclo 102)
+
+- PR #342 (roteiro de testes em staging zerado) mesclado em `dev` às 22:15:32Z; nenhum PR aberto. Gate do alvo PASS (10 legs / 77 pisos) antes e depois do ciclo 102.
+- Roteiro executado em staging local zerado (URLs/credenciais do staging real não entregues — **[NV]** no FQDN): cenários 0–5, 7, 9 e verificações de API para 10/11. Itens 6, 8 e 12 permanecem **[NV]** por ausência de fixture/UI/comandos de reset.
+- Ciclo 102 corrigiu o escopo de tarefas por workspace: `specs/102-task-workspace-scope` (spec/plan/tasks/analyze/converge), `.specify/assessments/102...` (go), `.specify/validations/102.../validate.md` (R4 APROVADO), `.specify/releases/102.../release.md` (R7), `docs/governance/2026-11-21-102-task-workspace-scope.md`.
+- Verificação: Vitest 45/45, fmt/check/clippy/svelte-check/lint/build exit 0; API e UI medidas ao vivo em navegador real (headless Chromium), com capturas em `/tmp/flora-qa-*`.
+- Dívida restante: identidade do usuário hardcoded na navegação/chat; próximo candidato do BLOCO 5.
+
+## Estado verificado — 2026-11-21 (ciclo 103 e merge 102)
+
+- PR #343 (ciclo 102) mesclado em `dev` às 23:03:13Z (`adec2d32`); PR #342 mesclado às 22:15:32Z (`ae8632e10`). Nenhum PR aberto.
+- Ciclo 103 corrigiu RBAC de `POST /api/v1/workspaces`: papel carregado no tenant da sessão, regra `WorkspaceWrite|WorkspaceAdmin`, 403 opaco; Admin preservado. Artefatos em `specs/103-workspace-create-rbac`, `.specify/assessments/103...`, `.specify/validations/103.../validate.md` (R4 APROVADO), `.specify/releases/103.../release.md` (R7), `docs/governance/2026-11-21-103-workspace-create-rbac.md`.
+- Gates: `check_gate_integrity.py` PASS (10 legs / 77 pisos), fmt/check/clippy exit 0, 2 testes unitários do helper RBAC, medição HTTP ReadOnly=403/Admin=201.
+- Roteiro: item 8 depende de `FLORA_STORAGE__LOCAL_PATH` gravável; item 6 (DMs) é placeholder; itens 6/8 UI/12 seguem **[NV]** no staging real.
+
+## Estado verificado — 2026-11-21 (ciclo 104 e merge 103)
+
+- PR #344 (ciclo 103) mesclado em `dev` às 23:14:46Z (`70babde31`); PR #343 mesclado às 23:03:13Z (`adec2d32`). Nenhum PR aberto.
+- Ciclo 104: e-mail real da sessão exibido na navegação via `emailFromToken` (fail-closed) + `$derived`; 7 testes novos (49/49 no total), check/lint ok, medição em navegador real.
+- Artefatos: `specs/104-session-identity/*`, `.specify/assessments/104-session-identity/*`, `.specify/validations/104-session-identity/validate.md` (R4 APROVADO), `.specify/releases/104-session-identity/release.md` (R7), `docs/governance/2026-11-21-104-session-identity.md`.
+- Dívidas: autoria no chat, DMs placeholder, UI de arquivos ausente; **[NV]** no staging real e no CI remoto.
+
+### Correção de contagem — 2026-11-21 (append-only)
+
+- A nota acima registrou "7 testes novos" no ciclo 104. O correto é **4 testes novos** (arquivo `tests/unit/jwt.test.ts`, 4 blocos `it`): o total do projeto passou de 45 para 49. Os "7" citados eram casos dentro de um único bloco, não testes.
+
+## Estado verificado — 2026-11-22 (ciclo 105)
+
+- Ciclo 105 expôs a UI de arquivos: rota `/files`, link na navegação, limite 10 MiB coerente com o Seed e download na origem da API. Gate PASS (10 legs / 77 pisos), Vitest 50/50, check/lint ok, validação em navegador real (upload válido e limite rejeitado em pt-BR).
+- Artefatos: `specs/105-files-ui/*`, `.specify/assessments/105-files-ui/*`, `.specify/validations/105-files-ui/validate.md` (R4 APROVADO), `.specify/releases/105-files-ui/release.md` (R7), `docs/governance/2026-11-22-105-files-ui.md`.
+- **[NV]**: staging real, CI/merge/deploy do PR 105, lista após reload e clique final no download.
+
+## Estado verificado — 2026-11-22 (assessment multiagente)
+
+- Assessment `avaliacao-arquitetura-multiagente-flora`: 9 eixos pesquisados com fontes primárias em pt-BR/en (zh-Hans secundário; es/fr/de/ja **[NV]**), 152 decisões ADAPT/ADOPT/DEFER/AVOID/REJECT, veredito GO documental.
+- Nenhuma implementação autorizada por este assessment; próximos ciclos devem tratar decisões ADOPT/ADAPT individualmente com gates e PR próprio.
+- Dois eixos não entregues por rate-limit de busca web estão marcados **[NV]**; não há pretensão de cobertura integral do PDF.
+
+## Estado verificado — 2026-11-22 (ciclo 106)
+
+- D15 concluído: Flora emite `VerificationReceipt` com HMAC canônico e vetor do validador Python reproduzido (2 testes); fmt/check/clippy/gate exit 0.
+- Artefatos: `specs/106-hitl-receipt-port/*`, bug `d15-*`, R4 APROVADO, R7, `docs/governance/2026-11-22-106-hitl-receipt-port.md`.
+- **[NV]**: round-trip ao vivo, transporte e credenciais; restam D11 e o ADR Zitadel/passkey do INBOX.
+
+## Estado verificado — 2026-11-22 (ciclo 107)
+
+- D11 concluído: wildcard restrito a Admin/Owner e one-shot com marcador persistente; 13+4 contratos DB e 70 testes unitários passaram; gate PASS (10 legs / 77 pisos).
+- Artefatos: `specs/107-wildcard-one-shot/*`, bug `d11-*`, ADR 0007, R4 APROVADO, R7, `docs/governance/2026-11-22-107-wildcard-one-shot.md`.
+- **[NV]**: staging, credenciais e restart; resta o ADR Zitadel/passkey do INBOX.
+
+## Estado verificado — 2026-11-22 (fechamento do INBOX)
+
+- ADR 0008 registra o deferimento de Zitadel/passkey com quatro gates de reentrada e sem promessa de não-repúdio.
+- INBOX do SE integralmente atendido: recebimento confirmado, D15 e D11 implementados e mesclados, MINOR documentado.
+
+## Estado verificado — 2026-11-22 (ciclo 108)
+
+- F7 concluído: quatro proptests em `flora-core`, 55 testes e 500 casos por propriedade, gate PASS (10 legs / 77 pisos).
+- Artefatos: `specs/108-proptest-invariants/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-108-proptest-invariants.md`.
+
+## Estado verificado — 2026-11-22 (ciclo 109)
+
+- F10 concluído: template de Briefing de Compreensão e nota de governança; gate PASS (10 legs / 77 pisos), diff limpo.
+- Artefatos: `specs/109-comprehension-briefing/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-briefing-compreensao.md`.
+
+## Estado verificado — 2026-11-22 (assessment 11 eixos)
+
+- Auditoria/imutabilidade e alternativas/premissas entregues: 11 eixos, 188 decisões, nenhum gate/código/ADR alterado.
+
+## Estado verificado — 2026-11-22 (ciclo 110)
+
+- F6 concluído: piloto de mutação revelou bug real de dedup em `Role::add_permission`; 42 mutantes medidos, 56 testes, gate PASS (10 legs / 77 pisos).
+- Artefatos: `specs/110-mutation-pilot/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-110-mutation-pilot.md`.

@@ -889,3 +889,149 @@ anterior foi alterada.
 - **Gates esperados:** `git diff --check` limpo; gate do alvo `python3 scripts/ci/check_gate_integrity.py` **PASS** registrado no diagnóstico (reexecutar no checkout final); testes Rust do login com `email='*'` (com opt-in → primeiro usuário ativo; sem opt-in → rejeição; e-mail comum inalterado) e nenhuma credencial em log/resposta; build Docker da API com login wildcard → sessão e `GET /api/v1/tasks` → 200; medição final em navegador real e nova nota append-only. Fora do gate de merge (ADR-0003); nenhum required check novo. Rollback = reapontar a app Coolify para imagem/commit anterior e remover as env temporárias, sem force-push.
 - **[NV] até deploy final:** aplicação da mudança, deploy/reinício da API, login wildcard com a credencial de recuperação, remoção das env após sucesso, `/health`/CORS e CI/proteção/Coolify/Forgejo/aprovações ao vivo.
 - **Escopo:** apenas apêndices em `STATE.md`/`PROGRESSO.md` e a nova nota de governança. Nenhum validation/release, workflow, gate, ADR, constituição, código, PR, merge, tag ou deploy alterado por esta nota; nenhuma credencial exposta.
+
+### Fechamento verificado — 2026-11-21T13:25:33Z (append-only)
+
+- **Ciclos 096–101 mesclados:** PRs #329, #331, #332, #335, #336 e #338 mesclados em `dev`; release #339 mesclada em `main` (`2f53abd58`). Conflitos `dev/main` resolvidos localmente com `-X ours` preservando 096–101; nenhuma reescrita/force-push.
+- **Produção:** deploy da API `pxx1xjtk6ssikhw08o3j8dsq` **finished**. `POST /api/v1/auth/password/login` com `email="*"` e a senha temporária retornou **200**, `session_token` presente, `expires_in=3600`, `next_step=select_or_create_organization`, `user_id=01a1fb7f-958c-73f7-a79d-3d8f908c3ebb`. Frontend pt-BR ao vivo (`lang="pt-BR"`, "Entrar", "E-mail", "Senha").
+- **Endpoints:** `https://flora.mdmv.qzz.io/` **200**, `/tasks` **200**, `/config.js` **200**, `https://flora-api.mdmv.qzz.io/health` **200**, `GET /api/v1/bootstrap/status` → `{"available":false}` (bootstrap já consumido; link First Seed escondido).
+- **Gates:** `check_gate_integrity.py` **PASS** (`exit=0`, 10 legs / 77 floors), CI verde em todos os PRs finais, clippy workspace `exit=0`, 36 testes unitários, e2e browser passou. `AGENTS.md` reescrito a partir de 4 pesquisas paralelas e versionado.
+- **Pendência humana restante:** as variáveis temporárias `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` e `FLORA_BOOTSTRAP__ADMIN_PASSWORD` permanecem na API Coolify para permitir login sem saber o e-mail real; remover/rodar rotação após o usuário confirmar acesso e trocar a senha. Browser E2E autenticado com a conta real não foi executado — **[NV]**; a autenticação via API foi medida com token emitido.
+
+### Verificação complementar — 2026-11-21T13:36:02Z (append-only)
+
+- **E-mail real da conta criada:** `founder@mdmv.com.br` (lido da claim `email` do JWT já emitido no navegador, sem expor o token). `POST /api/v1/auth/password/login` com esse e-mail e a senha temporária retornou **200**, `session_token` presente, `next_step=select_or_create_organization`, `user_id=01a1fb7f-958c-73f7-a79d-3d8f908c3ebb`. O e-mail `luis.granja@mdmv.com.br` informado pelo usuário não corresponde à conta persistida.
+- **First Seed Journey:** HTML do FQDN não contém “Primeira configuração” (`grep -c = 0`) e `GET /api/v1/bootstrap/status` retorna `{"available":false}` — link apresentado apenas em instalação limpa, conforme ciclo 097.
+- **Sem mudança de código:** diagnóstico conduzido por leitura de produção e do JWT de sessão; nenhum gate/workflow/contrato alterado. Recomendação ao usuário: entrar com `founder@mdmv.com.br` + senha temporária; após confirmação, rotacionar senha e remover `FLORA_BOOTSTRAP__ADMIN_*` do Coolify.
+
+## Atualização — ciclo 102 e execução do roteiro de staging (2026-11-21; append-only)
+
+- **Âncora:** `.specify/feature.json` → `specs/102-task-workspace-scope`; branch `feature/102-task-workspace-scope` @ `ae8632e10` (base `github/dev` após PR #342). Notas anteriores preservadas integralmente; apenas acréscimo no EOF. Registro canônico: `docs/governance/2026-11-21-102-task-workspace-scope.md` (novo).
+- **PR #342:** `docs(qa): adiciona roteiro de testes em staging zerado` mesclado em `dev` às **22:15:32Z**, merge commit `ae8632e10`; checks obrigatórios verificados via `gh pr checks` (db-tests, dependency-review, e2e-browser, frontend-build, rust-build, supply-chain-vet = pass). Nenhum PR aberto permanece. Todos os branches locais com patches aparentemente ausentes são commits já integrados via PRs (#329–#339); nenhum trabalho alheio foi reescrito ou descartado.
+- **Staging:** URLs/credenciais da MDMV-Autonoma não foram entregues; ambiente local zerado equivalente (Postgres 18 isolado + API + frontend) foi usado para executar o roteiro. Cenários validados: 0 pré-condições (web=200, health=200, bootstrap available=true/false conforme estado), 1 First Seed (sessão + token + link oculto após logout), 2 login válido/erro genérico/429/SSO/API direta, 3 pt-BR, 4 workspaces, 5 canais/mensagens/thread, 7 tarefas, 9 busca, 10/11 endpoints de notificações e RBAC. **[NV]** para o staging real e para itens 6/8/12 sem fixture de segundo usuário/UI de arquivos/comandos de reset entregues.
+- **Bug corrigido (102):** seletor de workspace em `/tasks` não escopava a lista. `GET /api/v1/tasks` ganhou `workspace_id` opcional, validado por `ensure_workspace_in_org`, usando `TaskService::list_tasks` com `assignee_id=Some(user_id)`; frontend envia o parâmetro e recarrega na troca. Evidência ao vivo: sem parâmetro → QA-001; QA Workspace 2 → `[]`; Main Workspace → QA-001; workspace inexistente → 422.
+- **Dívida registrada:** identidade do usuário na sidebar/chat é literal fixa (`Nome do usuário`, `usuario@flora.app`, `Usuário <id>`); não corrigida neste ciclo.
+- **Gates:** `check_gate_integrity.py` **PASS** (`exit=0`, 10 legs / 77 pisos) antes e depois do patch; `cargo fmt/check/clippy` exit 0; Vitest 45/45; svelte-check 0 erros; lint exit 0; build frontend exit 0.
+- **Escopo:** nenhum gate/required check/ADR/constituição/schema/migration/RBAC/flag tocado; nenhuma credencial real registrada. Factory lida em `b1deab15f482dd85871cd6c6a857ad710b89e2a6`, nada transplantado; worktree `feature/073-state-closure` intacto.
+- **[NV]:** CI/PR/merge/deploy/Coolify/Forgejo e execução do roteiro no FQDN de staging — reconsultar ao vivo antes de qualquer decisão.
+
+## Atualização — ciclo 103 e merge do ciclo 102 (2026-11-21; append-only)
+
+- **PR #343 mesclado** em `dev` às **23:03:13Z**, merge commit `adec2d32fa`; checks obrigatórios verificados ao vivo (`db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = pass). Nenhum PR aberto após o merge.
+- **Âncora 103:** `.specify/feature.json` → `specs/103-workspace-create-rbac`; branch `feature/103-workspace-create-rbac` @ `14cb336173` (base: commits do ciclo 102). Notas anteriores preservadas; registro canônico: `docs/governance/2026-11-21-103-workspace-create-rbac.md` (novo).
+- **Bug corrigido (103):** item 11 do roteiro — papel `SomenteLeituraQA` (`permissions=[]`) criava workspace (`POST /api/v1/workspaces` → 201). `create_workspace` agora carrega o papel no org da sessão e exige `WorkspaceWrite|WorkspaceAdmin`, negando com 403 opaco; Admin segue com 201. Helper puro `can_create_workspace` com 2 testes unitários; nenhum `#[ignore]` novo (pisos do gate preservados).
+- **Gates 103:** `check_gate_integrity.py` PASS (10 legs / 77 pisos); fmt/check/clippy exit 0; `cargo test -p flora-api workspace::tests` 2 passed. Medição HTTP local: ReadOnly 403 / Admin 201.
+- **Roteiro — itens adicionais medidos:** item 8 (upload/download) funcionou após configurar `FLORA_STORAGE__LOCAL_PATH` — com o default `/var/flora/storage` o upload retornou 500 por permissão (configuração de ambiente, não código); item 10 (notificação de atribuição) confirmado via API; item 11 (RBAC) revelou o bug 103; item 6 (DMs) é placeholder hardcoded (`dms/+page.svelte:9`), não implementado — **[NV]**/dívida.
+- **[NV]:** staging real (URLs/credenciais não entregues), CI remota do PR 103, branch protection, deploy e UI de arquivos (rota inexistente no frontend).
+
+## Atualização — ciclo 104 e merge do ciclo 103 (2026-11-21; append-only)
+
+- **PR #344 mesclado** em `dev` às **23:14:46Z**, merge commit `70babde31`; checks obrigatórios verificados ao vivo (`db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = pass). Nenhum PR aberto após o merge.
+- **Âncora 104:** `.specify/feature.json` → `specs/104-session-identity`; branch `feature/104-session-identity` @ `23ff4bc809`. Registro canônico: `docs/governance/2026-11-21-104-session-identity.md` (novo). Notas anteriores intactas.
+- **Correção 104:** rodapé da navegação passou a exibir o e-mail real da sessão (`qa-admin` / `qa-admin@flora.test`) via helper puro `emailFromToken` (base64url/UTF-8, fail-closed) e `$derived` no layout. Nenhum backend/gate/i18n novo; valor nunca usado para autorização.
+- **Gates 104:** Vitest 49/49 (14 arquivos), `bun run check` 0 erros, prettier/eslint exit 0 nos arquivos alterados após correções de `unicorn/prefer-code-point`, `prefer-split-limit`, `prefer-string-repeat` e `max-nested-calls`; navegador real confirmou a identidade. Gate do alvo PASS (10 legs / 77 pisos).
+- **Dívida remanescente:** autoria das mensagens no chat ainda exibe `Usuário <id>` — exige lookup de usuários, fora de escopo. DMs são placeholder e a UI de arquivos não existe — **[NV]**/dívidas.
+- **[NV]:** staging real (URLs/credenciais não entregues), CI remota do PR 104, branch protection e deploy.
+
+### Fechamento final — 2026-11-21T23:28:33Z (append-only)
+
+- **PR #345 mesclado** em `dev` às **23:28:33Z**, merge commit `3062ad719090835b215ef2d2e2892bc1bb34fb2f`. Checks obrigatórios observados ao vivo via `gh pr checks 345 --watch`: `db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = **pass**. `github/dev` = `3062ad719`; **nenhum PR aberto**.
+- **PRs mesclados nesta sessão:** #342 (`22:15:32Z`, `ae8632e10`), #343 (`23:03:13Z`, `adec2d32`), #344 (`23:14:46Z`, `70babde31`), #345 (`23:28:33Z`, `3062ad719`). Conflitos: nenhum (`mergeStateStatus=CLEAN` em todos). Branch `feature/073-state-closure` e demais branches de terceiros intactos.
+- **Gates finais:** `python3 scripts/ci/check_gate_integrity.py` **PASS** (`exit=0`, 4 required checks, 10 legs / 77 pisos), reexecutado após cada ciclo; `cargo fmt/check/clippy` exit 0; Vitest 49/49; `bun run check` 0 erros; prettier/eslint exit 0 nos arquivos alterados. `git diff --check` limpo, árvore de trabalho limpa antes de cada commit.
+- **Roteiro:** executado em staging local zerado (Postgres 18 isolado + API/frontend no HEAD do alvo) com browser real e capturas em `/tmp/flora-qa-*`. Cenários 0–5, 7, 9 e verificações de API para 8/10/11 executados; itens 6 (DMs — placeholder), 8 UI (sem rota de arquivos) e 12 (comandos de reset do staging real) permanecem **[NV]**/dívida.
+- **Factory:** HEAD `b1deab15f482dd85871cd6c6a857ad710b89e2a6`, lida como fonte, jamais modificada; nada transplantado da árvore suja. Âncora final do alvo: `feature.json` → `specs/104-session-identity`.
+- **[NV] remanescente:** FQDN/credenciais do staging real da MDMV-Autonoma, CI/proteção/deploy após o último merge, e implementação de DMs/UI de arquivos/autoria no chat (novos ciclos exigem priorização de produto).
+
+## Atualização — ciclo 105 (2026-11-22; append-only)
+
+- **Âncora:** `.specify/feature.json` → `specs/105-files-ui`; branch `feature/105-files-ui` @ `c5e4f886e` (dev após PR #347). Registro canônico: `docs/governance/2026-11-22-105-files-ui.md` (novo). Notas anteriores intactas.
+- **Correção 105:** rota `(app)/files/+page.svelte` com seletor de workspace, upload/lista via componentes existentes e link "Arquivos" na sidebar; limite client alinhado a 10 MiB (antes 50 MB) e mensagem pt-BR corrigida; `FilePreview` usa `API_BASE_URL` para download.
+- **Evidência:** gate do alvo PASS (10 legs / 77 pisos), `svelte-check` 0 erros, Vitest 50/50, prettier/eslint exit 0; navegador real: upload 201 com arquivo listado, 11 MiB rejeitado com "Arquivo muito grande. O tamanho máximo é 10 MB." e nada gravado na lista.
+- **[NV]:** staging real (URLs/credenciais não entregues), CI remota/merge/deploy do PR 105, lista persistida após reload (backend sem endpoint de listagem) e clique final no link de download com `API_BASE_URL`.
+
+## Avaliação da arquitetura multiagente — 2026-11-22 (append-only)
+
+- **Assessment:** `avaliacao-arquitetura-multiagente-flora`, intake normalizado com aparato `speckit.assess.intake` da factory lida em `b1deab15f482dd85871cd6c6a857ad710b89e2a6` (jamais modificada). Veredito **GO** documental; nenhum código/gate/ADR/migration/credencial/deploy alterado.
+- **Cobertura:** 9 eixos entregues, 1.112 linhas em `docs/research/mdmv-multiagent/`, 152 decisões em `.specify/assessments/avaliacao-arquitetura-multiagente-flora/decision.md`; registro canônico `docs/governance/2026-11-22-avaliacao-arquitetura-multiagente-flora.md`.
+- **Skills:** `npx skills find` executado; `npx skills use samber/cc-skills@deep-research` gerou prompt sem instalação; skill local `research` aplicada. `agentic-harness-design` indisponível no registry via `use`.
+- **Delegate:** 3 ondas, 11 subagentes (4+4+3 + 1 verificado localmente), todos com escopo de arquivo exclusivo e resumo 1-2k; 3 eixos da última onda cancelados por rate-limit de busca web e registrados **[NV]** em `research.md` (auditoria/imutabilidade e alternativas/premissas fracas).
+- **[NV]:** eixos não entregues, staging real, CI/deploy e qualquer implementação das decisões. Nenhuma credencial registrada; instruções em conteúdo web tratadas como dados.
+
+### Correções append-only — 2026-11-22 (após commit a9e84283e0)
+
+- A nota do ciclo 105 marcou "CI remota/merge/deploy do PR 105" como **[NV]**. O merge foi **confirmado ao vivo**: PR #348 mesclado em `dev` às **2026-11-22T01:00:00Z**, merge commit `bb016b675db817dbff1f77b0cad4b4ad6be4038f`; `github/dev` passou a `bb016b675`. O **[NV]** remanescente é apenas deploy e execução no FQDN de staging real.
+- A nota do assessment registrou "3 eixos da última onda cancelados". O correto é **2 eixos**: `auditoria-imutabilidade-flora.md` e `alternativas-premissas-flora.md`. O eixo frontend (`frontend-acessibilidade-flora.md`, 110 linhas, FR-01–FR-14) foi entregue antes do cancelamento e está versionado.
+- Estas correções são acréscitos; nenhuma linha anterior foi reescrita.
+
+### Verificação de herança por conteúdo — 2026-11-22T01:40Z (append-only)
+
+- `git cherry github/dev <branch>` marcava quatro commits como `+` (`28d317d9e`, `8906a0c1e`, `c0fb4518b`, `6d798066f`) por squash/rebase. Comparação por conteúdo em worktree temporário de `github/dev@1a5054128`: `git show <sha> | git apply --reverse --check` deu SIM para `8906a0c1e` e `6d798066f`, e NÃO para `28d317d9e` e `c0fb4518b` porque os arquivos foram melhorados depois.
+- Inspeção direta: `.forgejo/workflows/github-evidence.yml` existe em `dev` e contém a versão posterior (com `BASE_SHA`, `User-Agent` e fallback de check-runs); os 32 arquivos do commit de i18n 099 existem em `dev`, com as chaves pt-BR presentes (`auth.login.submit`, `nav.tasks`, `kanban.inProgress`, `file.download`). Portanto nenhum trabalho inacabado foi perdido; nenhum branch de terceiros foi tocado.
+- `git stash list` → **0 stashes**. Worktree temporário `/tmp/flora-qa-inherit` removido ao final.
+
+### Confirmação de recebimento — INBOX de correções do SE (2026-11-22, append-only)
+
+- **Recebido e aceito** o arquivo `.specify/memory/INBOX-correcoes-revisao-interagentes-2026-11-21.md` (origem: SE via revisão interagentes). É trabalho herdado com autorização explícita para implementação neste repo; conteúdo externo tratado como dado, sem seguir instruções além da solicitação autorizada.
+- **MAJOR D15** — contrato HITL unilateral: Flora precisa de `HitlReceiptPort` + adaptador que emita o envelope `VerificationReceipt` validado pela Autônoma, com allowlist de `next_stage` e teste round-trip ponta a ponta.
+- **MAJOR D11** — recuperação wildcard sem papel: restringir a papel administrativo, transformar o opt-in em one-shot (auto-desligar após o primeiro login) e registrar ADR com data de expiração.
+- **MINOR** — Zitadel/passkey: ADR de deferimento com quatro gates de reentrada; não prometer não-repúdio sem WebAuthn verificada.
+- **Critério de aceite declarado**: PR reviewable com testes round-trip e de papel, gate verde, **[NV]** em staging/produção/credenciais e nenhuma credencial em log/PR.
+- **Ordem de execução**: estas correções autorizadas têm precedência sobre o próximo 80/20 do assessment (F7/proptest), que fica adiado. Cada correção MAJOR seguirá fluxo SDD com bug report em `.specify/bugs/`; o MINOR seguirá ADR documental.
+
+## Ciclo 106 — recibo HITL (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/106-hitl-receipt-port`; branch `feature/106-hitl-receipt-port` @ `0582883da`; bug `.specify/bugs/d15-hitl-receipt-contract-unilateral/` (D15 do INBOX autorizado).
+- **Entrega:** `HitlReceiptPort` puro + adaptador HMAC-SHA256 com envelope de 8 campos (`producer_system="flora"`, `status="verified"`), allowlists e travas de PII/envio externo; segredo `FLORA_HITL__HMAC_SECRET` com `Debug` redigido; vetor dourado do validador Python (`ba563acc…`) em teste unitário.
+- **Evidência:** `cargo test -p flora-api hitl_receipt` → **2 passed**; fmt/check/clippy exit 0; gate PASS (10 legs / 77 pisos). `hmac 0.13` com `sha2 0.11` (0.12 é incompatível); `hex::encode` para assinatura.
+- **[NV]:** round-trip ao vivo com a Autônoma, transporte HTTP, staging/produção e credenciais reais.
+- **Próximos itens do INBOX:** D11 (wildcard one-shot por papel + ADR com expiração) e MINOR (ADR Zitadel/passkey com quatro gates).
+
+## Ciclo 107 — wildcard one-shot (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/107-wildcard-one-shot`; branch `feature/107-wildcard-one-shot` @ `df8c1e185`; bug `.specify/bugs/d11-wildcard-unbounded/` (D11 do INBOX autorizado).
+- **Entrega:** `WILDCARD_ADMIN_SQL` único com papel `Admin`/`Owner`; tabela singleton `bootstrap_wildcard_state` com `pg_advisory_xact_lock` e CAS; startup não reaplica hash após consumo; login consome antes da sessão e falha 401; ADR `0007` com expiração 2026-11-29.
+- **Evidência:** 13 contratos DB de bootstrap + 4 de login wildcard passaram no Postgres local; 70 testes unitários; gate PASS (10 legs / 77 pisos); fmt exit 0.
+- **Correções durante a implementação:** SQL com `concat!` (a continuação `\` colava `uJOIN`), imports do teste bootstrap reconstruídos, `-D unused-results` e `collapsible_if` resolvidos.
+- **[NV]:** staging/produção, credenciais, restart multiréplica. Resta apenas o item MINOR do INBOX (ADR Zitadel/passkey).
+
+### Fechamento do INBOX autorizado — 2026-11-22T05:20:44Z (append-only)
+
+- PRs mesclados: **#351** (confirmação de recebimento), **#352** (D15 — `HitlReceiptPort`), **#353** (D11 — wildcard one-shot). `github/dev` = `3c8afa1b3`; nenhum PR aberto após #353.
+- Item **MINOR** concluído: ADR `0008-zitadel-passkey-deferral.md` com quatro gates de reentrada (provedor OIDC, passkey/WebAuthn, service accounts RFC 7523/10070, auditoria HITL ligada ao principal verificado); sem promessa de não-repúdio sem WebAuthn.
+- **Todos os três itens do INBOX estão finalizados**; nenhuma credencial real foi registrada e a factory permaneceu somente leitura em `b1deab1`.
+- **[NV]**: execução real em staging/produção, Zitadel/passkey e rotação das variáveis temporárias de recuperação.
+
+### Fila de escalar para SWE — promoção dev→main (2026-11-22T05:47:28Z, append-only)
+
+- PR **#356** (`release: promove dev para main (ciclos 102-107)`) está **OPEN/CLEAN/MERGEABLE** com todos os required checks observados ao vivo: `db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = **pass** (`dependency-review=skipping` no run de push, permitido pela política do gate).
+- PR #355 (dev→main direto) estava `DIRTY/CONFLICTING` e `mirror=fail`; foi **fechado** e substituído pelo #356, cuja branch `fix/promo-355-conflict` mergeia `main` em `dev` preservando o release #339 e os 52 commits de `dev`. Resolução: versão mais recente de dev em `auth.rs`/contratos; apêndices append-only de ambos os lados em `STATE.md`/`PROGRESSO.md`.
+- **Ação pendente do SWE**: decidir merge de #356 em `main` e subsequente deploy. Não foi mesclado por esta sessão; nenhum auto-merge, force-push ou reescrita.
+- **[NV]**: `mirror=fail` no PR #355 (Forgejo mirror advisory; log não acessível aqui), deploy/produção e aprovação final de release.
+
+## Ciclo 108 — proptest (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/108-proptest-invariants`; branch `feature/108-proptest-invariants` @ `d79238dc6`; decisão F7 do assessment.
+- **Entrega:** quatro proptests em `flora-core` — round-trip `Permission`, não-concessão por string arbitrária, limites de `Pagination` e seletor wildcard com `trim()`.
+- **Evidência:** `cargo test -p flora-core` → 55 passed; `PROPTEST_CASES=500` → 4 passed; fmt/check/clippy exit 0; gate PASS (10 legs / 77 pisos).
+- **Correções:** `prop_assert!` com struct literal trocado por variável; `prop_filter` sem escopo substituído por `prop_assume!`; clippy `map_or`.
+- **[NV]**: nenhuma mudança de produção; cobertura é evidência local.
+
+## Ciclo 109 — Briefing de Compreensão (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/109-comprehension-briefing`; branch `feature/109-comprehension-briefing` @ `63375d737`; decisão F10 do assessment.
+- **Entrega:** template `.specify/templates/briefing-compreensao.md` e nota `docs/governance/2026-11-22-briefing-compreensao.md` com obrigatoriedade documental em auth/sessão, RBAC, tenant, bootstrap/recovery e HITL.
+- **Evidência:** gate PASS (10 legs / 77 pisos), `git diff --check` limpo; nenhum gate/required check/código/migration novo.
+- **[NV]**: eficácia depende da adesão humana nos próximos ciclos.
+
+### Assessment — fechamento dos 11 eixos (2026-11-22, append-only)
+
+- Os dois eixos antes **[NV]** foram entregues em 2026-11-22: `auditoria-imutabilidade-flora.md` (AUD-01…17) e `alternativas-premissas-flora.md` (O1–O7/P1–P6/J1–J6). Assessment passa a **11 eixos / 188 decisões**.
+- Notas anteriores que diziam "dois eixos não entregues por rate-limit" permanecem como registro histórico; a correção é este acréscimo append-only.
+- **[NV] remanescente**: apenas os detalhes marcados nos próprios relatórios (RustFS WORM, restore drill, cotação, idiomas es/fr/de/zh/ja), staging real, CI/deploy e promoção #356.
+
+## Ciclo 110 — piloto de mutation testing (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/110-mutation-pilot`; branch `feature/110-mutation-pilot` @ `f12571cf4`; decisão F6 com autorização do SE para usar ferramenta já instalada (`cargo-mutants 27.1.0`, sem instalação nova).
+- **Entrega:** piloto em `flora-core/src/models/role.rs` (42 mutantes: 39 caught, 1 missed, 2 unviable); correção de `#!`→`//!` em `workspace_service.rs`; correção de bug real de dedup em `Role::add_permission` (`Some(&perm_str)` → `Some(perm_str.as_str())`) e teste `add_permission_is_idempotent`.
+- **Evidência:** `cargo test -p flora-core` 56 passed; mutante focalizado 1/1 caught; fmt/clippy exit 0; gate PASS (10 legs / 77 pisos).
+- **[NV]**: aplicação em todo o workspace e job de CI não autorizados.

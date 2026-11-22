@@ -3,6 +3,7 @@
     clippy::multiple_crate_versions,
     reason = "transitive dependency overrides"
 )]
+pub mod adapters;
 pub mod extractors;
 pub mod middleware;
 pub mod oidc;

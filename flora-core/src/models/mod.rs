@@ -2,6 +2,7 @@
 
 pub mod channel;
 pub mod file;
+pub mod hitl_receipt;
 pub mod membership;
 pub mod message;
 pub mod notification;
@@ -15,6 +16,10 @@ pub mod workspace;
 // Re-export commonly used types
 pub use channel::{Channel, ChannelType, CreateChannelInput, UpdateChannelInput};
 pub use file::{CreateFileInput, File};
+pub use hitl_receipt::{
+    ALLOWED_RESUME_STAGES, HitlDecision, HitlReceipt, VALID_STATIONS, metrics_payload,
+    unsigned_payload, validate_decision,
+};
 pub use membership::Membership;
 pub use message::{CreateMessageInput, Message, UpdateMessageInput};
 pub use notification::{Notification, NotificationType};
@@ -80,5 +85,26 @@ impl<T> Page<T> {
     #[must_use]
     pub const fn new(items: Vec<T>, pagination: Option<Pagination>) -> Self {
         Self { items, pagination }
+    }
+}
+
+#[cfg(test)]
+mod proptests {
+    use proptest::prelude::*;
+
+    use super::Pagination;
+
+    proptest! {
+        #[test]
+        fn resolved_limit_is_bounded_and_offset_independent(
+            limit in prop_oneof![Just(0usize), Just(usize::MAX), any::<usize>()],
+            offset in any::<usize>(),
+        ) {
+            let expected = i64::try_from(limit).map_or(100, |value| value.min(100));
+            let resolved = Pagination { limit, offset }.resolved_limit();
+            prop_assert_eq!(resolved, expected);
+            prop_assert_eq!(resolved, Pagination { limit, offset: 0 }.resolved_limit());
+            prop_assert!((0..=100).contains(&resolved));
+        }
     }
 }

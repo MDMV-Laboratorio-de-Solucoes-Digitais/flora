@@ -15,15 +15,18 @@
 		ChevronLeft,
 		PanelRightClose,
 		PanelRightOpen,
-		Sparkles
+		Sparkles,
+		Files
 	} from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input';
 	import SearchBox from '$lib/components/search/SearchBox.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { t } from '$lib/i18n';
+	import { emailFromToken } from '$lib/utils/jwt';
 
 	let { children } = $props();
+	const userEmail = $derived(emailFromToken(authState.token) ?? t['nav.userEmail']);
 
 	// App state
 	let isSidebarOpen = $state(true);
@@ -145,6 +148,15 @@
 						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}<span>{t['nav.tasks']}</span>{/if}
 					</Button>
+					<Button
+						variant="ghost"
+						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
+						href="/files"
+						aria-label={t['nav.files']}
+					>
+						<Files class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
+						{#if isSidebarOpen}<span>{t['nav.files']}</span>{/if}
+					</Button>
 				</div>
 			</div>
 
@@ -179,10 +191,12 @@
 							</div>
 							{#if isSidebarOpen}
 								<div class="ml-2 flex flex-col items-start overflow-hidden text-sm">
-									<span class="w-full truncate font-medium">{t['nav.userName']}</span>
-									<span class="w-full truncate text-xs text-muted-foreground"
-										>{t['nav.userEmail']}</span
+									<span class="w-full truncate font-medium"
+										>{userEmail === t['nav.userEmail']
+											? t['nav.userName']
+											: userEmail.split('@', 1)[0]}</span
 									>
+									<span class="w-full truncate text-xs text-muted-foreground">{userEmail}</span>
 								</div>
 							{/if}
 						</Button>

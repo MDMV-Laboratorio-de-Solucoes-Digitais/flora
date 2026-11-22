@@ -1079,6 +1079,25 @@ mod db_password_login {
         Ok(user)
     }
 
+    async fn grant_admin(state: &AppState, user_id: Uuid) -> anyhow::Result<()> {
+        let uniq = Uuid::now_v7().simple().to_string();
+        let org = PgOrganizationRepository::new((*state.db_pool).clone())
+            .create(flora_core::models::Organization::new(
+                &format!("Wildcard {uniq}"),
+                &format!("wildcard-{uniq}"),
+            ))
+            .await?;
+        let role = PgRoleRepository::new((*state.db_pool).clone())
+            .create(flora_core::models::Role::new(org.id, "Admin"))
+            .await?;
+        let _membership = PgMembershipRepository::new((*state.db_pool).clone())
+            .create(flora_core::models::Membership::new(
+                user_id, org.id, role.id,
+            ))
+            .await?;
+        Ok(())
+    }
+
     async fn login(
         state: AppState,
         email: &str,
@@ -1260,6 +1279,7 @@ mod db_password_login {
             Some("SenhaPrimeira@12345"),
         )
         .await?;
+        grant_admin(&state, first.id).await?;
         let second = seed_user(
             &state,
             &format!("wildcard-second-{unique}@example.test"),
@@ -1286,6 +1306,9 @@ mod db_password_login {
             .await?
             .ok_or_else(|| anyhow::anyhow!("session not stored"))?;
         assert!(session.is_active);
+
+        let replay = login(state.clone(), "*", "SenhaPrimeira@12345").await?;
+        assert_eq!(replay.status(), StatusCode::UNAUTHORIZED);
 
         db.cleanup().await?;
         Ok(())
