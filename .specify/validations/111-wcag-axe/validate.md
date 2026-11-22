@@ -16,6 +16,8 @@ FR-001/002/003 rastreados e materializados. Nenhum required check foi relaxado. 
 
 PR #366: `e2e-browser` falhou no head `05cae89be` por `/tasks` e `/channels` redirecionarem para `/select-org`. Corrigido no teste com seleção prévia da organização Acme; `bun run check` reexecutado: 4886 arquivos, 0 erros. Novo CI pendente — **[NV]** até verde observado.
 
+Segundo CI (head `f2137b3b7`): `e2e-browser` encontrou violações reais (`button-name`, `color-contrast`, `document-title`) e o teste isolado revogou o jti do smoke. Decisão: integrar varredura ao smoke como anotação informativa, remover teste isolado e registrar bugs. Nenhuma regra desativada. **[NV]**: novo CI pendente.
+
 ## Conclusão
 
 **R4 APROVADO PARA CI** com ressalva local documentada; segue para R7 e PR.

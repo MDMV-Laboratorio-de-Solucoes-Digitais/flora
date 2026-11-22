@@ -22,6 +22,11 @@ R4 APROVADO PARA CI · `bun run check` 0 erros · prettier OK · gate PASS (10 l
 
 Novo commit de reversão dos quatro arquivos; sem force-push.
 
+
+## Emenda (2026-11-22)
+
+Varredura report-only; bugs BUG-111-01/02/03 registrados para ciclo de correção de UI. Rollback inalterado.
+
 ## [NV]
 
 Resultado do job `e2e-browser` no CI e qualquer execução em staging real.

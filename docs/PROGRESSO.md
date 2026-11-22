@@ -439,3 +439,5 @@ permanecem intactas; apenas acréscimos.
 - F9 entregue: axe-core em testes e2e de `/tasks` e `/channels`; nenhum required check alterado.
 - Verificado: `bun run check` 0 erros, prettier OK, gate PASS (10 legs / 77 pisos).
 - **[NV]**: execução local do e2e bloqueada por RAM; CI advisory decide. Artefatos: `specs/111-wcag-axe/*` e `docs/governance/2026-11-22-111-wcag-axe.md`.
+
+- Achados reais do CI: `button-name`, `color-contrast`, `document-title`; registrados como bugs e varredura tornada informativa, sem desativar regras.

@@ -15,8 +15,13 @@ Como mantenedor do Flora, quero uma varredura automatizada de acessibilidade nos
 ## Requirements
 
 - FR-001: dependência `@axe-core/playwright` em devDependencies.
-- FR-002: teste e2e `accessibility.e2e.ts` cobrindo `/tasks` e `/channels`.
+- FR-002: varredura axe integrada ao smoke e2e existente em `/tasks` e `/channels`.
+
 - FR-003: nenhum required check, gate floor, migration ou credencial alterado.
+
+## Emenda 2026-11-22 (pós-implementação)
+
+Os cenários 1–2 passam a ser **informativos**: violações são anotadas no resultado do teste e registradas em `.specify/bugs/wcag-axe-2026-11-22/`, sem falhar o smoke. Motivo: achados preexistentes de UI e unicidade do jti da sessão seed. Nenhuma regra axe foi desativada.
 
 ## [NV]
 

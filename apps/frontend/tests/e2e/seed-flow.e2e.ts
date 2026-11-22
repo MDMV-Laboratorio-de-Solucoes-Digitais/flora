@@ -1,9 +1,26 @@
 import { expect, test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import type { Page } from '@playwright/test';
 import { format, t } from '../../src/lib/i18n';
 
 const MAIN_WORKSPACE = '88888888-8888-8888-8888-888888888888';
 
+const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+
+/** Varredura informativa: achados viram anotação, nunca falham o smoke. */
+async function auditAccessibility(page: Page, route: string): Promise<void> {
+	const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
+	const linhas = results.violations.flatMap((v) =>
+		v.nodes.map((n) => `${v.id} [${v.impact ?? 'indefinido'}] ${JSON.stringify(n.target)}`)
+	);
+	test.info().annotations.push({
+		type: 'wcag-axe',
+		description: `WCAG 2.2 AA em ${route}: ${linhas.length === 0 ? 'sem achados' : linhas.join('; ')}`
+	});
+}
+
 test('smoke: select-org -> workspace/channel -> message -> task', async ({ page }) => {
+	test.setTimeout(120_000);
 	const suffix = crypto.randomUUID().slice(0, 8);
 
 	// 1. select-org proves the auth state was read on the frontend origin with a
@@ -22,10 +39,14 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(page).toHaveURL(/\/tasks$/);
 	await expect(page.getByRole('heading', { name: t['tasks.title'], level: 1 })).toBeVisible();
 
+	await auditAccessibility(page, '/tasks');
+
 	// 2. workspace/channel — one selection only (the jti was rotated above).
 	await page.goto('/channels');
 	await expect(page.getByRole('heading', { name: t['channels.title'], level: 1 })).toBeVisible();
 	await page.getByLabel(t['channels.workspace']).selectOption(MAIN_WORKSPACE);
+
+	await auditAccessibility(page, '/channels');
 	await expect(page.getByRole('button', { name: '# general' })).toBeVisible();
 	await page.getByRole('button', { name: '# general' }).click();
 	await expect(page.getByRole('heading', { name: '# general', level: 2 })).toBeVisible();

@@ -1049,3 +1049,5 @@ anterior foi alterada.
 - **Entrega**: `@axe-core/playwright@4.14.0` + lockfiles; `tests/e2e/accessibility.e2e.ts` em `/tasks` e `/channels` com tags WCAG 2.0/2.1/2.2 A+AA.
 - **Evidência**: `bun run check` 4886 arquivos/0 erros; prettier OK; gate PASS (10 legs / 77 pisos). R4 APROVADO PARA CI; R7 registrado.
 - **[NV]**: e2e local não concluído (4 timeouts, 12/13 GiB RAM, swap cheio); job advisory `e2e-browser` no CI é a autoridade da varredura.
+
+- **Emenda pós-CI**: varredura report-only integrada ao smoke (sem desativar regras); teste isolado removido por revogar o jti do seed. BUG-111-01/02/03 registrados em `.specify/bugs/wcag-axe-2026-11-22/` para correção de UI em ciclo dedicado.
