@@ -15,7 +15,7 @@ O Flora já usa OIDC PKCE S256 com `state`/`nonce` server-side, validação de I
 1. **Provedor**: Zitadel self-hosted com descoberta OIDC, JWKS e issuer/audience validados em runtime; `[NV]` até configuração real.
 2. **Humanos**: registro e verificação de passkey/WebAuthn (attestation, origin, `userVerification`) no fluxo de login — somente então é possível falar em não-repúdio.
 3. **Máquinas**: service accounts com Private Key JWT (RFC 7523) e `aud` igual ao issuer identifier do authorization server, conforme RFC 10070 (nov/2026); segredos em `.tokens/` 0o600, nunca no LLM.
-4. **Auditoria**: recibo HITL emitido pelo Flora (`HitlReceiptPort`, ciclo 106) com aprovação ligada ao principal WebAuthn verificado, `jti`, `exp`, hash do payload e trilha append-only — antes disso, o recibo prova autenticidade de origem, não não-repúdio humano.
+4. **Auditoria**: recibo HITL emitido pelo Flora (`HitlReceiptPort`, ciclo 106) com aprovação ligada ao principal WebAuthn verificado, `jti`, `exp`, hash do payload e trilha append-only — antes disso, o HMAC simétrico prova apenas integridade e posse da chave compartilhada, **não** identidade do operador, autenticidade de origem ou não-repúdio humano.
 
 ## Consequências
 
