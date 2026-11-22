@@ -447,3 +447,9 @@ permanecem intactas; apenas acréscimos.
 - R5 conclui BUG-111-01/02/03: nomes acessíveis, contraste ≥4,5:1 e `<title>`; nenhuma regra axe desativada.
 - Verificado localmente: prettier OK, `bun run check` 0 erros, gate PASS (10 legs / 77 pisos).
 - **[NV]**: CI/advisory e ACR pendentes; artefatos em `specs/112-wcag-fixes/*` e `docs/governance/2026-11-22-112-wcag-fixes.md`.
+
+## Estado verificado — 2026-11-22 (ciclo 113)
+
+- Inventário de bugs atualizado: D15 e OIDC com evidência local; WCAG-111 com evidência de CI remoto (PR #370).
+- Testes focados: D15 2 passed, OIDC 1 passed; gate PASS (10 legs / 77 pisos).
+- **[NV]**: produção/IdP/staging; artefatos em `specs/113-bug-status/*`.
