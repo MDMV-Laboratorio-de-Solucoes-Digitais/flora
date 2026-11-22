@@ -397,3 +397,9 @@ permanecem intactas; apenas acréscimos.
 - Assessment `avaliacao-arquitetura-multiagente-flora`: 9 eixos pesquisados com fontes primárias em pt-BR/en (zh-Hans secundário; es/fr/de/ja **[NV]**), 152 decisões ADAPT/ADOPT/DEFER/AVOID/REJECT, veredito GO documental.
 - Nenhuma implementação autorizada por este assessment; próximos ciclos devem tratar decisões ADOPT/ADAPT individualmente com gates e PR próprio.
 - Dois eixos não entregues por rate-limit de busca web estão marcados **[NV]**; não há pretensão de cobertura integral do PDF.
+
+## Estado verificado — 2026-11-22 (ciclo 106)
+
+- D15 concluído: Flora emite `VerificationReceipt` com HMAC canônico e vetor do validador Python reproduzido (2 testes); fmt/check/clippy/gate exit 0.
+- Artefatos: `specs/106-hitl-receipt-port/*`, bug `d15-*`, R4 APROVADO, R7, `docs/governance/2026-11-22-106-hitl-receipt-port.md`.
+- **[NV]**: round-trip ao vivo, transporte e credenciais; restam D11 e o ADR Zitadel/passkey do INBOX.

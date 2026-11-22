@@ -19,6 +19,8 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     /// Application-level settings.
     pub app: app::AppConfig,
+    /// HITL receipt signing; disabled when the secret is empty.
+    pub hitl: hitl::HitlConfig,
     /// Startup administrator password configuration.
     pub bootstrap: bootstrap::BootstrapConfig,
     /// Database connection settings.
@@ -59,6 +61,7 @@ impl Config {
     pub fn validate(&self) -> Result<(), crate::Error> {
         self.app.validate()?;
         self.bootstrap.validate()?;
+        self.hitl.validate()?;
         self.database.validate()?;
         self.oidc.validate()?;
         self.storage.validate()?;

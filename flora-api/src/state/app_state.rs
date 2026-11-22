@@ -57,6 +57,14 @@ pub struct AppState {
 }
 
 impl AppState {
+    /// Constrói o emissor de recibos HITL a partir da configuração carregada.
+    #[must_use]
+    pub fn hitl_receipt_adapter(&self) -> crate::adapters::HitlReceiptAdapter {
+        crate::adapters::HitlReceiptAdapter::new(&self.config.hitl.hmac_secret)
+    }
+}
+
+impl AppState {
     /// Creates a new `AppState` using an existing database pool.
     ///
     /// # Errors

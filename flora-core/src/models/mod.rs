@@ -2,6 +2,7 @@
 
 pub mod channel;
 pub mod file;
+pub mod hitl_receipt;
 pub mod membership;
 pub mod message;
 pub mod notification;
