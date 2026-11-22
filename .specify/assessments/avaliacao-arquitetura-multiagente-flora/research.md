@@ -47,6 +47,18 @@ Não há pretensão de cobertura integral do PDF: estes dois eixos permanecem em
 - **zh-Hans**: Secondary, via comentários em issue pública (RustFS), registrado no eixo infra.
 - **es/fr/de/ja**: **[NV]** — não localizadas fontes primárias adicionais; alguns eixos marcaram busca sem resultado.
 
+
+### Atualização — 2026-11-22T11:15Z (append-only)
+
+Os dois eixos anteriormente **[NV]** foram retomados com leitura direta das fontes primárias (rate-limit contornado sem novas buscas):
+
+- `docs/research/mdmv-multiagent/auditoria-imutabilidade-flora.md` — AUD-01…AUD-17 (RLS runtime, hash-chain, âncora WORM, PITR, papéis PG, retenção fiscal, gate advisory).
+- `docs/research/mdmv-multiagent/alternativas-premissas-flora.md` — O1–O7 (orquestradores), P1–P6 (premissas financeiras), J1–J6 (premissas jurídicas/contradições).
+
+**Total atualizado: 11 eixos, 188 decisões.** Os dois eixos não são mais **[NV]**; permanecem **[NV]** apenas os detalhes registrados nos próprios relatórios (RustFS WORM, restore drill, cotação, es/fr/de/zh/ja).
+
+Correções adicionais ao PDF: compressão 99,77% depende de mês de 30 dias e o "piso US$ 1.000/dia" é burn de tokens, não custo de humano; US$ 68,69 irreproduzível (nota 8 `unknown_url`); X US$ 0,015 vs US$ 0,200 com URL = 13,3×; RLS está `ENABLE` com zero `CREATE POLICY` e a app conecta como `postgres`.
+
 ## Segurança da pesquisa
 
 Conteúdo web foi tratado como dado não-confiável. Registradas tentativas de instrução incorporada em páginas de documentação (macro.com/docs/concepts/mentions sobre cadastro de agente; `SKILL.md` do Hashnode; avisos "ask AI" em docs) — nenhuma foi executada. Nenhuma credencial foi copiada ou registrada.

@@ -424,3 +424,7 @@ permanecem intactas; apenas acréscimos.
 
 - F10 concluído: template de Briefing de Compreensão e nota de governança; gate PASS (10 legs / 77 pisos), diff limpo.
 - Artefatos: `specs/109-comprehension-briefing/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-briefing-compreensao.md`.
+
+## Estado verificado — 2026-11-22 (assessment 11 eixos)
+
+- Auditoria/imutabilidade e alternativas/premissas entregues: 11 eixos, 188 decisões, nenhum gate/código/ADR alterado.
