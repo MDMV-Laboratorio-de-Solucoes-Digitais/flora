@@ -56,6 +56,8 @@ export const t = {
 	'nav.myAccount': 'Minha conta',
 	'nav.settings': 'Configurações',
 	'nav.logout': 'Sair',
+	'nav.openSidebar': 'Abrir menu lateral',
+	'nav.closeSidebar': 'Fechar menu lateral',
 	'nav.closeAiPanel': 'Fechar painel de IA',
 	'nav.openAiPanel': 'Abrir painel de IA',
 	'ai.panelTitle': 'Painel de insights de IA',
