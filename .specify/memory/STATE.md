@@ -1022,3 +1022,9 @@ anterior foi alterada.
 - **Entrega:** template `.specify/templates/briefing-compreensao.md` e nota `docs/governance/2026-11-22-briefing-compreensao.md` com obrigatoriedade documental em auth/sessão, RBAC, tenant, bootstrap/recovery e HITL.
 - **Evidência:** gate PASS (10 legs / 77 pisos), `git diff --check` limpo; nenhum gate/required check/código/migration novo.
 - **[NV]**: eficácia depende da adesão humana nos próximos ciclos.
+
+### Assessment — fechamento dos 11 eixos (2026-11-22, append-only)
+
+- Os dois eixos antes **[NV]** foram entregues em 2026-11-22: `auditoria-imutabilidade-flora.md` (AUD-01…17) e `alternativas-premissas-flora.md` (O1–O7/P1–P6/J1–J6). Assessment passa a **11 eixos / 188 decisões**.
+- Notas anteriores que diziam "dois eixos não entregues por rate-limit" permanecem como registro histórico; a correção é este acréscimo append-only.
+- **[NV] remanescente**: apenas os detalhes marcados nos próprios relatórios (RustFS WORM, restore drill, cotação, idiomas es/fr/de/zh/ja), staging real, CI/deploy e promoção #356.
