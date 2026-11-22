@@ -1,4 +1,6 @@
+/** Seed default in `flora-core/src/config/storage.rs` (`max_upload_bytes`). */
+export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
 export function isValidFileSize(sizeBytes: number): boolean {
-	const MAX_SIZE = 50 * 1024 * 1024;
-	return sizeBytes <= MAX_SIZE;
+	return sizeBytes <= MAX_FILE_SIZE_BYTES;
 }

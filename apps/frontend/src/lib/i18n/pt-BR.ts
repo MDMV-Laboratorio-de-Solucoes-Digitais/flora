@@ -49,6 +49,7 @@ export const t = {
 	'nav.channels': 'Canais',
 	'nav.directMessages': 'Mensagens diretas',
 	'nav.tasks': 'Tarefas',
+	'nav.files': 'Arquivos',
 	'nav.channelsHint': 'Abra Canais para navegar pelos canais do workspace.',
 	'nav.userName': 'Nome do usuário',
 	'nav.userEmail': 'usuario@flora.app',
@@ -100,9 +101,14 @@ export const t = {
 
 	// Arquivos
 	'file.download': 'Baixar',
-	'file.tooLarge': 'Arquivo muito grande. O tamanho máximo é 50 MB.',
+	'file.tooLarge': 'Arquivo muito grande. O tamanho máximo é 10 MB.',
 	'file.workspaceRequired': 'É necessário selecionar um workspace antes de enviar arquivos.',
 	'file.uploadFailed': 'Falha no envio.',
+	'files.title': 'Arquivos',
+	'files.description': 'Envie e baixe arquivos do workspace selecionado.',
+	'files.workspace': 'Workspace',
+	'files.empty': 'Nenhum arquivo enviado nesta sessão.',
+	'files.uploaded': 'Arquivo enviado: {name}',
 
 	// Organizações e workspaces
 	'org.selectTitle': 'Selecionar organização',
@@ -175,6 +181,7 @@ export const t = {
 	'error.selectOrganization': 'Falha ao selecionar organização',
 	'error.createOrganization': 'Falha ao criar organização',
 	'error.loadTasks': 'Falha ao carregar tarefas/workspaces',
+	'error.loadWorkspaces': 'Falha ao carregar workspaces',
 	'error.createTask': 'Falha ao criar tarefa',
 	'error.changeTaskStatus': 'Falha ao alterar o status da tarefa',
 	'error.loadMessages': 'Falha ao carregar mensagens',

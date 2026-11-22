@@ -15,7 +15,8 @@
 		ChevronLeft,
 		PanelRightClose,
 		PanelRightOpen,
-		Sparkles
+		Sparkles,
+		Files
 	} from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input';
 	import SearchBox from '$lib/components/search/SearchBox.svelte';
@@ -146,6 +147,15 @@
 					>
 						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}<span>{t['nav.tasks']}</span>{/if}
+					</Button>
+					<Button
+						variant="ghost"
+						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
+						href="/files"
+						aria-label={t['nav.files']}
+					>
+						<Files class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
+						{#if isSidebarOpen}<span>{t['nav.files']}</span>{/if}
 					</Button>
 				</div>
 			</div>

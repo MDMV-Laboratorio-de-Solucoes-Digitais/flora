@@ -941,3 +941,10 @@ anterior foi alterada.
 - **Roteiro:** executado em staging local zerado (Postgres 18 isolado + API/frontend no HEAD do alvo) com browser real e capturas em `/tmp/flora-qa-*`. Cenários 0–5, 7, 9 e verificações de API para 8/10/11 executados; itens 6 (DMs — placeholder), 8 UI (sem rota de arquivos) e 12 (comandos de reset do staging real) permanecem **[NV]**/dívida.
 - **Factory:** HEAD `b1deab15f482dd85871cd6c6a857ad710b89e2a6`, lida como fonte, jamais modificada; nada transplantado da árvore suja. Âncora final do alvo: `feature.json` → `specs/104-session-identity`.
 - **[NV] remanescente:** FQDN/credenciais do staging real da MDMV-Autonoma, CI/proteção/deploy após o último merge, e implementação de DMs/UI de arquivos/autoria no chat (novos ciclos exigem priorização de produto).
+
+## Atualização — ciclo 105 (2026-11-22; append-only)
+
+- **Âncora:** `.specify/feature.json` → `specs/105-files-ui`; branch `feature/105-files-ui` @ `c5e4f886e` (dev após PR #347). Registro canônico: `docs/governance/2026-11-22-105-files-ui.md` (novo). Notas anteriores intactas.
+- **Correção 105:** rota `(app)/files/+page.svelte` com seletor de workspace, upload/lista via componentes existentes e link "Arquivos" na sidebar; limite client alinhado a 10 MiB (antes 50 MB) e mensagem pt-BR corrigida; `FilePreview` usa `API_BASE_URL` para download.
+- **Evidência:** gate do alvo PASS (10 legs / 77 pisos), `svelte-check` 0 erros, Vitest 50/50, prettier/eslint exit 0; navegador real: upload 201 com arquivo listado, 11 MiB rejeitado com "Arquivo muito grande. O tamanho máximo é 10 MB." e nada gravado na lista.
+- **[NV]:** staging real (URLs/credenciais não entregues), CI remota/merge/deploy do PR 105, lista persistida após reload (backend sem endpoint de listagem) e clique final no link de download com `API_BASE_URL`.
