@@ -1051,3 +1051,18 @@ anterior foi alterada.
 - **[NV]**: e2e local não concluído (4 timeouts, 12/13 GiB RAM, swap cheio); job advisory `e2e-browser` no CI é a autoridade da varredura.
 
 - **Emenda pós-CI**: varredura report-only integrada ao smoke (sem desativar regras); teste isolado removido por revogar o jti do seed. BUG-111-01/02/03 registrados em `.specify/bugs/wcag-axe-2026-11-22/` para correção de UI em ciclo dedicado.
+
+## Decisão 80/20 — ciclo 112 (2026-11-22, append-only)
+
+- **session_title**: `flora - correcao de violacoes WCAG 2.2 AA (BUG-111)` · **session_id**: `20261122-164000-orch-v42`.
+- **Critério**: `impacto × confiança × (6−esforço) × (6−risco)`, fatores 1–5, denominador 625. Ordena a fila; não declara conclusão.
+- **Correção BUG-111-01/02/03**: 5×5×(6−3)×(6−2) = **300/625**. Automação de ACR/evidência 192/625; dívidas documentais 128/625.
+- **Escolha**: corrigir as três violações reais (R5: `bug.assess → bug.fix → bug.test`), com roteiro de testes e evidência antes do PR. Nenhuma regra axe será relaxada.
+- **Fila 0.0**: PR #369 (base `main`, CLEAN) registrado na fila SWE; não mesclado. Gap 0.7: deploy em `main` é manual (`workflow_dispatch`), não automático em push — escalar configuração ao SE.
+
+## Ciclo 112 — correção WCAG (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/112-wcag-fixes`; branch `feature/112-wcag-fixes` @ `ce3ce632e`; R5 a partir de `.specify/bugs/wcag-axe-2026-11-22/`.
+- **Entrega**: `aria-label` nos botões ícone, contraste de desabilitados (5,84:1 calculado), `<title>Flora</title>`, resumo axe no log do CI.
+- **Evidência local**: prettier OK; `bun run check` 4886/0; gate PASS (10 legs / 77 pisos). R4 APROVADO PARA CI; R7 registrado.
+- **[NV]**: UI local/staging, modo escuro, CI e ACR pendentes no momento do commit.

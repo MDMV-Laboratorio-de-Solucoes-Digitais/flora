@@ -13,14 +13,13 @@ async function auditAccessibility(page: Page, route: string): Promise<void> {
 	const linhas = results.violations.flatMap((v) =>
 		v.nodes.map((n) => `${v.id} [${v.impact ?? 'indefinido'}] ${JSON.stringify(n.target)}`)
 	);
-	test.info().annotations.push({
-		type: 'wcag-axe',
-		description: `WCAG 2.2 AA em ${route}: ${linhas.length === 0 ? 'sem achados' : linhas.join('; ')}`
-	});
+	const resumo = `WCAG 2.2 AA em ${route}: ${linhas.length === 0 ? 'sem achados' : linhas.join('; ')}`;
+	process.stdout.write(`${resumo}\n`);
+	test.info().annotations.push({ type: 'wcag-axe', description: resumo });
 }
 
 test('smoke: select-org -> workspace/channel -> message -> task', async ({ page }) => {
-	test.setTimeout(120_000);
+	test.setTimeout(180_000);
 	const suffix = crypto.randomUUID().slice(0, 8);
 
 	// 1. select-org proves the auth state was read on the frontend origin with a

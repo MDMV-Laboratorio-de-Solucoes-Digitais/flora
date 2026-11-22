@@ -441,3 +441,9 @@ permanecem intactas; apenas acréscimos.
 - **[NV]**: execução local do e2e bloqueada por RAM; CI advisory decide. Artefatos: `specs/111-wcag-axe/*` e `docs/governance/2026-11-22-111-wcag-axe.md`.
 
 - Achados reais do CI: `button-name`, `color-contrast`, `document-title`; registrados como bugs e varredura tornada informativa, sem desativar regras.
+
+## Estado verificado — 2026-11-22 (ciclo 112)
+
+- R5 conclui BUG-111-01/02/03: nomes acessíveis, contraste ≥4,5:1 e `<title>`; nenhuma regra axe desativada.
+- Verificado localmente: prettier OK, `bun run check` 0 erros, gate PASS (10 legs / 77 pisos).
+- **[NV]**: CI/advisory e ACR pendentes; artefatos em `specs/112-wcag-fixes/*` e `docs/governance/2026-11-22-112-wcag-fixes.md`.

@@ -97,7 +97,7 @@
 		<!-- Sidebar Header -->
 		<div class="flex h-14 items-center justify-between border-b px-4">
 			{#if isSidebarOpen}
-				<div class="flex items-center gap-2 truncate font-bold text-primary">
+				<div class="flex items-center gap-2 truncate font-bold text-foreground">
 					<div
 						class="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground"
 					>
@@ -109,6 +109,7 @@
 			<Button
 				variant="ghost"
 				size="icon"
+				aria-label={isSidebarOpen ? t['nav.closeSidebar'] : t['nav.openSidebar']}
 				class="h-8 w-8 shrink-0"
 				onclick={() => (isSidebarOpen = !isSidebarOpen)}
 			>
@@ -242,6 +243,7 @@
 					variant="ghost"
 					size="icon"
 					onclick={() => (isRightPanelOpen = !isRightPanelOpen)}
+					aria-label={isRightPanelOpen ? t['nav.closeAiPanel'] : t['nav.openAiPanel']}
 					title={isRightPanelOpen ? t['nav.closeAiPanel'] : t['nav.openAiPanel']}
 					class={isRightPanelOpen ? 'bg-muted text-primary' : ''}
 				>
@@ -275,6 +277,7 @@
 							variant="ghost"
 							size="icon"
 							class="h-6 w-6"
+							aria-label={t['nav.closeAiPanel']}
 							onclick={() => (isRightPanelOpen = false)}
 						>
 							<PanelRightOpen class="h-4 w-4" />
