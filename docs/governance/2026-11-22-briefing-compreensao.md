@@ -13,6 +13,11 @@ Gates determinísticos provam que o código passa nos testes; não provam que um
 
 ## Fronteira
 
-Nenhum required check novo (ADR-0003 inalterado). Adesão é processo de gov petição de PR, não checagem automática. O briefing é append-only.
+Nenhum required check novo (ADR-0003 inalterado). Adesão é processo de governança de PR, não checagem automática. O briefing é append-only.
 
 **[NV]**: eficácia real depende do uso pelo SE nos próximos ciclos.
+
+### Correção append-only — 2026-11-22 (após ciclo 109)
+
+- A obrigatoriedade é **prospectiva, a partir do ciclo 109**. Ciclos anteriores que tocaram os domínios críticos — 096–101 (auth), 103 (RBAC), 106 (HITL), 107 (bootstrap/recovery) e 108 (proptests de permissão) — são **grandfathered**: não são retroativamente não-conformes e não terão briefings forjados.
+- Convenção de nomes: os cinco templates preexistentes usam o sufixo `-template.md`. O arquivo `.specify/templates/briefing-compreensao.md` é uma **exceção registrada** para manter o nome legível nas referências de PR; nenhum template existente foi renomeado.
