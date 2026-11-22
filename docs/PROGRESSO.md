@@ -419,3 +419,8 @@ permanecem intactas; apenas acréscimos.
 
 - F7 concluído: quatro proptests em `flora-core`, 55 testes e 500 casos por propriedade, gate PASS (10 legs / 77 pisos).
 - Artefatos: `specs/108-proptest-invariants/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-108-proptest-invariants.md`.
+
+## Estado verificado — 2026-11-22 (ciclo 109)
+
+- F10 concluído: template de Briefing de Compreensão e nota de governança; gate PASS (10 legs / 77 pisos), diff limpo.
+- Artefatos: `specs/109-comprehension-briefing/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-briefing-compreensao.md`.

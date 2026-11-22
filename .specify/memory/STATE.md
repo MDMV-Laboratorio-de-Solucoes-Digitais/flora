@@ -1015,3 +1015,10 @@ anterior foi alterada.
 - **Evidência:** `cargo test -p flora-core` → 55 passed; `PROPTEST_CASES=500` → 4 passed; fmt/check/clippy exit 0; gate PASS (10 legs / 77 pisos).
 - **Correções:** `prop_assert!` com struct literal trocado por variável; `prop_filter` sem escopo substituído por `prop_assume!`; clippy `map_or`.
 - **[NV]**: nenhuma mudança de produção; cobertura é evidência local.
+
+## Ciclo 109 — Briefing de Compreensão (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/109-comprehension-briefing`; branch `feature/109-comprehension-briefing` @ `63375d737`; decisão F10 do assessment.
+- **Entrega:** template `.specify/templates/briefing-compreensao.md` e nota `docs/governance/2026-11-22-briefing-compreensao.md` com obrigatoriedade documental em auth/sessão, RBAC, tenant, bootstrap/recovery e HITL.
+- **Evidência:** gate PASS (10 legs / 77 pisos), `git diff --check` limpo; nenhum gate/required check/código/migration novo.
+- **[NV]**: eficácia depende da adesão humana nos próximos ciclos.
