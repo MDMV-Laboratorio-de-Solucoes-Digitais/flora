@@ -50,6 +50,9 @@ hyper.workspace = true
 hyper-util.workspace = true
 tower-service.workspace = true
 mime.workspace = true
+hmac.workspace = true
+sha2.workspace = true
+hex = "0.4"
 mime_guess.workspace = true
 tokio-util = { version = "0.7", features = ["io"] }
 axum-extra.workspace = true

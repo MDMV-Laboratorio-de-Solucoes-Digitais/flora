@@ -977,3 +977,11 @@ anterior foi alterada.
 - **MINOR** — Zitadel/passkey: ADR de deferimento com quatro gates de reentrada; não prometer não-repúdio sem WebAuthn verificada.
 - **Critério de aceite declarado**: PR reviewable com testes round-trip e de papel, gate verde, **[NV]** em staging/produção/credenciais e nenhuma credencial em log/PR.
 - **Ordem de execução**: estas correções autorizadas têm precedência sobre o próximo 80/20 do assessment (F7/proptest), que fica adiado. Cada correção MAJOR seguirá fluxo SDD com bug report em `.specify/bugs/`; o MINOR seguirá ADR documental.
+
+## Ciclo 106 — recibo HITL (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/106-hitl-receipt-port`; branch `feature/106-hitl-receipt-port` @ `0582883da`; bug `.specify/bugs/d15-hitl-receipt-contract-unilateral/` (D15 do INBOX autorizado).
+- **Entrega:** `HitlReceiptPort` puro + adaptador HMAC-SHA256 com envelope de 8 campos (`producer_system="flora"`, `status="verified"`), allowlists e travas de PII/envio externo; segredo `FLORA_HITL__HMAC_SECRET` com `Debug` redigido; vetor dourado do validador Python (`ba563acc…`) em teste unitário.
+- **Evidência:** `cargo test -p flora-api hitl_receipt` → **2 passed**; fmt/check/clippy exit 0; gate PASS (10 legs / 77 pisos). `hmac 0.13` com `sha2 0.11` (0.12 é incompatível); `hex::encode` para assinatura.
+- **[NV]:** round-trip ao vivo com a Autônoma, transporte HTTP, staging/produção e credenciais reais.
+- **Próximos itens do INBOX:** D11 (wildcard one-shot por papel + ADR com expiração) e MINOR (ADR Zitadel/passkey com quatro gates).

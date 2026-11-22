@@ -2,6 +2,7 @@
 
 pub mod channel;
 pub mod file;
+pub mod hitl_receipt;
 pub mod membership;
 pub mod message;
 pub mod notification;
@@ -15,6 +16,10 @@ pub mod workspace;
 // Re-export commonly used types
 pub use channel::{Channel, ChannelType, CreateChannelInput, UpdateChannelInput};
 pub use file::{CreateFileInput, File};
+pub use hitl_receipt::{
+    ALLOWED_RESUME_STAGES, HitlDecision, HitlReceipt, VALID_STATIONS, metrics_payload,
+    unsigned_payload, validate_decision,
+};
 pub use membership::Membership;
 pub use message::{CreateMessageInput, Message, UpdateMessageInput};
 pub use notification::{Notification, NotificationType};
