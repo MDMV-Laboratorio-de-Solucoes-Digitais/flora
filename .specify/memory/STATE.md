@@ -1000,3 +1000,10 @@ anterior foi alterada.
 - Item **MINOR** concluído: ADR `0008-zitadel-passkey-deferral.md` com quatro gates de reentrada (provedor OIDC, passkey/WebAuthn, service accounts RFC 7523/10070, auditoria HITL ligada ao principal verificado); sem promessa de não-repúdio sem WebAuthn.
 - **Todos os três itens do INBOX estão finalizados**; nenhuma credencial real foi registrada e a factory permaneceu somente leitura em `b1deab1`.
 - **[NV]**: execução real em staging/produção, Zitadel/passkey e rotação das variáveis temporárias de recuperação.
+
+### Fila de escalar para SWE — promoção dev→main (2026-11-22T05:47:28Z, append-only)
+
+- PR **#356** (`release: promove dev para main (ciclos 102-107)`) está **OPEN/CLEAN/MERGEABLE** com todos os required checks observados ao vivo: `db-tests`, `dependency-review`, `e2e-browser`, `frontend-build`, `rust-build`, `supply-chain-vet` = **pass** (`dependency-review=skipping` no run de push, permitido pela política do gate).
+- PR #355 (dev→main direto) estava `DIRTY/CONFLICTING` e `mirror=fail`; foi **fechado** e substituído pelo #356, cuja branch `fix/promo-355-conflict` mergeia `main` em `dev` preservando o release #339 e os 52 commits de `dev`. Resolução: versão mais recente de dev em `auth.rs`/contratos; apêndices append-only de ambos os lados em `STATE.md`/`PROGRESSO.md`.
+- **Ação pendente do SWE**: decidir merge de #356 em `main` e subsequente deploy. Não foi mesclado por esta sessão; nenhum auto-merge, force-push ou reescrita.
+- **[NV]**: `mirror=fail` no PR #355 (Forgejo mirror advisory; log não acessível aqui), deploy/produção e aprovação final de release.
