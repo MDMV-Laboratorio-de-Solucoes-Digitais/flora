@@ -269,3 +269,30 @@ mod tests {
         assert!(!serialized.contains("SenhaForte@12345"));
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use proptest::prelude::*;
+
+    use super::BootstrapConfig;
+
+    proptest! {
+        #[test]
+        fn wildcard_selector_matches_trimmed_exact_token(
+            email in prop_oneof![
+                Just("*".to_owned()),
+                Just("  * \t".to_owned()),
+                any::<String>()
+            ],
+        ) {
+            let config = BootstrapConfig {
+                admin_email: Some(email.clone()),
+                admin_password: None,
+            };
+            prop_assert_eq!(
+                config.is_wildcard_selector(),
+                email.trim() == "*"
+            );
+        }
+    }
+}
