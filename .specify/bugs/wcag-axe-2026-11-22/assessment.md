@@ -15,3 +15,7 @@ A varredura passa a ser **informativa** (`annotations` no smoke existente), sem 
 ## Evidência
 
 Logs do job `e2e-browser` em https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45038205571 (acesso 2026-11-22). **[NV]**: repro em staging real.
+
+## Fechamento (2026-11-22)
+
+BUG-111-01/02/03 corrigidos no ciclo 112, PR #370 mesclado em `dev` (`544a075ca`); axe final sem achados em `/tasks` e `/channels` (run 45048150000). **[NV]**: staging real e modo escuro.

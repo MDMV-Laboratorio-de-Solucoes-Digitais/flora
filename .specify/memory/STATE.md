@@ -1066,3 +1066,18 @@ anterior foi alterada.
 - **Entrega**: `aria-label` nos botões ícone, contraste de desabilitados (5,84:1 calculado), `<title>Flora</title>`, resumo axe no log do CI.
 - **Evidência local**: prettier OK; `bun run check` 4886/0; gate PASS (10 legs / 77 pisos). R4 APROVADO PARA CI; R7 registrado.
 - **[NV]**: UI local/staging, modo escuro, CI e ACR pendentes no momento do commit.
+
+## Decisão 80/20 — ciclo 113 (2026-11-22, append-only)
+
+- **session_title**: `flora - fechamento de bugs documentais stale` · **session_id**: `20261122-173900-orch-v42`.
+- **Critério**: `impacto × confiança × (6−esforço) × (6−risco)`, fatores 1–5, denominador 625.
+- **Fechamento de bugs documentais stale**: 3×5×5×5 = **375/625**. Automação de staging efêmero 144/625 (depende de canal seguro); deploy em `main` exige autorização SE 023 — fora do escopo autônomo.
+- **Escolha**: registrar status verificado de D15, OIDC e WCAG-111 nos artefatos de bug, preservando histórico e marcando **[NV]** o que depende de ambiente remoto. Nenhum código/backend alterado.
+- **Fila 0.0**: PRs #369 e #371 (base `main`, CLEAN) na fila SWE; não mesclados.
+
+## Ciclo 113 — fechamento documental (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/113-bug-status`; branch `feature/113-bug-status` @ `544a075ca`.
+- **Entrega**: notas de fechamento para D15 (2 passed), OIDC (rota + 1 passed) e WCAG-111 (PR #370), preservando histórico.
+- **Evidência**: gate PASS (10 legs / 77 pisos); nenhum código/gate/required check alterado.
+- **[NV]**: produção, IdP externo e staging real.

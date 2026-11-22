@@ -88,3 +88,7 @@ Não executada — proposta documental. A verificação completa está em `./tes
 ### Correção de dependência (2026-11-22, append-only)
 
 As menções a `hmac 0.12` acima estavam erradas: `hmac 0.12.1` usa `digest 0.10.7`, incompatível com `sha2 0.11.0` (`digest 0.11.3`). O `Cargo.lock` já contém `hmac 0.13.0` (`digest 0.11.3`, via `hkdf`/`sqlx`). A implementação usa `hmac = "0.13"` com `hmac.workspace = true` em `flora-core`; nenhuma dependência nova é baixada. O valor serializado de `producer_system` é literalmente `"flora"`, não o nome do enum Python.
+
+### Fechamento (2026-11-22, append-only)
+
+Implementação mesclada no ciclo 106 (`HitlReceiptPort` + `HitlReceiptAdapter` + modelo). O rótulo "proposta" no cabeçalho é histórico; status verificado em 2026-11-22: `cargo test -p flora-api hitl_receipt` → **2 passed**, exit 0.
