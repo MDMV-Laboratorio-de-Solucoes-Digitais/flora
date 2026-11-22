@@ -403,3 +403,9 @@ permanecem intactas; apenas acréscimos.
 - D15 concluído: Flora emite `VerificationReceipt` com HMAC canônico e vetor do validador Python reproduzido (2 testes); fmt/check/clippy/gate exit 0.
 - Artefatos: `specs/106-hitl-receipt-port/*`, bug `d15-*`, R4 APROVADO, R7, `docs/governance/2026-11-22-106-hitl-receipt-port.md`.
 - **[NV]**: round-trip ao vivo, transporte e credenciais; restam D11 e o ADR Zitadel/passkey do INBOX.
+
+## Estado verificado — 2026-11-22 (ciclo 107)
+
+- D11 concluído: wildcard restrito a Admin/Owner e one-shot com marcador persistente; 13+4 contratos DB e 70 testes unitários passaram; gate PASS (10 legs / 77 pisos).
+- Artefatos: `specs/107-wildcard-one-shot/*`, bug `d11-*`, ADR 0007, R4 APROVADO, R7, `docs/governance/2026-11-22-107-wildcard-one-shot.md`.
+- **[NV]**: staging, credenciais e restart; resta o ADR Zitadel/passkey do INBOX.

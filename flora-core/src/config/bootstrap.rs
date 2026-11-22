@@ -16,7 +16,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 use crate::error::{Error, Result};
-use crate::models::User;
 use crate::repositories::PgUserRepository;
 use crate::services::PasswordService;
 use crate::traits::UserRepository;
@@ -127,21 +126,14 @@ pub async fn apply_startup_password(
     let email = email.trim().to_lowercase();
 
     let repo = PgUserRepository::new(pool.clone());
-    // `*` is an explicit opt-in for an unknown e-mail: target the oldest active
-    // account instead of guessing an address. Exact e-mails keep the precise
-    // lookup and warn when no user matches.
+    // `*` é um opt-in temporário: apenas administradores built-in, e nunca
+    // reaplicado após o consumo do marcador one-shot.
     let user = if config.is_wildcard_selector() {
-        sqlx::query_as::<_, User>(
-            "SELECT id, email, oidc_subject, password_hash, password_updated_at,
-                    display_name, avatar_url, profile, is_active, created_at, updated_at
-             FROM users
-             WHERE is_active = TRUE
-             ORDER BY created_at ASC, id ASC
-             LIMIT 1",
-        )
-        .fetch_optional(pool)
-        .await
-        .map_err(Error::from_sqlx)?
+        if crate::services::wildcard_consumed(pool).await? {
+            tracing::warn!("wildcard recovery opt-in already consumed; startup password skipped");
+            return Ok(false);
+        }
+        crate::services::find_wildcard_admin(pool).await?
     } else {
         repo.find_by_email(&email).await?
     };

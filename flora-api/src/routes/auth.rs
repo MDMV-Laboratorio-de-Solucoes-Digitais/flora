@@ -450,21 +450,9 @@ async fn password_login(
 ) -> Result<Json<serde_json::Value>> {
     let email = req.email.trim().to_lowercase();
     let user_repo = PgUserRepository::new((*state.db_pool).clone());
-    // `*` is a temporary, config-gated selector: only the explicit bootstrap
-    // opt-in may redirect the lookup to the oldest active account. Without it
-    // the exact lookup below matches nothing and returns the generic 401.
+    // `*` é opt-in temporário: apenas administradores e no máximo uma sessão.
     let user = if email == "*" && state.config.bootstrap.is_wildcard_selector() {
-        sqlx::query_as::<_, User>(
-            "SELECT id, email, oidc_subject, password_hash, password_updated_at,
-                    display_name, avatar_url, profile, is_active, created_at, updated_at
-             FROM users
-             WHERE is_active = TRUE
-             ORDER BY created_at ASC, id ASC
-             LIMIT 1",
-        )
-        .fetch_optional(state.db_pool.as_ref())
-        .await
-        .map_err(Error::from_sqlx)?
+        flora_core::services::find_wildcard_admin(state.db_pool.as_ref()).await?
     } else {
         user_repo.find_by_email(&email).await?
     };
@@ -476,6 +464,12 @@ async fn password_login(
         return Err(Error::InvalidCredentials);
     }
     let user = user.ok_or(Error::InvalidCredentials)?;
+    if email == "*"
+        && state.config.bootstrap.is_wildcard_selector()
+        && !flora_core::services::try_consume_wildcard(state.db_pool.as_ref(), user.id).await?
+    {
+        return Err(Error::InvalidCredentials);
+    }
 
     let session_repo = PgSessionRepository::new((*state.db_pool).clone());
     let jti = Uuid::now_v7().to_string();

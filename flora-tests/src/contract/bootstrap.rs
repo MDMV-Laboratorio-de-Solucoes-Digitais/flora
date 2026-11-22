@@ -15,12 +15,16 @@ mod tests {
     use flora_core::config::Config;
     use flora_core::config::bootstrap::{BootstrapConfig, apply_startup_password};
     use flora_core::migrations::run_migrations;
-    use flora_core::models::{Organization, User};
+    use flora_core::models::{Membership, Organization, Role, User};
     use flora_core::repositories::{
-        PgOrganizationRepository, PgSessionRepository, PgUserRepository,
+        PgMembershipRepository, PgOrganizationRepository, PgRoleRepository, PgSessionRepository,
+        PgUserRepository,
     };
     use flora_core::services::PasswordService;
-    use flora_core::traits::{OrganizationRepository, SessionRepository, UserRepository};
+    use flora_core::traits::{
+        MembershipRepository, OrganizationRepository, RoleRepository, SessionRepository,
+        UserRepository,
+    };
     use flora_core::utils::jwt::decode_token;
     use serde_json::{Value, json};
     use sqlx::PgPool;
@@ -421,6 +425,15 @@ mod tests {
 
         let first = repo
             .create(User::new("primeiro@exemplo.test", "Primeiro"))
+            .await?;
+        let org = PgOrganizationRepository::new(pool.clone())
+            .create(Organization::new("Wildcard Org", "wildcard-org"))
+            .await?;
+        let role = PgRoleRepository::new(pool.clone())
+            .create(Role::new(org.id, "Admin"))
+            .await?;
+        let _membership = PgMembershipRepository::new(pool.clone())
+            .create(Membership::new(first.id, org.id, role.id))
             .await?;
         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
         let second = repo
