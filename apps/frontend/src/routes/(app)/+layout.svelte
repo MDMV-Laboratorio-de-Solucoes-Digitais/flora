@@ -97,7 +97,7 @@
 		<!-- Sidebar Header -->
 		<div class="flex h-14 items-center justify-between border-b px-4">
 			{#if isSidebarOpen}
-				<div class="flex items-center gap-2 truncate font-bold text-primary">
+				<div class="flex items-center gap-2 truncate font-bold text-foreground">
 					<div
 						class="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground"
 					>
