@@ -12,3 +12,5 @@
 - **[NV]**: modo escuro e staging real; verificação de UI local depende de sessão segura não fornecida.
 
 - 2026-11-22 (segunda rodada CI): `color-contrast` restante em marca da sidebar e canal selecionado; ambos passaram a usar `text-foreground` sobre fundo realçado. Reexecução pendente.
+
+- 2026-11-22 (ACR final): re-revisão no head `30d90f286` → **APPROVE**, sem blockers determinísticos; log do e2e com "sem achados" nas duas rotas.

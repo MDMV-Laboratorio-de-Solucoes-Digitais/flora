@@ -9,6 +9,6 @@
 | BUG-111-03 | varredura axe sem `document-title` | job `e2e-browser` (CI) |
 
 
-Na segunda rodada apareceram dois nós de `color-contrast` adicionais (marca da sidebar e canal selecionado); aguardando reexecução com resumo "sem achados" no head final — **[NV]**.
+Segunda rodada: dois nós de `color-contrast` adicionais (marca da sidebar e canal selecionado) corrigidos; reexecução final no head `30d90f286` sem achados.
 
-Nenhuma regra `disabledRules`/tag foi removida. O resumo "sem achados" precisa aparecer no log do job no head exato do PR — **[NV]** até execução.
+Nenhuma regra `disabledRules`/tag foi removida. Resumo "sem achados" observado no log do job `45048150000` no head exato do PR.
