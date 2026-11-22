@@ -15,6 +15,8 @@
 
 ## R2 — Wildcard de recuperação (ciclo 107, PR #353)
 
+**Ordem obrigatória:** executar os passos 1–5 **antes** da remoção/rotação de `FLORA_BOOTSTRAP__ADMIN_EMAIL` solicitada à Autônoma (INBOX #133). Após a remoção, não repetir os passos 1–5 como falha: o resultado esperado passa a ser apenas 401 por ausência de opt-in. O passo 6 registra a transição e depende de confirmação ao vivo — **[NV]**.
+
 1. Com `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` e senha temporária: login com `email="*"` selects apenas usuário ativo com papel `Admin`/`Owner`.
 2. **Esperado**: 200 + `session_token` na primeira tentativa.
 3. Repetir a mesma chamada: **esperado 401** genérico (`invalid_credentials`), sem vazamento de qual condição falhou.
