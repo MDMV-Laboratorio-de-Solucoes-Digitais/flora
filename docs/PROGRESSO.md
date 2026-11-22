@@ -450,6 +450,6 @@ permanecem intactas; apenas acréscimos.
 
 ## Estado verificado — 2026-11-22 (ciclo 113)
 
-- Inventário de bugs atualizado: D15, OIDC e WCAG-111 marcados como verificados com evidência local.
+- Inventário de bugs atualizado: D15 e OIDC com evidência local; WCAG-111 com evidência de CI remoto (PR #370).
 - Testes focados: D15 2 passed, OIDC 1 passed; gate PASS (10 legs / 77 pisos).
 - **[NV]**: produção/IdP/staging; artefatos em `specs/113-bug-status/*`.
