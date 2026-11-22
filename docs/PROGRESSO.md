@@ -385,3 +385,9 @@ permanecem intactas; apenas acréscimos.
 ### Correção de contagem — 2026-11-21 (append-only)
 
 - A nota acima registrou "7 testes novos" no ciclo 104. O correto é **4 testes novos** (arquivo `tests/unit/jwt.test.ts`, 4 blocos `it`): o total do projeto passou de 45 para 49. Os "7" citados eram casos dentro de um único bloco, não testes.
+
+## Estado verificado — 2026-11-22 (ciclo 105)
+
+- Ciclo 105 expôs a UI de arquivos: rota `/files`, link na navegação, limite 10 MiB coerente com o Seed e download na origem da API. Gate PASS (10 legs / 77 pisos), Vitest 50/50, check/lint ok, validação em navegador real (upload válido e limite rejeitado em pt-BR).
+- Artefatos: `specs/105-files-ui/*`, `.specify/assessments/105-files-ui/*`, `.specify/validations/105-files-ui/validate.md` (R4 APROVADO), `.specify/releases/105-files-ui/release.md` (R7), `docs/governance/2026-11-22-105-files-ui.md`.
+- **[NV]**: staging real, CI/merge/deploy do PR 105, lista após reload e clique final no download.
