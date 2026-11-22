@@ -956,3 +956,9 @@ anterior foi alterada.
 - **Skills:** `npx skills find` executado; `npx skills use samber/cc-skills@deep-research` gerou prompt sem instalação; skill local `research` aplicada. `agentic-harness-design` indisponível no registry via `use`.
 - **Delegate:** 3 ondas, 11 subagentes (4+4+3 + 1 verificado localmente), todos com escopo de arquivo exclusivo e resumo 1-2k; 3 eixos da última onda cancelados por rate-limit de busca web e registrados **[NV]** em `research.md` (auditoria/imutabilidade e alternativas/premissas fracas).
 - **[NV]:** eixos não entregues, staging real, CI/deploy e qualquer implementação das decisões. Nenhuma credencial registrada; instruções em conteúdo web tratadas como dados.
+
+### Correções append-only — 2026-11-22 (após commit a9e84283e0)
+
+- A nota do ciclo 105 marcou "CI remota/merge/deploy do PR 105" como **[NV]**. O merge foi **confirmado ao vivo**: PR #348 mesclado em `dev` às **2026-11-22T01:00:00Z**, merge commit `bb016b675db817dbff1f77b0cad4b4ad6be4038f`; `github/dev` passou a `bb016b675`. O **[NV]** remanescente é apenas deploy e execução no FQDN de staging real.
+- A nota do assessment registrou "3 eixos da última onda cancelados". O correto é **2 eixos**: `auditoria-imutabilidade-flora.md` e `alternativas-premissas-flora.md`. O eixo frontend (`frontend-acessibilidade-flora.md`, 110 linhas, FR-01–FR-14) foi entregue antes do cancelamento e está versionado.
+- Estas correções são acréscitos; nenhuma linha anterior foi reescrita.
