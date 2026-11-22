@@ -409,3 +409,8 @@ permanecem intactas; apenas acréscimos.
 - D11 concluído: wildcard restrito a Admin/Owner e one-shot com marcador persistente; 13+4 contratos DB e 70 testes unitários passaram; gate PASS (10 legs / 77 pisos).
 - Artefatos: `specs/107-wildcard-one-shot/*`, bug `d11-*`, ADR 0007, R4 APROVADO, R7, `docs/governance/2026-11-22-107-wildcard-one-shot.md`.
 - **[NV]**: staging, credenciais e restart; resta o ADR Zitadel/passkey do INBOX.
+
+## Estado verificado — 2026-11-22 (fechamento do INBOX)
+
+- ADR 0008 registra o deferimento de Zitadel/passkey com quatro gates de reentrada e sem promessa de não-repúdio.
+- INBOX do SE integralmente atendido: recebimento confirmado, D15 e D11 implementados e mesclados, MINOR documentado.

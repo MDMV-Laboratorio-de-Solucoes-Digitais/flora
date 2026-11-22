@@ -993,3 +993,10 @@ anterior foi alterada.
 - **Evidência:** 13 contratos DB de bootstrap + 4 de login wildcard passaram no Postgres local; 70 testes unitários; gate PASS (10 legs / 77 pisos); fmt exit 0.
 - **Correções durante a implementação:** SQL com `concat!` (a continuação `\` colava `uJOIN`), imports do teste bootstrap reconstruídos, `-D unused-results` e `collapsible_if` resolvidos.
 - **[NV]:** staging/produção, credenciais, restart multiréplica. Resta apenas o item MINOR do INBOX (ADR Zitadel/passkey).
+
+### Fechamento do INBOX autorizado — 2026-11-22T05:20:44Z (append-only)
+
+- PRs mesclados: **#351** (confirmação de recebimento), **#352** (D15 — `HitlReceiptPort`), **#353** (D11 — wildcard one-shot). `github/dev` = `3c8afa1b3`; nenhum PR aberto após #353.
+- Item **MINOR** concluído: ADR `0008-zitadel-passkey-deferral.md` com quatro gates de reentrada (provedor OIDC, passkey/WebAuthn, service accounts RFC 7523/10070, auditoria HITL ligada ao principal verificado); sem promessa de não-repúdio sem WebAuthn.
+- **Todos os três itens do INBOX estão finalizados**; nenhuma credencial real foi registrada e a factory permaneceu somente leitura em `b1deab1`.
+- **[NV]**: execução real em staging/produção, Zitadel/passkey e rotação das variáveis temporárias de recuperação.
