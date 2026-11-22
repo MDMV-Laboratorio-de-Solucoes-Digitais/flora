@@ -391,3 +391,9 @@ permanecem intactas; apenas acréscimos.
 - Ciclo 105 expôs a UI de arquivos: rota `/files`, link na navegação, limite 10 MiB coerente com o Seed e download na origem da API. Gate PASS (10 legs / 77 pisos), Vitest 50/50, check/lint ok, validação em navegador real (upload válido e limite rejeitado em pt-BR).
 - Artefatos: `specs/105-files-ui/*`, `.specify/assessments/105-files-ui/*`, `.specify/validations/105-files-ui/validate.md` (R4 APROVADO), `.specify/releases/105-files-ui/release.md` (R7), `docs/governance/2026-11-22-105-files-ui.md`.
 - **[NV]**: staging real, CI/merge/deploy do PR 105, lista após reload e clique final no download.
+
+## Estado verificado — 2026-11-22 (assessment multiagente)
+
+- Assessment `avaliacao-arquitetura-multiagente-flora`: 9 eixos pesquisados com fontes primárias em pt-BR/en (zh-Hans secundário; es/fr/de/ja **[NV]**), 152 decisões ADAPT/ADOPT/DEFER/AVOID/REJECT, veredito GO documental.
+- Nenhuma implementação autorizada por este assessment; próximos ciclos devem tratar decisões ADOPT/ADAPT individualmente com gates e PR próprio.
+- Dois eixos não entregues por rate-limit de busca web estão marcados **[NV]**; não há pretensão de cobertura integral do PDF.
