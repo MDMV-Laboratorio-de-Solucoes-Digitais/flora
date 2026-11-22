@@ -6,6 +6,7 @@
 pub mod app;
 pub mod bootstrap;
 pub mod database;
+pub mod hitl;
 pub mod messaging;
 pub mod oidc;
 pub mod search;
