@@ -962,3 +962,9 @@ anterior foi alterada.
 - A nota do ciclo 105 marcou "CI remota/merge/deploy do PR 105" como **[NV]**. O merge foi **confirmado ao vivo**: PR #348 mesclado em `dev` às **2026-11-22T01:00:00Z**, merge commit `bb016b675db817dbff1f77b0cad4b4ad6be4038f`; `github/dev` passou a `bb016b675`. O **[NV]** remanescente é apenas deploy e execução no FQDN de staging real.
 - A nota do assessment registrou "3 eixos da última onda cancelados". O correto é **2 eixos**: `auditoria-imutabilidade-flora.md` e `alternativas-premissas-flora.md`. O eixo frontend (`frontend-acessibilidade-flora.md`, 110 linhas, FR-01–FR-14) foi entregue antes do cancelamento e está versionado.
 - Estas correções são acréscitos; nenhuma linha anterior foi reescrita.
+
+### Verificação de herança por conteúdo — 2026-11-22T01:40Z (append-only)
+
+- `git cherry github/dev <branch>` marcava quatro commits como `+` (`28d317d9e`, `8906a0c1e`, `c0fb4518b`, `6d798066f`) por squash/rebase. Comparação por conteúdo em worktree temporário de `github/dev@1a5054128`: `git show <sha> | git apply --reverse --check` deu SIM para `8906a0c1e` e `6d798066f`, e NÃO para `28d317d9e` e `c0fb4518b` porque os arquivos foram melhorados depois.
+- Inspeção direta: `.forgejo/workflows/github-evidence.yml` existe em `dev` e contém a versão posterior (com `BASE_SHA`, `User-Agent` e fallback de check-runs); os 32 arquivos do commit de i18n 099 existem em `dev`, com as chaves pt-BR presentes (`auth.login.submit`, `nav.tasks`, `kanban.inProgress`, `file.download`). Portanto nenhum trabalho inacabado foi perdido; nenhum branch de terceiros foi tocado.
+- `git stash list` → **0 stashes**. Worktree temporário `/tmp/flora-qa-inherit` removido ao final.
