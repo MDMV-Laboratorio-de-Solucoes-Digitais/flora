@@ -381,3 +381,7 @@ permanecem intactas; apenas acréscimos.
 - Ciclo 104: e-mail real da sessão exibido na navegação via `emailFromToken` (fail-closed) + `$derived`; 7 testes novos (49/49 no total), check/lint ok, medição em navegador real.
 - Artefatos: `specs/104-session-identity/*`, `.specify/assessments/104-session-identity/*`, `.specify/validations/104-session-identity/validate.md` (R4 APROVADO), `.specify/releases/104-session-identity/release.md` (R7), `docs/governance/2026-11-21-104-session-identity.md`.
 - Dívidas: autoria no chat, DMs placeholder, UI de arquivos ausente; **[NV]** no staging real e no CI remoto.
+
+### Correção de contagem — 2026-11-21 (append-only)
+
+- A nota acima registrou "7 testes novos" no ciclo 104. O correto é **4 testes novos** (arquivo `tests/unit/jwt.test.ts`, 4 blocos `it`): o total do projeto passou de 45 para 49. Os "7" citados eram casos dentro de um único bloco, não testes.

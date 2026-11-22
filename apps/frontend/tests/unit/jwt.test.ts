@@ -13,7 +13,7 @@ describe('emailFromToken', () => {
 	});
 
 	it('handles UTF-8 e-mails and base64url without padding', () => {
-		expect(emailFromToken(tokenWith({ email: 'joao@exemplo.test' }))).toBe('joao@exemplo.test');
+		expect(emailFromToken(tokenWith({ email: 'joão@exemplo.test' }))).toBe('joão@exemplo.test');
 	});
 
 	it('returns null for absent or malformed tokens', () => {

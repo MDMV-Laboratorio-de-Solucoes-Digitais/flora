@@ -17,7 +17,7 @@ FR match= True ['FR-001','FR-002','FR-003','FR-004','FR-005']
 SC match= True ['SC-001','SC-002','SC-003']
 ```
 
-Decodificação base64url com `atob` + `TextDecoder`, fail-closed para tokens ausentes/malformados/payload sem `email` válido (testes Vitest: 14 arquivos / 49 testes no total do projeto, incluindo 7 casos novos).
+Decodificação base64url com `atob` + `TextDecoder`, fail-closed para tokens ausentes/malformados/payload sem `email` válido (testes Vitest: 14 arquivos / 49 testes no total do projeto, incluindo **4 testes novos**).
 
 ## Rastreabilidade
 

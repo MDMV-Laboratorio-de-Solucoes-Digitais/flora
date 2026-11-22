@@ -5,7 +5,7 @@
 
 **Date**: 2026-11-21
 
-**Format**: `[ID] Description` — T001..T008 em aberto (**fila a executar**); gates do alvo **[NV]** até o handoff. Os números de linha citados são do baseline `23ff4bc809`.
+**Format**: `[ID] Description` — T001..T008 (fila original; execução registrada no status abaixo); gates do alvo **PASS** no handoff. Os números de linha citados são do baseline `23ff4bc809`.
 **Status de execução (2026-11-21):** T001–T008 executados e verificados; os `[ ]` abaixo são a fila original, não o estado corrente. Correções de lint registradas no `converge.md`.
 
 ## Phase 1 — Diagnóstico e artefatos de assessoria
