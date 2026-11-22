@@ -14,7 +14,7 @@ async function auditAccessibility(page: Page, route: string): Promise<void> {
 		v.nodes.map((n) => `${v.id} [${v.impact ?? 'indefinido'}] ${JSON.stringify(n.target)}`)
 	);
 	const resumo = `WCAG 2.2 AA em ${route}: ${linhas.length === 0 ? 'sem achados' : linhas.join('; ')}`;
-	console.info(resumo);
+	process.stdout.write(`${resumo}\n`);
 	test.info().annotations.push({ type: 'wcag-axe', description: resumo });
 }
 

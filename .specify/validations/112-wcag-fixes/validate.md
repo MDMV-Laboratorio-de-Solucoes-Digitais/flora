@@ -10,7 +10,7 @@
 | `gh pr checks <PR> --watch` | pendente — preencher após o PR |
 | `gh run view <run>` filtrando `WCAG 2.2 AA em` | pendente — preencher após o PR |
 | Code Review agêntico | pendente — preencher após o PR |
-
-Roteiro: `test-roadmap.md`.-bugs fix/test registrados em `.specify/bugs/wcag-axe-2026-11-22/`. Nenhuma regra axe desativada.
+Roteiro: `test-roadmap.md`. Bugs fix/test registrados em `.specify/bugs/wcag-axe-2026-11-22/`. ACR encontrou blocker determinístico (`no-console`) no head `6288a85`, corrigido em novo commit.
+Nenhuma regra axe desativada.
 
 **Conclusão:** R4 APROVADO PARA CI; R7 somente após green + roteiro + ACR.
