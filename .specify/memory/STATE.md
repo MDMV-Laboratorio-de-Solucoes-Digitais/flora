@@ -985,3 +985,11 @@ anterior foi alterada.
 - **Evidência:** `cargo test -p flora-api hitl_receipt` → **2 passed**; fmt/check/clippy exit 0; gate PASS (10 legs / 77 pisos). `hmac 0.13` com `sha2 0.11` (0.12 é incompatível); `hex::encode` para assinatura.
 - **[NV]:** round-trip ao vivo com a Autônoma, transporte HTTP, staging/produção e credenciais reais.
 - **Próximos itens do INBOX:** D11 (wildcard one-shot por papel + ADR com expiração) e MINOR (ADR Zitadel/passkey com quatro gates).
+
+## Ciclo 107 — wildcard one-shot (2026-11-22, append-only)
+
+- **Âncora:** `feature.json` → `specs/107-wildcard-one-shot`; branch `feature/107-wildcard-one-shot` @ `df8c1e185`; bug `.specify/bugs/d11-wildcard-unbounded/` (D11 do INBOX autorizado).
+- **Entrega:** `WILDCARD_ADMIN_SQL` único com papel `Admin`/`Owner`; tabela singleton `bootstrap_wildcard_state` com `pg_advisory_xact_lock` e CAS; startup não reaplica hash após consumo; login consome antes da sessão e falha 401; ADR `0007` com expiração 2026-11-29.
+- **Evidência:** 13 contratos DB de bootstrap + 4 de login wildcard passaram no Postgres local; 70 testes unitários; gate PASS (10 legs / 77 pisos); fmt exit 0.
+- **Correções durante a implementação:** SQL com `concat!` (a continuação `\` colava `uJOIN`), imports do teste bootstrap reconstruídos, `-D unused-results` e `collapsible_if` resolvidos.
+- **[NV]:** staging/produção, credenciais, restart multiréplica. Resta apenas o item MINOR do INBOX (ADR Zitadel/passkey).

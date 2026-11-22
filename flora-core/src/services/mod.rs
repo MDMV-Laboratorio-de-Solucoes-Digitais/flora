@@ -1,5 +1,6 @@
 //! Service implementations for Flora Workspace.
 
+mod bootstrap_recovery;
 mod channel_service;
 mod draft_service;
 mod file_service;
@@ -12,6 +13,9 @@ mod rbac_service;
 mod session_service;
 mod task_service;
 mod workspace_service;
+pub use bootstrap_recovery::{
+    WILDCARD_ADMIN_SQL, find_wildcard_admin, try_consume_wildcard, wildcard_consumed,
+};
 
 pub use channel_service::ChannelService;
 pub use draft_service::DraftService;
