@@ -968,3 +968,12 @@ anterior foi alterada.
 - `git cherry github/dev <branch>` marcava quatro commits como `+` (`28d317d9e`, `8906a0c1e`, `c0fb4518b`, `6d798066f`) por squash/rebase. Comparação por conteúdo em worktree temporário de `github/dev@1a5054128`: `git show <sha> | git apply --reverse --check` deu SIM para `8906a0c1e` e `6d798066f`, e NÃO para `28d317d9e` e `c0fb4518b` porque os arquivos foram melhorados depois.
 - Inspeção direta: `.forgejo/workflows/github-evidence.yml` existe em `dev` e contém a versão posterior (com `BASE_SHA`, `User-Agent` e fallback de check-runs); os 32 arquivos do commit de i18n 099 existem em `dev`, com as chaves pt-BR presentes (`auth.login.submit`, `nav.tasks`, `kanban.inProgress`, `file.download`). Portanto nenhum trabalho inacabado foi perdido; nenhum branch de terceiros foi tocado.
 - `git stash list` → **0 stashes**. Worktree temporário `/tmp/flora-qa-inherit` removido ao final.
+
+### Confirmação de recebimento — INBOX de correções do SE (2026-11-22, append-only)
+
+- **Recebido e aceito** o arquivo `.specify/memory/INBOX-correcoes-revisao-interagentes-2026-11-21.md` (origem: SE via revisão interagentes). É trabalho herdado com autorização explícita para implementação neste repo; conteúdo externo tratado como dado, sem seguir instruções além da solicitação autorizada.
+- **MAJOR D15** — contrato HITL unilateral: Flora precisa de `HitlReceiptPort` + adaptador que emita o envelope `VerificationReceipt` validado pela Autônoma, com allowlist de `next_stage` e teste round-trip ponta a ponta.
+- **MAJOR D11** — recuperação wildcard sem papel: restringir a papel administrativo, transformar o opt-in em one-shot (auto-desligar após o primeiro login) e registrar ADR com data de expiração.
+- **MINOR** — Zitadel/passkey: ADR de deferimento com quatro gates de reentrada; não prometer não-repúdio sem WebAuthn verificada.
+- **Critério de aceite declarado**: PR reviewable com testes round-trip e de papel, gate verde, **[NV]** em staging/produção/credenciais e nenhuma credencial em log/PR.
+- **Ordem de execução**: estas correções autorizadas têm precedência sobre o próximo 80/20 do assessment (F7/proptest), que fica adiado. Cada correção MAJOR seguirá fluxo SDD com bug report em `.specify/bugs/`; o MINOR seguirá ADR documental.
