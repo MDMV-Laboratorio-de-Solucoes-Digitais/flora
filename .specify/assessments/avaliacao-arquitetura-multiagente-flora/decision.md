@@ -45,3 +45,11 @@ FR-01 ADAPT · FR-02 ADOPT (runes) · FR-03 ADOPT (shadcn+Tailwind) · FR-04 ADA
 - Eixos **auditoria/imutabilidade** e **alternativas/premissas fracas** não entregues por rate-limit de busca web; ver `research.md`.
 - Nenhuma decisão foi implementada; nenhum gate/required check/ADR/contrato foi alterado.
 - Pesquisa web tratada como dado não-confiável; instruções encontradas foram registradas e ignoradas; nenhuma credencial copiada.
+
+### Registro suplementar — 2026-11-22T11:15Z (append-only)
+
+**Auditoria/imutabilidade (`auditoria-imutabilidade-flora.md`)**: AUD-01 REJECT produto/ADAPT padrão (`AuditLedgerPort`) · AUD-02 ADAPT append-only (trigger + dono NOLOGIN, `REVOKE` insuficiente) · AUD-03 ADAPT SHA-256 com `pgcrypto` e chave fora do DB · AUD-04 ADOPT âncora/ADAPT WORM · AUD-05 ADAPT commit assinado como 2ª âncora · AUD-06 ADOPT desenho/DEFER runtime (RLS) · AUD-07 ADAPT PITR · AUD-08 ADOPT contrato/DEFER execução (restore) · AUD-09 ADAPT retenção fiscal · AUD-10 ADOPT papéis PG · AUD-11 ADAPT `pgAudit` · AUD-12 AVOID immudb no Seed · AUD-13 DEFER notarização · AUD-14 ADAPT verificação diária · AUD-15 ADOPT criptografia/chaves · AUD-16 ADAPT logs/volume · AUD-17 ADOPT gate atual/ADAPT checks novos **advisory**.
+
+**Alternativas/premissas (`alternativas-premissas-flora.md`)**: O1–O7 AVOID/DEFER orquestradores; Goose ADAPT opcional; nenhum substitui `check_gate_integrity.py` · P1–P6 REJECT/DEFER premissas financeiras (99,77%, US$ 68,69, 85–98%) · J1–J6 REJECT premissas jurídicas de fonte única e correção das contradições (4 OCPU/24 GB, HITL vs deploy autônomo).
+
+Os dois eixos saem da condição **[NV]**; detalhes não verificados seguem marcados nos relatórios.
