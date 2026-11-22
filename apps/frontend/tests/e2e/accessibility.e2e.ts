@@ -1,5 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { t } from '../../src/lib/i18n';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const ROUTES = ['/tasks', '/channels'] as const;
@@ -15,8 +17,20 @@ function describeViolations(
 	return `Acessibilidade WCAG 2.2 AA em ${route}:\n${linhas.join('\n')}`;
 }
 
+/** A sessão seed começa sem organização; seleciona Acme antes de navegar. */
+async function selectOrganization(page: Page): Promise<void> {
+	await page.goto('/select-org');
+	await expect(page.getByRole('heading', { name: t['org.selectTitle'] })).toBeVisible();
+	await page
+		.getByText('Acme Corporation')
+		.locator('xpath=../..')
+		.getByRole('button', { name: t['org.select'] })
+		.click();
+}
+
 for (const route of ROUTES) {
 	test(`acessibilidade: ${route} sem violações WCAG 2.2 AA`, async ({ page }) => {
+		await selectOrganization(page);
 		await page.goto(route);
 		await expect(page).toHaveURL(new RegExp(`${route}$`));
 

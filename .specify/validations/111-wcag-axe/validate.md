@@ -12,6 +12,10 @@
 
 FR-001/002/003 rastreados e materializados. Nenhum required check foi relaxado. A varredura real de acessibilidade depende do job advisory `e2e-browser` no head exato do PR — **[NV]** até execução remota observada.
 
+## Pós-CI (2026-11-22)
+
+PR #366: `e2e-browser` falhou no head `05cae89be` por `/tasks` e `/channels` redirecionarem para `/select-org`. Corrigido no teste com seleção prévia da organização Acme; `bun run check` reexecutado: 4886 arquivos, 0 erros. Novo CI pendente — **[NV]** até verde observado.
+
 ## Conclusão
 
 **R4 APROVADO PARA CI** com ressalva local documentada; segue para R7 e PR.
