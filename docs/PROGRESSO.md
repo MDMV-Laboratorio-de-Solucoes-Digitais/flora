@@ -428,3 +428,8 @@ permanecem intactas; apenas acréscimos.
 ## Estado verificado — 2026-11-22 (assessment 11 eixos)
 
 - Auditoria/imutabilidade e alternativas/premissas entregues: 11 eixos, 188 decisões, nenhum gate/código/ADR alterado.
+
+## Estado verificado — 2026-11-22 (ciclo 110)
+
+- F6 concluído: piloto de mutação revelou bug real de dedup em `Role::add_permission`; 42 mutantes medidos, 56 testes, gate PASS (10 legs / 77 pisos).
+- Artefatos: `specs/110-mutation-pilot/*`, R4 APROVADO, R7, `docs/governance/2026-11-22-110-mutation-pilot.md`.
