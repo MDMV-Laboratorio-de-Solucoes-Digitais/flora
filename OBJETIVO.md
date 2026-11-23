@@ -349,3 +349,10 @@ permanece como registro do momento da medição; nenhuma linha foi reescrita.
 - Ciclo 114: asserção WCAG 2.2 AA obrigatória em `seed-flow.e2e.ts` + correções e auditoria da rota `/files` (issues `#373`..`#377`), sem alterar required checks ou desativar regras axe.
 - Gate local: `check_gate_integrity.py` PASS (4 required checks, 10 legs / 77 pisos); `svelte-check` 0/0; `lint` exit 0; Vitest `server` 15/53; `vite build` exit 0.
 - **[NV]** CI remoto, ACR, modo escuro, staging real e produção; histórico preservado.
+
+### Estado verificado — 2026-11-23 (ciclo 115; append-only)
+
+- Recontagem via `find` (`feature/115-files-list-persistence`): `specs/` 105 diretórios (562), `.specify/assessments/` 103 (433), `.specify/validations/` 101 (109 pré-`evidence.md`), `.specify/releases/` 101 (101), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 115: listagem `GET /api/v1/files?workspace_id=<uuid>[&limit=<n>]` com guarda `ensure_member` + `ensure_workspace_in_org`, contrato `db_list_files_scoped_to_workspace_and_org`, lockstep `files: 6 -> 7` (78 pisos) e persistência em `/files` + Briefing de Compreensão (`tenant`) (`#379`..`#383`), sem alterar required checks.
+- Gate local (`task-402`): `check_gate_integrity.py` PASS (4 required checks, 10 legs / 78 pisos); `cargo fmt`/`clippy`/`flora-api files::tests` `2 passed`; `svelte-check` 0/0; `lint` exit 0; Vitest `server` `16/58`; `vite build` exit 0.
+- **[NV]** CI remoto (`db-tests`, `e2e-browser`), ACR, modo escuro, staging real e produção; histórico preservado.

@@ -6,7 +6,7 @@
 	import { t } from '$lib/i18n';
 
 	let { onUploadComplete, workspaceId } = $props<{
-		onUploadComplete?: (file: FileAttachment) => void;
+		onUploadComplete?: (file: FileAttachment, targetWorkspaceId: string) => void;
 		workspaceId?: string;
 	}>();
 
@@ -21,7 +21,8 @@
 				errorMessage = t['file.tooLarge'];
 				return;
 			}
-			if (!workspaceId) {
+			const targetWorkspaceId = workspaceId;
+			if (!targetWorkspaceId) {
 				errorMessage = t['file.workspaceRequired'];
 				return;
 			}
@@ -29,10 +30,10 @@
 			try {
 				const formData = new FormData();
 				formData.append('file', file);
-				formData.append('workspace_id', workspaceId);
+				formData.append('workspace_id', targetWorkspaceId);
 
 				const fileAttachment = await ApiClient.request<FileAttachment>(
-					`/api/v1/files/upload?workspace_id=${encodeURIComponent(workspaceId)}`,
+					`/api/v1/files/upload?workspace_id=${encodeURIComponent(targetWorkspaceId)}`,
 					{
 						method: 'POST',
 						body: formData
@@ -41,7 +42,7 @@
 				);
 
 				if (onUploadComplete) {
-					onUploadComplete(fileAttachment);
+					onUploadComplete(fileAttachment, targetWorkspaceId);
 				}
 
 				// Reset input
