@@ -55,6 +55,8 @@
 </script>
 
 {#if errorMessage}
-	<div class="error-message mb-2 text-sm text-red-500" role="alert">{errorMessage}</div>
+	<div class="error-message mb-2 text-sm text-red-700 dark:text-red-400" role="alert">
+		{errorMessage}
+	</div>
 {/if}
-<input type="file" class="text-sm" onchange={handleUpload} />
+<input type="file" aria-label={t['file.selectInput']} class="text-sm" onchange={handleUpload} />

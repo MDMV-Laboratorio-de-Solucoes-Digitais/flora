@@ -342,3 +342,10 @@ permanece como registro do momento da medição; nenhuma linha foi reescrita.
 - Alvo operacional confirmado: `/home/luis/development/MDMV/projetos/flora`; cwd `Arquivados/flora` é decoy sem `.specify/`. Gate `check_gate_integrity.py` PASS; PR #309 com 12 check-runs concluídos (11 success, 1 skipped) e `mergeable=clean`.
 - Contagens recontadas: `specs/` 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem índice (138 com ele). As cifras 70/70 acima são do snapshot 03:27Z e permanecem como histórico.
 - Proteção de `dev` verificada via `gh api`: 4 checks obrigatórios, `enforce_admins=true`, `required_pull_request_reviews=null`. A policy deste prompt ainda exige aprovador distinto; como não há reviews, merge não foi realizado. **[NV]** produção/Forgejo.
+
+### Estado verificado — 2026-11-22 (ciclo 114; append-only)
+
+- Recontagem via `find` (`feature/114-wcag-ci-guard`): `specs/` 104 diretórios (556 arquivos), `.specify/assessments/` 102 (428), `.specify/validations/` 100 (106 pré-`evidence.md`), `.specify/releases/` 100 (100), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 114: asserção WCAG 2.2 AA obrigatória em `seed-flow.e2e.ts` + correções e auditoria da rota `/files` (issues `#373`..`#377`), sem alterar required checks ou desativar regras axe.
+- Gate local: `check_gate_integrity.py` PASS (4 required checks, 10 legs / 77 pisos); `svelte-check` 0/0; `lint` exit 0; Vitest `server` 15/53; `vite build` exit 0.
+- **[NV]** CI remoto, ACR, modo escuro, staging real e produção; histórico preservado.
