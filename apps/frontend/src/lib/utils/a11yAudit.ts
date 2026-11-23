@@ -22,12 +22,15 @@ export interface WcagAuditSummary {
 
 /** Formata cada nó violado no padrão legível `id [impacto] [seletor]`. */
 export function formatWcagViolations(violations: readonly AxeViolation[]): string[] {
-	return violations.flatMap((violation) =>
-		violation.nodes.map(
-			(node) =>
-				`${violation.id} [${violation.impact ?? 'indefinido'}] ${JSON.stringify(node.target)}`
-		)
-	);
+	return violations.flatMap((violation) => {
+		const impact = violation.impact ?? 'indefinido';
+		if (violation.nodes.length === 0) {
+			return [`${violation.id} [${impact}] []`];
+		}
+		return violation.nodes.map(
+			(node) => `${violation.id} [${impact}] ${JSON.stringify(node.target)}`
+		);
+	});
 }
 
 /** Constrói o resumo determinístico da auditoria WCAG 2.2 AA para uma rota. */
@@ -40,6 +43,6 @@ export function summarizeWcagAudit(
 	return {
 		findings,
 		summary: `WCAG 2.2 AA em ${route}: ${detail}`,
-		passed: findings.length === 0
+		passed: violations.length === 0 && findings.length === 0
 	};
 }

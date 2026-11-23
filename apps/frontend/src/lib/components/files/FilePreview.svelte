@@ -24,7 +24,7 @@
 	</div>
 	<a
 		href={getDownloadUrl()}
-		class="text-blue-700 underline hover:text-blue-800 dark:text-blue-400"
+		class="text-blue-700 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
 		download
 	>
 		{t['file.download']}

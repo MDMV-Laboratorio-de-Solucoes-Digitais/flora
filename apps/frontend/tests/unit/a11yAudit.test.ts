@@ -48,4 +48,14 @@ describe('a11yAudit', () => {
 			passed: false
 		});
 	});
+
+	it('treats a violation without nodes as failed rather than silently passing', () => {
+		expect(
+			summarizeWcagAudit('/channels', [{ id: 'landmark-one-main', impact: 'moderate', nodes: [] }])
+		).toEqual({
+			findings: ['landmark-one-main [moderate] []'],
+			summary: 'WCAG 2.2 AA em /channels: landmark-one-main [moderate] []',
+			passed: false
+		});
+	});
 });
