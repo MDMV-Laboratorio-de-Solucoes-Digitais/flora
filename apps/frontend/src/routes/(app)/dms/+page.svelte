@@ -1,10 +1,27 @@
 <script lang="ts">
-	import ChatLayout from '$lib/components/chat/ChatLayout.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { t } from '$lib/i18n';
 </script>
 
-<div class="p-6">
-	<h1 class="mb-4 text-2xl font-bold">{t['dms.title']}</h1>
-	<!-- For MVP, we just use a hardcoded DM channel ID -->
-	<ChatLayout channelId="dm-channel-1" />
+<div class="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+	<h1 class="text-2xl font-bold">{t['dms.title']}</h1>
+
+	<Card>
+		<CardHeader>
+			<CardTitle>{t['dms.unavailableTitle']}</CardTitle>
+			<CardDescription>{t['dms.unavailableDescription']}</CardDescription>
+		</CardHeader>
+		<CardContent></CardContent>
+		<CardFooter>
+			<Button variant="outline" href="/channels">{t['dms.goToChannels']}</Button>
+		</CardFooter>
+	</Card>
 </div>

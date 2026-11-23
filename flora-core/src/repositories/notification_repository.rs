@@ -59,6 +59,29 @@ impl NotificationRepository for PgNotificationRepository {
         Ok(crate::models::Page::new(notifications, None))
     }
 
+    async fn find_unread_by_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        pagination: Pagination,
+    ) -> Result<crate::models::Page<Notification>> {
+        let limit = pagination.resolved_limit();
+        let notifications = sqlx::query_as::<_, Notification>(
+            "SELECT id, organization_id, user_id, event_type, target_id, target_url, is_read, created_at, updated_at
+             FROM notifications
+             WHERE user_id = $1 AND organization_id = $2 AND is_read = false
+             ORDER BY created_at DESC
+             LIMIT $3",
+        )
+        .bind(user_id)
+        .bind(organization_id)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(crate::models::Page::new(notifications, None))
+    }
+
     async fn find_by_user_id(
         &self,
         user_id: Uuid,
@@ -73,6 +96,29 @@ impl NotificationRepository for PgNotificationRepository {
              LIMIT $2",
         )
         .bind(user_id)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(crate::models::Page::new(notifications, None))
+    }
+
+    async fn find_by_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        pagination: Pagination,
+    ) -> Result<crate::models::Page<Notification>> {
+        let limit = pagination.resolved_limit();
+        let notifications = sqlx::query_as::<_, Notification>(
+            "SELECT id, organization_id, user_id, event_type, target_id, target_url, is_read, created_at, updated_at
+             FROM notifications
+             WHERE user_id = $1 AND organization_id = $2
+             ORDER BY created_at DESC
+             LIMIT $3",
+        )
+        .bind(user_id)
+        .bind(organization_id)
         .bind(limit)
         .fetch_all(&self.pool)
         .await
@@ -142,6 +188,24 @@ impl NotificationRepository for PgNotificationRepository {
             .execute(&self.pool)
             .await
             .map_err(Error::from_sqlx)?;
+        Ok(())
+    }
+
+    async fn mark_all_as_read_in_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<()> {
+        let _ = sqlx::query(
+            "UPDATE notifications
+             SET is_read = true, updated_at = NOW()
+             WHERE user_id = $1 AND organization_id = $2 AND is_read = false",
+        )
+        .bind(user_id)
+        .bind(organization_id)
+        .execute(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
         Ok(())
     }
 
