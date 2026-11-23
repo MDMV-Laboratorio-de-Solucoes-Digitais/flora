@@ -25,3 +25,11 @@
   - `bun run build`: `✓ built in 3m 10s` (`@sveltejs/adapter-node` `✔ done`).
 - **Briefing de Compreensão (`tenant`)**: preenchido em `docs/governance/2026-11-23-117-briefing-compreensao.md`.
 - **[NV]**: execução remota de `db-tests` (Postgres 18), `e2e-browser` (Passos 6 e 7 + WCAG 2.2 AA), ACR independente, tema escuro real e staging/produção.
+
+## Pós-CI e ACR independente (append-only, 2026-11-23)
+
+- **Hardening pós-ACR (`189edd4fe`, `task-496`)**: após ressalvas `MEDIUM-1` / `MEDIUM-2` / `LOW-3` do revisor `052fd698`, centralizou-se deduplicação em voo e `syncContext`/`loadSequence` em `NotificationStore.svelte.ts`, extraindo `buildNotificationContextKey` e `apps/frontend/src/lib/api/notifications.ts`. Revalidação local (`task-496`): `svelte-check` 0/0, `prettier`/`eslint` exit 0, Vitest `18 files / 71 tests passed`, `vite build` `25.33s`.
+- **ACR final (`dfa9e102`, modelo `pro`)**: **`APROVADO`** sobre `189edd4fe` ([PR #396 comment #2](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/396#issuecomment-7101299896)).
+- **CI remoto (`189edd4fe`)**: [`Rust CI 45174768424`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768424) (`rust-build`, `dependency-review`, `supply-chain-vet`, `db-tests` `80/80` incl. `notifications: passed=6 floor=6`, `e2e-browser` `4 passed (42.1s)` e WCAG 2.2 AA `sem achados` em `/tasks`, `/channels`, `/files`, `/notifications`, `/dms`) + [`CI 45174768337`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768337) (`frontend-build`) `success`.
+- **Evidência formal**: `.specify/validations/117-notifications-ui-and-honest-navigation/evidence.md`.
+- **Restante `[NV]`**: tema escuro real no navegador e staging/produção externos.

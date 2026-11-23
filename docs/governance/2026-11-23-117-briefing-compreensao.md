@@ -44,6 +44,7 @@ cargo test -p flora-tests contract::notifications::db_notifications::db_notifica
 
 ## [NV]
 
-- Execução ao vivo do contrato DB `db_notifications_org_scoped_target_url_and_read_all` em Postgres 18 e do smoke Chromium `e2e-browser` (validados remotamente no CI do PR).
-- Varredura WCAG em tema escuro real e staging/produção externos permanecem `[NV]`.
-- Políticas `CREATE POLICY` de RLS em runtime permanecem desativadas nesta fase (`ADR-0005`/`ADR-0006`).
+- Contrato DB `db_notifications_org_scoped_target_url_and_read_all` (Postgres 18, `notifications: 6/6`, total `80/80`) e smoke Chromium `e2e-browser` (`4 passed`, WCAG 2.2 AA `sem achados`) foram **verificados ao vivo** no CI do PR #396 (`45174768424`); permanecem `[NV]` apenas:
+  - Varredura WCAG em tema escuro real no navegador.
+  - Staging e produção externos (`Coolify` fora do gate de merge em `dev`).
+  - Políticas `CREATE POLICY` de RLS em runtime (`ADR-0005`/`ADR-0006`).
