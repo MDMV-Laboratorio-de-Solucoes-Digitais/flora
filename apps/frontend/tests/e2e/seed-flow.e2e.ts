@@ -70,10 +70,18 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(todo.getByText(title, { exact: true })).toBeVisible();
 	await expect(todo.getByText(description, { exact: true })).toBeVisible();
 
-	// 5. files — reuse rotated session to verify /files route and WCAG 2.2 AA compliance.
+	// 5. files — reuse rotated session to verify /files GET resolution, empty state, and WCAG 2.2 AA compliance.
+	const filesListResponsePromise = page.waitForResponse(
+		(response) =>
+			response.url().includes('/api/v1/files?workspace_id=') &&
+			response.request().method() === 'GET'
+	);
 	await page.goto('/files');
+	const filesListResponse = await filesListResponsePromise;
+	expect(filesListResponse.status()).toBe(200);
 	await expect(page.getByRole('heading', { name: t['files.title'], level: 1 })).toBeVisible();
 	await expect(page.getByLabel(t['files.workspace'])).toBeEnabled();
+	await expect(page.getByRole('alert')).toHaveCount(0);
 	await expect(page.getByText(t['files.empty'])).toBeVisible();
 	await auditAccessibility(page, '/files');
 });

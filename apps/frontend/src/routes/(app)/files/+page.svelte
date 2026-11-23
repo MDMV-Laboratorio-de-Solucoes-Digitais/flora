@@ -30,6 +30,8 @@
 			if (preferred) {
 				selectedWorkspaceId = preferred.id;
 				authState.setWorkspace(preferred.id);
+			} else {
+				authState.setWorkspace(null);
 			}
 		}
 	}
@@ -44,6 +46,7 @@
 		const seq = ++loadSeq;
 		isLoadingFiles = true;
 		errorMessage = '';
+		successMessage = '';
 		try {
 			const items = await ApiClient.request<FileAttachment[]>(filesQueryPath(workspaceId));
 			if (seq === loadSeq) {
@@ -65,14 +68,15 @@
 		selectedWorkspaceId = target.value;
 		successMessage = '';
 		errorMessage = '';
-		if (selectedWorkspaceId) {
-			authState.setWorkspace(selectedWorkspaceId);
-		}
+		authState.setWorkspace(selectedWorkspaceId || null);
 		fileStore.clear();
 		await loadFiles(selectedWorkspaceId);
 	}
 
-	function onUploadComplete(file: FileAttachment) {
+	function onUploadComplete(file: FileAttachment, targetWorkspaceId?: string) {
+		if (targetWorkspaceId && targetWorkspaceId !== selectedWorkspaceId) {
+			return;
+		}
 		fileStore.addFile(file);
 		successMessage = format('files.uploaded', { name: file.fileName });
 		errorMessage = '';
@@ -87,6 +91,7 @@
 			await goto('/select-org');
 			return;
 		}
+		fileStore.clear();
 		isLoading = true;
 		try {
 			await loadWorkspaces();
@@ -96,6 +101,7 @@
 				fileStore.clear();
 			}
 		} catch (error) {
+			fileStore.clear();
 			errorMessage = apiErrorMessage(error, 'error.loadWorkspaces');
 		} finally {
 			isLoading = false;
@@ -155,7 +161,7 @@
 				{t['files.refresh']}
 			</Button>
 		</div>
-		{#if isLoadingFiles}
+		{#if isLoading || isLoadingFiles}
 			<p class="text-sm text-muted-foreground">{t['files.loading']}</p>
 		{:else if fileStore.files.length === 0}
 			<p class="text-sm text-muted-foreground">{t['files.empty']}</p>

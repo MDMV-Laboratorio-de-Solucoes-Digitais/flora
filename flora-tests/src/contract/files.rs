@@ -694,7 +694,7 @@ mod db_files {
             setup_extra_list_workspaces(&state.db_pool, seed.org.id).await?;
         let app = files_app(state);
 
-        // Missing workspace_id -> 422 validation
+        // Missing workspace_id -> 422 validation_error
         let missing_err = authed_json_request(
             &app,
             "GET",
@@ -704,12 +704,12 @@ mod db_files {
             StatusCode::UNPROCESSABLE_ENTITY,
         )
         .await?;
-        assert_eq!(missing_err["error"], "validation");
+        assert_eq!(missing_err["error"], "validation_error");
         assert_eq!(missing_err["field"], "workspace_id");
 
-        // Cross-org workspace -> 422 (BOLA blocked)
+        // Cross-org and non-existent workspaces both return identical 422 validation_error (anti-enumeration BOLA guard)
         let cross_uri = format!("/api/v1/files?workspace_id={ws_other_org_id}");
-        let _ = authed_json_request(
+        let cross_err = authed_json_request(
             &app,
             "GET",
             &cross_uri,
@@ -718,6 +718,19 @@ mod db_files {
             StatusCode::UNPROCESSABLE_ENTITY,
         )
         .await?;
+        let ghost_uri = format!("/api/v1/files?workspace_id={}", Uuid::now_v7());
+        let ghost_err = authed_json_request(
+            &app,
+            "GET",
+            &ghost_uri,
+            &seed.token,
+            seed.org.id,
+            StatusCode::UNPROCESSABLE_ENTITY,
+        )
+        .await?;
+        assert_eq!(cross_err["error"], "validation_error");
+        assert_eq!(cross_err["field"], "workspace_id");
+        assert_eq!(cross_err, ghost_err);
 
         // Upload alpha.txt to workspace 1 and beta.txt to workspace 2
         let id_a = upload_test_file(
@@ -739,10 +752,11 @@ mod db_files {
         )
         .await?;
 
-        // Workspace 1 lists only alpha.txt and never leaks storage_path
+        // Workspace 1 lists only alpha.txt with exact 6 DTO keys (no storage_path/metadata leak)
         let items_a =
             list_workspace_files(&app, &seed.token, seed.org.id, seed.workspace.id).await?;
         assert_eq!(items_a.len(), 1);
+        assert_eq!(items_a[0].as_object().map(serde_json::Map::len), Some(6));
         assert_eq!(items_a[0]["id"], id_a);
         assert_eq!(items_a[0]["fileName"], "alpha.txt");
         assert_eq!(items_a[0]["mimeType"], "text/plain");

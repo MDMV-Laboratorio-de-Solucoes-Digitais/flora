@@ -1,7 +1,7 @@
-# Briefing de Compreensão — 115 / pendente (a atualizar após abertura do PR)
+# Briefing de Compreensão — 115 / PR #384
 
 **Data**: 2026-11-23 · **Domínio crítico**: tenant
-**PR**: pendente (a atualizar após abertura do PR) · **Autor**: orquestrador
+**PR**: [#384](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/384) · **Autor**: orquestrador
 
 ## Intenção
 
@@ -41,7 +41,7 @@ cargo test -p flora-tests contract::files::db_files::db_list_files_scoped_to_wor
 ## Pergunta-teste ao SE
 
 **Pergunta**: Se um membro autenticado da Organização A enviar `GET /api/v1/files?workspace_id=<UUID_DO_WORKSPACE_DA_ORG_B>`, em que ponto exato o fluxo falha e qual código/corpo HTTP deve ser devolvido?
-**Resposta esperada**: Antes de chamar `state.file_service.list_files`, `list_files` executa `ensure_workspace_in_org(&state, org_id, workspace_id)` (`flora-api/src/tenant.rs:26-46`) comparando `workspace.organization_id != org_id`; como divergem, retorna `422 Unprocessable Entity` (`error: "validation"`, `field: "workspace_id"`, `message: "workspace not found"`), sem distinguir entre workspace inexistente e workspace de outro tenant e sem consultar `files`.
+**Resposta esperada**: Antes de chamar `state.file_service.list_files`, `list_files` executa `ensure_workspace_in_org(&state, org_id, workspace_id)` (`flora-api/src/tenant.rs:26-46`) comparando `workspace.organization_id != org_id`; como divergem, retorna `422 Unprocessable Entity` (`error: "validation_error"`, `field: "workspace_id"`, `message: "workspace not found"`), sem distinguir entre workspace inexistente e workspace de outro tenant e sem consultar `files`.
 
 ## [NV]
 
