@@ -34,3 +34,9 @@ Issues R6 vinculadas: `#391`..`#395` · PR: [#396](https://github.com/MDMV-Labor
 | `cargo test -p flora-api oidc::` / `flora-tests test_auth_` / `test_registration_flow` | `5 passed; 0 failed` / `7 passed; 0 failed` / `2 passed; 0 failed` *(JWKS/ID-token HS256 e `callback` state/PKCE com `PgPool` lazy passam; `test_registration_flow_with_mock_oidc` segue stub sem IdP HTTP mock)* |
 
 - **Estado atualizado do Passo 11**: tema escuro `.dark` em navegador real validado (`PASS` com 0 violações WCAG 2.2 AA em `/dms`, `/notifications` e `/tasks`); apenas staging/produção externos (Coolify manual) e fluxo HTTP contra provedor OIDC externo permanecem **`[NV]`**.
+
+## Atualização append-only — Correções pós-CI `e2e-browser` e ACR #1 `REPROVADO` (`82bbec11`, 2026-11-23)
+
+- **Hardening aplicado**: `transition-[width]` no `<aside>` (`+layout.svelte`), `.dark --destructive: 0 90.6% 70.8%` (`7.23:1`) e tokens `@theme` (`layout.css`), `dark:text-green-400` (`tasks/+page.svelte`), bootstrap síncrono de `localStorage.getItem('flora.theme')` (`app.html`), remoção da chave órfã `notifications.unreadCount` (`pt-BR.ts`), `FLORA_STORAGE__LOCAL_PATH?.trim()` (`playwright.config.ts`) e `settleAnimations()` / cobertura de item não lido em `.dark` (`seed-flow.e2e.ts`).
+- **Verificação local sem `E2E_SCREENSHOT_DIR` (`task-948`)**: `bun run test:e2e` → **`4 passed (31.3s)`**, **12/12 `WCAG 2.2 AA: sem achados`** com `.dark` persistido em `/notifications` e `/tasks`.
+- **Escopo `[NV]` explícito**: a ativação automática por preferência do usuário em UI (`/settings`) continua `[NV]` fora do escopo do ciclo 117 (a persistência em reload é garantida via chave `flora.theme` no `localStorage`), além de deploy Coolify externo e provedor OIDC HTTP externo.

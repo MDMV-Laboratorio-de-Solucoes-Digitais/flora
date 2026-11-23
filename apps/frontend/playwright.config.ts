@@ -6,7 +6,7 @@ const FRONTEND_ORIGIN = process.env.E2E_FRONTEND_ORIGIN ?? 'http://127.0.0.1:417
 const API_ORIGIN = process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000';
 const AUTH_FILE = 'playwright/.auth/alice.json';
 const STORAGE_PATH =
-	process.env.FLORA_STORAGE__LOCAL_PATH ?? path.join(os.tmpdir(), 'flora-e2e-storage');
+	process.env.FLORA_STORAGE__LOCAL_PATH?.trim() || path.join(os.tmpdir(), 'flora-e2e-storage');
 const INHERITED_ENV = Object.fromEntries(
 	Object.entries(process.env).filter(
 		(entry): entry is [string, string] => typeof entry[1] === 'string'

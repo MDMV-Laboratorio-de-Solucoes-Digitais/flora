@@ -76,3 +76,15 @@
   16. [`16-notifications-dark-mode.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/16-notifications-dark-mode.png) — `/notifications` em tema `.dark`, `WCAG 2.2 AA: sem achados`
   17. [`17-tasks-dark-mode.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/17-tasks-dark-mode.png) — `/tasks` em tema `.dark`, `WCAG 2.2 AA: sem achados`
 - **Restante `[NV]`**: deploy em staging/produção externos (Coolify manual `workflow_dispatch`) e troca HTTP de tokens contra IdP OIDC externo real.
+
+### Correções pós-CI `e2e-browser` e ACR #1 `REPROVADO` (`82bbec11`, append-only, 2026-11-23)
+
+- **Causa-raiz da falha `e2e-browser` em `464e62b76`**: em `/dms (dark mode)`, `<aside>` (`apps/frontend/src/routes/(app)/+layout.svelte:120`) usava `transition-all duration-300 ease-in-out`, fazendo o fundo `bg-muted/30` transicionar em 300ms enquanto os textos filhos atualizavam instantaneamente para o tema escuro, gerando 7 erros transitórios de `color-contrast` no Chromium em CI sem captura de screenshot intermediária.
+- **Correções aplicadas**:
+  - `apps/frontend/src/routes/(app)/+layout.svelte`: `transition-all` → `transition-[width]` no `<aside>` para animar apenas a largura (`w-64` ↔ `w-16`).
+  - `apps/frontend/src/routes/layout.css`: `.dark --destructive` ajustado para `0 90.6% 70.8%` (`7.23:1` sobre `--background`; corrigidos também `--color-input` e `--color-secondary-foreground` em `@theme`).
+  - `apps/frontend/src/routes/(app)/tasks/+page.svelte`: adicionada variante `dark:text-green-400` no banner de sucesso.
+  - `apps/frontend/src/app.html`: script síncrono no `<head>` lendo `localStorage.getItem('flora.theme') === 'dark'` para persistir `.dark` em navegações/reloads. *(Ressalva `[NV]`: seletor interativo de tema para usuário final em `/settings` permanece fora do escopo do ciclo 117.)*
+  - `apps/frontend/src/lib/i18n/pt-BR.ts` & `apps/frontend/playwright.config.ts`: removida chave órfã `notifications.unreadCount` e endurecido fallback `FLORA_STORAGE__LOCAL_PATH?.trim() || ...`.
+  - `apps/frontend/tests/e2e/seed-flow.e2e.ts`: `settleAnimations()` após troca de tema/sidebar, `exact: true`, verificação de `.dark` persistente sem reinjeção em `/notifications` (com item não lido rearmado + sidebar recolhida com contador) e `/tasks`.
+- **Reexecução local fiel à CI (`task-948`, sem `E2E_SCREENSHOT_DIR`)**: `bun run test:e2e` → **`4 passed (31.3s)`**, **12/12 `WCAG 2.2 AA: sem achados`**.

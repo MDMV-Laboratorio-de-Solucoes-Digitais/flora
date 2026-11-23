@@ -26,11 +26,28 @@ async function capture(page: Page, filename: string): Promise<void> {
 	await page.screenshot({ path: path.join(SCREENSHOT_DIR, filename), fullPage: true });
 }
 
+async function settleAnimations(page: Page): Promise<void> {
+	await page.evaluate(async () => {
+		await Promise.allSettled(
+			document.getAnimations({ subtree: true }).map((animation) => animation.finished)
+		);
+		await new Promise<void>((resolve) =>
+			requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+		);
+	});
+}
+
 async function enableDarkMode(page: Page): Promise<void> {
 	await page.emulateMedia({ colorScheme: 'dark' });
 	await page.evaluate(() => {
+		try {
+			localStorage.setItem('flora.theme', 'dark');
+		} catch {
+			// Ignore storage access errors in restricted contexts.
+		}
 		document.documentElement.classList.add('dark');
 	});
+	await settleAnimations(page);
 }
 
 /** Auditoria WCAG 2.2 AA: registra resumo no log/anotação e falha em caso de violações. */
@@ -188,14 +205,15 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 		(response) =>
 			response.url().includes('/api/v1/notifications') && response.request().method() === 'GET'
 	);
-	await page.getByRole('button', { name: t['notifications.refresh'] }).click();
+	await page.getByRole('button', { name: t['notifications.refresh'], exact: true }).click();
 	const refreshResponse = await refreshPromise;
 	expect(refreshResponse.status()).toBe(200);
 	await expect(page.getByText(t['notifications.type.Mention'], { exact: true })).toBeVisible();
 	await expect(page.getByText(t['notifications.type.Assignment'], { exact: true })).toBeVisible();
 	await expect(
 		page.getByRole('link', {
-			name: `${t['nav.notifications']} 2 ${t['notifications.unreadPlural']}`
+			name: `${t['nav.notifications']} 2 ${t['notifications.unreadPlural']}`,
+			exact: true
 		})
 	).toBeVisible();
 	await auditAccessibility(page, '/notifications (2 unread)');
@@ -207,14 +225,18 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 			/\/api\/v1\/notifications\/[^/]+\/read$/.test(new URL(response.url()).pathname) &&
 			response.request().method() === 'POST'
 	);
-	await page.getByRole('button', { name: t['notifications.markRead'] }).first().click();
+	await page
+		.getByRole('button', { name: t['notifications.markRead'], exact: true })
+		.first()
+		.click();
 	const markSingleResponse = await markSinglePromise;
 	expect(markSingleResponse.status()).toBe(204);
 	await expect(page.getByText(t['notifications.read'], { exact: true })).toHaveCount(1);
 	await expect(page.getByText(t['notifications.unread'], { exact: true })).toHaveCount(1);
 	await expect(
 		page.getByRole('link', {
-			name: `${t['nav.notifications']} 1 ${t['notifications.unreadSingular']}`
+			name: `${t['nav.notifications']} 1 ${t['notifications.unreadSingular']}`,
+			exact: true
 		})
 	).toBeVisible();
 	await auditAccessibility(page, '/notifications (1 unread singular)');
@@ -251,15 +273,18 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(page.getByText(t['notifications.read'], { exact: true })).toHaveCount(2);
 
 	// 6f. collapsed sidebar (isSidebarOpen === false) accessible icon-only navigation + WCAG audit.
-	await page.getByRole('button', { name: t['nav.closeSidebar'] }).click();
-	await expect(page.getByRole('button', { name: t['nav.openSidebar'] })).toBeVisible();
+	await page.getByRole('button', { name: t['nav.closeSidebar'], exact: true }).click();
+	await settleAnimations(page);
+	await expect(page.getByRole('button', { name: t['nav.openSidebar'], exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: t['nav.channels'], exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: t['nav.tasks'], exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: t['nav.files'], exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: t['nav.notifications'], exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: t['nav.myAccount'], exact: true })).toBeVisible();
 	await auditAccessibility(page, '/notifications (sidebar collapsed)');
 	await capture(page, '13-sidebar-collapsed.png');
-	await page.getByRole('button', { name: t['nav.openSidebar'] }).click();
+	await page.getByRole('button', { name: t['nav.openSidebar'], exact: true }).click();
+	await settleAnimations(page);
 
 	// 7. dms — direct navigation to /dms shows an honest unavailable message without hardcoded channel errors.
 	await page.goto('/dms');
@@ -270,7 +295,7 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await auditAccessibility(page, '/dms');
 	await capture(page, '14-dms-honest-unavailable.png');
 
-	// 8. dark mode (.dark) — real dark theme across /dms, /notifications, and /tasks with WCAG 2.2 AA audit.
+	// 8. dark mode (.dark) — persistent dark theme across navigations, unread cards, and WCAG 2.2 AA audits.
 	await enableDarkMode(page);
 	await expect
 		.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
@@ -278,16 +303,54 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await auditAccessibility(page, '/dms (dark mode)');
 	await capture(page, '15-dms-dark-mode.png');
 
+	// Re-arm one unread notification so .dark audits both unread styling and collapsed unread aria-label.
+	runSql(
+		`UPDATE notifications SET is_read = false, updated_at = NOW() WHERE user_id = '${ALICE_ID}'::uuid AND target_id = '${targetMention}'::uuid;`
+	);
 	await page.goto('/notifications');
-	await enableDarkMode(page);
+	await expect
+		.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+		.toBe(true);
+	await settleAnimations(page);
 	await expect(page.getByText(t['notifications.type.Mention'], { exact: true })).toBeVisible();
+	await expect(page.getByText(t['notifications.unread'], { exact: true })).toBeVisible();
+	await expect(
+		page.getByRole('link', {
+			name: `${t['nav.notifications']} 1 ${t['notifications.unreadSingular']}`,
+			exact: true
+		})
+	).toBeVisible();
 	await auditAccessibility(page, '/notifications (dark mode)');
 	await capture(page, '16-notifications-dark-mode.png');
 
+	// Verify collapsed sidebar aria-label with unread count > 0, then expand cleanly.
+	await page.getByRole('button', { name: t['nav.closeSidebar'], exact: true }).click();
+	await settleAnimations(page);
+	await expect(
+		page.getByRole('link', {
+			name: `${t['nav.notifications']} (1 ${t['notifications.unreadSingular']})`,
+			exact: true
+		})
+	).toBeVisible();
+	await page.getByRole('button', { name: t['nav.openSidebar'], exact: true }).click();
+	await settleAnimations(page);
+
 	await page.goto('/tasks');
-	await enableDarkMode(page);
+	await expect
+		.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+		.toBe(true);
+	await settleAnimations(page);
 	await expect(page.getByRole('heading', { name: t['tasks.title'], level: 1 })).toBeVisible();
 	await expect(page.getByText(title, { exact: true })).toBeVisible();
 	await auditAccessibility(page, '/tasks (dark mode)');
 	await capture(page, '17-tasks-dark-mode.png');
+
+	await page.evaluate(() => {
+		try {
+			localStorage.removeItem('flora.theme');
+		} catch {
+			// Ignore storage cleanup errors.
+		}
+		document.documentElement.classList.remove('dark');
+	});
 });

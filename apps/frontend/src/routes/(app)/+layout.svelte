@@ -117,7 +117,7 @@
 <div class="flex h-screen w-full overflow-hidden bg-background">
 	<!-- Sidebar -->
 	<aside
-		class="z-20 flex shrink-0 flex-col border-r bg-muted/30 transition-all duration-300 ease-in-out {isSidebarOpen
+		class="z-20 flex shrink-0 flex-col border-r bg-muted/30 transition-[width] duration-300 ease-in-out {isSidebarOpen
 			? 'w-64'
 			: 'w-16'}"
 	>

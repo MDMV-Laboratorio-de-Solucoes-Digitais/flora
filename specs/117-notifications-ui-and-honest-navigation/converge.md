@@ -48,3 +48,8 @@
   - `apps/frontend/src/routes/layout.css`: adicionada `@custom-variant dark (&:where(.dark, .dark *));` para Tailwind CSS v4.
   - `apps/frontend/playwright.config.ts`: `FLORA_STORAGE__LOCAL_PATH` configurável com fallback em `os.tmpdir()/flora-e2e-storage`.
 - **Evidência (`task-847`)**: `bun run check` (`0/0`), `bun run lint` (`exit 0`), `bun run test:unit -- --run --project server` (`18 files / 71 tests passed`), `npm run build` + `bun run test:e2e` **`4 passed (1.3m)`** com **12/12 `WCAG 2.2 AA: sem achados`** e **17 PNGs** publicados em [Gist `962e8450` @ `8952ffbd`](https://gist.github.com/lfgranja/962e84502fb4cf5689266e10f2224967/8952ffbd89eebc783b8d20de4e9311dbe048a306); testes OIDC unit/contrato (`flora-api oidc::` `5/5`, `flora-tests test_auth_` `7/7`, `test_registration_flow` `2/2` stub). Restam `[NV]` apenas deploy Coolify externo e IdP OIDC HTTP real.
+
+## Correções pós-CI `e2e-browser` e ACR #1 (`82bbec11`, append-only, 2026-11-23)
+
+- Corrigido race visual no toggle de `.dark` em CI (`+layout.svelte`: `transition-all` → `transition-[width]` no `<aside>`), contraste `.dark --destructive: 0 90.6% 70.8%` + `@theme` (`layout.css`), `dark:text-green-400` (`tasks/+page.svelte`), persistência síncrona via `localStorage` (`flora.theme` em `app.html`), chave órfã `pt-BR.ts`, fallback `FLORA_STORAGE__LOCAL_PATH?.trim()` (`playwright.config.ts`) e asserções `seed-flow.e2e.ts` (`settleAnimations`, item não lido em `.dark`, persistência pós-`page.goto`).
+- Reexecução local idêntica à CI (`task-948`): `bun run test:e2e` **`4 passed (31.3s)`**, **12/12 `WCAG 2.2 AA: sem achados`**. Permanecem `[NV]` seletor interativo de tema em `/settings`, deploy Coolify externo e IdP OIDC HTTP externo.
