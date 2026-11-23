@@ -126,6 +126,26 @@ impl UserRepository for PgUserRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    async fn set_oidc_subject_if_absent(
+        &self,
+        id: Uuid,
+        oidc_subject: &str,
+        updated_at: DateTime<Utc>,
+    ) -> Result<bool> {
+        let result = sqlx::query(
+            "UPDATE users
+             SET oidc_subject = $2, updated_at = $3
+             WHERE id = $1 AND oidc_subject IS NULL AND is_active = true",
+        )
+        .bind(id)
+        .bind(oidc_subject)
+        .bind(updated_at)
+        .execute(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(result.rows_affected() > 0)
+    }
+
     async fn update(&self, id: Uuid, updates: UpdateUserInput) -> Result<User> {
         let user = sqlx::query_as::<_, User>(
             "UPDATE users

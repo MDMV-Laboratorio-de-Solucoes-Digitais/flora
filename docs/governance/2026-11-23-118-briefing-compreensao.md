@@ -15,18 +15,19 @@ Extrair e endurecer a troca HTTP de tokens OIDC no `GET /api/v1/auth/callback` (
   - `flora-tests/src/integration/registration.rs` (`test_registration_flow` e `test_registration_flow_with_mock_oidc`) continha apenas stubs gerando `Uuid::now_v7()`.
 
 - **Depois**:
-  - **Troca e verificação isoladas (`flora-api/src/oidc.rs`)**: `exchange_code_and_verify_id_token` executa `POST {issuer}/oauth/v2/token` com `grant_type=authorization_code`, `client_id`, `client_secret`, `redirect_uri` e `code_verifier`; busca Discovery + JWKS via `fetch_jwks` (rejeitando `jwks_uri` HTTP não-local); valida assinatura assimétrica via `verify_id_token` (`allow_symmetric = false`, rejeitando JWKs `oct`); exige e-mail não vazio e o normaliza (`trim().to_lowercase()`).
-  - **Proteção contra takeover de e-mail e conta inativa (`flora-api/src/routes/auth.rs`)**:
+  - **Troca e verificação isoladas (`flora-api/src/oidc.rs`)**: `oidc_http_client()` usa `Policy::none()` (sem redirecionamentos), `connect_timeout(5s)` e `timeout(10s)`; `exchange_code_and_verify_id_token` executa `POST {issuer}/oauth/v2/token` (`grant_type=authorization_code`, `client_id`, `client_secret`, `redirect_uri`, `code_verifier`), busca Discovery + JWKS via `fetch_jwks` validando correspondência de `metadata["issuer"]` e `validate_jwks_uri` (`url::Url::parse`, bloqueando credenciais na URL e `http://` fora de loopback estrito `localhost`/`127.0.0.1`/`::1`), valida assinatura assimétrica via `verify_id_token` (`allow_symmetric = false`, rejeitando JWKs `oct`), exige `email_verified == Some(true)` e normaliza `email` (`trim().to_lowercase()`), sanitizando mensagens de `Error::OidcProvider` (log detalhado via `tracing::warn!`).
+  - **Proteção contra takeover de e-mail, conta desativada e vinculação atômica (`flora-api/src/routes/auth.rs`, `flora-core/src/{traits/repository.rs,repositories/user_repository.rs}`)**:
     1. Se `user_repo.find_by_oidc_subject(&sub)` não encontrar vínculo direto e `find_by_email(&email)` retornar usuário cujo `oidc_subject` (`Some(bound_sub)`) difere de `sub`, o handler retorna `401 Unauthorized` (`Error::Unauthorized`) sem criar sessão nem sobrescrever vínculo;
-    2. Se `user.is_active == false`, retorna `401 Unauthorized` antes de chamar `PgSessionRepository::create`;
-    3. Em contas válidas e ativas, assina `FloraClaims` com `&user.email` persistido.
-  - **Servidor IdP OIDC HTTP mock (`flora-tests/src/oidc_mock.rs`)**: escuta em `http://127.0.0.1:0` assinando tokens com chave `Ed25519` (`OKP`, `EdDSA`), validando `client_id`/`client_secret`/`redirect_uri`/`code` uso único/PKCE `S256` (`derive_s256_challenge`), além de simular assinatura adulterada, `nonce` divergente, JWK `oct` simétrico, ausência de `email` e ausência de `id_token`.
+    2. Se o usuário encontrado por `email` verificado ainda tiver `oidc_subject: None` (ex.: admin local de bootstrap), `UserRepository::set_oidc_subject_if_absent` realiza `UPDATE users SET oidc_subject = $2, updated_at = $3 WHERE id = $1 AND oidc_subject IS NULL AND is_active = true` de forma atômica, impedindo corridas ou re-vinculação posterior por outro `sub` (retorna `401` se não vinculou);
+    3. Se `user.is_active == false`, retorna `401 Unauthorized` antes de chamar `PgSessionRepository::create`;
+    4. Em contas válidas e ativas, assina `FloraClaims` com `&user.email` persistido.
+  - **Servidor IdP OIDC HTTP mock (`flora-tests/src/oidc_mock.rs`)**: escuta em `http://127.0.0.1:0` assinando tokens com chave `Ed25519` (`OKP`, `EdDSA`), validando `client_id`/`client_secret`/`redirect_uri`/`code` uso único/PKCE `S256` (`derive_s256_challenge`), além de simular assinatura adulterada (no interior do segmento de assinatura), `nonce` divergente, JWK `oct` simétrico, ausência de `email`, `email_verified = Some(false)`, token expirado, `jwks_uri` `http://localhost.evil.com/keys` e ausência de `id_token`.
 
 ## Decisões implícitas
 
 1. **Chave `Ed25519` (`OKP` / `EdDSA`) no servidor mock em vez de `HS256`**: mantém em produção e em testes a regra de segurança que proíbe JWKs simétricos (`oct`) para ID tokens sem enfraquecer `verify_id_token`.
-2. **Permissão explícita para `http://127.0.0.1` em `fetch_jwks` preservada**: permite testes efêmeros locais sem desabilitar a rejeição de `http://` para hosts externos não-loopback.
-3. **Sem novas dependências no `Cargo.lock`**: reutiliza `base64`, `jsonwebtoken` e `serde_urlencoded` já declarados no `[workspace.dependencies]`.
+2. **Loopback restrito por `url::Host` em `validate_jwks_uri`**: permite `http://` apenas para `localhost` / IP loopback em ambiente de desenvolvimento/testes, bloqueando prefix bypass como `http://localhost.evil.com` ou credenciais embutidas.
+3. **Sem novas dependências no `Cargo.lock`**: reutiliza apenas `jsonwebtoken` e `serde_urlencoded` já declarados no `[workspace.dependencies]`.
 
 ## Comando de verificação
 

@@ -1711,10 +1711,49 @@ mod db_oidc_callback {
 
         // 4. Deactivated user must be rejected with 401 Unauthorized on OIDC callback.
         let user_uuid = Uuid::parse_str(&first_user_id)?;
-        PgUserRepository::new(pool).deactivate(user_uuid).await?;
+        let user_repo = PgUserRepository::new(pool);
+        user_repo.deactivate(user_uuid).await?;
         let (deactivated_resp, _, _) =
             perform_mock_oidc_login(&router, &idp, &sub, &email, Some("Primary User")).await?;
         assert_eq!(deactivated_resp.status(), StatusCode::UNAUTHORIZED);
+
+        // 5. Pre-existing local user without oidc_subject (`NULL`, e.g. Seed bootstrap admin)
+        // binds `oidc_subject` atomically on first verified OIDC login and rejects subsequent
+        // conflicting subjects claiming the same email.
+        let unlinked_email = format!("local-unlinked-{unique}@example.test");
+        let unlinked_user = flora_core::models::User::new(&unlinked_email, "Local Unlinked");
+        let unlinked_created = user_repo.create(unlinked_user).await?;
+        assert!(unlinked_created.oidc_subject.is_none());
+
+        let first_bind_sub = format!("oidc-bind-{unique}");
+        let (bind_resp, _, _) = perform_mock_oidc_login(
+            &router,
+            &idp,
+            &first_bind_sub,
+            &unlinked_email,
+            Some("Local Unlinked"),
+        )
+        .await?;
+        assert_eq!(bind_resp.status(), StatusCode::OK);
+        let bound_user = user_repo
+            .find_by_id(unlinked_created.id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("expected bound local user in PostgreSQL"))?;
+        assert_eq!(
+            bound_user.oidc_subject.as_deref(),
+            Some(first_bind_sub.as_str())
+        );
+
+        let hijack_sub = format!("oidc-hijack-{unique}");
+        let (hijack_resp, _, _) = perform_mock_oidc_login(
+            &router,
+            &idp,
+            &hijack_sub,
+            &unlinked_email,
+            Some("Hijacker"),
+        )
+        .await?;
+        assert_eq!(hijack_resp.status(), StatusCode::UNAUTHORIZED);
 
         Ok(())
     }

@@ -309,3 +309,8 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Ciclo 118 (`2000/3125`, fecha `BF-01`): servidor IdP OIDC HTTP mock `MockOidcIdpServer` (`Ed25519`, Discovery, JWKS, PKCE `S256`) em `flora-tests/src/oidc_mock.rs`, troca extraída em `oidc.rs`, bloqueio `401` cross-subject e conta inativa em `auth.rs`, substituição dos stubs em `registration.rs`, `2` contratos DB (`auth: 23 -> 25`, `82` total) e Briefing `auth` (`#399`..`#402`), SemVer `0.10.0 -> 0.10.1`.
 - Próximo candidato 80/20 mapeado: UI CRUD de RBAC/papéis (`BF-02`), endpoint HTTP para `HitlReceiptAdapter` (`BF-03`) ou seletor de tema em `/settings` (`BF-04`).
 - **[NV]** CI remoto do PR 118, ACR independente, Zitadel externo real, staging real, Forgejo e produção; histórico preservado.
+
+
+### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
+
+- Remediação ACR PR `#403` (`72547119`): `set_oidc_subject_if_absent` atômico (`flora-core`), `email_verified == Some(true)`, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação de `issuer` no Discovery + `validate_jwks_uri` estrita, sanitização de erros `Error::OidcProvider` e remoção de `base64` em `flora-tests/Cargo.toml` (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` total). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.

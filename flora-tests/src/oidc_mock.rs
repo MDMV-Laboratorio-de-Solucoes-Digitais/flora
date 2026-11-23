@@ -44,6 +44,8 @@ pub struct MockAuthorizationGrant {
     pub sub: String,
     /// Optional email claim (`email`) embedded in the signed ID token.
     pub email: Option<String>,
+    /// Optional `email_verified` claim embedded in the signed ID token (defaults to `Some(true)`).
+    pub email_verified: Option<bool>,
     /// Optional display name claim (`name`) embedded in the signed ID token.
     pub name: Option<String>,
     /// Expected `redirect_uri` matched on `POST /oauth/v2/token`.
@@ -52,7 +54,7 @@ pub struct MockAuthorizationGrant {
     pub code_challenge: String,
     /// Nonce bound to the login transaction and embedded in the ID token.
     pub nonce: String,
-    /// If `true`, flips the final character of the signed ID token to simulate tampering.
+    /// If `true`, alters a byte inside the Ed25519 signature segment to simulate tampering.
     pub tamper_signature: bool,
     /// If `true`, returns a token response without `id_token`.
     pub omit_id_token: bool,
@@ -74,6 +76,7 @@ impl MockAuthorizationGrant {
         Self {
             sub: sub.into(),
             email,
+            email_verified: Some(true),
             name,
             redirect_uri: redirect_uri.into(),
             code_challenge: code_challenge.into(),
@@ -125,6 +128,8 @@ struct MockIdTokenClaims {
     nonce: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     email: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    email_verified: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
 }
@@ -326,6 +331,7 @@ fn sign_mock_id_token(
         exp: (Utc::now() + Duration::seconds(grant.exp_offset_secs)).timestamp(),
         nonce: grant.nonce.clone(),
         email: grant.email.clone(),
+        email_verified: grant.email_verified,
         name: grant.name.clone(),
     };
     let (alg, key) = if use_symmetric_jwks {
@@ -337,10 +343,11 @@ fn sign_mock_id_token(
     header.kid = Some(MOCK_IDP_KID.to_owned());
 
     let mut id_token = encode(&header, &claims, &key).ok()?;
-    if grant.tamper_signature {
-        let replacement = if id_token.ends_with('a') { 'b' } else { 'a' };
-        let _ = id_token.pop();
-        id_token.push(replacement);
+    if grant.tamper_signature && id_token.len() > 20 {
+        let mut bytes = id_token.into_bytes();
+        let idx = bytes.len().saturating_sub(10);
+        bytes[idx] = if bytes[idx] == b'a' { b'b' } else { b'a' };
+        id_token = String::from_utf8(bytes).ok()?;
     }
     Some(id_token)
 }

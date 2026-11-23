@@ -162,9 +162,79 @@ async fn test_registration_flow_with_mock_oidc() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
+async fn assert_claim_and_discovery_failures(
+    router: &axum::Router,
+    idp: &MockOidcIdpServer,
+) -> anyhow::Result<()> {
+    // 5. Missing email claim -> 503 Service Unavailable.
+    let (status_email, _, _) =
+        run_callback_with_grant(router, idp, "email", None, |_, _| Ok(())).await?;
+    assert_eq!(status_email, StatusCode::SERVICE_UNAVAILABLE);
+
+    // 6. Token response omitting id_token -> 503 Service Unavailable.
+    let (status_omit, _, _) = run_callback_with_grant(
+        router,
+        idp,
+        "omit",
+        Some("omit@example.test"),
+        |grant, _| {
+            grant.omit_id_token = true;
+            Ok(())
+        },
+    )
+    .await?;
+    assert_eq!(status_omit, StatusCode::SERVICE_UNAVAILABLE);
+
+    // 7. Unverified email claim -> 503 Service Unavailable.
+    let (status_unverified, _, _) = run_callback_with_grant(
+        router,
+        idp,
+        "unverified-email",
+        Some("unverified@example.test"),
+        |grant, _| {
+            grant.email_verified = Some(false);
+            Ok(())
+        },
+    )
+    .await?;
+    assert_eq!(status_unverified, StatusCode::SERVICE_UNAVAILABLE);
+
+    // 8. Expired ID token -> 503 Service Unavailable.
+    let (status_expired, _, _) = run_callback_with_grant(
+        router,
+        idp,
+        "expired",
+        Some("expired@example.test"),
+        |grant, _| {
+            grant.exp_offset_secs = -3600;
+            Ok(())
+        },
+    )
+    .await?;
+    assert_eq!(status_expired, StatusCode::SERVICE_UNAVAILABLE);
+
+    // 9. Hostile discovery jwks_uri prefix bypass (`http://localhost.evil.com/keys`) -> 503.
+    idp.set_jwks_uri_override(Some("http://localhost.evil.com/keys".to_owned()))
+        .await;
+    let (status_ssrf, _, _) = run_callback_with_grant(
+        router,
+        idp,
+        "ssrf-jwks",
+        Some("ssrf@example.test"),
+        |_, _| Ok(()),
+    )
+    .await?;
+    assert_eq!(status_ssrf, StatusCode::SERVICE_UNAVAILABLE);
+    idp.set_jwks_uri_override(None).await;
+
+    Ok(())
+}
+
 /// Exercises `/auth/callback` HTTP failure modes end-to-end against [`MockOidcIdpServer`]:
 /// PKCE mismatch + single-use state consumption, tampered signature, nonce mismatch,
-/// symmetric JWK rejection, missing `email` claim, and missing `id_token`.
+/// symmetric JWK rejection, missing `email` claim, unverified email, expired `id_token`,
+/// non-loopback HTTP `jwks_uri` SSRF attempt, and missing `id_token`.
 #[tokio::test]
 async fn test_registration_flow() -> anyhow::Result<()> {
     let client_secret = "mock-oidc-failure-secret";
@@ -241,24 +311,7 @@ async fn test_registration_flow() -> anyhow::Result<()> {
     assert_eq!(status_sym, StatusCode::SERVICE_UNAVAILABLE);
     idp.set_use_symmetric_jwks(false).await;
 
-    // 5. Missing email claim -> 503 Service Unavailable.
-    let (status_email, _, _) =
-        run_callback_with_grant(&router, &idp, "email", None, |_, _| Ok(())).await?;
-    assert_eq!(status_email, StatusCode::SERVICE_UNAVAILABLE);
-
-    // 6. Token response omitting id_token -> 503 Service Unavailable.
-    let (status_omit, _, _) = run_callback_with_grant(
-        &router,
-        &idp,
-        "omit",
-        Some("omit@example.test"),
-        |grant, _| {
-            grant.omit_id_token = true;
-            Ok(())
-        },
-    )
-    .await?;
-    assert_eq!(status_omit, StatusCode::SERVICE_UNAVAILABLE);
+    assert_claim_and_discovery_failures(&router, &idp).await?;
 
     Ok(())
 }

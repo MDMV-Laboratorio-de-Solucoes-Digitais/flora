@@ -493,3 +493,9 @@ permanecem intactas; apenas acréscimos.
 - **Contagens (`find`)**: `specs/` `108` dirs (`578` arquivos), `.specify/assessments/` `106` (`448`), `.specify/validations/` `104` (`119`), `.specify/releases/` `104` (`104`), `.specify/bugs/` `8` (`26`), `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`), `docs/adr/` `8`.
 - **R6 / Artefatos**: issues `#399`..`#402`; `specs/118-oidc-callback-mock-idp-exchange/*`, `.specify/validations/118-oidc-callback-mock-idp-exchange/{test-roadmap,validate,evidence}.md`, `.specify/releases/118-oidc-callback-mock-idp-exchange/release.md` (`0.10.0 -> 0.10.1`), `docs/governance/2026-11-23-118-briefing-compreensao.md`, `docs/governance/2026-11-23-118-oidc-callback-mock-idp-exchange.md`.
 - **[NV]**: CI remoto do PR 118, ACR independente, Zitadel externo real e staging/produção.
+
+
+### Adendo Rodada 2 — Remediação ACR PR #403 (`task-1323`, 2026-11-23, append-only)
+
+- **Correções**: `UserRepository::set_oidc_subject_if_absent`, exigência de `email_verified == Some(true)`, `oidc_http_client()` (`Policy::none()`, `5s`/`10s`), checagem de `issuer` no Discovery, `validate_jwks_uri` estrita (`url::Host`), sanitização de `Error::OidcProvider`, limpeza de `base64` em `flora-tests/Cargo.toml` e testes extras em `oidc.rs` (`9/9`), `registration.rs` e `contract/auth.rs`.
+- **Verificação (`task-1323`)**: `fmt`/`clippy -D warnings`/`cargo deny` exit `0`; `cargo test --workspace` (`flora-api` `50`, `flora-core` `35+21`, `flora-tests` `36/82 ignored`); `contract::auth::db_` **`25 passed; 0 failed`** (`77.95s`); `check_gate_integrity.py` PASS (`82` pisos). **[NV]**: ACR Rodada 2, CI remoto do novo commit e Zitadel externo real.

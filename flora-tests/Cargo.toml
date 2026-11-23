@@ -30,7 +30,6 @@ wiremock.workspace = true
 reqwest.workspace = true
 anyhow.workspace = true
 axum.workspace = true
-base64.workspace = true
 jsonwebtoken.workspace = true
 serde_urlencoded.workspace = true
 sqlx.workspace = true

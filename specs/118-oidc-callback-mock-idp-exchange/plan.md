@@ -6,7 +6,7 @@
 
 | FR / SC | Arquivos alvo | Verificação |
 |---|---|---|
-| FR-001 / FR-002 / SC-001 / SC-002 | `flora-api/src/oidc.rs`, `flora-api/src/routes/auth.rs` | `cargo test -p flora-api oidc::` (`8+` unitários) + `cargo clippy --workspace --all-targets -- -D warnings` |
+| FR-001 / FR-002 / SC-001 / SC-002 | `flora-core/src/traits/repository.rs`, `flora-core/src/repositories/user_repository.rs`, `flora-api/src/oidc.rs`, `flora-api/src/routes/auth.rs` | `cargo test -p flora-api oidc::` (`9` unitários; `50` em `flora-api`) + `cargo clippy --workspace --all-targets -- -D warnings` |
 | FR-003 / SC-003 | `flora-tests/Cargo.toml`, `flora-tests/src/lib.rs`, `flora-tests/src/oidc_mock.rs` | `cargo deny check bans licenses sources && cargo test -p flora-tests` |
 | FR-004 / SC-003 / SC-004 | `flora-tests/src/integration/registration.rs`, `flora-tests/src/contract/auth.rs`, `scripts/ci/check_gate_integrity.py`, `.github/workflows/rust.yml` | `python3 scripts/ci/check_gate_integrity.py` (`82` total) + `cargo test -p flora-tests contract::auth::db_ -- --ignored --test-threads=1` (`25/25`) |
 | FR-005 / SC-005 | `2026-11-23-118-briefing-compreensao.md`, `2026-11-23-118-oidc-callback-mock-idp-exchange.md`, `converge.md`, `.specify/validations/118-*/*`, `.specify/releases/118-*/release.md`, `STATE.md`, `PROGRESSO.md`, `OBJETIVO.md`, `ROADMAP.md`, `research/index.md` | `git diff --check`, recontagem `find`, ACR independente e CI remoto verde |

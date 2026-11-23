@@ -20,3 +20,13 @@
   - `python3 scripts/ci/check_gate_integrity.py`: `gate-integrity: PASS`, `all 10 db contract floors intact (82 total)` (`auth: 25`).
 - **Briefing de Compreensão (`auth`)**: preenchido em `docs/governance/2026-11-23-118-briefing-compreensao.md`.
 - **[NV]**: execução remota de `db-tests`, `rust-build`, `dependency-review`, ACR independente e troca HTTP contra provedor Zitadel externo real.
+
+## Rodada 2 — Remediação ACR PR #403 (`task-1323`, append-only)
+
+- **PR `#403` Rodada 1 (`4d21e79c5`)**: CI remoto (`11/11` concluídos + `1` skip push-only); ACR `72547119` (`REPROVADO`) apontou `email_verified` ausente, não persistência de `oidc_subject` no vínculo por e-mail de conta local (`NULL`), bypass de prefixo `http://localhost` / redirecionamentos HTTP / issuer no Discovery e vazamento de detalhes `reqwest`/`Url` em `Error::OidcProvider`.
+- **Correções e re-verificação local (`task-1323`)**:
+  - `flora-core/src/{traits/repository.rs,repositories/user_repository.rs}` (`UserRepository::set_oidc_subject_if_absent`), `flora-api/src/{oidc.rs,routes/auth.rs}`, `flora-tests/{Cargo.toml,src/oidc_mock.rs,src/integration/registration.rs,src/contract/auth.rs}`.
+  - `cargo fmt --all -- --check`: exit `0`; `cargo clippy --workspace --all-targets -- -D warnings`: exit `0`; `cargo deny check bans licenses sources`: `bans ok, licenses ok, sources ok` (`Cargo.lock` removeu aresta `base64` não usada de `flora-tests`).
+  - `cargo test --workspace`: `flora-api` `50 passed` (incl. `9/9` `oidc::tests`), `flora-core` `35 + 21 passed`, `flora-tests` `36 passed; 0 failed; 82 ignored`.
+  - `cargo test -p flora-tests contract::auth::db_ -- --ignored --test-threads=1`: **`25 passed; 0 failed`** (`77.95s`); `python3 scripts/ci/check_gate_integrity.py`: **`gate-integrity: PASS`** (`82` total).
+- **[NV]**: ACR Rodada 2 + CI remoto no commit remediado e troca HTTP contra provedor Zitadel externo real.

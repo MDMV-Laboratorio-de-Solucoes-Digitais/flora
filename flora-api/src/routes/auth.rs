@@ -200,14 +200,19 @@ async fn callback(
         tracing::info!(user_id = %existing.id, oidc_subject = %sub, "Existing user logged in via OIDC");
         existing
     } else if let Some(existing) = user_repo.find_by_email(&email).await? {
-        if existing
-            .oidc_subject
-            .as_deref()
-            .is_some_and(|bound_sub| bound_sub != sub)
-        {
-            return Err(Error::Unauthorized);
+        match existing.oidc_subject.as_deref() {
+            Some(bound_sub) if bound_sub == sub => {}
+            Some(_) => return Err(Error::Unauthorized),
+            None => {
+                let bound = user_repo
+                    .set_oidc_subject_if_absent(existing.id, &sub, chrono::Utc::now())
+                    .await?;
+                if !bound {
+                    return Err(Error::Unauthorized);
+                }
+            }
         }
-        tracing::info!(user_id = %existing.id, email = %email, "Existing user matched by email via OIDC");
+        tracing::info!(user_id = %existing.id, email = %email, oidc_subject = %sub, "Existing user matched by email via OIDC");
         existing
     } else {
         let mut new_user = User::new(&email, &name);
@@ -388,7 +393,8 @@ pub struct OidcCallbackParams {
     pub code: Option<String>,
     /// The state parameter for CSRF/PKCE transaction binding.
     pub state: Option<String>,
-    /// The original redirect URI used for authorization (validated against stored transaction).
+    /// Unused optional query parameter retained for OAuth callback compatibility;
+    /// the stored login transaction `redirect_uri` is authoritative during token exchange.
     pub redirect_uri: Option<String>,
 }
 
