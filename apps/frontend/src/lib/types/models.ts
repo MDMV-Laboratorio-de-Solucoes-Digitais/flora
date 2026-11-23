@@ -72,3 +72,12 @@ export interface FileAttachment {
 	rustFsUrl: string;
 	uploadedAt: ISO8601Date;
 }
+
+export interface NotificationItem {
+	id: UUID;
+	eventType: string;
+	targetId: UUID;
+	targetUrl: string | null;
+	isRead: boolean;
+	createdAt: ISO8601Date;
+}

@@ -1,4 +1,4 @@
-import type { Channel, Message } from '$lib/types/models';
+import type { Channel, Message, NotificationItem } from '$lib/types/models';
 
 export interface ApiChannel {
 	id: string;
@@ -19,6 +19,15 @@ export interface ApiMessage {
 	is_edited?: boolean;
 	created_at: string;
 	updated_at?: string | null;
+}
+
+export interface ApiNotification {
+	id: string;
+	event_type: string;
+	target_id: string;
+	target_url?: string | null;
+	is_read: boolean;
+	created_at: string;
 }
 
 export function toChannel(api: ApiChannel): Channel {
@@ -44,5 +53,17 @@ export function toMessage(api: ApiMessage): Message {
 		fileAttachments: [],
 		createdAt: api.created_at,
 		updatedAt: api.updated_at ?? null
+	};
+}
+
+export function toNotification(api: ApiNotification): NotificationItem {
+	const targetUrl = api.target_url?.trim();
+	return {
+		id: api.id,
+		eventType: api.event_type,
+		targetId: api.target_id,
+		targetUrl: targetUrl || null,
+		isRead: api.is_read,
+		createdAt: api.created_at
 	};
 }

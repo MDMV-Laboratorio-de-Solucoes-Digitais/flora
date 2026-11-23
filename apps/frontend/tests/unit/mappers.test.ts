@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toChannel, toMessage } from '../../src/lib/api/mappers';
+import { toChannel, toMessage, toNotification } from '../../src/lib/api/mappers';
 
 describe('api mappers', () => {
 	it('maps channel snake_case DTO to UI model', () => {
@@ -65,5 +65,35 @@ describe('api mappers', () => {
 		});
 		expect(blankAuthor.authorName).toBeNull();
 		expect(blankAuthor.authorAvatarUrl).toBeNull();
+	});
+
+	it('maps notification snake_case DTO and normalizes optional target_url', () => {
+		const withUrl = toNotification({
+			id: '66666666-7777-8888-9999-000000000000',
+			event_type: 'Assignment',
+			target_id: '33333333-4444-5555-6666-777777777777',
+			target_url: '  /tasks  ',
+			is_read: false,
+			created_at: '2026-11-23T06:00:00Z'
+		});
+		expect(withUrl).toEqual({
+			id: '66666666-7777-8888-9999-000000000000',
+			eventType: 'Assignment',
+			targetId: '33333333-4444-5555-6666-777777777777',
+			targetUrl: '/tasks',
+			isRead: false,
+			createdAt: '2026-11-23T06:00:00Z'
+		});
+
+		const blankUrl = toNotification({
+			id: '77777777-8888-9999-0000-111111111111',
+			event_type: 'Reply',
+			target_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+			target_url: ' '.repeat(3),
+			is_read: true,
+			created_at: '2026-11-23T06:05:00Z'
+		});
+		expect(blankUrl.targetUrl).toBeNull();
+		expect(blankUrl.isRead).toBe(true);
 	});
 });

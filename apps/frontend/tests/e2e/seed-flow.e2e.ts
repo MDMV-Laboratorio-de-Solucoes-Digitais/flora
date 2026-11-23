@@ -88,4 +88,31 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(page.getByRole('alert')).toHaveCount(0);
 	await expect(page.getByText(t['files.empty'])).toBeVisible();
 	await auditAccessibility(page, '/files');
+
+	// 6. notifications — honest navigation (no /dms sidebar link or fake AI drawer) and org-scoped /notifications.
+	await expect(page.getByRole('link', { name: t['nav.directMessages'] })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: t['nav.openAiPanel'] })).toHaveCount(0);
+
+	const notificationsListPromise = page.waitForResponse(
+		(response) =>
+			response.url().includes('/api/v1/notifications') && response.request().method() === 'GET'
+	);
+	await page.getByRole('link', { name: t['nav.notifications'] }).click();
+	const notificationsListResponse = await notificationsListPromise;
+	expect(notificationsListResponse.status()).toBe(200);
+	await expect(page).toHaveURL(/\/notifications$/);
+	await expect(
+		page.getByRole('heading', { name: t['notifications.title'], level: 1 })
+	).toBeVisible();
+	await expect(page.getByRole('alert')).toHaveCount(0);
+	await expect(page.getByText(t['notifications.empty'])).toBeVisible();
+	await auditAccessibility(page, '/notifications');
+
+	// 7. dms — direct navigation to /dms shows an honest unavailable message without hardcoded channel errors.
+	await page.goto('/dms');
+	await expect(page.getByRole('heading', { name: t['dms.title'], level: 1 })).toBeVisible();
+	await expect(page.getByText(t['dms.unavailableDescription'])).toBeVisible();
+	await expect(page.getByRole('link', { name: t['dms.goToChannels'] })).toBeVisible();
+	await expect(page.getByRole('alert')).toHaveCount(0);
+	await auditAccessibility(page, '/dms');
 });
