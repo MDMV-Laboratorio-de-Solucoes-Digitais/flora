@@ -591,4 +591,189 @@ mod db_files {
         assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
         Ok(())
     }
+
+    async fn authed_json_request(
+        app: &Router,
+        method: &str,
+        uri: &str,
+        token: &str,
+        org_id: Uuid,
+        expected_status: StatusCode,
+    ) -> anyhow::Result<Value> {
+        let req = Request::builder()
+            .method(method)
+            .uri(uri)
+            .header("authorization", format!("Bearer {token}"))
+            .header("x-organization-id", org_id.to_string())
+            .body(Body::empty())?;
+        let resp = app.clone().oneshot(req).await?;
+        assert_eq!(resp.status(), expected_status);
+        if expected_status == StatusCode::NO_CONTENT {
+            return Ok(Value::Null);
+        }
+        json_body(resp).await
+    }
+
+    async fn upload_test_file(
+        app: &Router,
+        token: &str,
+        org_id: Uuid,
+        workspace_id: Uuid,
+        filename: &str,
+        contents: &[u8],
+    ) -> anyhow::Result<String> {
+        let boundary = "flora-list-boundary";
+        let body = multipart_body(
+            boundary,
+            &[],
+            Some(("file", filename, "text/plain", contents)),
+        );
+        let req = Request::builder()
+            .method("POST")
+            .uri(format!("/api/v1/files/upload?workspace_id={workspace_id}"))
+            .header("authorization", format!("Bearer {token}"))
+            .header("x-organization-id", org_id.to_string())
+            .header(
+                header::CONTENT_TYPE,
+                format!("multipart/form-data; boundary={boundary}"),
+            )
+            .body(Body::from(body))?;
+        let resp = app.clone().oneshot(req).await?;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        let created = json_body(resp).await?;
+        created["id"]
+            .as_str()
+            .map(str::to_string)
+            .ok_or_else(|| anyhow::anyhow!("missing uploaded file id for {filename}"))
+    }
+
+    async fn setup_extra_list_workspaces(
+        pool: &PgPool,
+        org_id: Uuid,
+    ) -> anyhow::Result<(Uuid, Uuid)> {
+        let org_repo = PgOrganizationRepository::new(pool.clone());
+        let workspace_repo = PgWorkspaceRepository::new(pool.clone());
+        let uniq = Uuid::now_v7().simple().to_string();
+
+        let ws_same_org_2 = workspace_repo
+            .create(Workspace::new(org_id, &format!("WS2 {uniq}"), None))
+            .await?;
+        let org_b = org_repo
+            .create(Organization::new(
+                &format!("OrgB {uniq}"),
+                &format!("orgb-{uniq}"),
+            ))
+            .await?;
+        let ws_other_org = workspace_repo
+            .create(Workspace::new(org_b.id, &format!("WSB {uniq}"), None))
+            .await?;
+        Ok((ws_same_org_2.id, ws_other_org.id))
+    }
+
+    async fn list_workspace_files(
+        app: &Router,
+        token: &str,
+        org_id: Uuid,
+        workspace_id: Uuid,
+    ) -> anyhow::Result<Vec<Value>> {
+        let uri = format!("/api/v1/files?workspace_id={workspace_id}");
+        let val = authed_json_request(app, "GET", &uri, token, org_id, StatusCode::OK).await?;
+        val.as_array()
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("expected array for workspace {workspace_id}"))
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 115)"]
+    async fn db_list_files_scoped_to_workspace_and_org() -> anyhow::Result<()> {
+        let Some((state, _config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_user_org_workspace(&state, state.config.as_ref()).await?;
+        let (ws_same_org_2_id, ws_other_org_id) =
+            setup_extra_list_workspaces(&state.db_pool, seed.org.id).await?;
+        let app = files_app(state);
+
+        // Missing workspace_id -> 422 validation
+        let missing_err = authed_json_request(
+            &app,
+            "GET",
+            "/api/v1/files",
+            &seed.token,
+            seed.org.id,
+            StatusCode::UNPROCESSABLE_ENTITY,
+        )
+        .await?;
+        assert_eq!(missing_err["error"], "validation");
+        assert_eq!(missing_err["field"], "workspace_id");
+
+        // Cross-org workspace -> 422 (BOLA blocked)
+        let cross_uri = format!("/api/v1/files?workspace_id={ws_other_org_id}");
+        let _ = authed_json_request(
+            &app,
+            "GET",
+            &cross_uri,
+            &seed.token,
+            seed.org.id,
+            StatusCode::UNPROCESSABLE_ENTITY,
+        )
+        .await?;
+
+        // Upload alpha.txt to workspace 1 and beta.txt to workspace 2
+        let id_a = upload_test_file(
+            &app,
+            &seed.token,
+            seed.org.id,
+            seed.workspace.id,
+            "alpha.txt",
+            b"alpha",
+        )
+        .await?;
+        let _id_b = upload_test_file(
+            &app,
+            &seed.token,
+            seed.org.id,
+            ws_same_org_2_id,
+            "beta.txt",
+            b"beta",
+        )
+        .await?;
+
+        // Workspace 1 lists only alpha.txt and never leaks storage_path
+        let items_a =
+            list_workspace_files(&app, &seed.token, seed.org.id, seed.workspace.id).await?;
+        assert_eq!(items_a.len(), 1);
+        assert_eq!(items_a[0]["id"], id_a);
+        assert_eq!(items_a[0]["fileName"], "alpha.txt");
+        assert_eq!(items_a[0]["mimeType"], "text/plain");
+        assert_eq!(items_a[0]["byteSize"], 5);
+        assert_eq!(
+            items_a[0]["rustFsUrl"],
+            format!("/api/v1/files/download/{id_a}")
+        );
+        assert!(items_a[0].get("storage_path").is_none());
+
+        // Workspace 2 lists only beta.txt
+        let items_b =
+            list_workspace_files(&app, &seed.token, seed.org.id, ws_same_org_2_id).await?;
+        assert_eq!(items_b.len(), 1);
+        assert_eq!(items_b[0]["fileName"], "beta.txt");
+
+        // Soft-delete alpha.txt -> omitted from workspace 1 listing
+        let del_uri = format!("/api/v1/files/{id_a}");
+        let _ = authed_json_request(
+            &app,
+            "DELETE",
+            &del_uri,
+            &seed.token,
+            seed.org.id,
+            StatusCode::NO_CONTENT,
+        )
+        .await?;
+        let items_after =
+            list_workspace_files(&app, &seed.token, seed.org.id, seed.workspace.id).await?;
+        assert_eq!(items_after, Vec::<Value>::new());
+
+        Ok(())
+    }
 }
