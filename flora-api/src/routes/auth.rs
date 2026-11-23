@@ -170,12 +170,9 @@ async fn login(
 /// `GET /auth/callback` — Handles the OIDC callback from Zitadel.
 ///
 /// Validates and consumes the stored PKCE/state transaction, exchanges the
-/// authorization code for tokens with `code_verifier`, creates or finds the
-/// user, and issues a Flora session JWT.
-#[expect(
-    clippy::too_many_lines,
-    reason = "OIDC callback: token exchange, ID-token verification and session creation are kept in one transactional flow"
-)]
+/// authorization code for tokens with `code_verifier`, enforces active account
+/// and subject consistency, creates or finds the user, and issues a Flora
+/// session JWT.
 async fn callback(
     State(state): State<AppState>,
     Query(params): Query<OidcCallbackParams>,
@@ -189,85 +186,40 @@ async fn callback(
         .await?
         .ok_or(Error::Unauthorized)?;
 
-    // Exchange code for tokens via Zitadel token endpoint.
-    let token_url = format!(
-        "{}/oauth/v2/token",
-        state.config.oidc.issuer_url.trim_end_matches('/')
-    );
+    let identity =
+        crate::oidc::exchange_code_and_verify_id_token(&state.config.oidc, code, &transaction)
+            .await?;
+    let sub = identity.sub;
+    let email = identity.email;
+    let name = identity.name;
 
-    let client = reqwest::Client::new();
-    let form_data = serde_urlencoded::to_string([
-        ("grant_type", "authorization_code"),
-        ("code", code),
-        ("redirect_uri", transaction.redirect_uri.as_str()),
-        ("client_id", state.config.oidc.client_id.as_str()),
-        ("client_secret", state.config.oidc.client_secret.as_str()),
-        ("code_verifier", transaction.code_verifier.as_str()),
-    ])
-    .map_err(|e| Error::OidcProvider(e.to_string()))?;
-
-    let token_response = client
-        .post(&token_url)
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(form_data)
-        .send()
-        .await
-        .map_err(|e| Error::OidcProvider(e.to_string()))?;
-
-    if !token_response.status().is_success() {
-        return Err(Error::OidcProvider(format!(
-            "token exchange failed: {}",
-            token_response.status()
-        )));
-    }
-
-    let token_body: serde_json::Value = token_response
-        .json()
-        .await
-        .map_err(|e| Error::OidcProvider(e.to_string()))?;
-
-    let id_token = token_body["id_token"]
-        .as_str()
-        .ok_or_else(|| Error::OidcProvider("missing id_token".to_string()))?;
-
-    // 024: verify signature + iss/aud/exp/nonce against the provider's JWKS before
-    // creating a user or issuing a Flora session.
-    let issuer = state
-        .config
-        .oidc
-        .issuer_url
-        .trim_end_matches('/')
-        .to_owned();
-    let jwks = crate::oidc::fetch_jwks(&issuer).await?;
-    let claims = crate::oidc::verify_id_token(
-        id_token,
-        &issuer,
-        state.config.oidc.client_id.as_str(),
-        transaction.nonce.as_str(),
-        &jwks,
-    )?;
-    let sub = claims.sub.clone();
-    let email = claims.email.as_deref().unwrap_or("");
-    let name = claims.name.as_deref().unwrap_or("User");
-    if email.is_empty() {
-        return Err(Error::OidcProvider("id_token missing email".to_owned()));
-    }
-
-    // Create or update user in the database. Identity is the provider subject (024).
+    // Create or resolve user in PostgreSQL. Identity binds on provider subject (024),
+    // rejecting email collisions against an existing account bound to a different subject.
     let user_repo = PgUserRepository::new((*state.db_pool).clone());
     let user = if let Some(existing) = user_repo.find_by_oidc_subject(&sub).await? {
         tracing::info!(user_id = %existing.id, oidc_subject = %sub, "Existing user logged in via OIDC");
         existing
-    } else if let Some(existing) = user_repo.find_by_email(email).await? {
+    } else if let Some(existing) = user_repo.find_by_email(&email).await? {
+        if existing
+            .oidc_subject
+            .as_deref()
+            .is_some_and(|bound_sub| bound_sub != sub)
+        {
+            return Err(Error::Unauthorized);
+        }
         tracing::info!(user_id = %existing.id, email = %email, "Existing user matched by email via OIDC");
         existing
     } else {
-        let mut new_user = User::new(email, name);
+        let mut new_user = User::new(&email, &name);
         new_user.oidc_subject = Some(sub.clone());
         let created_user = user_repo.create(new_user).await?;
         tracing::info!(user_id = %created_user.id, email = %email, oidc_subject = %sub, "New user registered via OIDC");
         created_user
     };
+
+    if !user.is_active {
+        return Err(Error::Unauthorized);
+    }
 
     // Create a session record.
     let session_repo = PgSessionRepository::new((*state.db_pool).clone());
@@ -295,7 +247,7 @@ async fn callback(
     };
     let _session = session_repo.create(session).await?;
 
-    let flora_claims = FloraClaims::new(user.id, jti, org_id, email, ttl);
+    let flora_claims = FloraClaims::new(user.id, jti, org_id, &user.email, ttl);
     let jwt = encode_token(&flora_claims, &state.config.app.jwt_secret);
 
     Ok(Json(serde_json::json!({

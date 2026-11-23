@@ -10,7 +10,21 @@ use jsonwebtoken::{
 };
 use serde::{Deserialize, Serialize};
 
+use flora_core::config::oidc::OidcConfig;
 use flora_core::error::{Error, Result};
+
+use crate::state::oidc_transactions::OidcTransaction;
+
+/// Verified identity claims returned after OIDC code exchange and ID-token verification.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VerifiedOidcIdentity {
+    /// Stable provider subject (`sub` claim).
+    pub sub: String,
+    /// Normalized lowercase user e-mail address.
+    pub email: String,
+    /// Display name from the `name` claim, or `"User"` when absent/blank.
+    pub name: String,
+}
 
 /// Claims consumed from a verified OIDC ID token.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -160,6 +174,91 @@ pub async fn fetch_jwks(issuer: &str) -> Result<JwkSet> {
         .await
         .map_err(|e| Error::OidcProvider(format!("invalid JWKS: {e}")))?;
     Ok(jwks)
+}
+
+/// Exchanges an authorization `code` at the provider token endpoint, verifies the
+/// returned ID token against Discovery/JWKS, and extracts a normalized identity.
+///
+/// # Errors
+///
+/// Returns [`Error::OidcProvider`] if form encoding, token exchange HTTP call,
+/// discovery/JWKS fetch, signature/claim verification, or required `email`
+/// extraction fails.
+pub async fn exchange_code_and_verify_id_token(
+    oidc: &OidcConfig,
+    code: &str,
+    transaction: &OidcTransaction,
+) -> Result<VerifiedOidcIdentity> {
+    let issuer = oidc.issuer_url.trim_end_matches('/').to_owned();
+    let token_url = format!("{issuer}/oauth/v2/token");
+
+    let client = reqwest::Client::new();
+    let form_data = serde_urlencoded::to_string([
+        ("grant_type", "authorization_code"),
+        ("code", code),
+        ("redirect_uri", transaction.redirect_uri.as_str()),
+        ("client_id", oidc.client_id.as_str()),
+        ("client_secret", oidc.client_secret.as_str()),
+        ("code_verifier", transaction.code_verifier.as_str()),
+    ])
+    .map_err(|e| Error::OidcProvider(e.to_string()))?;
+
+    let token_response = client
+        .post(&token_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(form_data)
+        .send()
+        .await
+        .map_err(|e| Error::OidcProvider(e.to_string()))?;
+
+    if !token_response.status().is_success() {
+        return Err(Error::OidcProvider(format!(
+            "token exchange failed: {}",
+            token_response.status()
+        )));
+    }
+
+    let token_body: serde_json::Value = token_response
+        .json()
+        .await
+        .map_err(|e| Error::OidcProvider(e.to_string()))?;
+
+    let id_token = token_body["id_token"]
+        .as_str()
+        .ok_or_else(|| Error::OidcProvider("missing id_token".to_owned()))?;
+
+    // 024: verify signature + iss/aud/exp/nonce against the provider's JWKS before
+    // creating a user or issuing a Flora session.
+    let jwks = fetch_jwks(&issuer).await?;
+    let claims = verify_id_token(
+        id_token,
+        &issuer,
+        oidc.client_id.as_str(),
+        transaction.nonce.as_str(),
+        &jwks,
+    )?;
+
+    let email = claims
+        .email
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_lowercase)
+        .ok_or_else(|| Error::OidcProvider("id_token missing email".to_owned()))?;
+
+    let name = claims
+        .name
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .unwrap_or("User")
+        .to_owned();
+
+    Ok(VerifiedOidcIdentity {
+        sub: claims.sub,
+        email,
+        name,
+    })
 }
 
 #[cfg(test)]
@@ -327,5 +426,82 @@ mod tests {
         let set = jwks();
         assert!(set.find(KID).is_some());
         assert!(set.find("missing").is_none());
+    }
+
+    #[test]
+    fn verify_id_token_accepts_asymmetric_eddsa_and_rejects_symmetric_jwk() {
+        let ed_der: [u8; 48] = [
+            0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22,
+            0x04, 0x20, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+            0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
+        ];
+        let ed_key = EncodingKey::from_ed_der(&ed_der);
+        let mut ed_jwk =
+            jsonwebtoken::jwk::Jwk::from_encoding_key(&ed_key, jsonwebtoken::Algorithm::EdDSA)
+                .expect("valid Ed25519 JWK");
+        ed_jwk.common.key_id = Some("ed-1".to_owned());
+        let ed_jwks = JwkSet { keys: vec![ed_jwk] };
+
+        let claims = json!({
+            "sub": "ed-sub-1",
+            "iss": "https://issuer.test",
+            "aud": "flora-client",
+            "exp": (Utc::now() + Duration::hours(1)).timestamp(),
+            "nonce": "nonce-ed",
+            "email": "ed@example.test",
+            "name": "Ed User",
+        });
+        let mut ed_header = Header::new(jsonwebtoken::Algorithm::EdDSA);
+        ed_header.kid = Some("ed-1".to_owned());
+        let ed_token = encode(&ed_header, &claims, &ed_key).expect("signed EdDSA token");
+
+        let verified = verify_id_token(
+            &ed_token,
+            "https://issuer.test",
+            "flora-client",
+            "nonce-ed",
+            &ed_jwks,
+        )
+        .expect("public verify_id_token must accept asymmetric EdDSA JWK");
+        assert_eq!(verified.sub, "ed-sub-1");
+
+        let sym_token = token(
+            jsonwebtoken::Algorithm::HS256,
+            KID,
+            "https://issuer.test",
+            "flora-client",
+            Some("nonce-sym"),
+            "sym-sub-1",
+        );
+        let err = verify_id_token(
+            &sym_token,
+            "https://issuer.test",
+            "flora-client",
+            "nonce-sym",
+            &jwks(),
+        )
+        .expect_err("public verify_id_token must reject symmetric JWK");
+        assert!(err.to_string().contains("symmetric JWK"));
+    }
+
+    #[tokio::test]
+    async fn fetch_jwks_rejects_non_localhost_http_jwks_uri() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("GET"))
+            .and(wiremock::matchers::path(
+                "/.well-known/openid-configuration",
+            ))
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(json!({
+                "issuer": server.uri(),
+                "jwks_uri": "http://evil.example.com/keys",
+            })))
+            .mount(&server)
+            .await;
+
+        let err = fetch_jwks(&server.uri())
+            .await
+            .expect_err("non-localhost http jwks_uri must be rejected");
+        assert!(err.to_string().contains("must use HTTPS"));
     }
 }
