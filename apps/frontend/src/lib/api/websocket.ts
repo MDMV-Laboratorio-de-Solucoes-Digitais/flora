@@ -9,6 +9,8 @@ export interface WsMessagePayload {
 	id: string;
 	channel_id: string;
 	sender_id: string;
+	sender_name?: string | null;
+	sender_avatar_url?: string | null;
 	content: string;
 	thread_id?: string | null;
 	is_edited?: boolean;

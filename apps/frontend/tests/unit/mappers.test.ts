@@ -33,9 +33,37 @@ describe('api mappers', () => {
 		});
 
 		expect(message.authorId).toBe('44444444-4444-4444-4444-444444444444');
+		expect(message.authorName).toBeNull();
+		expect(message.authorAvatarUrl).toBeNull();
 		expect(message.channelId).toBe('11111111-1111-1111-1111-111111111111');
 		expect(message.threadId).toBe('55555555-5555-5555-5555-555555555555');
 		expect(message.fileAttachments).toEqual([]);
 		expect(message.updatedAt).toBe('2026-11-16T00:01:00Z');
+	});
+
+	it('maps trimmed sender_name and sender_avatar_url and normalizes blank values to null', () => {
+		const withAuthor = toMessage({
+			id: '33333333-3333-3333-3333-333333333333',
+			channel_id: '11111111-1111-1111-1111-111111111111',
+			sender_id: '44444444-4444-4444-4444-444444444444',
+			sender_name: '  Alice Admin  ',
+			sender_avatar_url: 'https://example.test/alice.png',
+			content: 'hello',
+			created_at: '2026-11-16T00:00:00Z'
+		});
+		expect(withAuthor.authorName).toBe('Alice Admin');
+		expect(withAuthor.authorAvatarUrl).toBe('https://example.test/alice.png');
+
+		const blankAuthor = toMessage({
+			id: '33333333-3333-3333-3333-333333333334',
+			channel_id: '11111111-1111-1111-1111-111111111111',
+			sender_id: '44444444-4444-4444-4444-444444444444',
+			sender_name: ' '.repeat(3),
+			sender_avatar_url: null,
+			content: 'hello',
+			created_at: '2026-11-16T00:00:00Z'
+		});
+		expect(blankAuthor.authorName).toBeNull();
+		expect(blankAuthor.authorAvatarUrl).toBeNull();
 	});
 });
