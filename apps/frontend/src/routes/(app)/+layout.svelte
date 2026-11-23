@@ -2,27 +2,29 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { ApiClient } from '$lib/api/client';
+	import { toNotification, type ApiNotification } from '$lib/api/mappers';
 	import { authState } from '$lib/state/AuthState.svelte';
+	import { notificationStore } from '$lib/state/NotificationStore.svelte';
 	import { wsClient } from '$lib/api/websocket';
+	import { logger } from '$lib/utils/logger';
+	import { notificationsQueryPath } from '$lib/utils/notifications';
 	import {
 		Menu,
-		MessageSquare,
+		Bell,
 		Hash,
 		CheckSquare,
 		Settings,
 		User,
 		LogOut,
 		ChevronLeft,
-		PanelRightClose,
-		PanelRightOpen,
-		Sparkles,
 		Files
 	} from '@lucide/svelte';
-	import { Input } from '$lib/components/ui/input';
 	import SearchBox from '$lib/components/search/SearchBox.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { t } from '$lib/i18n';
+	import { format, t } from '$lib/i18n';
 	import { emailFromToken } from '$lib/utils/jwt';
 
 	let { children } = $props();
@@ -30,9 +32,9 @@
 
 	// App state
 	let isSidebarOpen = $state(true);
-	let isRightPanelOpen = $state(false);
-
 	let wsKey = $state<string | null>(null);
+	let notifKey = $state<string | null>(null);
+	let notifLoadSeq = 0;
 
 	function enforceAuth() {
 		if (globalThis.window === undefined) return;
@@ -48,6 +50,22 @@
 
 	function disconnectWs() {
 		wsClient.disconnect();
+	}
+
+	async function preloadNotifications(key: string) {
+		const seq = ++notifLoadSeq;
+		try {
+			const response = await ApiClient.request<ApiNotification[]>(
+				notificationsQueryPath({ limit: 50 })
+			);
+			if (seq !== notifLoadSeq || notifKey !== key) return;
+			notificationStore.setNotifications(response.map((item) => toNotification(item)));
+		} catch (error) {
+			if (seq !== notifLoadSeq) return;
+			logger.warn('notifications', 'Failed to preload notifications', {
+				message: error instanceof Error ? error.message : String(error)
+			});
+		}
 	}
 
 	onMount(() => {
@@ -76,13 +94,29 @@
 		if (!key) {
 			wsKey = null;
 			wsClient.disconnect();
-			return;
-		}
-
-		if (key !== wsKey) {
+		} else if (key !== wsKey) {
 			wsClient.disconnect();
 			wsKey = key;
 			wsClient.connect();
+		}
+
+		const nextNotifKey =
+			authState.isAuthenticated &&
+			authState.token &&
+			authState.organizationId &&
+			!authState.isSessionLocked &&
+			!authState.isInvalidated
+				? `${authState.organizationId}|${authState.token}`
+				: null;
+
+		if (!nextNotifKey) {
+			notifKey = null;
+			notifLoadSeq += 1;
+			notificationStore.clear();
+		} else if (nextNotifKey !== notifKey) {
+			notifKey = nextNotifKey;
+			notificationStore.clear();
+			void preloadNotifications(nextNotifKey);
 		}
 	});
 </script>
@@ -136,14 +170,6 @@
 					<Button
 						variant="ghost"
 						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
-						href="/dms"
-					>
-						<MessageSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
-						{#if isSidebarOpen}<span>{t['nav.directMessages']}</span>{/if}
-					</Button>
-					<Button
-						variant="ghost"
-						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
 						href="/tasks"
 					>
 						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
@@ -157,6 +183,28 @@
 					>
 						<Files class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}<span>{t['nav.files']}</span>{/if}
+					</Button>
+					<Button
+						variant="ghost"
+						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
+						href="/notifications"
+						aria-label={t['nav.notifications']}
+					>
+						<Bell class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
+						{#if isSidebarOpen}
+							<span>{t['nav.notifications']}</span>
+							{#if notificationStore.unreadCount > 0}
+								<Badge
+									variant="secondary"
+									class="ml-auto"
+									title={format('notifications.unreadCount', {
+										count: notificationStore.unreadCount
+									})}
+								>
+									{notificationStore.unreadCount}
+								</Badge>
+							{/if}
+						{/if}
 					</Button>
 				</div>
 			</div>
@@ -237,66 +285,13 @@
 			<div class="flex flex-1 items-center gap-4">
 				<SearchBox />
 			</div>
-
-			<div class="ml-4 flex items-center gap-2">
-				<Button
-					variant="ghost"
-					size="icon"
-					onclick={() => (isRightPanelOpen = !isRightPanelOpen)}
-					aria-label={isRightPanelOpen ? t['nav.closeAiPanel'] : t['nav.openAiPanel']}
-					title={isRightPanelOpen ? t['nav.closeAiPanel'] : t['nav.openAiPanel']}
-					class={isRightPanelOpen ? 'bg-muted text-primary' : ''}
-				>
-					{#if isRightPanelOpen}
-						<PanelRightClose class="h-5 w-5" />
-					{:else}
-						<Sparkles class="h-5 w-5 text-primary" />
-					{/if}
-				</Button>
-			</div>
 		</header>
 
 		<!-- Main Split Area -->
 		<div class="flex flex-1 overflow-hidden">
-			<!-- View Container -->
 			<main class="relative flex-1 overflow-auto">
 				{@render children?.()}
 			</main>
-
-			<!-- AI Insight Panel -->
-			{#if isRightPanelOpen}
-				<aside
-					class="z-10 flex w-80 shrink-0 flex-col overflow-hidden border-l bg-muted/10 shadow-xl"
-				>
-					<div class="flex h-12 items-center justify-between border-b bg-muted/30 px-4">
-						<div class="flex items-center gap-2 text-sm font-semibold text-primary">
-							<Sparkles class="h-4 w-4" />
-							{t['ai.panelTitle']}
-						</div>
-						<Button
-							variant="ghost"
-							size="icon"
-							class="h-6 w-6"
-							aria-label={t['nav.closeAiPanel']}
-							onclick={() => (isRightPanelOpen = false)}
-						>
-							<PanelRightOpen class="h-4 w-4" />
-						</Button>
-					</div>
-					<div class="flex flex-1 flex-col items-center justify-center p-4 text-center">
-						<div class="mb-4 rounded-full bg-primary/10 p-3">
-							<Sparkles class="h-6 w-6 text-primary" />
-						</div>
-						<h3 class="mb-1 text-sm font-medium">{t['ai.welcome']}</h3>
-						<p class="mb-4 text-xs text-muted-foreground">
-							{t['ai.welcomeHint']}
-						</p>
-						<div class="w-full">
-							<Input placeholder={t['ai.askPlaceholder']} class="w-full" />
-						</div>
-					</div>
-				</aside>
-			{/if}
 		</div>
 	</div>
 </div>
