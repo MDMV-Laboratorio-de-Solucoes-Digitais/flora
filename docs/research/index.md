@@ -222,3 +222,7 @@ Contagens locais por `find` (`2026-11-20`): `specs/` 75 diretórios, `.specify/a
 ### Revalidação — 2026-11-20T09:34Z
 
 Recontagem: `specs/` 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem `index.md` (138 com ele); cobertura 137/137 links preservada. Nenhum link reescrito. **[NV]** CI futuro/produção/Forgejo.
+
+### Estado verificado — 2026-11-22 (ciclo 114; append-only)
+
+Recontagem via `find` no worktree `feature/114-wcag-ci-guard`: `specs/` 104 diretórios (556 arquivos), `.specify/assessments/` 102 diretórios (428 arquivos), `.specify/validations/` 100 diretórios (106 arquivos pré-`evidence.md`), `.specify/releases/` 100 diretórios (100 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.

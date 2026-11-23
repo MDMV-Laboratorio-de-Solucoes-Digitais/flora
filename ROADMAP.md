@@ -273,3 +273,10 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Gate PASS e PR #309 com checks verdes, sem conflitos; branch `feature/085-local-first-seed` é a única não mesclada em `dev`.
 - Contagens atuais: specs 75, assessments 72, validations **71**, releases **71**, bugs 4; research 137/138.
 - Mesmo com `required_pull_request_reviews=null` na proteção de `dev`, a regra explícita deste prompt exige aprovador distinto; ausência de reviews mantém o PR aberto, sem auto-merge/force-push.
+
+## Estado verificado — 2026-11-22 (ciclo 114; append-only)
+
+- Recontagem via `find` (`feature/114-wcag-ci-guard`): `specs/` 104 diretórios (556 arquivos, `001`–`114`), `.specify/assessments/` 102 (428), `.specify/validations/` 100 (106 pré-`evidence.md`), `.specify/releases/` 100 (100), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 114 (`400/625`): blindagem WCAG 2.2 AA no `e2e-browser` + correções e auditoria em `/files` + `a11yAudit.ts` (issues `#373`..`#377`). Gate local `check_gate_integrity.py` PASS (10 legs / 77 pisos).
+- Próximo candidato 80/20 mapeado (`300/625`): listagem `GET /api/v1/files?workspace_id=...` e persistência pós-reload em `/files`.
+- **[NV]** CI remoto, ACR, modo escuro, staging real, Forgejo e produção; histórico preservado.

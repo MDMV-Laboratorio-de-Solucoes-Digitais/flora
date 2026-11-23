@@ -453,3 +453,11 @@ permanecem intactas; apenas acréscimos.
 - Inventário de bugs atualizado: D15 e OIDC com evidência local; WCAG-111 com evidência de CI remoto (PR #370).
 - Testes focados: D15 2 passed, OIDC 1 passed; gate PASS (10 legs / 77 pisos).
 - **[NV]**: produção/IdP/staging; artefatos em `specs/113-bug-status/*`.
+
+## Estado verificado — 2026-11-22 (ciclo 114; append-only)
+
+- **Entrega (`400/625`)**: `a11yAudit.ts` + TDD (`a11yAudit.test.ts` 3/3 passed); correções WCAG 2.2 AA em `/files` (`FileUpload.svelte` `aria-label` + `text-red-700 dark:text-red-400`, `FilePreview.svelte` `aria-hidden="true"` + `text-blue-700 underline hover:text-blue-800 dark:text-blue-400`, `pt-BR.ts` `'file.selectInput'`); `auditAccessibility` em `seed-flow.e2e.ts` passou a afirmar zero violações (`expect(findings, summary).toEqual([])`) e audita `/files` (Passo 5).
+- **Evidência local**: `svelte-check` 0 erros/0 avisos; `prettier --check . && eslint .` exit 0; Vitest `server` 15 arquivos / 53 testes passed; `vite build` exit 0; `check_gate_integrity.py` PASS (4 required checks, 10 legs / 77 pisos); `git diff --check` limpo.
+- **Contagens (`find`)**: `specs/` 104 dirs (556 arquivos), `.specify/assessments/` 102 (428), `.specify/validations/` 100 (106 pré-`evidence.md`), `.specify/releases/` 100 (100), `.specify/bugs/` 8 (26), `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148), `docs/adr/` 8.
+- **R6 / Artefatos**: issues `#373`..`#377`; `specs/114-wcag-ci-guard/*`, `.specify/validations/114-wcag-ci-guard/{test-roadmap,validate}.md`, `.specify/releases/114-wcag-ci-guard/release.md`, `docs/governance/2026-11-22-114-wcag-ci-guard.md`.
+- **[NV]**: CI remoto (`e2e-browser` e required checks), ACR independente, modo escuro em navegador real, staging real e deploy em produção.

@@ -1081,3 +1081,25 @@ anterior foi alterada.
 - **Entrega**: notas de fechamento para D15 (2 passed), OIDC (rota + 1 passed) e WCAG-111 (PR #370), preservando histórico.
 - **Evidência**: gate PASS (10 legs / 77 pisos); nenhum código/gate/required check alterado.
 - **[NV]**: produção, IdP externo e staging real.
+
+## Decisão 80/20 — ciclo 114 (2026-11-22, append-only)
+
+- **session_title**: `flora - blindagem WCAG 2.2 AA no e2e-browser e rota /files` · **session_id**: `20261123-020500-orch-v46`.
+- **FONTE_FACTORY**: `b1deab1` (`origin/dev`: `05b977f`), consultada somente leitura; gate autoritativo do alvo `python3 scripts/ci/check_gate_integrity.py` PASS (10 legs / 77 pisos; `--remote` OK para `dev`/`main`).
+- **Critério**: `impacto × confiança × (6 − esforço) × (6 − risco)`, escalas 1–5, denominador **625**.
+  1. **Blindagem WCAG 2.2 AA no `e2e-browser` + correção/auditoria da rota `/files` (114)**: `4 × 5 × (6 − 2) × (6 − 1)` = **400/625** (**escolhido**).
+  2. Listagem `GET /api/v1/files?workspace_id=...` e persistência pós-reload (115 candidato): `5 × 5 × (6 − 3) × (6 − 2)` = **300/625**.
+  3. F12 medição da fração determinística da esteira: `3 × 4 × (6 − 2) × (6 − 3)` = **144/625**.
+  4. Lookup de autoria de mensagens no chat: `4 × 4 × (6 − 4) × (6 − 2)` = **128/625**.
+  5. Vitest `--project client` em `ci.yml`: `3 × 4 × (6 − 3) × (6 − 4)` = **72/625**.
+  6. Deploy automático em push para `main` (Gap 0.7): bloqueado — exige autorização SE (023).
+- **Escolha e venue (0.8)**: elevar `auditAccessibility` de report-only para falha explícita em violações WCAG 2.2 AA, extrair helper puro testável (`a11yAudit.ts`), corrigir 3 defeitos em `/files` e auditar `/files` no smoke — sem alterar required checks nem desabilitar regras axe. Build/E2E completo no GitHub Actions (repo público, Venue #1); local apenas checagens baratas (`check`, `lint`, Vitest `server`, `build`, `check_gate_integrity.py`).
+- **Fila 0.0 / Herança**: 0 PRs abertos para `dev/`; PR #371 (`release/112-promotion` → `main`, CLEAN) permanece na fila SWE sem merge/deploy; 0 stashes; `fix/promo-355-conflict` e `INBOX-correcoes-revisao-interagentes-2026-11-21.md` preservados intactos na worktree compartilhada.
+
+## Ciclo 114 — blindagem WCAG 2.2 AA (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/114-wcag-ci-guard`; branch `feature/114-wcag-ci-guard` @ `github/dev@b32f7cafe`.
+- **Issues R6**: `T-001`→`#373`, `T-002`→`#374`, `T-003`→`#375`, `T-004`→`#376`, `T-005`→`#377`.
+- **Entrega**: helper `a11yAudit.ts` + TDD `a11yAudit.test.ts` (3/3); correções `/files` (`FileUpload.svelte` `aria-label` + `text-red-700 dark:text-red-400`, `FilePreview.svelte` `aria-hidden="true"` + `text-blue-700 underline hover:text-blue-800 dark:text-blue-400`, `pt-BR.ts` `'file.selectInput'`); `seed-flow.e2e.ts` exige `expect(findings, summary).toEqual([])` e audita `/files` (Passo 5).
+- **Evidência local**: `svelte-check` 0/0; `lint` exit 0; Vitest `server` 15/53; `vite build` exit 0; `check_gate_integrity.py` PASS (10 legs / 77 pisos); `git diff --check` limpo. Contagens `find`: specs 104/556, assessments 102/428, validations 100/106, releases 100/100, bugs 8/26, research 137/148, adr 8.
+- **[NV]**: CI remoto (`e2e-browser` e required checks), ACR independente, modo escuro, staging real e produção.
