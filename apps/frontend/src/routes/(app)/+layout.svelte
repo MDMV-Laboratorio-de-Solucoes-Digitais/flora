@@ -2,13 +2,12 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ApiClient } from '$lib/api/client';
-	import { toNotification, type ApiNotification } from '$lib/api/mappers';
+	import { fetchOrganizationNotifications } from '$lib/api/notifications';
 	import { authState } from '$lib/state/AuthState.svelte';
 	import { notificationStore } from '$lib/state/NotificationStore.svelte';
 	import { wsClient } from '$lib/api/websocket';
 	import { logger } from '$lib/utils/logger';
-	import { notificationsQueryPath } from '$lib/utils/notifications';
+	import { buildNotificationContextKey } from '$lib/utils/notifications';
 	import {
 		Menu,
 		Bell,
@@ -33,8 +32,6 @@
 	// App state
 	let isSidebarOpen = $state(true);
 	let wsKey = $state<string | null>(null);
-	let notifKey = $state<string | null>(null);
-	let notifLoadSeq = 0;
 
 	function enforceAuth() {
 		if (globalThis.window === undefined) return;
@@ -52,16 +49,13 @@
 		wsClient.disconnect();
 	}
 
-	async function preloadNotifications(key: string) {
-		const seq = ++notifLoadSeq;
+	async function preloadNotifications(contextKey: string) {
 		try {
-			const response = await ApiClient.request<ApiNotification[]>(
-				notificationsQueryPath({ limit: 50 })
-			);
-			if (seq !== notifLoadSeq || notifKey !== key) return;
-			notificationStore.setNotifications(response.map((item) => toNotification(item)));
+			await notificationStore.load({
+				contextKey,
+				fetcher: () => fetchOrganizationNotifications(50)
+			});
 		} catch (error) {
-			if (seq !== notifLoadSeq) return;
 			logger.warn('notifications', 'Failed to preload notifications', {
 				message: error instanceof Error ? error.message : String(error)
 			});
@@ -100,22 +94,11 @@
 			wsClient.connect();
 		}
 
-		const nextNotifKey =
-			authState.isAuthenticated &&
-			authState.token &&
-			authState.organizationId &&
-			!authState.isSessionLocked &&
-			!authState.isInvalidated
-				? `${authState.organizationId}|${authState.token}`
-				: null;
+		const nextNotifKey = buildNotificationContextKey(authState);
 
 		if (!nextNotifKey) {
-			notifKey = null;
-			notifLoadSeq += 1;
 			notificationStore.clear();
-		} else if (nextNotifKey !== notifKey) {
-			notifKey = nextNotifKey;
-			notificationStore.clear();
+		} else if (notificationStore.syncContext(nextNotifKey)) {
 			void preloadNotifications(nextNotifKey);
 		}
 	});
@@ -188,19 +171,17 @@
 						variant="ghost"
 						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
 						href="/notifications"
-						aria-label={t['nav.notifications']}
+						aria-label={notificationStore.unreadCount > 0
+							? `${t['nav.notifications']} (${format('notifications.unreadCount', {
+									count: notificationStore.unreadCount
+								})})`
+							: t['nav.notifications']}
 					>
 						<Bell class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}
 							<span>{t['nav.notifications']}</span>
 							{#if notificationStore.unreadCount > 0}
-								<Badge
-									variant="secondary"
-									class="ml-auto"
-									title={format('notifications.unreadCount', {
-										count: notificationStore.unreadCount
-									})}
-								>
+								<Badge variant="secondary" class="ml-auto" aria-hidden="true">
 									{notificationStore.unreadCount}
 								</Badge>
 							{/if}

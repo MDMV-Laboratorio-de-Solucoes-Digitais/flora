@@ -1,7 +1,7 @@
 # Briefing de Compreensão — 117 / #391..#395
 
 **Data**: 2026-11-23 · **Domínio crítico**: tenant
-**Issues**: [#391](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/issues/391)–[#395](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/issues/395) · **Autor**: orquestrador
+**PR**: [#396](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/396) · **Issues**: [#391](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/issues/391)–[#395](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/issues/395) · **Autor**: orquestrador
 
 ## Intenção
 
@@ -18,7 +18,7 @@ Escopar todas as operações HTTP de `/api/v1/notifications` (`GET /`, `POST /{i
   - **Fronteira de tenant e associação explícita**: `ensure_member(&auth, &state)` (`flora-api/src/routes/notifications.rs`) exige `auth.require_org()` (derivado exclusivamente da sessão JWT/DB validada, nunca de header `X-Organization-ID`) e confirma vínculo ativo em `PgMembershipRepository::find_by_user_and_organization`.
   - **Queries escopadas por `(user_id, organization_id)`**: `PgNotificationRepository::find_by_user_and_organization`, `find_unread_by_user_and_organization` e `mark_all_as_read_in_organization` (`flora-core/src/repositories/notification_repository.rs`) incluem `WHERE user_id = $1 AND organization_id = $2` em todas as consultas e no `UPDATE` em lote (`POST /api/v1/notifications/read-all`).
   - **Fail-closed cross-org (`404`)**: em `mark_as_read`, se `notif.organization_id != org_id`, o handler retorna `Error::NotificationNotFound` (`404`) **antes** de verificar `notif.user_id != user_id` (`403`), evitando vazar existência de IDs pertencentes a outra organização.
-  - **Navegação segura e estado reativo isolado no cliente**: `resolveNotificationHref` (`apps/frontend/src/lib/utils/notifications.ts`) aceita apenas prefixos internos permitidos (`/channels`, `/tasks`, `/files`, `/settings`, `/notifications`), descartando URLs externas/`//`/`javascript:`/`/dms`; `+layout.svelte` limpa `notificationStore` e incrementa `notifLoadSeq` ao trocar de organização ou encerrar sessão.
+  - **Navegação segura e estado reativo isolado no cliente**: `resolveNotificationHref` (`apps/frontend/src/lib/utils/notifications.ts`) aceita apenas prefixos internos permitidos (`/channels`, `/tasks`, `/files`, `/settings`, `/notifications`), descartando URLs externas/`//`/`javascript:`/`/dms`; `NotificationStore` (`NotificationStore.svelte.ts`) centraliza `syncContext` + `loadSequence` + deduplicação de requisições em voo (`pendingLoad`), descartando respostas obsoletas ao trocar de organização, encerrar sessão ou marcar notificações como lidas.
 
 ## Decisões implícitas
 

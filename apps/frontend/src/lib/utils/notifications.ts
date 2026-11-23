@@ -20,6 +20,27 @@ const SAFE_ROUTE_PREFIXES = [
 	'/notifications'
 ] as const;
 
+export interface NotificationContextInput {
+	isAuthenticated: boolean;
+	token: string | null;
+	organizationId: string | null;
+	isSessionLocked: boolean;
+	isInvalidated: boolean;
+}
+
+export function buildNotificationContextKey(context: NotificationContextInput): string | null {
+	if (
+		!context.isAuthenticated ||
+		!context.token ||
+		!context.organizationId ||
+		context.isSessionLocked ||
+		context.isInvalidated
+	) {
+		return null;
+	}
+	return `${context.organizationId}|${context.token}`;
+}
+
 export function notificationsQueryPath(options?: { unreadOnly?: boolean; limit?: number }): string {
 	const parameters = new URLSearchParams();
 	if (options?.limit !== undefined && Number.isFinite(options.limit)) {

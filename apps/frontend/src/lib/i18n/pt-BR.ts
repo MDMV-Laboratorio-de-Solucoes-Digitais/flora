@@ -79,6 +79,7 @@ export const t = {
 	'notifications.unread': 'Não lida',
 	'notifications.filterAll': 'Todas',
 	'notifications.filterUnread': 'Não lidas',
+	'notifications.filtersLabel': 'Filtros de notificações',
 	'notifications.openTarget': 'Abrir destino',
 	'notifications.unreadCount': '{count} não lida(s)',
 	'notifications.type.Mention': 'Menção',

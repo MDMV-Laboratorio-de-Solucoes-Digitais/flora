@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { ApiClient } from '$lib/api/client';
-	import { toNotification, type ApiNotification } from '$lib/api/mappers';
+	import {
+		fetchOrganizationNotifications,
+		markAllOrganizationNotificationsAsRead,
+		markNotificationAsRead
+	} from '$lib/api/notifications';
 	import { authState } from '$lib/state/AuthState.svelte';
 	import { notificationStore } from '$lib/state/NotificationStore.svelte';
 	import {
+		buildNotificationContextKey,
 		notificationEventLabel,
-		notificationsQueryPath,
 		resolveNotificationHref
 	} from '$lib/utils/notifications';
 	import { Badge } from '$lib/components/ui/badge';
@@ -15,10 +18,9 @@
 	import { apiErrorMessage, t } from '$lib/i18n';
 
 	let filterMode = $state<'all' | 'unread'>('all');
-	let isLoading = $state(true);
 	let isMutating = $state(false);
 	let errorMessage = $state('');
-	let loadSeq = 0;
+	let errorSequence = 0;
 
 	const visibleNotifications = $derived(
 		filterMode === 'unread'
@@ -26,53 +28,64 @@
 			: notificationStore.notifications
 	);
 
-	async function loadNotifications() {
-		const seq = ++loadSeq;
-		isLoading = true;
+	async function loadNotifications(shouldForce = false) {
+		const contextKey = buildNotificationContextKey(authState);
+		if (!contextKey) return;
+		notificationStore.syncContext(contextKey);
+		const currentErrorSequence = ++errorSequence;
 		errorMessage = '';
 		try {
-			const response = await ApiClient.request<ApiNotification[]>(
-				notificationsQueryPath({ limit: 50 })
-			);
-			if (seq !== loadSeq) return;
-			notificationStore.setNotifications(response.map((item) => toNotification(item)));
+			await notificationStore.load({
+				contextKey,
+				shouldForce,
+				fetcher: () => fetchOrganizationNotifications(50)
+			});
 		} catch (error) {
-			if (seq !== loadSeq) return;
-			errorMessage = apiErrorMessage(error, 'error.loadNotifications');
-		} finally {
-			if (seq === loadSeq) {
-				isLoading = false;
+			if (
+				currentErrorSequence !== errorSequence ||
+				buildNotificationContextKey(authState) !== contextKey
+			) {
+				return;
 			}
+			errorMessage = apiErrorMessage(error, 'error.loadNotifications');
 		}
 	}
 
 	async function markOneAsRead(notificationId: string) {
-		if (isMutating) return;
+		if (isMutating || notificationStore.isLoading) return;
+		const contextKey = buildNotificationContextKey(authState);
+		if (!contextKey) return;
 		isMutating = true;
 		errorMessage = '';
 		try {
-			await ApiClient.request(`/api/v1/notifications/${notificationId}/read`, {
-				method: 'POST'
-			});
-			notificationStore.markAsRead(notificationId);
+			await markNotificationAsRead(notificationId);
+			if (buildNotificationContextKey(authState) === contextKey) {
+				notificationStore.markAsRead(notificationId);
+			}
 		} catch (error) {
-			errorMessage = apiErrorMessage(error, 'error.markNotificationRead');
+			if (buildNotificationContextKey(authState) === contextKey) {
+				errorMessage = apiErrorMessage(error, 'error.markNotificationRead');
+			}
 		} finally {
 			isMutating = false;
 		}
 	}
 
 	async function markAllAsRead() {
-		if (isMutating || notificationStore.unreadCount === 0) return;
+		if (isMutating || notificationStore.isLoading || notificationStore.unreadCount === 0) return;
+		const contextKey = buildNotificationContextKey(authState);
+		if (!contextKey) return;
 		isMutating = true;
 		errorMessage = '';
 		try {
-			await ApiClient.request('/api/v1/notifications/read-all', {
-				method: 'POST'
-			});
-			notificationStore.markAllAsRead();
+			await markAllOrganizationNotificationsAsRead();
+			if (buildNotificationContextKey(authState) === contextKey) {
+				notificationStore.markAllAsRead();
+			}
 		} catch (error) {
-			errorMessage = apiErrorMessage(error, 'error.markNotificationRead');
+			if (buildNotificationContextKey(authState) === contextKey) {
+				errorMessage = apiErrorMessage(error, 'error.markNotificationRead');
+			}
 		} finally {
 			isMutating = false;
 		}
@@ -87,7 +100,7 @@
 			await goto('/select-org');
 			return;
 		}
-		await loadNotifications();
+		await loadNotifications(false);
 	});
 </script>
 
@@ -97,23 +110,27 @@
 			<h1 class="text-2xl font-bold">{t['notifications.title']}</h1>
 			<p class="text-sm text-muted-foreground">{t['notifications.description']}</p>
 		</div>
-
 		<div class="flex flex-wrap items-center gap-2">
-			<Button variant="outline" size="sm" onclick={loadNotifications} disabled={isLoading}>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={() => loadNotifications(true)}
+				disabled={notificationStore.isLoading || isMutating}
+			>
 				{t['notifications.refresh']}
 			</Button>
 			<Button
 				variant="secondary"
 				size="sm"
 				onclick={markAllAsRead}
-				disabled={isLoading || isMutating || notificationStore.unreadCount === 0}
+				disabled={notificationStore.isLoading || isMutating || notificationStore.unreadCount === 0}
 			>
 				{t['notifications.markAllRead']}
 			</Button>
 		</div>
 	</div>
 
-	<div class="flex items-center gap-2" role="group" aria-label={t['notifications.title']}>
+	<div class="flex items-center gap-2" role="group" aria-label={t['notifications.filtersLabel']}>
 		<Button
 			variant={filterMode === 'all' ? 'secondary' : 'outline'}
 			size="sm"
@@ -141,7 +158,7 @@
 		</div>
 	{/if}
 
-	{#if isLoading}
+	{#if notificationStore.isLoading && visibleNotifications.length === 0}
 		<p class="text-sm text-muted-foreground">{t['notifications.loading']}</p>
 	{:else if visibleNotifications.length === 0}
 		<div class="rounded-lg border p-6 text-sm text-muted-foreground">
@@ -176,7 +193,7 @@
 							<Button
 								variant="secondary"
 								size="sm"
-								disabled={isMutating}
+								disabled={notificationStore.isLoading || isMutating}
 								onclick={() => markOneAsRead(item.id)}
 							>
 								{t['notifications.markRead']}

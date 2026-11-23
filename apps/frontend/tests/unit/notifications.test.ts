@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { NotificationStore } from '../../src/lib/state/NotificationStore.svelte';
 import type { NotificationItem } from '../../src/lib/types/models';
 import {
+	buildNotificationContextKey,
 	notificationEventLabel,
 	notificationsQueryPath,
 	resolveNotificationHref
@@ -101,5 +102,87 @@ describe('NotificationStore', () => {
 		store.clear();
 		expect(store.notifications).toEqual([]);
 		expect(store.unreadCount).toBe(0);
+	});
+
+	it('builds context keys only for active unlocked authenticated sessions', () => {
+		expect(
+			buildNotificationContextKey({
+				isAuthenticated: true,
+				token: 'tok-1',
+				organizationId: 'org-a',
+				isSessionLocked: false,
+				isInvalidated: false
+			})
+		).toBe('org-a|tok-1');
+		expect(
+			buildNotificationContextKey({
+				isAuthenticated: true,
+				token: 'tok-1',
+				organizationId: 'org-a',
+				isSessionLocked: true,
+				isInvalidated: false
+			})
+		).toBeNull();
+		expect(
+			buildNotificationContextKey({
+				isAuthenticated: true,
+				token: 'tok-1',
+				organizationId: null,
+				isSessionLocked: false,
+				isInvalidated: false
+			})
+		).toBeNull();
+	});
+
+	it('deduplicates concurrent loads for the same context and cancels stale snapshots', async () => {
+		store.syncContext('org-a|tok-1');
+		const first = Promise.withResolvers<NotificationItem[]>();
+		let fetchCount = 0;
+
+		const firstPromise = store.load({
+			contextKey: 'org-a|tok-1',
+			fetcher: () => {
+				fetchCount += 1;
+				return first.promise;
+			}
+		});
+		const duplicatePromise = store.load({
+			contextKey: 'org-a|tok-1',
+			fetcher: () => {
+				fetchCount += 1;
+				return Promise.resolve([]);
+			}
+		});
+
+		expect(fetchCount).toBe(1);
+		expect(store.isLoading).toBe(true);
+		first.resolve([makeNotification('n-1', false)]);
+		expect(await firstPromise).toBe(true);
+		expect(await duplicatePromise).toBe(true);
+		expect(store.isLoading).toBe(false);
+		expect(store.unreadCount).toBe(1);
+
+		const stale = Promise.withResolvers<NotificationItem[]>();
+		const staleLoad = store.load({
+			contextKey: 'org-a|tok-1',
+			fetcher: () => stale.promise
+		});
+		store.markAsRead('n-1');
+		expect(store.unreadCount).toBe(0);
+
+		stale.resolve([makeNotification('n-1', false), makeNotification('n-2', false)]);
+		expect(await staleLoad).toBe(false);
+		expect(store.notifications).toHaveLength(1);
+		expect(store.unreadCount).toBe(0);
+
+		const oldOrg = Promise.withResolvers<NotificationItem[]>();
+		const oldOrgLoad = store.load({
+			contextKey: 'org-a|tok-1',
+			fetcher: () => oldOrg.promise
+		});
+		store.syncContext('org-b|tok-1');
+		oldOrg.resolve([makeNotification('n-old', false)]);
+		expect(await oldOrgLoad).toBe(false);
+		expect(store.notifications).toEqual([]);
 	});
 });
