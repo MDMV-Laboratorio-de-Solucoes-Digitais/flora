@@ -2,20 +2,17 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { format, t } from '../../src/lib/i18n';
+import { WCAG_22_AA_TAGS, summarizeWcagAudit } from '../../src/lib/utils/a11yAudit';
 
 const MAIN_WORKSPACE = '88888888-8888-8888-8888-888888888888';
 
-const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
-
-/** Varredura informativa: achados viram anotação, nunca falham o smoke. */
+/** Auditoria WCAG 2.2 AA: registra resumo no log/anotação e falha em caso de violações. */
 async function auditAccessibility(page: Page, route: string): Promise<void> {
-	const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
-	const linhas = results.violations.flatMap((v) =>
-		v.nodes.map((n) => `${v.id} [${v.impact ?? 'indefinido'}] ${JSON.stringify(n.target)}`)
-	);
-	const resumo = `WCAG 2.2 AA em ${route}: ${linhas.length === 0 ? 'sem achados' : linhas.join('; ')}`;
-	process.stdout.write(`${resumo}\n`);
-	test.info().annotations.push({ type: 'wcag-axe', description: resumo });
+	const results = await new AxeBuilder({ page }).withTags([...WCAG_22_AA_TAGS]).analyze();
+	const { findings, summary } = summarizeWcagAudit(route, results.violations);
+	process.stdout.write(`${summary}\n`);
+	test.info().annotations.push({ type: 'wcag-axe', description: summary });
+	expect(findings, summary).toEqual([]);
 }
 
 test('smoke: select-org -> workspace/channel -> message -> task', async ({ page }) => {
@@ -72,4 +69,10 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	const todo = page.getByRole('region', { name: `${t['kanban.column']} ${t['kanban.todo']}` });
 	await expect(todo.getByText(title, { exact: true })).toBeVisible();
 	await expect(todo.getByText(description, { exact: true })).toBeVisible();
+
+	// 5. files — reuse rotated session to verify /files route and WCAG 2.2 AA compliance.
+	await page.goto('/files');
+	await expect(page.getByRole('heading', { name: t['files.title'], level: 1 })).toBeVisible();
+	await expect(page.getByLabel(t['files.workspace'])).toBeEnabled();
+	await auditAccessibility(page, '/files');
 });
