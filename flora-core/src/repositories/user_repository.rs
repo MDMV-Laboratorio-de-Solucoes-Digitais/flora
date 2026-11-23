@@ -67,6 +67,23 @@ impl UserRepository for PgUserRepository {
         Ok(user)
     }
 
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let users = sqlx::query_as::<_, User>(
+            "SELECT id, email, oidc_subject, password_hash, password_updated_at,
+                    display_name, avatar_url, profile, is_active, created_at, updated_at
+             FROM users
+             WHERE id = ANY($1)",
+        )
+        .bind(ids)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(users)
+    }
+
     async fn create(&self, user: User) -> Result<User> {
         let created = sqlx::query_as::<_, User>(
             "INSERT INTO users (id, email, oidc_subject, password_hash, password_updated_at,
@@ -102,6 +119,26 @@ impl UserRepository for PgUserRepository {
         )
         .bind(id)
         .bind(password_hash)
+        .bind(updated_at)
+        .execute(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(result.rows_affected() > 0)
+    }
+
+    async fn set_oidc_subject_if_absent(
+        &self,
+        id: Uuid,
+        oidc_subject: &str,
+        updated_at: DateTime<Utc>,
+    ) -> Result<bool> {
+        let result = sqlx::query(
+            "UPDATE users
+             SET oidc_subject = $2, updated_at = $3
+             WHERE id = $1 AND oidc_subject IS NULL AND is_active = true",
+        )
+        .bind(id)
+        .bind(oidc_subject)
         .bind(updated_at)
         .execute(&self.pool)
         .await

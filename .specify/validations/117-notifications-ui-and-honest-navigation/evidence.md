@@ -1,0 +1,90 @@
+# Evidência de Validação — ciclo 117 (`117-notifications-ui-and-honest-navigation`)
+
+- **Data**: 2026-11-23 UTC
+- **PR**: [#396](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/396) (`feature/117-notifications-ui-and-honest-navigation` → `dev`)
+- **HEAD verificado para código & CI**: `189edd4feee9232b8c0e35c7ec9b419871652603`
+- **Veredito R4**: **APROVADO com ressalva `[NV]`** *(tema escuro em navegador real e staging/produção externos fora do escopo do smoke em CI)*
+
+## Tabela do Roteiro de Testes (`test-roadmap.md`, 11 passos)
+
+| # | Passo | Resultado observado | Evidência / Referência |
+|---|---|---|---|
+| 1 | `cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings` | `PASS` (exit `0`, `0` warnings) | Local `task-331` + CI [`rust-build`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768424/job/137693063118) |
+| 2 | `cargo test --workspace` | `PASS` (`flora-api` `46`, `flora-core` `35+21`, `flora-tests` `36 passed / 80 ignored`) | Local `task-331` + CI `rust-build` |
+| 3 | `python3 scripts/ci/check_gate_integrity.py` | `PASS` (`gate-integrity: PASS`, 4 required checks, 10 legs / 80 pisos, `notifications: 6`) | Local `task-331` + CI `rust-build` |
+| 4 | `bun run check && bun run lint` em `apps/frontend` | `PASS` (`svelte-check`: `0 errors and 0 warnings`; `prettier` + `eslint` exit `0` após fix ACR `189edd4fe`) | Local `task-496` + CI [`frontend-build`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768337/job/137693058969) |
+| 5 | `bun run test:unit -- --run --project server` em `apps/frontend` | `PASS` (`Test Files 18 passed (18)`, `Tests 71 passed (71)` — inclui TDD RED `task-199` → GREEN `task-222` e hardening `task-496`) | Local `task-496` + CI `frontend-build` |
+| 6 | `bun run build` em `apps/frontend` | `PASS` (`vite build` + `@sveltejs/adapter-node ✔ done`, `25.33s`) | Local `task-496` + CI `frontend-build` |
+| 7 | `gh pr checks 396 --watch` no head `189edd4fe` | `PASS` (`0 cancelled, 0 failing, 11 successful, 1 skipped` — `dependency-review` skip apenas em evento `push`, `success` em `pull_request`) | [`Rust CI`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768424) · [`CI`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768337) |
+| 8 | Logs ao vivo de `db-tests` (Postgres 18) | `PASS` — 10/10 pernas / `80/80` contratos (`notifications: passed=6 floor=6`, incl. `db_notifications_org_scoped_target_url_and_read_all ... ok`) | [`db-tests` log](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768424/job/137693062993) |
+| 9 | Logs ao vivo de `e2e-browser` (Chromium) | `PASS` — `4 passed (42.1s)`, Passos 6 (`/notifications` `GET 200` + empty state + sem `/dms`/IA na UI) e 7 (`/dms` honesto), `WCAG 2.2 AA`: `sem achados` em `/tasks`, `/channels`, `/files`, `/notifications` e `/dms` | [`e2e-browser` log](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768424/job/137693063173) |
+| 10 | Code Review Agêntico Independente (`research`, modelo `pro`) | `APROVADO` (rodada 1 `052fd698` apontou 2 `MEDIUM` de corrida no frontend + `LOW-3`; corrigidos em `189edd4fe` e revalidados na rodada 2 `dfa9e102` com `0` blockers) | [PR #396 comment #1](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/396#issuecomment-7101161293) · [PR #396 comment #2](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/396#issuecomment-7101299896) |
+| 11 | Tema escuro real em navegador e staging/produção externos | `[NV]` | Smoke Chromium executa em tema claro contra `dev-seed.sql`; deploy Coolify fora do gate de merge (`dev`) |
+
+## Evidência Visual Local (Playwright Chromium + PostgreSQL 18.7) e Correção WCAG 2.5.3
+
+- **Execução local do contrato DB (`task-618`, PostgreSQL 18.7 em `127.0.0.1:15433`)**: `cargo test -p flora-tests contract::notifications::db_notifications:: -- --ignored --test-threads=1` → **`test result: ok. 6 passed; 0 failed`** (`finished in 3.05s`), incluindo `db_notifications_org_scoped_target_url_and_read_all ... ok`.
+- **Achado e correção em tela real (`task-650` → `task-694`)**: ao popular 2 notificações não lidas na UI e auditar `/notifications (unread)` com `@axe-core/playwright`, o roteiro revelou `WCAG 2.2 AA: label-content-name-mismatch [serious] ["a[href$=\"notifications\"]"]` (`aria-label="Notificações (2 não lida(s))"` conflitava com texto visível `"Notificações 2"`). Corrigido em `apps/frontend/src/routes/(app)/+layout.svelte` (`notificationsCollapsedAriaLabel` apenas quando `!isSidebarOpen`; quando expandida, `<Badge>` + `<span class="sr-only">` compõem o nome acessível naturalmente) e guardado permanentemente pelo Passo 6b em `apps/frontend/tests/e2e/seed-flow.e2e.ts`.
+- **Reexecução Playwright local (`task-694`)**: `bun run check` (`0` erros/avisos), `bun run lint` (`exit 0`), `bun run test:unit -- --run --project server` (`exit 0`), `npm run build` (`exit 0`) e `bun run test:e2e` → **`4 passed (35.1s)`**, `WCAG 2.2 AA: sem achados` em `/tasks`, `/channels`, `/files`, `/notifications`, `/notifications (unread)` e `/dms`.
+- **Galeria de capturas (8 PNGs em [Gist `962e84502fb4cf5689266e10f2224967`](https://gist.github.com/lfgranja/962e84502fb4cf5689266e10f2224967))**:
+  1. [`01-select-org.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/01-select-org.png) — `/select-org` (`Acme Corporation`)
+  2. [`02-tasks-board.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/02-tasks-board.png) — `/tasks` (tarefa criada + sidebar honesta sem `/dms` e sem botão IA)
+  3. [`03-channels-chat.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/03-channels-chat.png) — `/channels` (`# general`, autores reais `Alice Admin` / `Bob Builder`)
+  4. [`04-files-workspace.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/04-files-workspace.png) — `/files` (seletor de workspace + estado vazio)
+  5. [`05-notifications-empty.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/05-notifications-empty.png) — `/notifications` (estado vazio escopado à organização)
+  6. [`06-notifications-unread-and-badge.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/06-notifications-unread-and-badge.png) — `/notifications` populado (`Menção`, `Atribuição`, badge `2` na sidebar, WCAG `sem achados`)
+  7. [`07-notifications-after-read-all.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/07-notifications-after-read-all.png) — `/notifications` após `Marcar todas como lidas` (`POST /read-all` `204`, itens `Lida`, badge zerado)
+  8. [`08-dms-honest-unavailable.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/369fb4fcbf114d87365a81fa5069303990aaf53f/08-dms-honest-unavailable.png) — `/dms` (aviso honesto pt-BR + `Ir para Canais`)
+
+## Extensão E2E Granular, Tema Escuro e Sidebar Recolhida (append-only, 2026-11-23)
+
+- **Branch de extensão**: `fix/117-granular-e2e-dark-and-a11y` (expansão do smoke E2E + correções detectadas na auditoria real em Chromium).
+- **Correções entregues**:
+  1. **Sidebar recolhida WCAG 2.2 AA (`button-name [critical] #bits-s1`)**: adicionados `aria-label` condicionais quando `!isSidebarOpen` no botão de conta do rodapé (`nav.myAccount`) e nos links `/channels`, `/tasks` e `/files` em `apps/frontend/src/routes/(app)/+layout.svelte`.
+  2. **Concordância singular/plural para leitor de tela (`1 não lida` vs `N não lidas`)**: adicionadas chaves `notifications.unreadSingular` (`'não lida'`) e `notifications.unreadPlural` (`'não lidas'`) em `apps/frontend/src/lib/i18n/pt-BR.ts` + `$derived` `unreadSrLabel` em `(app)/+layout.svelte`.
+  3. **Ativação de variantes `dark:*` no Tailwind CSS v4**: adicionada diretiva `@custom-variant dark (&:where(.dark, .dark *));` em `apps/frontend/src/routes/layout.css`.
+  4. **Storage gravável no Playwright E2E (`/files` upload)**: configurado `FLORA_STORAGE__LOCAL_PATH` em `apps/frontend/playwright.config.ts` (`process.env.FLORA_STORAGE__LOCAL_PATH ?? path.join(os.tmpdir(), 'flora-e2e-storage')`).
+  5. **Roteiro E2E expandido (`apps/frontend/tests/e2e/seed-flow.e2e.ts`)**:
+     - Passo 5b (`/files`): upload multipart real (`POST /api/v1/files/upload` → `201`) de `relatorio-ciclo-117.txt`, `page.reload()` comprovando listagem persistida (`GET /api/v1/files?workspace_id=` → `200`) + WCAG 2.2 AA.
+     - Passos 6b–6f (`/notifications` & sidebar recolhida): `2` não lidas → clique individual `"Marcar como lida"` (`POST /api/v1/notifications/{id}/read` → `204`) → label acessível `"Notificações 1 não lida"` + WCAG 2.2 AA → filtro `"Não lidas"` → lote `"Marcar todas como lidas"` (`POST /read-all` → `204`) → estado vazio `"Nenhuma notificação não lida."` → aba `"Todas"` → clique `"Abrir destino"` + sidebar recolhida + WCAG 2.2 AA.
+     - Passo 8 (`.dark`): ativação real da classe `.dark` no navegador e auditoria WCAG 2.2 AA em `/dms`, `/notifications` e `/tasks`.
+- **Reexecução local completa (`task-847`, PostgreSQL 18.7 em `127.0.0.1:15433`, `FLORA_STORAGE__LOCAL_PATH=/tmp/flora-e2e-storage`)**:
+  - `bun run check`: `svelte-check found 0 errors and 0 warnings` (exit `0`).
+  - `bun run lint`: `prettier --check . && eslint .` exit `0`.
+  - `bun run test:unit -- --run --project server`: `Test Files 18 passed (18)`, `Tests 71 passed (71)`.
+  - `npm run build` + `bun run test:e2e`: **`4 passed (1.3m)`** com **12/12 `WCAG 2.2 AA: sem achados`** (`/tasks`, `/channels`, `/files`, `/files (populated after reload)`, `/notifications`, `/notifications (2 unread)`, `/notifications (1 unread singular)`, `/notifications (sidebar collapsed)`, `/dms`, `/dms (dark mode)`, `/notifications (dark mode)`, `/tasks (dark mode)`).
+- **Testes OIDC com mocks/fixtures (`task-847`)**:
+  - `cargo test -p flora-api oidc::`: **`5 passed; 0 failed`** (`jwks_find_is_kid_aware`, `rejects_unknown_kid`, `rejects_tampered_token`, `verifies_valid_token`, `rejects_wrong_issuer_audience_or_nonce` com fixture HS256 `JwkSet` / `verify_id_token_inner`).
+  - `cargo test -p flora-tests test_auth_`: **`7 passed; 0 failed`** (URL PKCE + validação de `state`/`code` no `callback` com `PgPool` lazy, sem DB nem IdP HTTP).
+  - `cargo test -p flora-tests test_registration_flow`: **`2 passed; 0 failed`** (`test_registration_flow_with_mock_oidc` em `flora-tests/src/integration/registration.rs` ainda é placeholder sem troca HTTP de token contra provedor mock).
+- **Galeria atualizada (17 PNGs em [Gist `962e84502fb4cf5689266e10f2224967` @ `8952ffbd`](https://gist.github.com/lfgranja/962e84502fb4cf5689266e10f2224967/8952ffbd89eebc783b8d20de4e9311dbe048a306))**:
+  1. [`01-select-org.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/01-select-org.png) — `/select-org` (`Acme Corporation`)
+  2. [`02-tasks-board.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/02-tasks-board.png) — `/tasks` (quadro Kanban + sidebar honesta)
+  3. [`03-channels-chat.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/03-channels-chat.png) — `/channels` (`# general`)
+  4. [`04-files-workspace.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/04-files-workspace.png) — `/files` (seletor de workspace + estado vazio)
+  5. [`05-files-uploaded.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/05-files-uploaded.png) — `/files` após upload multipart `201` (`relatorio-ciclo-117.txt`)
+  6. [`06-files-persisted-after-reload.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/06-files-persisted-after-reload.png) — `/files` após `page.reload()` (`GET /api/v1/files` `200`, WCAG `sem achados`)
+  7. [`07-notifications-empty.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/07-notifications-empty.png) — `/notifications` (estado vazio)
+  8. [`08-notifications-2-unread.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/08-notifications-2-unread.png) — `/notifications` com 2 não lidas e badge `2`
+  9. [`09-notifications-1-unread-singular.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/09-notifications-1-unread-singular.png) — `/notifications` após marcar 1 item (`POST /{id}/read` `204`, `"Notificações 1 não lida"`)
+  10. [`10-notifications-filter-unread.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/10-notifications-filter-unread.png) — `/notifications` na aba `"Não lidas"` (1 item restante)
+  11. [`11-notifications-empty-unread-filter.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/11-notifications-empty-unread-filter.png) — aba `"Não lidas"` após `"Marcar todas como lidas"` (`"Nenhuma notificação não lida."`)
+  12. [`12-notifications-all-read.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/12-notifications-all-read.png) — aba `"Todas"` com ambos os itens `Lida` e botão `"Abrir destino"`
+  13. [`13-sidebar-collapsed.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/13-sidebar-collapsed.png) — sidebar recolhida (`isSidebarOpen === false`), `WCAG 2.2 AA: sem achados`
+  14. [`14-dms-honest-unavailable.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/14-dms-honest-unavailable.png) — `/dms` (estado honesto + `Ir para Canais`)
+  15. [`15-dms-dark-mode.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/15-dms-dark-mode.png) — `/dms` em tema `.dark`, `WCAG 2.2 AA: sem achados`
+  16. [`16-notifications-dark-mode.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/16-notifications-dark-mode.png) — `/notifications` em tema `.dark`, `WCAG 2.2 AA: sem achados`
+  17. [`17-tasks-dark-mode.png`](https://gist.githubusercontent.com/lfgranja/962e84502fb4cf5689266e10f2224967/raw/8952ffbd89eebc783b8d20de4e9311dbe048a306/17-tasks-dark-mode.png) — `/tasks` em tema `.dark`, `WCAG 2.2 AA: sem achados`
+- **Restante `[NV]`**: deploy em staging/produção externos (Coolify manual `workflow_dispatch`) e troca HTTP de tokens contra IdP OIDC externo real.
+
+### Correções pós-CI `e2e-browser` e ACR #1 `REPROVADO` (`82bbec11`, append-only, 2026-11-23)
+
+- **Causa-raiz da falha `e2e-browser` em `464e62b76`**: em `/dms (dark mode)`, `<aside>` (`apps/frontend/src/routes/(app)/+layout.svelte:120`) usava `transition-all duration-300 ease-in-out`, fazendo o fundo `bg-muted/30` transicionar em 300ms enquanto os textos filhos atualizavam instantaneamente para o tema escuro, gerando 7 erros transitórios de `color-contrast` no Chromium em CI sem captura de screenshot intermediária.
+- **Correções aplicadas**:
+  - `apps/frontend/src/routes/(app)/+layout.svelte`: `transition-all` → `transition-[width]` no `<aside>` para animar apenas a largura (`w-64` ↔ `w-16`).
+  - `apps/frontend/src/routes/layout.css`: `.dark --destructive` ajustado para `0 90.6% 70.8%` (`7.23:1` sobre `--background`; corrigidos também `--color-input` e `--color-secondary-foreground` em `@theme`).
+  - `apps/frontend/src/routes/(app)/tasks/+page.svelte`: adicionada variante `dark:text-green-400` no banner de sucesso.
+  - `apps/frontend/src/app.html`: script síncrono no `<head>` lendo `localStorage.getItem('flora.theme') === 'dark'` para persistir `.dark` em navegações/reloads. *(Ressalva `[NV]`: seletor interativo de tema para usuário final em `/settings` permanece fora do escopo do ciclo 117.)*
+  - `apps/frontend/src/lib/i18n/pt-BR.ts` & `apps/frontend/playwright.config.ts`: removida chave órfã `notifications.unreadCount` e endurecido fallback `FLORA_STORAGE__LOCAL_PATH?.trim() || ...`.
+  - `apps/frontend/tests/e2e/seed-flow.e2e.ts`: `settleAnimations()` após troca de tema/sidebar, `exact: true`, verificação de `.dark` persistente sem reinjeção em `/notifications` (com item não lido rearmado + sidebar recolhida com contador) e `/tasks`.
+- **Reexecução local fiel à CI (`task-948`, sem `E2E_SCREENSHOT_DIR`)**: `bun run test:e2e` → **`4 passed (31.3s)`**, **12/12 `WCAG 2.2 AA: sem achados`**.

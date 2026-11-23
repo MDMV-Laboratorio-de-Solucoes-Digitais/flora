@@ -14,6 +14,7 @@ use tokio_util::io::ReaderStream;
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
+use flora_core::models::Pagination;
 use flora_core::repositories::PgMembershipRepository;
 use flora_core::traits::MembershipRepository;
 
@@ -77,10 +78,19 @@ struct UploadQuery {
     workspace_id: Option<Uuid>,
 }
 
+/// Query parameters for `GET /api/v1/files`.
+#[derive(Debug, Deserialize)]
+pub struct ListFilesQuery {
+    /// Required workspace ID scoped to the session organization.
+    pub workspace_id: Option<Uuid>,
+    /// Optional page size clamped to `1..=100` (default `50`).
+    pub limit: Option<usize>,
+}
+
 /// Creates the files router.
 pub fn create_files_router() -> Router<AppState> {
     Router::new()
-        .route("/", post(upload_file_metadata))
+        .route("/", get(list_files).post(upload_file_metadata))
         .route("/upload", post(upload_file_multipart))
         .route("/download/{id}", get(download_file))
         .route("/{id}/download", get(download_file))
@@ -316,4 +326,83 @@ async fn delete_file(
 
     state.file_service.delete_file(file_id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+const fn resolve_list_limit(limit: Option<usize>) -> usize {
+    match limit {
+        Some(value) if value < 1 => 1,
+        Some(value) if value > 100 => 100,
+        Some(value) => value,
+        None => 50,
+    }
+}
+
+/// `GET /api/v1/files` — List persisted files in a workspace of the current organization.
+async fn list_files(
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+    Query(query): Query<ListFilesQuery>,
+) -> Result<Json<Vec<FileAttachmentResponse>>> {
+    let org_id = ensure_member(&auth, &state).await?;
+    let workspace_id = query.workspace_id.ok_or_else(|| Error::Validation {
+        field: "workspace_id".to_string(),
+        message: "workspace_id query parameter is required".to_string(),
+    })?;
+    ensure_workspace_in_org(&state, org_id, workspace_id).await?;
+
+    let page = state
+        .file_service
+        .list_files(
+            org_id,
+            workspace_id,
+            Pagination {
+                limit: resolve_list_limit(query.limit),
+                offset: 0,
+            },
+        )
+        .await?;
+    Ok(Json(page.items.iter().map(to_attachment).collect()))
+}
+
+#[cfg(test)]
+mod tests {
+    use flora_core::models::File;
+    use uuid::Uuid;
+
+    use super::{resolve_list_limit, to_attachment};
+
+    #[test]
+    fn test_resolve_list_limit_defaults_and_clamps() {
+        assert_eq!(resolve_list_limit(None), 50);
+        assert_eq!(resolve_list_limit(Some(0)), 1);
+        assert_eq!(resolve_list_limit(Some(25)), 25);
+        assert_eq!(resolve_list_limit(Some(100)), 100);
+        assert_eq!(resolve_list_limit(Some(250)), 100);
+    }
+
+    #[test]
+    fn test_to_attachment_maps_fields_and_clamps_negative_size() {
+        let org_id = Uuid::now_v7();
+        let owner_id = Uuid::now_v7();
+        let mut file = File::new(
+            org_id,
+            owner_id,
+            "text/plain".to_string(),
+            "report.txt".to_string(),
+            512,
+            "orgs/x/files/y".to_string(),
+        );
+        let mapped = to_attachment(&file);
+        assert_eq!(mapped.id, file.id.to_string());
+        assert_eq!(mapped.file_name, "report.txt");
+        assert_eq!(mapped.mime_type, "text/plain");
+        assert_eq!(mapped.byte_size, 512);
+        assert_eq!(
+            mapped.rust_fs_url,
+            format!("/api/v1/files/download/{}", file.id)
+        );
+
+        file.size_bytes = -1;
+        assert_eq!(to_attachment(&file).byte_size, 0);
+    }
 }

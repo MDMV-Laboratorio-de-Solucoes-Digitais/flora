@@ -2,6 +2,8 @@
 //!
 //! Per T035, T036.
 
+use std::collections::{HashMap, HashSet};
+
 use axum::{
     Router,
     extract::{Path, Query, State},
@@ -13,19 +15,19 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use flora_core::error::{Error, Result};
-use flora_core::models::{Channel, Message, Notification, NotificationType};
+use flora_core::models::{Channel, Message, Notification, NotificationType, User};
 use flora_core::repositories::{
     PgChannelRepository, PgMembershipRepository, PgMessageRepository, PgNotificationRepository,
-    PgWorkspaceRepository,
+    PgUserRepository, PgWorkspaceRepository,
 };
 use flora_core::traits::{
     ChannelRepository, MembershipRepository, MessageRepository, NotificationRepository,
-    WorkspaceRepository,
+    UserRepository, WorkspaceRepository,
 };
 
 use crate::AppState;
 use crate::extractors::AuthExtractor;
-use crate::realtime::{self, HubEnvelope, MessageEventPayload, RealtimeEvent};
+use crate::realtime::{self, HubEnvelope, MessageEventPayload, RealtimeEvent, resolve_sender_name};
 
 /// Query params for listing channels in a workspace.
 #[derive(Debug, Deserialize)]
@@ -98,6 +100,10 @@ pub struct MessageResponse {
     pub channel_id: String,
     /// The sender's user ID.
     pub sender_id: String,
+    /// The sender's public display name (or email fallback).
+    pub sender_name: Option<String>,
+    /// The sender's avatar URL, if any.
+    pub sender_avatar_url: Option<String>,
     /// The message content.
     pub content: String,
     /// The thread ID if this is a reply.
@@ -116,6 +122,8 @@ impl From<Message> for MessageResponse {
             id: msg.id.to_string(),
             channel_id: msg.channel_id.to_string(),
             sender_id: msg.sender_id.to_string(),
+            sender_name: None,
+            sender_avatar_url: None,
             content: msg.content,
             thread_id: msg.thread_id.map(|id| id.to_string()),
             is_edited: msg.is_edited,
@@ -125,12 +133,55 @@ impl From<Message> for MessageResponse {
     }
 }
 
+impl MessageResponse {
+    /// Builds a message response enriched with public author metadata.
+    fn with_author(msg: Message, author: Option<&User>) -> Self {
+        let mut resp = Self::from(msg);
+        if let Some(user) = author {
+            resp.sender_name = resolve_sender_name(&user.display_name, &user.email);
+            resp.sender_avatar_url.clone_from(&user.avatar_url);
+        }
+        resp
+    }
+}
+
+async fn enrich_messages(state: &AppState, msgs: Vec<Message>) -> Result<Vec<MessageResponse>> {
+    let active: Vec<Message> = msgs.into_iter().filter(|m| !m.is_deleted).collect();
+    if active.is_empty() {
+        return Ok(Vec::new());
+    }
+    let sender_ids: Vec<Uuid> = active
+        .iter()
+        .map(|m| m.sender_id)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    let user_repo = PgUserRepository::new((*state.db_pool).clone());
+    let users = user_repo.find_by_ids(&sender_ids).await?;
+    let by_id: HashMap<Uuid, User> = users.into_iter().map(|u| (u.id, u)).collect();
+    Ok(active
+        .into_iter()
+        .map(|m| {
+            let author = by_id.get(&m.sender_id);
+            MessageResponse::with_author(m, author)
+        })
+        .collect())
+}
+
+async fn enrich_single_message(state: &AppState, msg: Message) -> Result<MessageResponse> {
+    let user_repo = PgUserRepository::new((*state.db_pool).clone());
+    let author = user_repo.find_by_id(msg.sender_id).await?;
+    Ok(MessageResponse::with_author(msg, author.as_ref()))
+}
+
 impl From<&MessageResponse> for MessageEventPayload {
     fn from(msg: &MessageResponse) -> Self {
         Self {
             id: msg.id.clone(),
             channel_id: msg.channel_id.clone(),
             sender_id: msg.sender_id.clone(),
+            sender_name: msg.sender_name.clone(),
+            sender_avatar_url: msg.sender_avatar_url.clone(),
             content: msg.content.clone(),
             thread_id: msg.thread_id.clone(),
             is_edited: msg.is_edited,
@@ -299,11 +350,7 @@ async fn list_messages(
         let msgs = msg_repo
             .find_by_channel_id_after(channel_id, after_id, limit)
             .await?;
-        let resp: Vec<MessageResponse> = msgs
-            .into_iter()
-            .filter(|m| !m.is_deleted)
-            .map(MessageResponse::from)
-            .collect();
+        let resp = enrich_messages(&state, msgs).await?;
         return Ok(Json(resp));
     }
 
@@ -314,13 +361,7 @@ async fn list_messages(
         )
         .await?;
 
-    let msgs: Vec<MessageResponse> = page
-        .items
-        .into_iter()
-        .filter(|m| !m.is_deleted)
-        .map(MessageResponse::from)
-        .collect();
-
+    let msgs = enrich_messages(&state, page.items).await?;
     Ok(Json(msgs))
 }
 
@@ -379,7 +420,7 @@ async fn post_message(
         );
     }
 
-    let resp = MessageResponse::from(created);
+    let resp = enrich_single_message(&state, created).await?;
 
     emit_event(
         &state,
@@ -473,7 +514,7 @@ async fn edit_message(
     let mut updated = existing.clone();
     updated.content = req.content;
     let saved = msg_repo.update(msg_id, updated).await?;
-    let resp = MessageResponse::from(saved);
+    let resp = enrich_single_message(&state, saved).await?;
 
     emit_event(
         &state,
@@ -524,7 +565,7 @@ async fn delete_message(
 
     msg_repo.soft_delete(msg_id).await?;
     let deleted = msg_repo.find_by_id(msg_id).await?.unwrap_or(existing);
-    let resp = MessageResponse::from(deleted);
+    let resp = enrich_single_message(&state, deleted).await?;
 
     emit_event(
         &state,

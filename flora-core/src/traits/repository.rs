@@ -23,6 +23,9 @@ pub trait UserRepository: Send + Sync + std::fmt::Debug {
     /// Find a user by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<User>>;
 
+    /// Find multiple users by IDs in a single batch query.
+    async fn find_by_ids(&self, ids: &[Uuid]) -> crate::Result<Vec<User>>;
+
     /// Create a new user.
     async fn create(&self, user: User) -> crate::Result<User>;
 
@@ -40,6 +43,17 @@ pub trait UserRepository: Send + Sync + std::fmt::Debug {
         &self,
         id: Uuid,
         password_hash: &str,
+        updated_at: DateTime<Utc>,
+    ) -> crate::Result<bool>;
+
+    /// Binds an OIDC subject to an existing active user only when `oidc_subject` is currently `NULL`.
+    ///
+    /// Returns `true` when the subject was bound; `false` if the user does not exist,
+    /// is inactive, or already has an `oidc_subject`.
+    async fn set_oidc_subject_if_absent(
+        &self,
+        id: Uuid,
+        oidc_subject: &str,
         updated_at: DateTime<Utc>,
     ) -> crate::Result<bool>;
 }
@@ -297,10 +311,26 @@ pub trait NotificationRepository: Send + Sync + std::fmt::Debug {
         pagination: Pagination,
     ) -> crate::Result<Page<Notification>>;
 
+    /// Find unread notifications for a user scoped to one organization.
+    async fn find_unread_by_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        pagination: Pagination,
+    ) -> crate::Result<Page<Notification>>;
+
     /// Find notifications for a user (all) with pagination.
     async fn find_by_user_id(
         &self,
         user_id: Uuid,
+        pagination: Pagination,
+    ) -> crate::Result<Page<Notification>>;
+
+    /// Find notifications for a user scoped to one organization.
+    async fn find_by_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
         pagination: Pagination,
     ) -> crate::Result<Page<Notification>>;
 
@@ -324,6 +354,13 @@ pub trait NotificationRepository: Send + Sync + std::fmt::Debug {
 
     /// Mark all notifications as read for a user.
     async fn mark_all_as_read(&self, user_id: Uuid) -> crate::Result<()>;
+
+    /// Mark all notifications as read for a user within one organization.
+    async fn mark_all_as_read_in_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+    ) -> crate::Result<()>;
 
     /// Delete old notifications (retention policy).
     async fn delete_old(&self, older_than: DateTime<Utc>) -> crate::Result<usize>;

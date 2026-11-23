@@ -28,6 +28,8 @@ export interface Message {
 	id: UUID;
 	channelId: UUID;
 	authorId: UUID;
+	authorName?: string | null;
+	authorAvatarUrl?: string | null;
 	content: string;
 	threadId: UUID | null;
 	fileAttachments: FileAttachment[];
@@ -69,4 +71,13 @@ export interface FileAttachment {
 	byteSize: number;
 	rustFsUrl: string;
 	uploadedAt: ISO8601Date;
+}
+
+export interface NotificationItem {
+	id: UUID;
+	eventType: string;
+	targetId: UUID;
+	targetUrl: string | null;
+	isRead: boolean;
+	createdAt: ISO8601Date;
 }

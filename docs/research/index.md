@@ -222,3 +222,23 @@ Contagens locais por `find` (`2026-11-20`): `specs/` 75 diretórios, `.specify/a
 ### Revalidação — 2026-11-20T09:34Z
 
 Recontagem: `specs/` 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem `index.md` (138 com ele); cobertura 137/137 links preservada. Nenhum link reescrito. **[NV]** CI futuro/produção/Forgejo.
+
+### Estado verificado — 2026-11-22 (ciclo 114; append-only)
+
+Recontagem via `find` no worktree `feature/114-wcag-ci-guard`: `specs/` 104 diretórios (556 arquivos), `.specify/assessments/` 102 diretórios (428 arquivos), `.specify/validations/` 100 diretórios (106 arquivos pré-`evidence.md`), `.specify/releases/` 100 diretórios (100 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+### Estado verificado — 2026-11-23 (ciclo 115; append-only)
+
+Recontagem via `find` no worktree `feature/115-files-list-persistence`: `specs/` 105 diretórios (562 arquivos), `.specify/assessments/` 103 diretórios (433 arquivos), `.specify/validations/` 101 diretórios (109 arquivos pré-`evidence.md`), `.specify/releases/` 101 diretórios (101 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+### Estado verificado — 2026-11-23 (ciclo 116; append-only)
+
+Recontagem via `find` no worktree `feature/116-chat-author-identity`: `specs/` 106 diretórios (568 arquivos), `.specify/assessments/` 104 diretórios (438 arquivos), `.specify/validations/` 102 diretórios (112 arquivos pré-`evidence.md`), `.specify/releases/` 102 diretórios (102 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+### Estado verificado — 2026-11-23 (ciclo 117; append-only)
+
+Recontagem via `find` no worktree `feature/117-notifications-ui-and-honest-navigation`: `specs/` 107 diretórios (573 arquivos), `.specify/assessments/` 105 diretórios (443 arquivos), `.specify/validations/` 103 diretórios (115 arquivos pré-`evidence.md`), `.specify/releases/` 103 diretórios (103 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+### Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+Recontagem via `find` no worktree `feature/118-oidc-callback-mock-idp-exchange`: `specs/` 108 diretórios (578 arquivos), `.specify/assessments/` 106 diretórios (448 arquivos), `.specify/validations/` 104 diretórios (119 arquivos), `.specify/releases/` 104 diretórios (104 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.

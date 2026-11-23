@@ -14,13 +14,13 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use flora_core::models::Message;
-use flora_core::repositories::{PgChannelRepository, PgMessageRepository};
-use flora_core::traits::{ChannelRepository, MessageRepository};
+use flora_core::repositories::{PgChannelRepository, PgMessageRepository, PgUserRepository};
+use flora_core::traits::{ChannelRepository, MessageRepository, UserRepository};
 use tokio::sync::broadcast::error::RecvError;
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::realtime::{self, HubEnvelope, MessageEventPayload, RealtimeEvent};
+use crate::realtime::{self, HubEnvelope, MessageEventPayload, RealtimeEvent, resolve_sender_name};
 
 /// WebSocket message types for client-server communication.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -341,11 +341,26 @@ async fn handle_send_message(
         }
     }
 
-    // Emit canonical realtime event for subscribed peers
+    // Emit canonical realtime event for subscribed peers (best-effort author enrichment)
+    let user_repo = PgUserRepository::new((*state.db_pool).clone());
+    let author = match user_repo.find_by_id(user_id).await {
+        Ok(found) => found,
+        Err(e) => {
+            tracing::warn!(error = %e, %user_id, "Best-effort WS author lookup failed");
+            None
+        }
+    };
+    let sender_name = author
+        .as_ref()
+        .and_then(|u| resolve_sender_name(&u.display_name, &u.email));
+    let sender_avatar_url = author.and_then(|u| u.avatar_url);
+
     let payload = MessageEventPayload {
         id: created.id.to_string(),
         channel_id: created.channel_id.to_string(),
         sender_id: created.sender_id.to_string(),
+        sender_name,
+        sender_avatar_url,
         content: created.content.clone(),
         thread_id: created.thread_id.map(|id| id.to_string()),
         is_edited: created.is_edited,

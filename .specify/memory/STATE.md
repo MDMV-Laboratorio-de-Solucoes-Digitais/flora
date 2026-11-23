@@ -1035,3 +1035,162 @@ anterior foi alterada.
 - **Entrega:** piloto em `flora-core/src/models/role.rs` (42 mutantes: 39 caught, 1 missed, 2 unviable); correção de `#!`→`//!` em `workspace_service.rs`; correção de bug real de dedup em `Role::add_permission` (`Some(&perm_str)` → `Some(perm_str.as_str())`) e teste `add_permission_is_idempotent`.
 - **Evidência:** `cargo test -p flora-core` 56 passed; mutante focalizado 1/1 caught; fmt/clippy exit 0; gate PASS (10 legs / 77 pisos).
 - **[NV]**: aplicação em todo o workspace e job de CI não autorizados.
+
+## Decisão 80/20 — ciclo 111 (2026-11-22, append-only)
+
+- **Critério**: `impacto × confiança × (6−esforço) × (6−risco)`, cada fator 1–5, denominador 625. Ordena a fila; não declara conclusão.
+- **F9 (axe-core/WCAG 2.2 AA)**: 4×5×(6−3)×(6−2) = **240/625**. F12 (medir fração determinística) 128/625; F5 (stubs DTU) 36/625.
+- **Escolha**: F9 — autorização do SE para instalar dependências de dev já concedida; evidência primária no assessment (FR-06/FR-08), risco contido em job informativo (`e2e-browser` advisory), nenhum required check alterado.
+- **Herança**: 0 stashes; worktree órfã `feature/073-state-closure` (heartbeat 19/11) revalidada como mergeada e removida; único PR aberto (#356, `dev→main`) permanece escalado ao SE — competência humana.
+
+## Ciclo 111 — auditoria WCAG 2.2 AA (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/111-wcag-axe`; branch `feature/111-wcag-axe` @ `8c47dd637`; F9 ADAPT (240/625).
+- **Entrega**: `@axe-core/playwright@4.14.0` + lockfiles; `tests/e2e/accessibility.e2e.ts` em `/tasks` e `/channels` com tags WCAG 2.0/2.1/2.2 A+AA.
+- **Evidência**: `bun run check` 4886 arquivos/0 erros; prettier OK; gate PASS (10 legs / 77 pisos). R4 APROVADO PARA CI; R7 registrado.
+- **[NV]**: e2e local não concluído (4 timeouts, 12/13 GiB RAM, swap cheio); job advisory `e2e-browser` no CI é a autoridade da varredura.
+
+- **Emenda pós-CI**: varredura report-only integrada ao smoke (sem desativar regras); teste isolado removido por revogar o jti do seed. BUG-111-01/02/03 registrados em `.specify/bugs/wcag-axe-2026-11-22/` para correção de UI em ciclo dedicado.
+
+## Decisão 80/20 — ciclo 112 (2026-11-22, append-only)
+
+- **session_title**: `flora - correcao de violacoes WCAG 2.2 AA (BUG-111)` · **session_id**: `20261122-164000-orch-v42`.
+- **Critério**: `impacto × confiança × (6−esforço) × (6−risco)`, fatores 1–5, denominador 625. Ordena a fila; não declara conclusão.
+- **Correção BUG-111-01/02/03**: 5×5×(6−3)×(6−2) = **300/625**. Automação de ACR/evidência 192/625; dívidas documentais 128/625.
+- **Escolha**: corrigir as três violações reais (R5: `bug.assess → bug.fix → bug.test`), com roteiro de testes e evidência antes do PR. Nenhuma regra axe será relaxada.
+- **Fila 0.0**: PR #369 (base `main`, CLEAN) registrado na fila SWE; não mesclado. Gap 0.7: deploy em `main` é manual (`workflow_dispatch`), não automático em push — escalar configuração ao SE.
+
+## Ciclo 112 — correção WCAG (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/112-wcag-fixes`; branch `feature/112-wcag-fixes` @ `ce3ce632e`; R5 a partir de `.specify/bugs/wcag-axe-2026-11-22/`.
+- **Entrega**: `aria-label` nos botões ícone, contraste de desabilitados (5,84:1 calculado), `<title>Flora</title>`, resumo axe no log do CI.
+- **Evidência local**: prettier OK; `bun run check` 4886/0; gate PASS (10 legs / 77 pisos). R4 APROVADO PARA CI; R7 registrado.
+- **[NV]**: UI local/staging, modo escuro, CI e ACR pendentes no momento do commit.
+
+## Decisão 80/20 — ciclo 113 (2026-11-22, append-only)
+
+- **session_title**: `flora - fechamento de bugs documentais stale` · **session_id**: `20261122-173900-orch-v42`.
+- **Critério**: `impacto × confiança × (6−esforço) × (6−risco)`, fatores 1–5, denominador 625.
+- **Fechamento de bugs documentais stale**: 3×5×5×5 = **375/625**. Automação de staging efêmero 144/625 (depende de canal seguro); deploy em `main` exige autorização SE 023 — fora do escopo autônomo.
+- **Escolha**: registrar status verificado de D15, OIDC e WCAG-111 nos artefatos de bug, preservando histórico e marcando **[NV]** o que depende de ambiente remoto. Nenhum código/backend alterado.
+- **Fila 0.0**: PRs #369 e #371 (base `main`, CLEAN) na fila SWE; não mesclados.
+
+## Ciclo 113 — fechamento documental (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/113-bug-status`; branch `feature/113-bug-status` @ `544a075ca`.
+- **Entrega**: notas de fechamento para D15 (2 passed), OIDC (rota + 1 passed) e WCAG-111 (PR #370), preservando histórico.
+- **Evidência**: gate PASS (10 legs / 77 pisos); nenhum código/gate/required check alterado.
+- **[NV]**: produção, IdP externo e staging real.
+
+## Decisão 80/20 — ciclo 114 (2026-11-22, append-only)
+
+- **session_title**: `flora - blindagem WCAG 2.2 AA no e2e-browser e rota /files` · **session_id**: `20261123-020500-orch-v46`.
+- **FONTE_FACTORY**: `b1deab1` (`origin/dev`: `05b977f`), consultada somente leitura; gate autoritativo do alvo `python3 scripts/ci/check_gate_integrity.py` PASS (10 legs / 77 pisos; `--remote` OK para `dev`/`main`).
+- **Critério**: `impacto × confiança × (6 − esforço) × (6 − risco)`, escalas 1–5, denominador **625**.
+  1. **Blindagem WCAG 2.2 AA no `e2e-browser` + correção/auditoria da rota `/files` (114)**: `4 × 5 × (6 − 2) × (6 − 1)` = **400/625** (**escolhido**).
+  2. Listagem `GET /api/v1/files?workspace_id=...` e persistência pós-reload (115 candidato): `5 × 5 × (6 − 3) × (6 − 2)` = **300/625**.
+  3. F12 medição da fração determinística da esteira: `3 × 4 × (6 − 2) × (6 − 3)` = **144/625**.
+  4. Lookup de autoria de mensagens no chat: `4 × 4 × (6 − 4) × (6 − 2)` = **128/625**.
+  5. Vitest `--project client` em `ci.yml`: `3 × 4 × (6 − 3) × (6 − 4)` = **72/625**.
+  6. Deploy automático em push para `main` (Gap 0.7): bloqueado — exige autorização SE (023).
+- **Escolha e venue (0.8)**: elevar `auditAccessibility` de report-only para falha explícita em violações WCAG 2.2 AA, extrair helper puro testável (`a11yAudit.ts`), corrigir 3 defeitos em `/files` e auditar `/files` no smoke — sem alterar required checks nem desabilitar regras axe. Build/E2E completo no GitHub Actions (repo público, Venue #1); local apenas checagens baratas (`check`, `lint`, Vitest `server`, `build`, `check_gate_integrity.py`).
+- **Fila 0.0 / Herança**: 0 PRs abertos para `dev/`; PR #371 (`release/112-promotion` → `main`, CLEAN) permanece na fila SWE sem merge/deploy; 0 stashes; `fix/promo-355-conflict` e `INBOX-correcoes-revisao-interagentes-2026-11-21.md` preservados intactos na worktree compartilhada.
+
+## Ciclo 114 — blindagem WCAG 2.2 AA (2026-11-22, append-only)
+
+- **Âncora**: `feature.json` → `specs/114-wcag-ci-guard`; branch `feature/114-wcag-ci-guard` @ `github/dev@b32f7cafe`.
+- **Issues R6**: `T-001`→`#373`, `T-002`→`#374`, `T-003`→`#375`, `T-004`→`#376`, `T-005`→`#377`.
+- **Entrega**: helper `a11yAudit.ts` + TDD `a11yAudit.test.ts` (3/3); correções `/files` (`FileUpload.svelte` `aria-label` + `text-red-700 dark:text-red-400`, `FilePreview.svelte` `aria-hidden="true"` + `text-blue-700 underline hover:text-blue-800 dark:text-blue-400`, `pt-BR.ts` `'file.selectInput'`); `seed-flow.e2e.ts` exige `expect(findings, summary).toEqual([])` e audita `/files` (Passo 5).
+- **Evidência local**: `svelte-check` 0/0; `lint` exit 0; Vitest `server` 15/53; `vite build` exit 0; `check_gate_integrity.py` PASS (10 legs / 77 pisos); `git diff --check` limpo. Contagens `find`: specs 104/556, assessments 102/428, validations 100/106, releases 100/100, bugs 8/26, research 137/148, adr 8.
+- **[NV]**: CI remoto (`e2e-browser` e required checks), ACR independente, modo escuro, staging real e produção.
+
+## Decisão 80/20 — ciclo 115 (2026-11-23, append-only)
+
+- **session_title**: `flora - listagem persistida de arquivos por workspace` · **session_id**: `20261123-032000-orch-v46`.
+- **FONTE_FACTORY**: `b1deab1` (`origin/dev`: `05b977f`), consultada somente leitura; gate autoritativo do alvo `python3 scripts/ci/check_gate_integrity.py` PASS (10 legs / 77 pisos; `--remote` OK).
+- **Critério**: `impacto × confiança × (6 − esforço) × (6 − risco)`, escalas 1–5, denominador **625**.
+  1. **`GET /api/v1/files?workspace_id=...` + persistência pós-reload em `/files` (115)**: `5 × 5 × (6 − 2) × (6 − 2)` = **400/625** (**escolhido** — `PgFileRepository::find_by_workspace_id` e `FileService::list_files` já existem em `flora-core`; falta expor a rota escopada por org/workspace e ligá-la à UI).
+  2. Lookup de identidade real de autores no chat (116 fila): `4 × 5 × (6 − 3) × (6 − 2)` = **240/625**.
+  3. UI de notificações + ocultação de cascas sem backend (`/dms` hardcoded e drawer de IA) (117 fila): `4 × 5 × (6 − 3) × (6 − 2)` = **240/625**.
+  4. Alinhamento consistente de tema escuro Tailwind v4 (119 fila): `4 × 5 × (6 − 3) × (6 − 2)` = **240/625**.
+  5. UI CRUD de RBAC/papéis (118 fila) e endpoint HTTP para `HitlReceiptPort` (120 fila): `4 × 4 × (6 − 3) × (6 − 2)` = **192/625**.
+  6. Promoção em `main` (PR #371), Gap 0.7 auto-deploy, remoção do wildcard Coolify (`ADR-0007`) e ativação de RLS em produção (`ADR-0006`): competência humana / autorização SE.
+- **Venue (0.8)**: GitHub Actions (repo público, Venue #1) para `rust-build`, `db-tests` (Postgres 18), `frontend-build` e `e2e-browser`; localmente apenas checagens baratas com `CARGO_TARGET_DIR=/home/luis/development/MDMV/projetos/flora/target` compartilhado.
+- **Fila 0.0 / Herança**: 0 PRs abertos para `dev/` (PR #378 mesclado em `07556dd0e`); PR #371 (`release/112-promotion` → `main`, `401d37b64`, `CLEAN`) permanece na fila SWE sem merge/deploy.
+
+## Estado verificado — 2026-11-23 (ciclo 115; append-only)
+
+- **Entrega (`400/625`)**: `GET /api/v1/files?workspace_id=<uuid>[&limit=<n>]` em `flora-api/src/routes/files.rs` (`ensure_member` + `ensure_workspace_in_org`, DTO `FileAttachmentResponse` sem `storage_path`, clamp `1..=100` default `50`, 2 testes unitários); contrato `db_list_files_scoped_to_workspace_and_org` em `flora-tests/src/contract/files.rs` com lockstep `files: 6 -> 7` (78 total) em `check_gate_integrity.py` e `.github/workflows/rust.yml`; UI `/files` com `filesQueryPath`, `FileStore` (`setFiles`/`clear`/prepend dedup + `FileStore.test.ts` 4/4 TDD), `fileStore.clear()` + guarda `loadSeq`, `pt-BR.ts` e Passo 5 E2E verificando `t['files.empty']`.
+- **Evidência local (`task-402`)**: `cargo fmt` exit 0; `cargo clippy --workspace --all-targets -- -D warnings` 0 erros; `flora-api files::tests` `2 passed`; `check_gate_integrity.py` PASS (4 required checks, 10 legs / 78 pisos); `git diff --check` limpo; `svelte-check` 0/0; `prettier` + `eslint` exit 0; Vitest `server` `16 passed (16)` / `58 passed (58)`; `vite build` exit 0 (`31.56s`).
+- **Contagens (`find`)**: `specs/` 105 dirs (562 arquivos), `.specify/assessments/` 103 (433), `.specify/validations/` 101 (109 pré-`evidence.md`), `.specify/releases/` 101 (101), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- **Briefing (`tenant`) / R4 / R7**: `docs/governance/2026-11-22-115-briefing-compreensao.md`, `docs/governance/2026-11-22-115-files-list-persistence.md`, `validate.md` (`APROVADO PARA CI`), `release.md` (`0.7.16 -> 0.8.0` MINOR), issues `#379`..`#383`. **[NV]**: CI remoto (`db-tests`, `e2e-browser`), ACR independente, modo escuro real e staging/produção.
+
+## Decisão 80/20 — ciclo 116 (2026-11-23, append-only)
+
+- **session_title**: `flora - identidade real de autores no chat` · **session_id**: `20261123-042500-orch-v46`.
+- **Critério**: `impacto × confiança × (6 − esforço) × (6 − risco)`, escalas 1–5, denominador **625**.
+  1. **Identidade real de autores no chat (`UserRepository::find_by_ids` + DTO + `ChatLayout`) (116)**: `4 × 5 × (6 − 3) × (6 − 2)` = **240/625** (**escolhido** — resolve a lacuna #3 onde `ChatLayout.svelte:130,166` exibe `Usuário <8 chars do UUID>` em vez de nome/e-mail real; usa lote `WHERE id = ANY($1)` após validação de canal/organização, zero N+1 e aditivo para REST + WS).
+  2. UI de notificações + ocultação de cascas sem backend (`/dms` hardcoded e drawer de IA) (117 fila): `4 × 5 × (6 − 3) × (6 − 2)` = **240/625**.
+  3. Alinhamento consistente de tema escuro Tailwind v4 (`@custom-variant dark`) (118 fila): `4 × 5 × (6 − 3) × (6 − 2)` = **240/625**.
+  4. UI CRUD de RBAC/papéis (119 fila) e endpoint HTTP para `HitlReceiptPort` (120 fila): **192/625**.
+- **Venue (0.8)**: GitHub Actions (repo público) para `rust-build`, `db-tests` (Postgres 18), `frontend-build` e `e2e-browser`; localmente checagens com `CARGO_TARGET_DIR=/home/luis/development/MDMV/projetos/flora/target`.
+- **Fila 0.0 / Herança**: 0 PRs abertos para `dev/` (PR #384 mesclado em `2052ad7f1`); PR #371 (`release/112-promotion` → `main`, `0dd815f88`, `CLEAN`) permanece na fila SWE sem merge/deploy.
+
+## Estado verificado — 2026-11-23 (ciclo 116; append-only)
+
+- **Entrega (`240/625`)**: `UserRepository::find_by_ids` em lote (`WHERE id = ANY($1)`); `resolve_sender_name` (+ 2 testes unitários) e campos aditivos `sender_name` / `sender_avatar_url` em `MessageEventPayload` (`flora-api/src/realtime.rs`), `MessageResponse` (`channels.rs`: `list_messages`, catch-up `after`, `post_message`, `edit_message`, `delete_message`) e `websocket.rs` (best-effort) exclusivamente para `sender_id`s de canais autorizados pela organização; contrato DB `db_messages_include_author_display_name_across_post_list_and_catchup` com lockstep `messaging: 4 -> 5` (total `79`); front-end `chatAuthor.ts` (TDD `chatAuthor.test.ts` 4/4), `models.ts`, `mappers.ts`, `websocket.ts`, `MessageStore.svelte.ts`, `ChatLayout.svelte` (nomes/iniciais reais, `loadSeq`, `aria-label` no composer) e `seed-flow.e2e.ts` Passo 3 verificando `'Alice Admin'` / `'Bob Builder'`.
+- **Evidência local (`task-637` + `task-673`)**: `cargo fmt --check` exit `0`; `clippy -D warnings` `0` erros; `cargo test --workspace` passou (`flora-api` `44`, `flora-core` `35+21`, `flora-tests` `36/79 ignored`); `check_gate_integrity.py` PASS (10 legs / 79 pisos); `svelte-check` `0/0`; `prettier`/`eslint` exit `0`; Vitest `server` `17 passed (17)` / `64 passed (64)`; `vite build` `26.46s`.
+- **Contagens (`find`)**: `specs/` `106` dirs (`568` arquivos), `.specify/assessments/` `104` (`438`), `.specify/validations/` `102` (`112` pré-`evidence.md`), `.specify/releases/` `102` (`102`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`tenant`) / R4 / R7**: `docs/governance/2026-11-23-116-briefing-compreensao.md`, `docs/governance/2026-11-23-116-chat-author-identity.md`, `validate.md` (`APROVADO PARA CI`), `release.md` (`0.8.0 -> 0.9.0` MINOR), issues `#385`..`#389`. **[NV]**: CI remoto (`db-tests`, `e2e-browser`), ACR independente, WS multi-usuário real em E2E, modo escuro e staging/produção.
+
+## Decisão 80/20 — ciclo 117 (2026-11-23, append-only)
+
+- **session_title**: `flora - central de notificações escopada por organização e navegação honesta` · **session_id**: `20261123-105800-orch-v46`.
+- **Critério**: `impacto × confiança × (6 − esforço) × (6 − risco)`, escalas 1–5, denominador **625**.
+  1. **Central de notificações escopada por organização + remoção de placeholders (`/dms` e painel fake de IA) (117)**: `4 × 5 × (6 − 3) × (6 − 2)` = **240/625** (**escolhido** — resolve simultaneamente a ausência de UI sobre `GET/POST /api/v1/notifications`, fecha a fronteira multi-tenant `organization_id` com `404` fail-closed cross-org + `POST /read-all` e elimina cascas enganosas do `+layout.svelte`/`dms`).
+  2. Alinhamento consistente de tema escuro Tailwind v4 (`@custom-variant dark`) (118 fila): `4 × 5 × (6 − 3) × (6 − 2)` = **240/625**.
+  3. UI CRUD de RBAC/papéis (119 fila) e endpoint HTTP para `HitlReceiptPort` (120 fila): **192/625**.
+- **Venue (0.8)**: GitHub Actions (repo público) para `rust-build`, `db-tests` (Postgres 18), `frontend-build` e `e2e-browser`; localmente checagens com `CARGO_TARGET_DIR=/home/luis/development/MDMV/projetos/flora/target`.
+- **Fila 0.0 / Herança**: 0 PRs abertos para `dev/` (PR #390 mesclado em `0cc41336f`); PR #371 (`release/112-promotion` → `main`, `138da0613`, `CLEAN`) permanece na fila SWE sem merge/deploy; worktree órfã `/tmp/flora-wt-117-notifications-ui` herdada e issues `#391`..`#395` preservadas.
+
+## Estado verificado — 2026-11-23 (ciclo 117; append-only)
+
+- **Entrega (`240/625`)**: métodos `find_unread_by_user_and_organization`, `find_by_user_and_organization` e `mark_all_as_read_in_organization` em `NotificationRepository`/`PgNotificationRepository`; `ensure_member`, escopo org, `target_url` opcional em `NotificationResponse`, `404` fail-closed cross-org e `POST /api/v1/notifications/read-all` em `flora-api/src/routes/notifications.rs` (+ `notifications::tests` `2/2`); contrato `db_notifications_org_scoped_target_url_and_read_all` com lockstep `notifications: 5 -> 6` (total `80`); TDD frontend `RED → GREEN` (`notifications.test.ts` `4/4`, `mappers.test.ts` `4/4`), `NotificationStore.svelte.ts`, `utils/notifications.ts`, rota `/notifications`, badge reativo no `+layout.svelte`, remoção do link `/dms` e drawer de IA, `/dms` honesto e Passos 6 e 7 em `seed-flow.e2e.ts`.
+- **Evidência local e CI (`task-199`, `task-222`, `task-331`, `task-496`, `45174768424`, `45174768337`, ACR `dfa9e102`)**: `cargo fmt --check` exit `0`; `clippy -D warnings` `0` erros; `cargo test --workspace` passou (`flora-api` `46`, `flora-core` `35+21`, `flora-tests` `36/80 ignored`); `check_gate_integrity.py` PASS (10 legs / 80 pisos); `svelte-check` `0/0`; `prettier`/`eslint` exit `0`; Vitest `server` `18 passed (18)` / `71 passed (71)`; `vite build` `25.33s`; CI remoto `db-tests` `80/80` (`notifications: 6/6`), `e2e-browser` `4 passed` + WCAG `sem achados`, ACR `APROVADO`.
+- **Contagens (`find`)**: `specs/` `107` dirs (`573` arquivos), `.specify/assessments/` `105` (`443`), `.specify/validations/` `103` (`116` com `evidence.md`), `.specify/releases/` `103` (`103`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`tenant`) / R4 / R7**: `docs/governance/2026-11-23-117-briefing-compreensao.md`, `docs/governance/2026-11-23-117-notifications-ui-and-honest-navigation.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.9.0 -> 0.10.0` MINOR), issues `#391`..`#395`, PR `#396`. **[NV]**: tema escuro real e staging/produção externos.
+
+## Decisão 80/20 — ciclo 118 (2026-11-23, append-only)
+
+- **session_title**: `flora - servidor IdP OIDC HTTP mock e endurecimento do callback` · **session_id**: `20261123-171500-orch-v49` · **FONTE_FACTORY**: `b1deab1`.
+- **Fila 0.0 / Herança**: `0` PRs abertos para `dev/`; PR `#371` (`release/112-promotion` → `main`, `1afc958c8`, `CLEAN` / ACR `APROVADO` `58119473`) na fila SWE sem merge/deploy; branch remota obsoleta `feature/117-notifications-ui-and-honest-navigation` removida após confirmação de ancestralidade em `github/dev@2ef8fd97e`; checkout raiz (`fix/promo-355-conflict`) e worktree `speckit-1.4.3-upgrade` preservados intactos.
+- **Resumo do `backlog_de_fechamento`**:
+  - `BF-01` (**este ciclo**, bloqueio: implementação): substituir stubs de `flora-tests/src/integration/registration.rs` por servidor IdP OIDC HTTP mock real exercitando troca completa `POST /oauth/v2/token` PKCE S256 → Discovery → JWKS (`Ed25519`/`OKP`) → `verify_id_token` → PostgreSQL `users` + `sessions` no `GET /api/v1/auth/callback`, além de endurecer rejeição de conta desativada e colisão cross-subject (`oidc_subject` distinto para mesmo `email`).
+  - `BF-02` (fila): UI CRUD de RBAC/papéis e convites (`/users/invite`).
+  - `BF-03` (fila): endpoint HTTP consumidor para `HitlReceiptAdapter`.
+  - `BF-04` (fila): seletor interativo de tema escuro em `/settings`.
+  - `BF-05` (autorização/fase futura): ativação de RLS multi-tenant em runtime (`ADR-0005` / `ADR-0006`).
+  - `BF-06` (operação): expiração de `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` em `2026-11-29T23:59:59Z` (`ADR-0007`).
+- **Critério e Ranqueamento (Prompt v4.9)**: `impacto × confiança × fechamento × (6 − esforço) × (6 − risco)`, escalas 1–5, denominador **3125**:
+  1. **Servidor IdP OIDC HTTP mock + endurecimento de conta no `/auth/callback` (`118-oidc-callback-mock-idp-exchange`, `IMPLEMENTAÇÃO`/`CORREÇÃO`)**: `5 × 5 × 5 × (6 − 2) × (6 − 2)` = **2000/3125** (**escolhido** — fecha `BF-01`, elimina os últimos placeholders OIDC em `registration.rs`, valida fim a fim o fluxo crítico `auth` via HTTP real contra `MockOidcIdpServer` + PostgreSQL 18 e bloqueia takeover por colisão de `oidc_subject`/conta desativada).
+  2. UI de administração RBAC (`BF-02`): `4 × 4 × 4 × (6 − 4) × (6 − 3)` = **384/3125**.
+  3. Endpoint HTTP para `HitlReceiptAdapter` (`BF-03`): `3 × 4 × 3 × (6 − 3) × (6 − 2)` = **432/3125**.
+- **Definição de Conclusão (DoD — Bloco 0.9 / Bloco 5)**:
+  - *Comportamento final*: helper `exchange_code_and_verify_id_token` em `flora-api/src/oidc.rs`, bloqueio `401 Unauthorized` em `callback` para conta `is_active = false` ou `email` vinculado a `oidc_subject` distinto, servidor HTTP local `MockOidcIdpServer` em `flora-tests/src/oidc_mock.rs` (Discovery, JWKS Ed25519, `POST /oauth/v2/token` PKCE S256), substituição real dos testes em `registration.rs` e `2` novos contratos DB `db_oidc_callback_*` em `flora-tests/src/contract/auth.rs` com trava lockstep `auth: 23 -> 25` (`82` total).
+  - *Consumidores*: rotas de autenticação `/api/v1/auth/{login,callback}` (`flora-api`) e suíte de regressão/CI (`flora-tests` / job `db-tests`).
+  - *Comandos que provam*: `cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo deny check bans licenses sources && cargo test --workspace && python3 scripts/ci/check_gate_integrity.py && cargo test -p flora-tests contract::auth::db_ -- --ignored --test-threads=1`.
+  - *Fechamento*: `BF-01` passa a `fechado`.
+- **Venue (0.8)**: GitHub Actions (repo público) para `rust-build`, `db-tests` (Postgres 18), `frontend-build`, `e2e-browser` e `dependency-review`; checks locais com `CARGO_TARGET_DIR=/home/luis/development/MDMV/projetos/flora/target` e Postgres 18.7 em `127.0.0.1:15433`.
+
+## Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+- **Entrega (`2000/3125`, `BF-01 -> fechado`)**: `VerifiedOidcIdentity` + `exchange_code_and_verify_id_token` em `flora-api/src/oidc.rs` (`verify_id_token` `EdDSA` + rejeição `oct` + bloqueio `http://` não-local), endurecimento `401 Unauthorized` para conta `is_active = false` e colisão cross-subject em `flora-api/src/routes/auth.rs`, servidor local `MockOidcIdpServer` (`Ed25519` + PKCE `S256`) em `flora-tests/src/oidc_mock.rs`, substituição integral de `registration.rs` e `2` contratos DB `db_oidc_callback_*` em `flora-tests/src/contract/auth.rs` com trava lockstep `auth: 23 -> 25` (`82` pisos).
+- **Evidência local (`task-1190`)**: `cargo fmt` exit `0`; `cargo clippy --workspace --all-targets -- -D warnings` `0` erros; `cargo deny check bans licenses sources` (`bans ok, licenses ok, sources ok`); `cargo test --workspace` (`flora-api` `48`, `flora-core` `35+21`, `flora-tests` `36/82 ignored`); `contract::auth::db_` **`25 passed; 0 failed`** (`55.34s` em Postgres 18.7); `check_gate_integrity.py` **`gate-integrity: PASS`** (`82` pisos).
+- **Contagens (`find`)**: `specs/` `108` dirs (`578` arquivos), `.specify/assessments/` `106` (`448`), `.specify/validations/` `104` (`119`), `.specify/releases/` `104` (`104`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`auth`) / R4 / R7**: `docs/governance/2026-11-23-118-briefing-compreensao.md`, `docs/governance/2026-11-23-118-oidc-callback-mock-idp-exchange.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.10.0 -> 0.10.1` PATCH), `converge.md`, issues `#399`..`#402`. **[NV]**: CI remoto do PR 118, ACR independente, instância Zitadel externa real e deploy/produção.
+
+
+### Adendo Rodada 2 — Remediação ACR PR #403 (`task-1323`, 2026-11-23, append-only)
+
+- **Achados endereçados (`72547119`)**: exigência de `email_verified == Some(true)` em `IdTokenClaims` / `exchange_code_and_verify_id_token`, método atômico `UserRepository::set_oidc_subject_if_absent` (`flora-core/src/{traits/repository.rs,repositories/user_repository.rs}`) vinculando contas locais sem `oidc_subject` (`NULL`) apenas uma vez enquanto ativas, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação do `issuer` no Discovery, `validate_jwks_uri` estrita (`url::Host`, bloqueando `http://localhost.evil.com` e userinfo), sanitização de mensagens `Error::OidcProvider`, remoção da aresta `base64` não usada de `flora-tests` no `Cargo.lock` e ampliação dos testes em `oidc.rs` (`9/9`), `registration.rs` (`email_verified=false`, `exp=-3600s`, `http://localhost.evil.com/keys`) e `contract/auth.rs` (vinculação atômica + rejeição hijack `401`).
+- **Evidência local (`task-1323`)**: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo deny check bans licenses sources` (`bans ok, licenses ok, sources ok`), `cargo test --workspace` (`flora-api` `50 passed`, `flora-core` `35+21`, `flora-tests` `36 passed; 82 ignored`), `check_gate_integrity.py` PASS (`82` total) e `contract::auth::db_` **`25 passed; 0 failed`** (`77.95s` em Postgres 18.7). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.

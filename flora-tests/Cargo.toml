@@ -30,6 +30,8 @@ wiremock.workspace = true
 reqwest.workspace = true
 anyhow.workspace = true
 axum.workspace = true
+jsonwebtoken.workspace = true
+serde_urlencoded.workspace = true
 sqlx.workspace = true
 tower = { version = "0.5", features = ["util"] }
 http = "1.0"

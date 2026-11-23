@@ -6,7 +6,7 @@
 	import { t } from '$lib/i18n';
 
 	let { onUploadComplete, workspaceId } = $props<{
-		onUploadComplete?: (file: FileAttachment) => void;
+		onUploadComplete?: (file: FileAttachment, targetWorkspaceId: string) => void;
 		workspaceId?: string;
 	}>();
 
@@ -21,7 +21,8 @@
 				errorMessage = t['file.tooLarge'];
 				return;
 			}
-			if (!workspaceId) {
+			const targetWorkspaceId = workspaceId;
+			if (!targetWorkspaceId) {
 				errorMessage = t['file.workspaceRequired'];
 				return;
 			}
@@ -29,10 +30,10 @@
 			try {
 				const formData = new FormData();
 				formData.append('file', file);
-				formData.append('workspace_id', workspaceId);
+				formData.append('workspace_id', targetWorkspaceId);
 
 				const fileAttachment = await ApiClient.request<FileAttachment>(
-					`/api/v1/files/upload?workspace_id=${encodeURIComponent(workspaceId)}`,
+					`/api/v1/files/upload?workspace_id=${encodeURIComponent(targetWorkspaceId)}`,
 					{
 						method: 'POST',
 						body: formData
@@ -41,7 +42,7 @@
 				);
 
 				if (onUploadComplete) {
-					onUploadComplete(fileAttachment);
+					onUploadComplete(fileAttachment, targetWorkspaceId);
 				}
 
 				// Reset input
@@ -55,6 +56,8 @@
 </script>
 
 {#if errorMessage}
-	<div class="error-message mb-2 text-sm text-red-500" role="alert">{errorMessage}</div>
+	<div class="error-message mb-2 text-sm text-red-700 dark:text-red-400" role="alert">
+		{errorMessage}
+	</div>
 {/if}
-<input type="file" class="text-sm" onchange={handleUpload} />
+<input type="file" aria-label={t['file.selectInput']} class="text-sm" onchange={handleUpload} />

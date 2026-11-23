@@ -273,3 +273,44 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Gate PASS e PR #309 com checks verdes, sem conflitos; branch `feature/085-local-first-seed` é a única não mesclada em `dev`.
 - Contagens atuais: specs 75, assessments 72, validations **71**, releases **71**, bugs 4; research 137/138.
 - Mesmo com `required_pull_request_reviews=null` na proteção de `dev`, a regra explícita deste prompt exige aprovador distinto; ausência de reviews mantém o PR aberto, sem auto-merge/force-push.
+
+## Estado verificado — 2026-11-22 (ciclo 114; append-only)
+
+- Recontagem via `find` (`feature/114-wcag-ci-guard`): `specs/` 104 diretórios (556 arquivos, `001`–`114`), `.specify/assessments/` 102 (428), `.specify/validations/` 100 (106 pré-`evidence.md`), `.specify/releases/` 100 (100), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 114 (`400/625`): blindagem WCAG 2.2 AA no `e2e-browser` + correções e auditoria em `/files` + `a11yAudit.ts` (issues `#373`..`#377`). Gate local `check_gate_integrity.py` PASS (10 legs / 77 pisos).
+- Próximo candidato 80/20 mapeado (`300/625`): listagem `GET /api/v1/files?workspace_id=...` e persistência pós-reload em `/files`.
+- **[NV]** CI remoto, ACR, modo escuro, staging real, Forgejo e produção; histórico preservado.
+
+## Estado verificado — 2026-11-23 (ciclo 115; append-only)
+
+- Recontagem via `find` (`feature/115-files-list-persistence`): `specs/` 105 diretórios (562 arquivos, `001`–`115`), `.specify/assessments/` 103 (433), `.specify/validations/` 101 (109 pré-`evidence.md`), `.specify/releases/` 101 (101), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 115 (`400/625`): endpoint `GET /api/v1/files` escopado por organização/workspace, contrato DB (`files: 6 -> 7`, 78 total), persistência em `/files`, E2E `t['files.empty']` e Briefing de Compreensão `tenant` (`#379`..`#383`), SemVer `0.7.16 -> 0.8.0`.
+- Próximo candidato 80/20 mapeado (`240/625`): lookup de identidade real de autores no chat (ciclo 116).
+- **[NV]** CI remoto, ACR, modo escuro, staging real, Forgejo e produção; histórico preservado.
+
+## Estado verificado — 2026-11-23 (ciclo 116; append-only)
+
+- Recontagem via `find` (`feature/116-chat-author-identity`): `specs/` 106 diretórios (568 arquivos, `001`–`116`), `.specify/assessments/` 104 (438), `.specify/validations/` 102 (112 pré-`evidence.md`), `.specify/releases/` 102 (102), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 116 (`240/625`): identidade real de autores no chat (`UserRepository::find_by_ids`, `resolve_sender_name`, `ChatLayout.svelte`, contrato `messaging: 4 -> 5`, 79 total, Briefing `tenant`, `#385`..`#389`), SemVer `0.8.0 -> 0.9.0`.
+- Próximo candidato 80/20 mapeado (`240/625`): UI de notificações + ocultação/tratamento de cascas sem backend (`/dms` hardcoded e drawer de IA) ou tema escuro Tailwind v4 (ciclo 117).
+- **[NV]** CI remoto, ACR, WS multi-usuário real em E2E, modo escuro, staging real, Forgejo e produção; histórico preservado.
+
+## Estado verificado — 2026-11-23 (ciclo 117; append-only)
+
+- Recontagem via `find` (`feature/117-notifications-ui-and-honest-navigation`): `specs/` 107 diretórios (573 arquivos, `001`–`117`), `.specify/assessments/` 105 (443), `.specify/validations/` 103 (116 com `evidence.md`), `.specify/releases/` 103 (103), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 117 (`240/625`): `/api/v1/notifications` escopado por organização (`ensure_member`, `404` fail-closed cross-org, `target_url`, `POST /read-all`), contrato `notifications: 5 -> 6` (80 total), central `/notifications`, badge reativo na sidebar, remoção de atalhos placeholder (`/dms` e drawer de IA), `/dms` honesto, Passos 6 e 7 E2E com WCAG 2.2 AA, CI remoto GREEN (`45174768424`, `45174768337`), ACR `APROVADO` e Briefing `tenant` (`#391`..`#395`, PR `#396`), SemVer `0.9.0 -> 0.10.0`.
+- Próximo candidato 80/20 mapeado (`240/625`): alinhamento consistente de tema escuro Tailwind v4 (`@custom-variant dark`, ciclo 118) e UI CRUD de RBAC / endpoint HTTP para `HitlReceiptPort`.
+- **[NV]** Tema escuro em navegador real, staging real, Forgejo e produção; histórico preservado.
+
+## Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+- Recontagem via `find` (`feature/118-oidc-callback-mock-idp-exchange`): `specs/` 108 diretórios (578 arquivos, `001`–`118`), `.specify/assessments/` 106 (448), `.specify/validations/` 104 (119), `.specify/releases/` 104 (104), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 117 follow-ups concluídos e mesclados em `github/dev@2ef8fd97e` (`PR #397` WCAG 2.5.3 badge + `PR #398` `.dark` Tailwind v4, persistência `flora.theme`, sidebar recolhida `#bits-s1`, `/files` reload e sub-fluxos granulares `/notifications` — `12/12` `WCAG 2.2 AA: sem achados`).
+- Ciclo 118 (`2000/3125`, fecha `BF-01`): servidor IdP OIDC HTTP mock `MockOidcIdpServer` (`Ed25519`, Discovery, JWKS, PKCE `S256`) em `flora-tests/src/oidc_mock.rs`, troca extraída em `oidc.rs`, bloqueio `401` cross-subject e conta inativa em `auth.rs`, substituição dos stubs em `registration.rs`, `2` contratos DB (`auth: 23 -> 25`, `82` total) e Briefing `auth` (`#399`..`#402`), SemVer `0.10.0 -> 0.10.1`.
+- Próximo candidato 80/20 mapeado: UI CRUD de RBAC/papéis (`BF-02`), endpoint HTTP para `HitlReceiptAdapter` (`BF-03`) ou seletor de tema em `/settings` (`BF-04`).
+- **[NV]** CI remoto do PR 118, ACR independente, Zitadel externo real, staging real, Forgejo e produção; histórico preservado.
+
+
+### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
+
+- Remediação ACR PR `#403` (`72547119`): `set_oidc_subject_if_absent` atômico (`flora-core`), `email_verified == Some(true)`, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação de `issuer` no Discovery + `validate_jwks_uri` estrita, sanitização de erros `Error::OidcProvider` e remoção de `base64` em `flora-tests/Cargo.toml` (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` total). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.

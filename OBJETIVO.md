@@ -342,3 +342,43 @@ permanece como registro do momento da medição; nenhuma linha foi reescrita.
 - Alvo operacional confirmado: `/home/luis/development/MDMV/projetos/flora`; cwd `Arquivados/flora` é decoy sem `.specify/`. Gate `check_gate_integrity.py` PASS; PR #309 com 12 check-runs concluídos (11 success, 1 skipped) e `mergeable=clean`.
 - Contagens recontadas: `specs/` 75, assessments 72, validations **71**, releases **71**, bugs 4, research 137 sem índice (138 com ele). As cifras 70/70 acima são do snapshot 03:27Z e permanecem como histórico.
 - Proteção de `dev` verificada via `gh api`: 4 checks obrigatórios, `enforce_admins=true`, `required_pull_request_reviews=null`. A policy deste prompt ainda exige aprovador distinto; como não há reviews, merge não foi realizado. **[NV]** produção/Forgejo.
+
+### Estado verificado — 2026-11-22 (ciclo 114; append-only)
+
+- Recontagem via `find` (`feature/114-wcag-ci-guard`): `specs/` 104 diretórios (556 arquivos), `.specify/assessments/` 102 (428), `.specify/validations/` 100 (106 pré-`evidence.md`), `.specify/releases/` 100 (100), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 114: asserção WCAG 2.2 AA obrigatória em `seed-flow.e2e.ts` + correções e auditoria da rota `/files` (issues `#373`..`#377`), sem alterar required checks ou desativar regras axe.
+- Gate local: `check_gate_integrity.py` PASS (4 required checks, 10 legs / 77 pisos); `svelte-check` 0/0; `lint` exit 0; Vitest `server` 15/53; `vite build` exit 0.
+- **[NV]** CI remoto, ACR, modo escuro, staging real e produção; histórico preservado.
+
+### Estado verificado — 2026-11-23 (ciclo 115; append-only)
+
+- Recontagem via `find` (`feature/115-files-list-persistence`): `specs/` 105 diretórios (562), `.specify/assessments/` 103 (433), `.specify/validations/` 101 (109 pré-`evidence.md`), `.specify/releases/` 101 (101), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 115: listagem `GET /api/v1/files?workspace_id=<uuid>[&limit=<n>]` com guarda `ensure_member` + `ensure_workspace_in_org`, contrato `db_list_files_scoped_to_workspace_and_org`, lockstep `files: 6 -> 7` (78 pisos) e persistência em `/files` + Briefing de Compreensão (`tenant`) (`#379`..`#383`), sem alterar required checks.
+- Gate local (`task-402`): `check_gate_integrity.py` PASS (4 required checks, 10 legs / 78 pisos); `cargo fmt`/`clippy`/`flora-api files::tests` `2 passed`; `svelte-check` 0/0; `lint` exit 0; Vitest `server` `16/58`; `vite build` exit 0.
+- **[NV]** CI remoto (`db-tests`, `e2e-browser`), ACR, modo escuro, staging real e produção; histórico preservado.
+
+### Estado verificado — 2026-11-23 (ciclo 116; append-only)
+
+- Recontagem via `find` (`feature/116-chat-author-identity`): `specs/` 106 diretórios (568), `.specify/assessments/` 104 (438), `.specify/validations/` 102 (112 pré-`evidence.md`), `.specify/releases/` 102 (102), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 116: lookup em lote `UserRepository::find_by_ids` e identidade real de autores (`sender_name`/`sender_avatar_url`) em REST (`channels.rs`), WebSocket (`websocket.rs`) e `ChatLayout.svelte`, contrato DB `db_messages_include_author_display_name_across_post_list_and_catchup`, lockstep `messaging: 4 -> 5` (79 pisos) e Briefing de Compreensão (`tenant`) (`#385`..`#389`), sem alterar required checks.
+- Gate local (`task-637` + `task-673`): `check_gate_integrity.py` PASS (4 required checks, 10 legs / 79 pisos); `cargo fmt`/`clippy`/`cargo test --workspace`; `svelte-check` 0/0; `lint` exit 0; Vitest `server` `17/64`; `vite build` `26.46s`.
+- **[NV]** CI remoto (`db-tests`, `e2e-browser`), ACR, WS multi-usuário em E2E, modo escuro, staging real e produção; histórico preservado.
+
+### Estado verificado — 2026-11-23 (ciclo 117; append-only)
+
+- Recontagem via `find` (`feature/117-notifications-ui-and-honest-navigation`): `specs/` 107 diretórios (573 arquivos), `.specify/assessments/` 105 (443), `.specify/validations/` 103 (116 com `evidence.md`), `.specify/releases/` 103 (103), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 117 (`240/625`): escopo explícito por `organization_id` em `/api/v1/notifications` (`ensure_member`, fail-closed `404` cross-org, `target_url`, `POST /read-all`), contrato `db_notifications_org_scoped_target_url_and_read_all` com trava lockstep `notifications: 5 -> 6` (80 pisos), rota `/notifications` + badge reativo + remoção de atalhos placeholder (`/dms` e drawer de IA) + `/dms` honesto + Passos 6 e 7 E2E com WCAG 2.2 AA e Briefing de Compreensão (`tenant`) (`#391`..`#395`, [PR #396](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/396)), sem alterar required checks.
+- Gate local e CI (`task-331`, `task-496`, `45174768424`, `45174768337`, ACR `dfa9e102`): `check_gate_integrity.py` PASS (4 required checks, 10 legs / 80 pisos); `db-tests` `80/80` (`notifications: 6/6`); `e2e-browser` `4 passed` + WCAG `sem achados`; Vitest `server` `18/71`; `vite build` `25.33s`; ACR `APROVADO`.
+- **[NV]** Tema escuro real, staging real e produção; histórico preservado.
+
+### Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+- Recontagem via `find` (`feature/118-oidc-callback-mock-idp-exchange`): `specs/` 108 diretórios (578 arquivos), `.specify/assessments/` 106 (448), `.specify/validations/` 104 (119 com `evidence.md`/`validate.md`), `.specify/releases/` 104 (104), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 118 (`2000/3125`, fecha `BF-01`): `VerifiedOidcIdentity`/`exchange_code_and_verify_id_token` em `flora-api/src/oidc.rs`, bloqueio `401` para contas inativas e conflito de `oidc_subject` em `auth.rs`, servidor `MockOidcIdpServer` (`Ed25519`/PKCE `S256`) em `flora-tests/src/oidc_mock.rs`, substituição dos placeholders em `registration.rs`, `2` novos contratos DB `db_oidc_callback_*` com trava lockstep `auth: 23 -> 25` (`82` pisos) e Briefing de Compreensão (`auth`) (`#399`–`#402`).
+- Gate local (`task-1190`): `check_gate_integrity.py` PASS (4 required checks, 10 legs / 82 pisos); `cargo fmt`/`clippy`/`deny`/`cargo test --workspace` (`flora-api` `48`, `flora-core` `35+21`, `flora-tests` `36/82 ignored`); `contract::auth::db_` `25 passed; 0 failed` em Postgres 18.7.
+- **[NV]** CI remoto do PR 118, ACR independente, instância Zitadel externa real e deploy/produção; histórico preservado.
+
+
+### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
+
+- Remediação ACR PR `#403` (`72547119`): `UserRepository::set_oidc_subject_if_absent` atômico, `email_verified == Some(true)` obrigatório, `oidc_http_client()` (`Policy::none()` + timeouts), checagem de `issuer` no Discovery, `validate_jwks_uri` estrita contra prefix bypass/userinfo, sanitização de `Error::OidcProvider` e cobertura ampliada (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` pisos). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.

@@ -9,6 +9,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import { apiErrorMessage, format, t } from '$lib/i18n';
+	import { filesQueryPath } from '$lib/utils/files';
 	import type { FileAttachment } from '$lib/types/models';
 
 	type Workspace = { id: string; name: string };
@@ -16,8 +17,10 @@
 	let workspaces = $state<Workspace[]>([]);
 	let selectedWorkspaceId = $state('');
 	let isLoading = $state(true);
+	let isLoadingFiles = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
+	let loadSeq = 0;
 
 	async function loadWorkspaces() {
 		workspaces = await ApiClient.request<Workspace[]>('/api/v1/workspaces');
@@ -27,11 +30,53 @@
 			if (preferred) {
 				selectedWorkspaceId = preferred.id;
 				authState.setWorkspace(preferred.id);
+			} else {
+				authState.setWorkspace(null);
 			}
 		}
 	}
 
-	function onUploadComplete(file: FileAttachment) {
+	async function loadFiles(workspaceId: string) {
+		if (!workspaceId) {
+			loadSeq += 1;
+			isLoadingFiles = false;
+			fileStore.clear();
+			return;
+		}
+		const seq = ++loadSeq;
+		isLoadingFiles = true;
+		errorMessage = '';
+		successMessage = '';
+		try {
+			const items = await ApiClient.request<FileAttachment[]>(filesQueryPath(workspaceId));
+			if (seq === loadSeq) {
+				fileStore.setFiles(items);
+			}
+		} catch (error) {
+			if (seq === loadSeq) {
+				errorMessage = apiErrorMessage(error, 'error.loadFiles');
+			}
+		} finally {
+			if (seq === loadSeq) {
+				isLoadingFiles = false;
+			}
+		}
+	}
+
+	async function handleWorkspaceChange(event: Event) {
+		const target = event.currentTarget as HTMLSelectElement;
+		selectedWorkspaceId = target.value;
+		successMessage = '';
+		errorMessage = '';
+		authState.setWorkspace(selectedWorkspaceId || null);
+		fileStore.clear();
+		await loadFiles(selectedWorkspaceId);
+	}
+
+	function onUploadComplete(file: FileAttachment, targetWorkspaceId?: string) {
+		if (targetWorkspaceId && targetWorkspaceId !== selectedWorkspaceId) {
+			return;
+		}
 		fileStore.addFile(file);
 		successMessage = format('files.uploaded', { name: file.fileName });
 		errorMessage = '';
@@ -46,10 +91,17 @@
 			await goto('/select-org');
 			return;
 		}
+		fileStore.clear();
 		isLoading = true;
 		try {
 			await loadWorkspaces();
+			if (selectedWorkspaceId) {
+				await loadFiles(selectedWorkspaceId);
+			} else {
+				fileStore.clear();
+			}
 		} catch (error) {
+			fileStore.clear();
 			errorMessage = apiErrorMessage(error, 'error.loadWorkspaces');
 		} finally {
 			isLoading = false;
@@ -82,6 +134,7 @@
 				id="files-workspace"
 				class="flex h-9 w-full rounded-md border bg-background px-3 text-sm"
 				bind:value={selectedWorkspaceId}
+				onchange={handleWorkspaceChange}
 				disabled={isLoading || workspaces.length === 0}
 			>
 				{#if workspaces.length === 0}
@@ -97,8 +150,20 @@
 	</div>
 
 	<div class="space-y-2">
-		<h2 class="font-semibold">{t['files.title']}</h2>
-		{#if fileStore.files.length === 0}
+		<div class="flex items-center justify-between">
+			<h2 class="font-semibold">{t['files.title']}</h2>
+			<Button
+				variant="outline"
+				size="sm"
+				disabled={isLoading || isLoadingFiles || !selectedWorkspaceId}
+				onclick={() => loadFiles(selectedWorkspaceId)}
+			>
+				{t['files.refresh']}
+			</Button>
+		</div>
+		{#if isLoading || isLoadingFiles}
+			<p class="text-sm text-muted-foreground">{t['files.loading']}</p>
+		{:else if fileStore.files.length === 0}
 			<p class="text-sm text-muted-foreground">{t['files.empty']}</p>
 		{:else}
 			{#each fileStore.files as file (file.id)}

@@ -24,8 +24,14 @@ export class MessageStore {
 			this.messages = [...this.messages, message].toSorted(byTimeline);
 			return;
 		}
+		const current = this.messages[index];
 		const next = [...this.messages];
-		next[index] = { ...next[index], ...message };
+		next[index] = {
+			...current,
+			...message,
+			authorName: message.authorName ?? current.authorName ?? null,
+			authorAvatarUrl: message.authorAvatarUrl ?? current.authorAvatarUrl ?? null
+		};
 		this.messages = next.toSorted(byTimeline);
 	}
 
