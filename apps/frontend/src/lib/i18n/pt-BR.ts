@@ -103,6 +103,7 @@ export const t = {
 
 	// Arquivos
 	'file.download': 'Baixar',
+	'file.selectInput': 'Selecionar arquivo para envio',
 	'file.tooLarge': 'Arquivo muito grande. O tamanho máximo é 10 MB.',
 	'file.workspaceRequired': 'É necessário selecionar um workspace antes de enviar arquivos.',
 	'file.uploadFailed': 'Falha no envio.',

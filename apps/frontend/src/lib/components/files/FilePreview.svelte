@@ -11,7 +11,7 @@
 </script>
 
 <div class="flex items-center gap-2 rounded-md border bg-background p-2 text-sm">
-	<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+	<svg class="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"
 		><path
 			stroke-linecap="round"
 			stroke-linejoin="round"
@@ -22,7 +22,11 @@
 	<div class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 		{file.fileName}
 	</div>
-	<a href={getDownloadUrl()} class="text-blue-500 hover:underline" download>
+	<a
+		href={getDownloadUrl()}
+		class="text-blue-700 underline hover:text-blue-800 dark:text-blue-400"
+		download
+	>
 		{t['file.download']}
 	</a>
 </div>
