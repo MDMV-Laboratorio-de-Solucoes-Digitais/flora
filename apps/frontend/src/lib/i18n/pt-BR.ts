@@ -82,6 +82,8 @@ export const t = {
 	'notifications.filtersLabel': 'Filtros de notificações',
 	'notifications.openTarget': 'Abrir destino',
 	'notifications.unreadCount': '{count} não lida(s)',
+	'notifications.unreadSingular': 'não lida',
+	'notifications.unreadPlural': 'não lidas',
 	'notifications.type.Mention': 'Menção',
 	'notifications.type.Assignment': 'Atribuição',
 	'notifications.type.Reply': 'Resposta',

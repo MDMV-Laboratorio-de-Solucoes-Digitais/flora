@@ -23,16 +23,19 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { format, t } from '$lib/i18n';
+	import { t } from '$lib/i18n';
 	import { emailFromToken } from '$lib/utils/jwt';
 
 	let { children } = $props();
 	const userEmail = $derived(emailFromToken(authState.token) ?? t['nav.userEmail']);
+	const unreadSrLabel = $derived(
+		notificationStore.unreadCount === 1
+			? t['notifications.unreadSingular']
+			: t['notifications.unreadPlural']
+	);
 	const notificationsCollapsedAriaLabel = $derived(
 		notificationStore.unreadCount > 0
-			? `${t['nav.notifications']} (${format('notifications.unreadCount', {
-					count: notificationStore.unreadCount
-				})})`
+			? `${t['nav.notifications']} (${notificationStore.unreadCount} ${unreadSrLabel})`
 			: t['nav.notifications']
 	);
 
@@ -153,6 +156,7 @@
 						variant="ghost"
 						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
 						href="/channels"
+						aria-label={isSidebarOpen ? undefined : t['nav.channels']}
 					>
 						<Hash class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}<span>{t['nav.channels']}</span>{/if}
@@ -161,6 +165,7 @@
 						variant="ghost"
 						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
 						href="/tasks"
+						aria-label={isSidebarOpen ? undefined : t['nav.tasks']}
 					>
 						<CheckSquare class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}<span>{t['nav.tasks']}</span>{/if}
@@ -169,7 +174,7 @@
 						variant="ghost"
 						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
 						href="/files"
-						aria-label={t['nav.files']}
+						aria-label={isSidebarOpen ? undefined : t['nav.files']}
 					>
 						<Files class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}<span>{t['nav.files']}</span>{/if}
@@ -186,7 +191,7 @@
 							{#if notificationStore.unreadCount > 0}
 								<Badge variant="secondary" class="ml-auto">
 									{notificationStore.unreadCount}
-									<span class="sr-only"> {t['notifications.filterUnread'].toLowerCase()}</span>
+									<span class="sr-only"> {unreadSrLabel}</span>
 								</Badge>
 							{/if}
 						{/if}
@@ -217,6 +222,7 @@
 							{...props}
 							variant="ghost"
 							class="w-full justify-start {isSidebarOpen ? 'px-2' : 'justify-center px-0'}"
+							aria-label={isSidebarOpen ? undefined : t['nav.myAccount']}
 						>
 							<div
 								class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
