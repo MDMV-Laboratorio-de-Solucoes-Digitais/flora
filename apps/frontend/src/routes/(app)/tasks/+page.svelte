@@ -160,7 +160,9 @@
 		</div>
 	{/if}
 	{#if successMessage}
-		<div class="rounded-md border border-green-500/30 bg-green-500/5 p-3 text-sm text-green-700">
+		<div
+			class="rounded-md border border-green-500/30 bg-green-500/5 p-3 text-sm text-green-700 dark:text-green-400"
+		>
 			{successMessage}
 		</div>
 	{/if}
