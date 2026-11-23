@@ -19,4 +19,38 @@ describe('MessageStore', () => {
 		store.addMessage(message);
 		expect(store.messages.length).toBe(1);
 	});
+
+	it('preserves existing author metadata when partial upsert omits authorName or authorAvatarUrl', () => {
+		const store = new MessageStore();
+		store.upsertMessage({
+			id: 'msg-2',
+			content: 'Initial',
+			channelId: 'c1',
+			authorId: 'u1',
+			authorName: 'Alice Admin',
+			authorAvatarUrl: 'https://example.test/alice.png',
+			threadId: null,
+			fileAttachments: [],
+			createdAt: '2026-11-23T00:00:00Z',
+			updatedAt: null
+		});
+
+		store.upsertMessage({
+			id: 'msg-2',
+			content: 'Edited',
+			channelId: 'c1',
+			authorId: 'u1',
+			authorName: null,
+			authorAvatarUrl: null,
+			threadId: null,
+			fileAttachments: [],
+			createdAt: '2026-11-23T00:00:00Z',
+			updatedAt: '2026-11-23T00:01:00Z'
+		});
+
+		expect(store.messages).toHaveLength(1);
+		expect(store.messages[0].content).toBe('Edited');
+		expect(store.messages[0].authorName).toBe('Alice Admin');
+		expect(store.messages[0].authorAvatarUrl).toBe('https://example.test/alice.png');
+	});
 });

@@ -495,4 +495,163 @@ mod db_messaging {
 
         Ok(())
     }
+
+    async fn seed_second_member_blank_name(
+        state: &AppState,
+        config: &Config,
+        org_id: Uuid,
+        role_id: Uuid,
+        uniq: &str,
+    ) -> anyhow::Result<(User, String)> {
+        let user_repo = PgUserRepository::new((*state.db_pool).clone());
+        let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+        let session_repo = PgSessionRepository::new((*state.db_pool).clone());
+        let user = user_repo
+            .create(User::new(&format!("blank-{uniq}@example.test"), "   "))
+            .await?;
+        let _ = membership_repo
+            .create(Membership::new(user.id, org_id, role_id))
+            .await?;
+        let jti = format!("jti-b-{}", Uuid::now_v7());
+        let now = Utc::now();
+        let _ = session_repo
+            .create(Session {
+                id: Uuid::now_v7(),
+                user_id: user.id,
+                organization_id: org_id,
+                jti: jti.clone(),
+                refresh_token_id: None,
+                client_ip: None,
+                user_agent: None,
+                expires_at: now + Duration::seconds(3600),
+                last_activity_at: now,
+                is_active: true,
+                created_at: now,
+                updated_at: now,
+            })
+            .await?;
+        let token = jwt::encode_token(
+            &FloraClaims::new(
+                user.id,
+                jti,
+                org_id,
+                &user.email,
+                config.app.session_ttl_secs,
+            ),
+            &config.app.jwt_secret,
+        );
+        Ok((user, token))
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 116)"]
+    async fn db_messages_include_author_display_name_across_post_list_and_catchup()
+    -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_member(&state, &config).await?;
+        let roles = PgRoleRepository::new((*state.db_pool).clone())
+            .find_by_organization_id(seed.org.id)
+            .await?;
+        let role_id = roles
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("missing org role"))?
+            .id;
+        let uniq = Uuid::now_v7().simple().to_string();
+        let (user_b, token_b) =
+            seed_second_member_blank_name(&state, &config, seed.org.id, role_id, &uniq).await?;
+        let channel_id = insert_channel(&state, seed.workspace.id, seed.org.id, "authors").await?;
+        let app = channels_app(state);
+
+        // User A posts -> sender_name uses display_name, no secret user fields leak
+        let (s1, m1) = authed_json(
+            app.clone(),
+            "POST",
+            format!("/channels/{channel_id}/messages"),
+            &seed.token,
+            Some(json!({ "content": "msg a" })),
+        )
+        .await?;
+        anyhow::ensure!(s1 == StatusCode::CREATED, "post a: {s1} {m1}");
+        anyhow::ensure!(
+            m1["sender_name"] == "Messaging Test User",
+            "m1 author: {m1}"
+        );
+        anyhow::ensure!(
+            m1.get("password_hash").is_none() && m1.get("oidc_subject").is_none(),
+            "secret fields leaked: {m1}"
+        );
+        let m1_id = m1["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing m1 id"))?;
+
+        // User B with blank display_name -> falls back to trimmed email
+        let (s2, m2) = authed_json(
+            app.clone(),
+            "POST",
+            format!("/channels/{channel_id}/messages"),
+            &token_b,
+            Some(json!({ "content": "msg b" })),
+        )
+        .await?;
+        anyhow::ensure!(s2 == StatusCode::CREATED, "post b: {s2} {m2}");
+        anyhow::ensure!(m2["sender_name"] == user_b.email, "m2 fallback: {m2}");
+
+        // Batch GET list includes both author names
+        let (s_list, listed) = authed_json(
+            app.clone(),
+            "GET",
+            format!("/channels/{channel_id}/messages?limit=50"),
+            &seed.token,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(s_list == StatusCode::OK, "list: {s_list} {listed}");
+        let items = listed
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected array"))?;
+        anyhow::ensure!(
+            items
+                .iter()
+                .any(|m| m["sender_name"] == "Messaging Test User")
+                && items.iter().any(|m| m["sender_name"] == user_b.email),
+            "batch author resolution incomplete: {listed}"
+        );
+
+        // Catch-up ?after= includes author identity
+        let (s_after, after) = authed_json(
+            app.clone(),
+            "GET",
+            format!("/channels/{channel_id}/messages?after={m1_id}&limit=50"),
+            &seed.token,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(s_after == StatusCode::OK, "after: {s_after} {after}");
+        let after_items = after
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected array"))?;
+        anyhow::ensure!(
+            after_items.len() == 1 && after_items[0]["sender_name"] == user_b.email,
+            "catch-up author mismatch: {after}"
+        );
+
+        // PATCH preserves sender_name
+        let (s_patch, patched) = authed_json(
+            app,
+            "PATCH",
+            format!("/channels/{channel_id}/messages/{m1_id}"),
+            &seed.token,
+            Some(json!({ "content": "msg a edited" })),
+        )
+        .await?;
+        anyhow::ensure!(s_patch == StatusCode::OK, "patch: {s_patch} {patched}");
+        anyhow::ensure!(
+            patched["sender_name"] == "Messaging Test User" && patched["is_edited"] == true,
+            "patch lost sender_name: {patched}"
+        );
+
+        Ok(())
+    }
 }

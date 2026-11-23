@@ -28,6 +28,8 @@ export interface Message {
 	id: UUID;
 	channelId: UUID;
 	authorId: UUID;
+	authorName?: string | null;
+	authorAvatarUrl?: string | null;
 	content: string;
 	threadId: UUID | null;
 	fileAttachments: FileAttachment[];

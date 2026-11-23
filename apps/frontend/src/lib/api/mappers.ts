@@ -12,6 +12,8 @@ export interface ApiMessage {
 	id: string;
 	channel_id: string;
 	sender_id: string;
+	sender_name?: string | null;
+	sender_avatar_url?: string | null;
 	content: string;
 	thread_id?: string | null;
 	is_edited?: boolean;
@@ -35,6 +37,8 @@ export function toMessage(api: ApiMessage): Message {
 		id: api.id,
 		channelId: api.channel_id,
 		authorId: api.sender_id,
+		authorName: api.sender_name?.trim() || null,
+		authorAvatarUrl: api.sender_avatar_url ?? null,
 		content: api.content,
 		threadId: api.thread_id ?? null,
 		fileAttachments: [],

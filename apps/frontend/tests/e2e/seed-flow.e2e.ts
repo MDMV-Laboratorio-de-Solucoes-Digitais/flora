@@ -49,10 +49,14 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 
 	// 3. message — REST upsert is sufficient; WS with a lean backend is NV.
 	await expect(page.getByText(/Welcome to Acme Corporation/)).toBeVisible();
+	await expect(page.getByText('Alice Admin', { exact: true }).first()).toBeVisible();
+	await expect(page.getByText('Bob Builder', { exact: true }).first()).toBeVisible();
+	await expect(page.getByText('Usuário 22222222')).toHaveCount(0);
 	const message = `e2e smoke ${suffix}`;
 	await page.locator('textarea').fill(message);
 	await page.getByRole('button', { name: t['chat.send'] }).click();
 	await expect(page.getByText(message)).toBeVisible();
+	await expect(page.getByText('Usuário 22222222')).toHaveCount(0);
 
 	// 4. task — "Assign to me" stays checked so the created task is the only one
 	//    in Alice's assignee-scoped list. This is the single select-org consumer.

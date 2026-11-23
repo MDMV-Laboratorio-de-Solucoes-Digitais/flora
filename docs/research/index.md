@@ -230,3 +230,7 @@ Recontagem via `find` no worktree `feature/114-wcag-ci-guard`: `specs/` 104 dire
 ### Estado verificado — 2026-11-23 (ciclo 115; append-only)
 
 Recontagem via `find` no worktree `feature/115-files-list-persistence`: `specs/` 105 diretórios (562 arquivos), `.specify/assessments/` 103 diretórios (433 arquivos), `.specify/validations/` 101 diretórios (109 arquivos pré-`evidence.md`), `.specify/releases/` 101 diretórios (101 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+### Estado verificado — 2026-11-23 (ciclo 116; append-only)
+
+Recontagem via `find` no worktree `feature/116-chat-author-identity`: `specs/` 106 diretórios (568 arquivos), `.specify/assessments/` 104 diretórios (438 arquivos), `.specify/validations/` 102 diretórios (112 arquivos pré-`evidence.md`), `.specify/releases/` 102 diretórios (102 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
