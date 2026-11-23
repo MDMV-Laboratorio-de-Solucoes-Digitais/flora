@@ -110,7 +110,9 @@ export const t = {
 	'files.title': 'Arquivos',
 	'files.description': 'Envie e baixe arquivos do workspace selecionado.',
 	'files.workspace': 'Workspace',
-	'files.empty': 'Nenhum arquivo enviado nesta sessão.',
+	'files.empty': 'Nenhum arquivo neste workspace.',
+	'files.loading': 'Carregando arquivos...',
+	'files.refresh': 'Atualizar',
 	'files.uploaded': 'Arquivo enviado: {name}',
 
 	// Organizações e workspaces
@@ -185,6 +187,7 @@ export const t = {
 	'error.createOrganization': 'Falha ao criar organização',
 	'error.loadTasks': 'Falha ao carregar tarefas/workspaces',
 	'error.loadWorkspaces': 'Falha ao carregar workspaces',
+	'error.loadFiles': 'Falha ao carregar arquivos',
 	'error.createTask': 'Falha ao criar tarefa',
 	'error.changeTaskStatus': 'Falha ao alterar o status da tarefa',
 	'error.loadMessages': 'Falha ao carregar mensagens',

@@ -280,3 +280,10 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Ciclo 114 (`400/625`): blindagem WCAG 2.2 AA no `e2e-browser` + correções e auditoria em `/files` + `a11yAudit.ts` (issues `#373`..`#377`). Gate local `check_gate_integrity.py` PASS (10 legs / 77 pisos).
 - Próximo candidato 80/20 mapeado (`300/625`): listagem `GET /api/v1/files?workspace_id=...` e persistência pós-reload em `/files`.
 - **[NV]** CI remoto, ACR, modo escuro, staging real, Forgejo e produção; histórico preservado.
+
+## Estado verificado — 2026-11-23 (ciclo 115; append-only)
+
+- Recontagem via `find` (`feature/115-files-list-persistence`): `specs/` 105 diretórios (562 arquivos, `001`–`115`), `.specify/assessments/` 103 (433), `.specify/validations/` 101 (109 pré-`evidence.md`), `.specify/releases/` 101 (101), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 115 (`400/625`): endpoint `GET /api/v1/files` escopado por organização/workspace, contrato DB (`files: 6 -> 7`, 78 total), persistência em `/files`, E2E `t['files.empty']` e Briefing de Compreensão `tenant` (`#379`..`#383`), SemVer `0.7.16 -> 0.8.0`.
+- Próximo candidato 80/20 mapeado (`240/625`): lookup de identidade real de autores no chat (ciclo 116).
+- **[NV]** CI remoto, ACR, modo escuro, staging real, Forgejo e produção; histórico preservado.
