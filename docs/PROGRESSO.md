@@ -485,3 +485,17 @@ permanecem intactas; apenas acréscimos.
 - **Contagens (`find`)**: `specs/` 107 dirs (573 arquivos), `.specify/assessments/` 105 (443), `.specify/validations/` 103 (116 com `evidence.md`), `.specify/releases/` 103 (103), `.specify/bugs/` 8 (26), `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148), `docs/adr/` 8.
 - **R6 / Artefatos**: issues `#391`..`#395`; PR `#396`; `specs/117-notifications-ui-and-honest-navigation/*`, `.specify/validations/117-notifications-ui-and-honest-navigation/{test-roadmap,validate,evidence}.md`, `.specify/releases/117-notifications-ui-and-honest-navigation/release.md` (`0.9.0 -> 0.10.0`), `docs/governance/2026-11-23-117-briefing-compreensao.md`, `docs/governance/2026-11-23-117-notifications-ui-and-honest-navigation.md`.
 - **[NV]**: tema escuro real e staging/produção externos.
+
+## Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+- **Entrega (`2000/3125`, fecha `BF-01`)**: `VerifiedOidcIdentity` e `exchange_code_and_verify_id_token` em `flora-api/src/oidc.rs` (com testes assimétricos `EdDSA` e SSRF `jwks_uri`), endurecimento `401` em `flora-api/src/routes/auth.rs` (conta desativada e conflito de `oidc_subject`), servidor local `MockOidcIdpServer` em `flora-tests/src/oidc_mock.rs` (`Ed25519` + PKCE `S256`), substituição real de `registration.rs` e `2` contratos DB `db_oidc_callback_*` em `contract/auth.rs` com trava lockstep `auth: 23 -> 25` (`82` total).
+- **Evidência local (`task-1190`)**: `cargo fmt` exit 0; `clippy -D warnings` 0 erros; `cargo deny check bans licenses sources` (`bans ok, licenses ok, sources ok`); `cargo test --workspace` (`flora-api` `48`, `flora-core` `35+21`, `flora-tests` `36/82 ignored`); `contract::auth::db_` `25 passed; 0 failed` em Postgres 18.7; `check_gate_integrity.py` PASS (4 required checks, 10 legs / 82 pisos).
+- **Contagens (`find`)**: `specs/` `108` dirs (`578` arquivos), `.specify/assessments/` `106` (`448`), `.specify/validations/` `104` (`119`), `.specify/releases/` `104` (`104`), `.specify/bugs/` `8` (`26`), `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`), `docs/adr/` `8`.
+- **R6 / Artefatos**: issues `#399`..`#402`; `specs/118-oidc-callback-mock-idp-exchange/*`, `.specify/validations/118-oidc-callback-mock-idp-exchange/{test-roadmap,validate,evidence}.md`, `.specify/releases/118-oidc-callback-mock-idp-exchange/release.md` (`0.10.0 -> 0.10.1`), `docs/governance/2026-11-23-118-briefing-compreensao.md`, `docs/governance/2026-11-23-118-oidc-callback-mock-idp-exchange.md`.
+- **[NV]**: CI remoto do PR 118, ACR independente, Zitadel externo real e staging/produção.
+
+
+### Adendo Rodada 2 — Remediação ACR PR #403 (`task-1323`, 2026-11-23, append-only)
+
+- **Correções**: `UserRepository::set_oidc_subject_if_absent`, exigência de `email_verified == Some(true)`, `oidc_http_client()` (`Policy::none()`, `5s`/`10s`), checagem de `issuer` no Discovery, `validate_jwks_uri` estrita (`url::Host`), sanitização de `Error::OidcProvider`, limpeza de `base64` em `flora-tests/Cargo.toml` e testes extras em `oidc.rs` (`9/9`), `registration.rs` e `contract/auth.rs`.
+- **Verificação (`task-1323`)**: `fmt`/`clippy -D warnings`/`cargo deny` exit `0`; `cargo test --workspace` (`flora-api` `50`, `flora-core` `35+21`, `flora-tests` `36/82 ignored`); `contract::auth::db_` **`25 passed; 0 failed`** (`77.95s`); `check_gate_integrity.py` PASS (`82` pisos). **[NV]**: ACR Rodada 2, CI remoto do novo commit e Zitadel externo real.

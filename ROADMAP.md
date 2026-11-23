@@ -301,3 +301,16 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Ciclo 117 (`240/625`): `/api/v1/notifications` escopado por organização (`ensure_member`, `404` fail-closed cross-org, `target_url`, `POST /read-all`), contrato `notifications: 5 -> 6` (80 total), central `/notifications`, badge reativo na sidebar, remoção de atalhos placeholder (`/dms` e drawer de IA), `/dms` honesto, Passos 6 e 7 E2E com WCAG 2.2 AA, CI remoto GREEN (`45174768424`, `45174768337`), ACR `APROVADO` e Briefing `tenant` (`#391`..`#395`, PR `#396`), SemVer `0.9.0 -> 0.10.0`.
 - Próximo candidato 80/20 mapeado (`240/625`): alinhamento consistente de tema escuro Tailwind v4 (`@custom-variant dark`, ciclo 118) e UI CRUD de RBAC / endpoint HTTP para `HitlReceiptPort`.
 - **[NV]** Tema escuro em navegador real, staging real, Forgejo e produção; histórico preservado.
+
+## Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+- Recontagem via `find` (`feature/118-oidc-callback-mock-idp-exchange`): `specs/` 108 diretórios (578 arquivos, `001`–`118`), `.specify/assessments/` 106 (448), `.specify/validations/` 104 (119), `.specify/releases/` 104 (104), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 117 follow-ups concluídos e mesclados em `github/dev@2ef8fd97e` (`PR #397` WCAG 2.5.3 badge + `PR #398` `.dark` Tailwind v4, persistência `flora.theme`, sidebar recolhida `#bits-s1`, `/files` reload e sub-fluxos granulares `/notifications` — `12/12` `WCAG 2.2 AA: sem achados`).
+- Ciclo 118 (`2000/3125`, fecha `BF-01`): servidor IdP OIDC HTTP mock `MockOidcIdpServer` (`Ed25519`, Discovery, JWKS, PKCE `S256`) em `flora-tests/src/oidc_mock.rs`, troca extraída em `oidc.rs`, bloqueio `401` cross-subject e conta inativa em `auth.rs`, substituição dos stubs em `registration.rs`, `2` contratos DB (`auth: 23 -> 25`, `82` total) e Briefing `auth` (`#399`..`#402`), SemVer `0.10.0 -> 0.10.1`.
+- Próximo candidato 80/20 mapeado: UI CRUD de RBAC/papéis (`BF-02`), endpoint HTTP para `HitlReceiptAdapter` (`BF-03`) ou seletor de tema em `/settings` (`BF-04`).
+- **[NV]** CI remoto do PR 118, ACR independente, Zitadel externo real, staging real, Forgejo e produção; histórico preservado.
+
+
+### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
+
+- Remediação ACR PR `#403` (`72547119`): `set_oidc_subject_if_absent` atômico (`flora-core`), `email_verified == Some(true)`, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação de `issuer` no Discovery + `validate_jwks_uri` estrita, sanitização de erros `Error::OidcProvider` e remoção de `base64` em `flora-tests/Cargo.toml` (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` total). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.

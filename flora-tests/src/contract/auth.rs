@@ -1484,3 +1484,277 @@ mod db_password_login {
         Ok(())
     }
 }
+
+/// DB-backed OIDC callback contract tests exercising a local mock HTTP `IdP` (cycle 118).
+#[cfg(test)]
+mod db_oidc_callback {
+    use super::*;
+    use crate::oidc_mock::{MockAuthorizationGrant, MockOidcIdpServer};
+    use flora_core::repositories::{PgSessionRepository, PgUserRepository};
+    use flora_core::traits::{SessionRepository, UserRepository};
+    use flora_core::utils::pkce::derive_s256_challenge;
+    use std::collections::HashMap;
+    use uuid::Uuid;
+
+    async fn connect_oidc_router(
+        idp: &MockOidcIdpServer,
+        client_secret: &str,
+    ) -> anyhow::Result<(PgPool, Config, axum::Router)> {
+        let Some(url) = std::env::var("FLORA_DATABASE__POSTGRES_URL")
+            .ok()
+            .or_else(|| std::env::var("DATABASE_URL").ok())
+        else {
+            anyhow::bail!(
+                "FLORA_DATABASE__POSTGRES_URL/DATABASE_URL required for DB contract tests"
+            );
+        };
+
+        let pool = PgPool::connect(&url).await?;
+        flora_core::migrations::run_migrations(&pool).await?;
+
+        let mut config = Config::default();
+        idp.issuer_url().clone_into(&mut config.oidc.issuer_url);
+        "flora@localhost".clone_into(&mut config.oidc.client_id);
+        client_secret.clone_into(&mut config.oidc.client_secret);
+
+        let state = make_test_state(pool.clone(), &config);
+        let router = axum::Router::new()
+            .nest("/auth", create_auth_router())
+            .with_state(state);
+        Ok((pool, config, router))
+    }
+
+    async fn perform_mock_oidc_login(
+        router: &axum::Router,
+        idp: &MockOidcIdpServer,
+        sub: &str,
+        email: &str,
+        name: Option<&str>,
+    ) -> anyhow::Result<(axum::response::Response, String, String)> {
+        let login_resp = ServiceExt::oneshot(
+            router.clone(),
+            http::Request::builder()
+                .uri("/auth/login")
+                .body(axum::body::Body::empty())?,
+        )
+        .await?;
+        assert_eq!(login_resp.status(), StatusCode::OK);
+        let login_bytes = axum::body::to_bytes(login_resp.into_body(), usize::MAX).await?;
+        let login_json: serde_json::Value = serde_json::from_slice(&login_bytes)?;
+
+        let oauth_state = login_json["state"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing state"))?
+            .to_owned();
+        let auth_url = login_json["authorization_url"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing authorization_url"))?;
+        let parsed = url::Url::parse(auth_url)?;
+        let pairs: HashMap<String, String> = parsed.query_pairs().into_owned().collect();
+        let redirect_uri = pairs
+            .get("redirect_uri")
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("missing redirect_uri"))?;
+        let code_challenge = pairs
+            .get("code_challenge")
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("missing code_challenge"))?;
+        let nonce = pairs
+            .get("nonce")
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("missing nonce"))?;
+
+        let code = format!("code-{}", Uuid::now_v7());
+        idp.register_code(
+            code.clone(),
+            MockAuthorizationGrant::new(
+                sub,
+                Some(email.to_owned()),
+                name.map(str::to_owned),
+                redirect_uri,
+                code_challenge.clone(),
+                nonce,
+            ),
+        )
+        .await;
+
+        let callback_resp = ServiceExt::oneshot(
+            router.clone(),
+            http::Request::builder()
+                .uri(format!("/auth/callback?code={code}&state={oauth_state}"))
+                .body(axum::body::Body::empty())?,
+        )
+        .await?;
+
+        Ok((callback_resp, code, code_challenge))
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 118)"]
+    async fn db_oidc_callback_exchanges_code_registers_new_user_and_creates_session()
+    -> anyhow::Result<()> {
+        let client_secret = "oidc-db-contract-secret";
+        let idp = MockOidcIdpServer::start("flora@localhost", client_secret).await?;
+        let (pool, config, router) = connect_oidc_router(&idp, client_secret).await?;
+
+        let unique = Uuid::now_v7().simple();
+        let sub = format!("oidc-sub-{unique}");
+        let raw_email = format!("  OidcNew-{unique}@Example.Test ");
+        let expected_email = format!("oidcnew-{unique}@example.test");
+
+        let (resp, code, code_challenge) =
+            perform_mock_oidc_login(&router, &idp, &sub, &raw_email, Some("OIDC Contract User"))
+                .await?;
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let token_requests = idp.take_token_requests().await;
+        assert_eq!(token_requests.len(), 1);
+        assert_eq!(token_requests[0].code.as_deref(), Some(code.as_str()));
+        let verifier = token_requests[0]
+            .code_verifier
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("missing PKCE code_verifier"))?;
+        assert_eq!(derive_s256_challenge(verifier), code_challenge);
+
+        let body_bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await?;
+        let json: serde_json::Value = serde_json::from_slice(&body_bytes)?;
+        assert_eq!(json["next_step"], "select_or_create_organization");
+        let jwt = json["session_token"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing session_token"))?;
+        let user_id_str = json["user_id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing user_id"))?;
+
+        let claims = flora_core::utils::jwt::decode_token(jwt, &config.app.jwt_secret)?;
+        assert_eq!(claims.sub, user_id_str);
+        assert_eq!(claims.email, expected_email);
+        assert!(claims.org_id().is_nil());
+
+        let user_repo = PgUserRepository::new(pool.clone());
+        let user = user_repo
+            .find_by_oidc_subject(&sub)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("expected registered OIDC user in PostgreSQL"))?;
+        assert_eq!(user.id.to_string(), user_id_str);
+        assert_eq!(user.email, expected_email);
+        assert_eq!(user.oidc_subject.as_deref(), Some(sub.as_str()));
+        assert_eq!(user.display_name, "OIDC Contract User");
+
+        let session_repo = PgSessionRepository::new(pool);
+        let session = session_repo
+            .find_by_jti(&claims.jti)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("expected persisted OIDC session in PostgreSQL"))?;
+        assert!(session.is_active);
+        assert_eq!(session.user_id, user.id);
+        assert!(session.organization_id.is_nil());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 118)"]
+    async fn db_oidc_callback_existing_user_login_and_rejects_deactivated_or_conflicting_subject()
+    -> anyhow::Result<()> {
+        let client_secret = "oidc-db-security-secret";
+        let idp = MockOidcIdpServer::start("flora@localhost", client_secret).await?;
+        let (pool, config, router) = connect_oidc_router(&idp, client_secret).await?;
+
+        let unique = Uuid::now_v7().simple();
+        let sub = format!("oidc-primary-{unique}");
+        let email = format!("oidc-existing-{unique}@example.test");
+
+        // 1. Initial registration login.
+        let (first_resp, _, _) =
+            perform_mock_oidc_login(&router, &idp, &sub, &email, Some("Primary User")).await?;
+        assert_eq!(first_resp.status(), StatusCode::OK);
+        let first_json: serde_json::Value = serde_json::from_slice(
+            &axum::body::to_bytes(first_resp.into_body(), usize::MAX).await?,
+        )?;
+        let first_user_id = first_json["user_id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing user_id on first login"))?
+            .to_owned();
+        let first_claims = flora_core::utils::jwt::decode_token(
+            first_json["session_token"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("missing session_token"))?,
+            &config.app.jwt_secret,
+        )?;
+
+        // 2. Subsequent login with same oidc_subject reuses existing user and issues new jti.
+        let (second_resp, _, _) =
+            perform_mock_oidc_login(&router, &idp, &sub, &email, Some("Primary User")).await?;
+        assert_eq!(second_resp.status(), StatusCode::OK);
+        let second_json: serde_json::Value = serde_json::from_slice(
+            &axum::body::to_bytes(second_resp.into_body(), usize::MAX).await?,
+        )?;
+        assert_eq!(
+            second_json["user_id"].as_str(),
+            Some(first_user_id.as_str())
+        );
+        let second_claims = flora_core::utils::jwt::decode_token(
+            second_json["session_token"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("missing second session_token"))?,
+            &config.app.jwt_secret,
+        )?;
+        assert_ne!(first_claims.jti, second_claims.jti);
+
+        // 3. Conflicting oidc_subject claiming the same email must be rejected with 401 Unauthorized.
+        let conflicting_sub = format!("oidc-attacker-{unique}");
+        let (conflict_resp, _, _) =
+            perform_mock_oidc_login(&router, &idp, &conflicting_sub, &email, Some("Attacker"))
+                .await?;
+        assert_eq!(conflict_resp.status(), StatusCode::UNAUTHORIZED);
+
+        // 4. Deactivated user must be rejected with 401 Unauthorized on OIDC callback.
+        let user_uuid = Uuid::parse_str(&first_user_id)?;
+        let user_repo = PgUserRepository::new(pool);
+        user_repo.deactivate(user_uuid).await?;
+        let (deactivated_resp, _, _) =
+            perform_mock_oidc_login(&router, &idp, &sub, &email, Some("Primary User")).await?;
+        assert_eq!(deactivated_resp.status(), StatusCode::UNAUTHORIZED);
+
+        // 5. Pre-existing local user without oidc_subject (`NULL`, e.g. Seed bootstrap admin)
+        // binds `oidc_subject` atomically on first verified OIDC login and rejects subsequent
+        // conflicting subjects claiming the same email.
+        let unlinked_email = format!("local-unlinked-{unique}@example.test");
+        let unlinked_user = flora_core::models::User::new(&unlinked_email, "Local Unlinked");
+        let unlinked_created = user_repo.create(unlinked_user).await?;
+        assert!(unlinked_created.oidc_subject.is_none());
+
+        let first_bind_sub = format!("oidc-bind-{unique}");
+        let (bind_resp, _, _) = perform_mock_oidc_login(
+            &router,
+            &idp,
+            &first_bind_sub,
+            &unlinked_email,
+            Some("Local Unlinked"),
+        )
+        .await?;
+        assert_eq!(bind_resp.status(), StatusCode::OK);
+        let bound_user = user_repo
+            .find_by_id(unlinked_created.id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("expected bound local user in PostgreSQL"))?;
+        assert_eq!(
+            bound_user.oidc_subject.as_deref(),
+            Some(first_bind_sub.as_str())
+        );
+
+        let hijack_sub = format!("oidc-hijack-{unique}");
+        let (hijack_resp, _, _) = perform_mock_oidc_login(
+            &router,
+            &idp,
+            &hijack_sub,
+            &unlinked_email,
+            Some("Hijacker"),
+        )
+        .await?;
+        assert_eq!(hijack_resp.status(), StatusCode::UNAUTHORIZED);
+
+        Ok(())
+    }
+}

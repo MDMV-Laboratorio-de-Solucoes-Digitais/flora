@@ -238,3 +238,7 @@ Recontagem via `find` no worktree `feature/116-chat-author-identity`: `specs/` 1
 ### Estado verificado — 2026-11-23 (ciclo 117; append-only)
 
 Recontagem via `find` no worktree `feature/117-notifications-ui-and-honest-navigation`: `specs/` 107 diretórios (573 arquivos), `.specify/assessments/` 105 diretórios (443 arquivos), `.specify/validations/` 103 diretórios (115 arquivos pré-`evidence.md`), `.specify/releases/` 103 diretórios (103 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+### Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+Recontagem via `find` no worktree `feature/118-oidc-callback-mock-idp-exchange`: `specs/` 108 diretórios (578 arquivos), `.specify/assessments/` 106 diretórios (448 arquivos), `.specify/validations/` 104 diretórios (119 arquivos), `.specify/releases/` 104 diretórios (104 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.

@@ -370,3 +370,15 @@ permanece como registro do momento da medição; nenhuma linha foi reescrita.
 - Ciclo 117 (`240/625`): escopo explícito por `organization_id` em `/api/v1/notifications` (`ensure_member`, fail-closed `404` cross-org, `target_url`, `POST /read-all`), contrato `db_notifications_org_scoped_target_url_and_read_all` com trava lockstep `notifications: 5 -> 6` (80 pisos), rota `/notifications` + badge reativo + remoção de atalhos placeholder (`/dms` e drawer de IA) + `/dms` honesto + Passos 6 e 7 E2E com WCAG 2.2 AA e Briefing de Compreensão (`tenant`) (`#391`..`#395`, [PR #396](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/396)), sem alterar required checks.
 - Gate local e CI (`task-331`, `task-496`, `45174768424`, `45174768337`, ACR `dfa9e102`): `check_gate_integrity.py` PASS (4 required checks, 10 legs / 80 pisos); `db-tests` `80/80` (`notifications: 6/6`); `e2e-browser` `4 passed` + WCAG `sem achados`; Vitest `server` `18/71`; `vite build` `25.33s`; ACR `APROVADO`.
 - **[NV]** Tema escuro real, staging real e produção; histórico preservado.
+
+### Estado verificado — 2026-11-23 (ciclo 118; append-only)
+
+- Recontagem via `find` (`feature/118-oidc-callback-mock-idp-exchange`): `specs/` 108 diretórios (578 arquivos), `.specify/assessments/` 106 (448), `.specify/validations/` 104 (119 com `evidence.md`/`validate.md`), `.specify/releases/` 104 (104), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 118 (`2000/3125`, fecha `BF-01`): `VerifiedOidcIdentity`/`exchange_code_and_verify_id_token` em `flora-api/src/oidc.rs`, bloqueio `401` para contas inativas e conflito de `oidc_subject` em `auth.rs`, servidor `MockOidcIdpServer` (`Ed25519`/PKCE `S256`) em `flora-tests/src/oidc_mock.rs`, substituição dos placeholders em `registration.rs`, `2` novos contratos DB `db_oidc_callback_*` com trava lockstep `auth: 23 -> 25` (`82` pisos) e Briefing de Compreensão (`auth`) (`#399`–`#402`).
+- Gate local (`task-1190`): `check_gate_integrity.py` PASS (4 required checks, 10 legs / 82 pisos); `cargo fmt`/`clippy`/`deny`/`cargo test --workspace` (`flora-api` `48`, `flora-core` `35+21`, `flora-tests` `36/82 ignored`); `contract::auth::db_` `25 passed; 0 failed` em Postgres 18.7.
+- **[NV]** CI remoto do PR 118, ACR independente, instância Zitadel externa real e deploy/produção; histórico preservado.
+
+
+### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
+
+- Remediação ACR PR `#403` (`72547119`): `UserRepository::set_oidc_subject_if_absent` atômico, `email_verified == Some(true)` obrigatório, `oidc_http_client()` (`Policy::none()` + timeouts), checagem de `issuer` no Discovery, `validate_jwks_uri` estrita contra prefix bypass/userinfo, sanitização de `Error::OidcProvider` e cobertura ampliada (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` pisos). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.

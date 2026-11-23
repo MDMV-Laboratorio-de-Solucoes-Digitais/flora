@@ -8,6 +8,8 @@
 /// Contract tests module - tests the API contract.
 pub mod contract;
 pub mod integration;
+/// Local HTTP mock OIDC identity provider for end-to-end callback tests.
+pub mod oidc_mock;
 
 #[cfg(test)]
 mod tests {
