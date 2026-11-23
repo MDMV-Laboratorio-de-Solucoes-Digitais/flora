@@ -1,7 +1,7 @@
-# Briefing de Compreensão — 116 / pendente (a atualizar após abertura do PR)
+# Briefing de Compreensão — 116 / PR #390
 
 **Data**: 2026-11-23 · **Domínio crítico**: tenant
-**PR**: pendente (a atualizar após abertura do PR) · **Autor**: orquestrador
+**PR**: [#390](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/390) · **Autor**: orquestrador
 
 ## Intenção
 

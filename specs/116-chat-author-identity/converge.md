@@ -26,3 +26,8 @@
   - `bun run build`: `✓ built in 26.46s` (`@sveltejs/adapter-node done`).
 - **Briefing de Compreensão (`tenant`)**: preenchido em `docs/governance/2026-11-23-116-briefing-compreensao.md`.
 - **[NV]**: execução remota de `db-tests` (Postgres 18), `e2e-browser` (`# general` `'Alice Admin'` / `'Bob Builder'` + WCAG), ACR independente, WS multi-usuário ao vivo no E2E, modo escuro real e staging/produção.
+
+## Fechamento pós-CI e ACR (2026-11-23 UTC; append-only)
+
+- **CI remoto (`a5a35fd7b`)**: PR #390 `SUCCESS` em `CI/frontend-build` (`45113661689` / `137491474792`), `Rust CI/rust-build` (`45113661700`), `db-tests` (`137491474891`: `db_messages_include_author_display_name_across_post_list_and_catchup ... ok`, `messaging: passed=5 floor=5`, **79/79**), `dependency-review`, `supply-chain-vet` e `e2e-browser` (`137491474873`: `4 passed (37.8s)` com `'Alice Admin'` / `'Bob Builder'` em `# general` e WCAG `"sem achados"` em `/tasks`, `/channels`, `/files`).
+- **ACR independente (`a5a35fd7b`, revisor `4ff7319c`, `pro`)**: **`APPROVE`** (0 Critical, 0 High, 0 Medium; 3 observações Low não bloqueantes documentadas em `evidence.md` e placeholder do PR atualizado para `#390` em `docs/governance/2026-11-23-116-briefing-compreensao.md`). R4 atualizado para `APROVADO com ressalva [NV]`.
