@@ -294,3 +294,10 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Ciclo 116 (`240/625`): identidade real de autores no chat (`UserRepository::find_by_ids`, `resolve_sender_name`, `ChatLayout.svelte`, contrato `messaging: 4 -> 5`, 79 total, Briefing `tenant`, `#385`..`#389`), SemVer `0.8.0 -> 0.9.0`.
 - Próximo candidato 80/20 mapeado (`240/625`): UI de notificações + ocultação/tratamento de cascas sem backend (`/dms` hardcoded e drawer de IA) ou tema escuro Tailwind v4 (ciclo 117).
 - **[NV]** CI remoto, ACR, WS multi-usuário real em E2E, modo escuro, staging real, Forgejo e produção; histórico preservado.
+
+## Estado verificado — 2026-11-23 (ciclo 117; append-only)
+
+- Recontagem via `find` (`feature/117-notifications-ui-and-honest-navigation`): `specs/` 107 diretórios (573 arquivos, `001`–`117`), `.specify/assessments/` 105 (443), `.specify/validations/` 103 (115 pré-`evidence.md`), `.specify/releases/` 103 (103), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 137 na raiz sem `index.md` (+11 em `mdmv-multiagent/` = 148).
+- Ciclo 117 (`240/625`): `/api/v1/notifications` escopado por organização (`ensure_member`, `404` fail-closed cross-org, `target_url`, `POST /read-all`), contrato `notifications: 5 -> 6` (80 total), central `/notifications`, badge reativo na sidebar, remoção de atalhos placeholder (`/dms` e drawer de IA), `/dms` honesto, Passos 6 e 7 E2E com WCAG 2.2 AA e Briefing `tenant` (`#391`..`#395`), SemVer `0.9.0 -> 0.10.0`.
+- Próximo candidato 80/20 mapeado (`240/625`): alinhamento consistente de tema escuro Tailwind v4 (`@custom-variant dark`, ciclo 118) e UI CRUD de RBAC / endpoint HTTP para `HitlReceiptPort`.
+- **[NV]** CI remoto, ACR, tema escuro em navegador real, staging real, Forgejo e produção; histórico preservado.
