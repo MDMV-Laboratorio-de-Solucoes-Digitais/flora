@@ -105,7 +105,7 @@ jobs:
             [ "$passed" -ge "$floor" ]
           }
           run_leg auth          contract::auth::db_          23
-          run_leg messaging     contract::messaging::db_      4
+          run_leg messaging     contract::messaging::db_      5
           run_leg websocket     contract::websocket::db_      8
           run_leg search        contract::search::db_         8
           run_leg notifications contract::notifications::db_  5

@@ -23,6 +23,9 @@ pub trait UserRepository: Send + Sync + std::fmt::Debug {
     /// Find a user by ID.
     async fn find_by_id(&self, id: Uuid) -> crate::Result<Option<User>>;
 
+    /// Find multiple users by IDs in a single batch query.
+    async fn find_by_ids(&self, ids: &[Uuid]) -> crate::Result<Vec<User>>;
+
     /// Create a new user.
     async fn create(&self, user: User) -> crate::Result<User>;
 
