@@ -12,13 +12,13 @@ Expor a rota autenticada `GET /api/v1/files?workspace_id=<uuid>[&limit=<n>]` em 
 - **Antes**:
   - `flora-api/src/routes/files.rs` expunha apenas `POST /`, `POST /upload`, `GET /download/{id}`, `GET /{id}/download`, `GET /{id}` e `DELETE /{id}`; não havia endpoint `GET /api/v1/files`.
   - A página `apps/frontend/src/routes/(app)/files/+page.svelte` populava `fileStore` somente no callback `onUploadComplete`, perdendo todos os arquivos persistidos ao recarregar `/files` ou trocar de workspace.
-  - O método `PgFileRepository::find_by_workspace_id` (`flora-core/src/repositories/file_repository.rs:41-59`) filtrava `WHERE organization_id = $1 AND workspace_id = $2 AND is_deleted = false ORDER BY created_at DESC LIMIT $3`, sem handler HTTP correspondente.
+  - O método `PgFileRepository::find_by_workspace_id` (`flora-core/src/repositories/file_repository.rs:41-63`) filtrava `WHERE organization_id = $1 AND workspace_id = $2 AND is_deleted = false ORDER BY created_at DESC LIMIT $3`, sem handler HTTP correspondente.
 
 - **Depois**:
   - `create_files_router()` (`flora-api/src/routes/files.rs:91-99`) registra `.route("/", get(list_files).post(upload_file_metadata))`.
   - `list_files` (`flora-api/src/routes/files.rs:341-365`) exige em sequência: (1) sessão válida + pertencimento à organização ativa via `ensure_member(&auth, &state)` (`lines 101-112`), (2) presença de `workspace_id` (retorna `422 Error::Validation { field: "workspace_id", .. }` se ausente), e (3) validação explícita de propriedade `ensure_workspace_in_org(&state, org_id, workspace_id)` (`flora-api/src/tenant.rs:26-46`, retornando `422` indistinguível tanto para inexistente quanto para workspace de outra organização).
   - A consulta delegada a `state.file_service.list_files(org_id, workspace_id, Pagination { limit: resolve_list_limit(query.limit), offset: 0 })` usa `org_id` derivado da sessão (nunca de parâmetro do cliente) e retorna `Vec<FileAttachmentResponse>` (`to_attachment`, `lines 114-123`) sem `storage_path`.
-  - Na UI (`apps/frontend/src/routes/(app)/files/+page.svelte:37-72`), a troca de workspace chama `fileStore.clear()` imediatamente antes de `await loadFiles(selectedWorkspaceId)` e descarta respostas antigas via contador monotônico `loadSeq`, impedindo vazamento visual de arquivos entre workspaces em respostas fora de ordem.
+  - Na UI (`apps/frontend/src/routes/(app)/files/+page.svelte:39-74`), a troca de workspace chama `fileStore.clear()` imediatamente antes de `await loadFiles(selectedWorkspaceId)` e descarta respostas antigas via contador monotônico `loadSeq`, impedindo vazamento visual de arquivos entre workspaces em respostas fora de ordem.
 
 ## Decisões implícitas
 

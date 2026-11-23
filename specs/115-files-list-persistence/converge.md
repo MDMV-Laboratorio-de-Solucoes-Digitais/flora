@@ -26,3 +26,10 @@
   - `bun run build`: `✓ built in 31.56s` (`@sveltejs/adapter-node` done).
 - **Briefing de Compreensão (`tenant`)**: preenchido em `docs/governance/2026-11-22-115-briefing-compreensao.md` seguindo `.specify/templates/briefing-compreensao.md`.
 - **[NV]**: execução remota de `db-tests` (Postgres 18), `e2e-browser` (Chromium + WCAG `/tasks`, `/channels`, `/files`), ACR independente, modo escuro em navegador real e staging/produção externos.
+
+## Fechamento pós-CI e ACR (2026-11-23 UTC; append-only)
+
+- **ACR Round 1 (`51b55c252`, revisor `33c01dfa`)**: `REQUEST_CHANGES` (1 High, 2 Medium, 2 Low) — apontou `"error": "validation"` em vez de `"validation_error"` no contrato DB e no Briefing (confirmado no run `45107507844`), limpeza de `fileStore` e guarda `isLoading || isLoadingFiles` no `onMount` de `files/+page.svelte`, checagem explícita de HTTP `200` + ausência de alerta em `seed-flow.e2e.ts` e captura de `targetWorkspaceId` no upload concorrente (`FileUpload.svelte`). Todos corrigidos no commit `df6382dd7`.
+- **Revalidação local (`df6382dd7`)**: `cargo fmt`/`clippy`/`cargo test --workspace` (`flora-api` 42/42, `flora-core` 35+21, `flora-tests` 36 passed / 78 ignored), `check_gate_integrity.py` PASS (10 legs / 78 pisos), `svelte-check` 0/0, `prettier`/`eslint` exit 0, Vitest `server` `16 passed / 58 passed`, `vite build` `33.20s`, `git diff --check` limpo.
+- **CI remoto (`df6382dd7`)**: PR #384 `CLEAN`; `frontend-build` (`45108788166`), `rust-build`, `db-tests` (`45108788116` / `137476110671`: `db_list_files_scoped_to_workspace_and_org ... ok`, `files: passed=7 floor=7`, **78/78**), `dependency-review`, `supply-chain-vet` e `e2e-browser` (`45108788116` / `137476110594`: `4 passed (32.5s)` e WCAG `"sem achados"` em `/tasks`, `/channels`, `/files`) = `SUCCESS`.
+- **ACR Round 2 (`df6382dd7`, revisor `2600ac2c`)**: **`APPROVE`** (0 críticos/high/medium; pequenas referências de linha no Briefing ajustadas). R4 atualizado para `APROVADO com ressalva [NV]`; evidência anexada em `.specify/validations/115-files-list-persistence/evidence.md`.
