@@ -8,7 +8,8 @@
 	import ThreadReply from './thread/ThreadReply.svelte';
 	import { tick } from 'svelte';
 	import { Send, Sparkles } from '@lucide/svelte';
-	import { apiErrorMessage, format, t } from '$lib/i18n';
+	import { apiErrorMessage, t } from '$lib/i18n';
+	import { authorInitials, formatAuthorName } from '$lib/utils/chatAuthor';
 
 	let { channelId = '' } = $props<{ channelId?: string }>();
 
@@ -17,6 +18,7 @@
 	let isLoading = $state(false);
 	let loadError = $state('');
 	let chatContainer = $state<HTMLElement>();
+	let loadSeq = 0;
 
 	async function scrollToBottom() {
 		await tick();
@@ -32,17 +34,22 @@
 
 	async function loadMessages(id: string) {
 		if (!id) {
+			loadSeq += 1;
+			isLoading = false;
+			loadError = '';
 			messageStore.clear();
 			wsClient.setActiveChannel(null);
 			wsClient.lastKnownMessageId = null;
 			return;
 		}
+		const seq = ++loadSeq;
 		isLoading = true;
 		loadError = '';
 		try {
 			const messages = await ApiClient.request<ApiMessage[]>(
 				`/api/v1/channels/${id}/messages?limit=100`
 			);
+			if (seq !== loadSeq) return;
 			// API returns newest-first by default; display chronologically.
 			messageStore.setMessages(messages.toReversed().map((message) => toMessage(message)));
 			updateLastKnownFromStore();
@@ -50,12 +57,15 @@
 			wsClient.setActiveChannel(id);
 			await scrollToBottom();
 		} catch (error) {
+			if (seq !== loadSeq) return;
 			loadError = apiErrorMessage(error, 'error.loadMessages');
 			logger.error('chat', 'Failed to fetch messages', { channelId: id }, error as Error);
 			messageStore.clear();
 			wsClient.lastKnownMessageId = null;
 		} finally {
-			isLoading = false;
+			if (seq === loadSeq) {
+				isLoading = false;
+			}
 		}
 	}
 
@@ -119,15 +129,16 @@
 					<div class="group flex flex-col px-4 py-2 transition-colors hover:bg-muted/40 md:px-6">
 						<div class="flex gap-4">
 							<div
+								aria-hidden="true"
 								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-secondary font-bold text-secondary-foreground"
 							>
-								{(message.authorId.at(0) ?? '?').toUpperCase()}
+								{authorInitials(message.authorName, message.authorId)}
 							</div>
 
 							<div class="min-w-0 flex-1">
 								<div class="mb-1 flex items-baseline space-x-2">
 									<span class="text-[15px] font-semibold text-foreground">
-										{format('chat.author', { id: message.authorId.slice(0, 8) })}
+										{formatAuthorName(message.authorName, message.authorId)}
 									</span>
 									<span class="text-xs text-muted-foreground"
 										>{new Date(message.createdAt).toLocaleTimeString([], {
@@ -156,14 +167,15 @@
 										{#each messageStore.messages.filter((m) => m.threadId === message.id) as reply (reply.id)}
 											<div class="flex gap-3">
 												<div
+													aria-hidden="true"
 													class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold"
 												>
-													{(reply.authorId.at(0) ?? '?').toUpperCase()}
+													{authorInitials(reply.authorName, reply.authorId)}
 												</div>
 												<div class="flex-1">
 													<div class="flex items-baseline space-x-2">
 														<span class="text-sm font-semibold">
-															{format('chat.author', { id: reply.authorId.slice(0, 8) })}
+															{formatAuthorName(reply.authorName, reply.authorId)}
 														</span>
 														<span class="text-[10px] text-muted-foreground"
 															>{new Date(reply.createdAt).toLocaleTimeString([], {
@@ -207,6 +219,7 @@
 		>
 			<textarea
 				bind:value={newMessage}
+				aria-label={channelId ? t['chat.writePlaceholder'] : t['chat.selectFirst']}
 				placeholder={channelId ? t['chat.writePlaceholder'] : t['chat.selectFirst']}
 				class="min-h-[60px] w-full resize-none scrollbar-thin bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none"
 				onkeydown={(event) => {

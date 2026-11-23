@@ -67,6 +67,23 @@ impl UserRepository for PgUserRepository {
         Ok(user)
     }
 
+    async fn find_by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let users = sqlx::query_as::<_, User>(
+            "SELECT id, email, oidc_subject, password_hash, password_updated_at,
+                    display_name, avatar_url, profile, is_active, created_at, updated_at
+             FROM users
+             WHERE id = ANY($1)",
+        )
+        .bind(ids)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(users)
+    }
+
     async fn create(&self, user: User) -> Result<User> {
         let created = sqlx::query_as::<_, User>(
             "INSERT INTO users (id, email, oidc_subject, password_hash, password_updated_at,

@@ -47,6 +47,12 @@ pub struct MessageEventPayload {
     pub channel_id: String,
     /// Sender user ID.
     pub sender_id: String,
+    /// Sender public display name (or email fallback).
+    #[serde(default)]
+    pub sender_name: Option<String>,
+    /// Sender avatar URL.
+    #[serde(default)]
+    pub sender_avatar_url: Option<String>,
     /// Message content.
     pub content: String,
     /// Thread/reply parent ID.
@@ -57,6 +63,23 @@ pub struct MessageEventPayload {
     pub created_at: String,
     /// RFC3339 update timestamp.
     pub updated_at: String,
+}
+
+/// Resolve the public display name for a message author.
+///
+/// Prefers trimmed `display_name`, falls back to trimmed `email`, and returns
+/// `None` when both are blank.
+#[must_use]
+pub fn resolve_sender_name(display_name: &str, email: &str) -> Option<String> {
+    let name = display_name.trim();
+    if !name.is_empty() {
+        return Some(name.to_string());
+    }
+    let mail = email.trim();
+    if !mail.is_empty() {
+        return Some(mail.to_string());
+    }
+    None
 }
 
 /// Envelope published through the in-process hub.
@@ -92,4 +115,26 @@ pub fn create_hub() -> broadcast::Sender<HubEnvelope> {
 /// Publishes an event to the hub (best-effort; no subscribers is not an error).
 pub fn publish(tx: &broadcast::Sender<HubEnvelope>, envelope: HubEnvelope) {
     let _ = tx.send(envelope);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::resolve_sender_name;
+
+    #[test]
+    fn resolve_sender_name_prefers_trimmed_display_name() {
+        assert_eq!(
+            resolve_sender_name("  Alice Admin  ", "alice@acme.test"),
+            Some("Alice Admin".to_string())
+        );
+    }
+
+    #[test]
+    fn resolve_sender_name_falls_back_to_email_or_none() {
+        assert_eq!(
+            resolve_sender_name("   ", "  bob@acme.test  "),
+            Some("bob@acme.test".to_string())
+        );
+        assert_eq!(resolve_sender_name("   ", "  "), None);
+    }
 }
