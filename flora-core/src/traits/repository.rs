@@ -300,10 +300,26 @@ pub trait NotificationRepository: Send + Sync + std::fmt::Debug {
         pagination: Pagination,
     ) -> crate::Result<Page<Notification>>;
 
+    /// Find unread notifications for a user scoped to one organization.
+    async fn find_unread_by_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        pagination: Pagination,
+    ) -> crate::Result<Page<Notification>>;
+
     /// Find notifications for a user (all) with pagination.
     async fn find_by_user_id(
         &self,
         user_id: Uuid,
+        pagination: Pagination,
+    ) -> crate::Result<Page<Notification>>;
+
+    /// Find notifications for a user scoped to one organization.
+    async fn find_by_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
         pagination: Pagination,
     ) -> crate::Result<Page<Notification>>;
 
@@ -327,6 +343,13 @@ pub trait NotificationRepository: Send + Sync + std::fmt::Debug {
 
     /// Mark all notifications as read for a user.
     async fn mark_all_as_read(&self, user_id: Uuid) -> crate::Result<()>;
+
+    /// Mark all notifications as read for a user within one organization.
+    async fn mark_all_as_read_in_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+    ) -> crate::Result<()>;
 
     /// Delete old notifications (retention policy).
     async fn delete_old(&self, older_than: DateTime<Utc>) -> crate::Result<usize>;

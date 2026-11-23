@@ -887,4 +887,202 @@ mod db_notifications {
 
         Ok(())
     }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 117)"]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "117 DB-gated contract verifies multi-org isolation, target_url, cross-org 404, and POST /read-all"
+    )]
+    async fn db_notifications_org_scoped_target_url_and_read_all() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let seed = seed_two_members(&state, &config).await?;
+        let uniq = Uuid::now_v7().simple().to_string();
+
+        let org_repo = PgOrganizationRepository::new((*state.db_pool).clone());
+        let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+        let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+        let session_repo = PgSessionRepository::new((*state.db_pool).clone());
+        let notif_repo = PgNotificationRepository::new((*state.db_pool).clone());
+
+        // Seed Org B with seed.a.user also as a member and an active Org B session
+        let org_b = org_repo
+            .create(Organization::new(
+                &format!("NotifOrgB {uniq}"),
+                &format!("notiforg-b-{uniq}"),
+            ))
+            .await?;
+        let role_b = role_repo.create(Role::new(org_b.id, "Member")).await?;
+        let _ = membership_repo
+            .create(Membership::new(seed.a.user.id, org_b.id, role_b.id))
+            .await?;
+        let jti_b = format!("jti-a-orgb-{}", Uuid::now_v7());
+        let now = Utc::now();
+        let _ = session_repo
+            .create(Session {
+                id: Uuid::now_v7(),
+                user_id: seed.a.user.id,
+                organization_id: org_b.id,
+                jti: jti_b.clone(),
+                refresh_token_id: None,
+                client_ip: None,
+                user_agent: None,
+                expires_at: now + Duration::seconds(3600),
+                last_activity_at: now,
+                is_active: true,
+                created_at: now,
+                updated_at: now,
+            })
+            .await?;
+        let token_a_org_b = jwt::encode_token(
+            &FloraClaims::new(
+                seed.a.user.id,
+                jti_b,
+                org_b.id,
+                &seed.a.user.email,
+                config.app.session_ttl_secs,
+            ),
+            &config.app.jwt_secret,
+        );
+
+        let primary_notif = notif_repo
+            .create(Notification::new(
+                seed.org.id,
+                seed.a.user.id,
+                NotificationType::TaskCompleted,
+                Uuid::now_v7(),
+                Some("/tasks".to_string()),
+            ))
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("expected Org A notification"))?;
+
+        let secondary_notif = notif_repo
+            .create(Notification::new(
+                org_b.id,
+                seed.a.user.id,
+                NotificationType::FileShare,
+                Uuid::now_v7(),
+                Some("/files".to_string()),
+            ))
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("expected Org B notification"))?;
+
+        let app = app(state);
+        let primary_id = primary_notif.id.to_string();
+        let secondary_id = secondary_notif.id.to_string();
+
+        // 1. GET /notifications in Org A returns only Org A notification and includes target_url
+        let (status, list_a) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?limit=20".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::OK, "list Org A: {status} {list_a}");
+        let arr_a = list_a
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected array: {list_a}"))?;
+        anyhow::ensure!(arr_a.len() == 1, "expected 1 Org A notif: {list_a}");
+        anyhow::ensure!(
+            arr_a[0]["id"] == primary_id && arr_a[0]["target_url"] == "/tasks",
+            "Org A notification mismatch: {list_a}"
+        );
+
+        // 2. Cross-org mark_as_read from Org A targeting Org B notification fails closed with 404
+        let (status, cross_org_body) = authed_json(
+            app.clone(),
+            "POST",
+            format!("/notifications/{secondary_id}/read"),
+            &seed.a.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::NOT_FOUND,
+            "cross-org mark_as_read must return 404, got {status}: {cross_org_body}"
+        );
+
+        // 3. Same-org different user trying to mark seed.a's notification still returns 403
+        let (status, cross_user_body) = authed_json(
+            app.clone(),
+            "POST",
+            format!("/notifications/{primary_id}/read"),
+            &seed.b.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::FORBIDDEN,
+            "cross-user mark_as_read in same org must return 403, got {status}: {cross_user_body}"
+        );
+
+        // 4. POST /notifications/read-all in Org A marks Org A read while leaving Org B unread
+        let (status, read_all_body) = authed_json(
+            app.clone(),
+            "POST",
+            "/notifications/read-all".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::NO_CONTENT,
+            "read-all must return 204, got {status}: {read_all_body}"
+        );
+
+        let (status, primary_unread) = authed_json(
+            app.clone(),
+            "GET",
+            "/notifications?unread_only=true&limit=20".to_string(),
+            &seed.a.token,
+            seed.org.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "unread Org A: {status} {primary_unread}"
+        );
+        let primary_items = primary_unread
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected array: {primary_unread}"))?;
+        anyhow::ensure!(
+            primary_items.is_empty(),
+            "Org A unread list should be empty after read-all: {primary_unread}"
+        );
+
+        let (status, secondary_unread) = authed_json(
+            app,
+            "GET",
+            "/notifications?unread_only=true&limit=20".to_string(),
+            &token_a_org_b,
+            org_b.id,
+            None,
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::OK,
+            "unread Org B: {status} {secondary_unread}"
+        );
+        let secondary_items = secondary_unread
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected array: {secondary_unread}"))?;
+        anyhow::ensure!(
+            secondary_items.len() == 1
+                && secondary_items[0]["id"] == secondary_id
+                && secondary_items[0]["is_read"] == false
+                && secondary_items[0]["target_url"] == "/files",
+            "Org B notification must remain unread after Org A read-all: {secondary_unread}"
+        );
+
+        Ok(())
+    }
 }

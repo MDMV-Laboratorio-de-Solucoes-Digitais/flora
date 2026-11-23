@@ -108,7 +108,7 @@ jobs:
           run_leg messaging     contract::messaging::db_      5
           run_leg websocket     contract::websocket::db_      8
           run_leg search        contract::search::db_         8
-          run_leg notifications contract::notifications::db_  5
+          run_leg notifications contract::notifications::db_  6
           run_leg files         contract::files::db_          7
           run_leg tasks         contract::tasks::db::db_      4
           run_leg workspace     contract::workspace::db::db_  3
