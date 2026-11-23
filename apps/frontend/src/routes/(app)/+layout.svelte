@@ -28,6 +28,13 @@
 
 	let { children } = $props();
 	const userEmail = $derived(emailFromToken(authState.token) ?? t['nav.userEmail']);
+	const notificationsCollapsedAriaLabel = $derived(
+		notificationStore.unreadCount > 0
+			? `${t['nav.notifications']} (${format('notifications.unreadCount', {
+					count: notificationStore.unreadCount
+				})})`
+			: t['nav.notifications']
+	);
 
 	// App state
 	let isSidebarOpen = $state(true);
@@ -171,18 +178,15 @@
 						variant="ghost"
 						class="w-full justify-start {isSidebarOpen ? 'px-3' : 'justify-center px-0'}"
 						href="/notifications"
-						aria-label={notificationStore.unreadCount > 0
-							? `${t['nav.notifications']} (${format('notifications.unreadCount', {
-									count: notificationStore.unreadCount
-								})})`
-							: t['nav.notifications']}
+						aria-label={isSidebarOpen ? undefined : notificationsCollapsedAriaLabel}
 					>
 						<Bell class="h-4 w-4 {isSidebarOpen ? 'mr-2' : ''}" />
 						{#if isSidebarOpen}
 							<span>{t['nav.notifications']}</span>
 							{#if notificationStore.unreadCount > 0}
-								<Badge variant="secondary" class="ml-auto" aria-hidden="true">
+								<Badge variant="secondary" class="ml-auto">
 									{notificationStore.unreadCount}
+									<span class="sr-only"> {t['notifications.filterUnread'].toLowerCase()}</span>
 								</Badge>
 							{/if}
 						{/if}
