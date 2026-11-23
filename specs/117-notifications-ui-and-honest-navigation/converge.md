@@ -33,3 +33,9 @@
 - **CI remoto (`189edd4fe`)**: [`Rust CI 45174768424`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768424) (`rust-build`, `dependency-review`, `supply-chain-vet`, `db-tests` `80/80` incl. `notifications: passed=6 floor=6`, `e2e-browser` `4 passed (42.1s)` e WCAG 2.2 AA `sem achados` em `/tasks`, `/channels`, `/files`, `/notifications`, `/dms`) + [`CI 45174768337`](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45174768337) (`frontend-build`) `success`.
 - **Evidência formal**: `.specify/validations/117-notifications-ui-and-honest-navigation/evidence.md`.
 - **Restante `[NV]`**: tema escuro real no navegador e staging/produção externos.
+
+## Pós-evidência visual e correção WCAG 2.5.3 (append-only, 2026-11-23)
+
+- **Execução local completa (`task-618`, `task-694`, PostgreSQL 18.7 em `127.0.0.1:15433`)**: `contract::notifications::db_notifications::` obteve `6 passed; 0 failed` (`3.05s`). Na execução Playwright com inserção de 2 notificações não lidas, o axe-core identificou `WCAG 2.2 AA: label-content-name-mismatch [serious] ["a[href$=\"notifications\"]"]` (`+layout.svelte`).
+- **Correção (`fix/117-notifications-badge-wcag`)**: ajustado `+layout.svelte` (`notificationsCollapsedAriaLabel` apenas quando `!isSidebarOpen`; texto natural + `<Badge>` + `<span class="sr-only">` quando expandida) e consolidado o Passo 6b em `seed-flow.e2e.ts` (não lidas + badge + `WCAG 2.2 AA` + `POST /read-all` `204`).
+- **Verificação pós-correção (`task-694`)**: `check`/`lint`/`test:unit`/`build` PASS + Playwright `4 passed (35.1s)` com `WCAG 2.2 AA: sem achados` nas 6 vistas e 8 PNGs publicados em [Gist `962e84502fb4cf5689266e10f2224967`](https://gist.github.com/lfgranja/962e84502fb4cf5689266e10f2224967) (`369fb4fc`).
