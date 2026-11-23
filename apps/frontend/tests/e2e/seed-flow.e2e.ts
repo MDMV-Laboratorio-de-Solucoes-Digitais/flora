@@ -74,5 +74,6 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await page.goto('/files');
 	await expect(page.getByRole('heading', { name: t['files.title'], level: 1 })).toBeVisible();
 	await expect(page.getByLabel(t['files.workspace'])).toBeEnabled();
+	await expect(page.getByText(t['files.empty'])).toBeVisible();
 	await auditAccessibility(page, '/files');
 });
