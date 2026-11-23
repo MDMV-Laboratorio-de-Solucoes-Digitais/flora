@@ -45,6 +45,17 @@ pub trait UserRepository: Send + Sync + std::fmt::Debug {
         password_hash: &str,
         updated_at: DateTime<Utc>,
     ) -> crate::Result<bool>;
+
+    /// Binds an OIDC subject to an existing active user only when `oidc_subject` is currently `NULL`.
+    ///
+    /// Returns `true` when the subject was bound; `false` if the user does not exist,
+    /// is inactive, or already has an `oidc_subject`.
+    async fn set_oidc_subject_if_absent(
+        &self,
+        id: Uuid,
+        oidc_subject: &str,
+        updated_at: DateTime<Utc>,
+    ) -> crate::Result<bool>;
 }
 
 /// Repository trait for Organization operations.
