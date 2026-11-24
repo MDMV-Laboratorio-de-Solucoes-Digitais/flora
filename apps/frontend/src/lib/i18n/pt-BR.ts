@@ -242,6 +242,8 @@ export const t = {
 	'members.forbidden': 'Você não tem permissão para gerenciar membros nesta organização.',
 	'members.notFound': 'Usuário ativo ou papel não encontrado para esta organização.',
 	'members.duplicate': 'Este usuário já é membro desta organização.',
+	'members.roleConflict':
+		'O papel deste membro foi alterado recentemente. Atualize a lista e tente novamente.',
 	'members.added': 'Membro adicionado: {name}',
 	'members.roleUpdated': 'Papel atualizado para {name}: {role}',
 	'members.removed': 'Membro removido: {name}',

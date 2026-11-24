@@ -40,3 +40,9 @@ cd apps/frontend && bun run check && bun run lint && bun run test:unit -- --run 
 ## [NV]
 
 - Execução em staging/produção externos com Coolify (`workflow_dispatch`, fora do gate de PR).
+
+## Atualização pós-ACR Rodada 1 (`#424`, 2026-11-24)
+
+- Ao revogar um membro (`POST /api/v1/roles/{id}/revoke`), `revoke_role` agora usa `MembershipRepository::delete_with_role` atômico e revoga imediatamente todas as sessões ativas desse usuário na organização via `SessionRepository::revoke_for_user_and_organization` (`UPDATE sessions SET is_active = false`), invalidando JWTs pré-existentes e refresh tokens na organização (mantendo eventuais sessões em outras organizações intactas).
+- `flora-api/src/routes/search.rs` deixou de descartar o `Option<Membership>` e agora retorna `403 Forbidden` caso o usuário não seja membro ativo da organização; `validate_member_email` passou a retornar `422 Error::Validation`.
+- Revalidação local `[EV]` completa após a remediação: `contract::rbac::db` **`5/5`**, `contract::search::db` **`8/8`**, `89/89` Vitest e Playwright E2E **`4 passed` (`15/15` WCAG `sem achados`)**.

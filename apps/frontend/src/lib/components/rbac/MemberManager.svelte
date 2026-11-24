@@ -38,11 +38,17 @@
 		return buildNotificationContextKey(authState);
 	}
 
-	function describeError(error: unknown, fallback: TranslationKey): string {
+	function describeError(
+		error: unknown,
+		fallback: TranslationKey,
+		conflictKey?: TranslationKey
+	): string {
 		const apiError = error as { status?: unknown; code?: unknown } | null;
 		if (apiError?.status === 403) return t['members.forbidden'];
 		if (apiError?.status === 404) return t['members.notFound'];
-		if (apiError?.status === 409 || apiError?.code === 'conflict') return t['members.duplicate'];
+		if (conflictKey && (apiError?.status === 409 || apiError?.code === 'conflict')) {
+			return t[conflictKey];
+		}
 		return apiErrorMessage(error, fallback);
 	}
 
@@ -58,6 +64,7 @@
 		const key = contextKey();
 		if (!key) return;
 		memberStore.syncContext(key);
+		roleStore.syncContext(key);
 		errorMessage = '';
 		try {
 			await Promise.all([
@@ -115,7 +122,9 @@
 				successMessage = format('members.removed', { name: member.displayName });
 			}
 		} catch (error) {
-			if (contextKey() === key) errorMessage = describeError(error, 'error.revokeRole');
+			if (contextKey() === key) {
+				errorMessage = describeError(error, 'error.revokeRole', 'members.roleConflict');
+			}
 		} finally {
 			isMutating = false;
 		}
@@ -145,7 +154,9 @@
 				successMessage = format('members.added', { name: created.displayName });
 			}
 		} catch (error) {
-			if (contextKey() === key) errorMessage = describeError(error, 'error.addMember');
+			if (contextKey() === key) {
+				errorMessage = describeError(error, 'error.addMember', 'members.duplicate');
+			}
 		} finally {
 			isMutating = false;
 		}
@@ -158,6 +169,7 @@
 			memberStore.clear();
 			draftRoleIds = {};
 			addEmail = '';
+			addRoleId = '';
 			errorMessage = '';
 			successMessage = '';
 			return;
@@ -166,6 +178,7 @@
 			observedContextKey = key;
 			draftRoleIds = {};
 			addEmail = '';
+			addRoleId = '';
 			errorMessage = '';
 			successMessage = '';
 			void loadMembers();
@@ -208,7 +221,7 @@
 						<div class="flex flex-wrap items-center gap-2">
 							<span class="font-medium">{member.displayName}</span>
 							<Badge variant="outline">{member.roleName}</Badge>
-							{#if !canManageMember(member, currentUserId)}
+							{#if currentUserId && member.userId === currentUserId}
 								<Badge variant="secondary">{t['members.you']}</Badge>
 							{/if}
 						</div>
@@ -261,7 +274,7 @@
 		</ul>
 	{/if}
 
-	<form class="space-y-4 border-t pt-4" onsubmit={submitAddMember}>
+	<form class="space-y-4 border-t pt-4" novalidate onsubmit={submitAddMember}>
 		<h3 class="text-lg font-semibold">{t['members.addTitle']}</h3>
 		<div class="grid gap-4 md:grid-cols-2">
 			<div class="space-y-2">

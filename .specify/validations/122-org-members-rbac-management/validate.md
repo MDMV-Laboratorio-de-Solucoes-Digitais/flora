@@ -17,3 +17,14 @@ Briefing de Compreensão (`auth` / `rbac`): `docs/governance/2026-11-24-122-brie
 Issues R6 vinculadas: `#420`–`#423`.
 
 **Conclusão**: todas as verificações backend (`fmt`/`clippy`/`deny`/`55`+`5` contratos DB `87`), gates de integridade (`87` pisos), frontend (`svelte-check`, `eslint`, `89` testes unitários, `vite build`) e fluxo E2E real com WCAG 2.2 AA (`15/15` sem achados) estão verdes; permanecem **`[NV]`** até a etapa de PR o CI remoto/ACR e, fora do gate de PR, o deploy manual em staging/produção no Coolify.
+
+## Adendo — Revalidação Pós-Remediação ACR Rodada 1 (`#424`, 2026-11-24T20:35Z)
+
+| Verificação | Resultado observado (`[EV]`) |
+|---|---|
+| `cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo deny check bans licenses sources && cargo test --workspace` | `PASS` (`flora-api` `55/55`, `flora-core` `36+21`, `flora-tests` `36 passed; 87 ignored`) |
+| `cargo test -p flora-tests contract::rbac::db::db_ -- --ignored --test-threads=1` | **`5 passed; 0 failed`** (incl. `401` de token após `revoke_role`, `422` e-mail inválido, `404` inativo/cross-org) |
+| `cargo test -p flora-tests contract::search::db_ -- --ignored --test-threads=1` | **`8 passed; 0 failed`** (após corrigir checagem `.ok_or_else(Forbidden)` em `routes/search.rs`) |
+| `check_gate_integrity.py && check_deploy_workflows.py && --self-test` | `gate-integrity: PASS` (`87` pisos), `deploy-workflows: PASS`, `self-test: PASS` |
+| `bun run format && bun run check && bun run lint && bun run test:unit -- --run --project server && vite build` | `PASS` (`21/21` arquivos, `89/89` testes, build limpo) |
+| `bun run test:e2e` (Chromium + `flora-api` recompilado + PG 18.7) | **`4 passed (1.9m)`**, **`15/15` WCAG 2.2 AA: `sem achados`** |

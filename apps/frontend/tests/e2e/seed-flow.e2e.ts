@@ -460,6 +460,18 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(membersHeading).toBeVisible();
 	await expect(membersSection.getByText('Alice Admin', { exact: true })).toBeVisible();
 	await expect(membersSection.getByText(t['members.you'], { exact: true })).toBeVisible();
+	await expect(
+		membersSection.getByRole('button', {
+			name: format('members.removeAria', { name: 'Alice Admin' }),
+			exact: true
+		})
+	).toHaveCount(0);
+	await expect(
+		membersSection.getByRole('button', {
+			name: format('members.saveRoleAria', { name: 'Alice Admin' }),
+			exact: true
+		})
+	).toHaveCount(0);
 	await expect(membersSection.getByText('Bob Builder', { exact: true })).toBeVisible();
 	await expect(membersSection.getByText('Carol Viewer', { exact: true })).toBeVisible();
 

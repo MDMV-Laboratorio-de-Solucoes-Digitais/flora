@@ -23,3 +23,17 @@
 - `/settings` — Gestão de membros (`Membros e atribuição de papéis`): <https://gist.githubusercontent.com/lfgranja/2458075a6526da72fd23bd43cf9f2fda/raw/b1adc000faca61a36bd4433e9033f8549456a229/20-settings-members-light.png>
 - `/settings` — Tema escuro (`.dark`): <https://gist.githubusercontent.com/lfgranja/2458075a6526da72fd23bd43cf9f2fda/raw/b1adc000faca61a36bd4433e9033f8549456a229/18-settings-roles-dark.png>
 - `/settings` — Tema claro: <https://gist.githubusercontent.com/lfgranja/2458075a6526da72fd23bd43cf9f2fda/raw/b1adc000faca61a36bd4433e9033f8549456a229/19-settings-roles-light.png>
+
+## Adendo — Remediação ACR Rodada 1 (`#424`, 2026-11-24T20:35Z)
+
+Após a Rodada 1 do ACR independente (`1 HIGH`, `1 MEDIUM`, `4 LOW` sobre `16cc37cb9`), foram aplicados os seguintes ajustes e verificações locais (`[EV]`, PG 18.7 `127.0.0.1:15433`):
+
+- **Backend**: `SessionRepository::revoke_for_user_and_organization` + `MembershipRepository::delete_with_role` atômico em `revoke_role` (revogando todas as sessões ativas do membro na organização removida), correção da checagem de membership em `flora-api/src/routes/search.rs`, validação de e-mail em `validate_member_email` com `Error::Validation` (`422`) e cobertura de contrato DB ampliada em `flora-tests/src/contract/rbac.rs` (`401` pós-revogação, `422` e-mail inválido, `404` usuário inativo/role de outra org/assign de não membro).
+- **Frontend**: `members.roleConflict` distinto de `members.duplicate` em `MemberManager.svelte` + `pt-BR.ts`, selo `Você` condicionado a `currentUserId && member.userId === currentUserId`, `roleStore.syncContext(key)` em `loadMembers`, reset de `addRoleId` ao trocar contexto, `novalidate` no formulário de adição e asserções de 0 botões de ação na linha de auto-usuário em `seed-flow.e2e.ts`.
+- **Resultados `[EV]` pós-edição**:
+  - `cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo deny check bans licenses sources && cargo test --workspace`: `PASS` (`flora-api` `55/55`, `flora-core` `36+21`, `flora-tests` `36 passed; 87 ignored`).
+  - `cargo test -p flora-tests contract::rbac::db::db_ -- --ignored --test-threads=1`: **`5 passed; 0 failed`** (`3.09s`).
+  - `cargo test -p flora-tests contract::search::db_ -- --ignored --test-threads=1`: **`8 passed; 0 failed`** (`4.00s`).
+  - `check_gate_integrity.py && check_deploy_workflows.py && --self-test`: `PASS` (`87` pisos DB intactos).
+  - `apps/frontend`: `bun run format && bun run check && bun run lint && bun run test:unit -- --run --project server && vite build`: `PASS` (`21/21` arquivos, `89/89` testes).
+  - `bun run test:e2e` (Chromium + `flora-api` recompilado + PG 18.7): **`4 passed (1.9m)`**, **`15/15` auditorias WCAG 2.2 AA: `sem achados`**.

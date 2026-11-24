@@ -21,8 +21,10 @@ use crate::extractors::auth::AuthExtractor;
 use crate::state::AppState;
 use flora_core::error::{Error, Result};
 use flora_core::models::{Membership, Permission};
-use flora_core::repositories::{PgMembershipRepository, PgRoleRepository, PgUserRepository};
-use flora_core::traits::{MembershipRepository, RoleRepository, UserRepository};
+use flora_core::repositories::{
+    PgMembershipRepository, PgRoleRepository, PgSessionRepository, PgUserRepository,
+};
+use flora_core::traits::{MembershipRepository, RoleRepository, SessionRepository, UserRepository};
 
 /// Creates the RBAC (role-based access control) router.
 pub fn create_rbac_router() -> Router<AppState> {
@@ -153,7 +155,10 @@ const fn can_modify_role(role: &flora_core::models::Role) -> bool {
 fn validate_member_email(raw: &str) -> Result<String> {
     let normalized = raw.trim().to_lowercase();
     if normalized.is_empty() || !normalized.contains('@') {
-        return Err(Error::InvalidInput("Valid email is required".to_string()));
+        return Err(Error::Validation {
+            field: "email".to_string(),
+            message: "Valid email is required".to_string(),
+        });
     }
     Ok(normalized)
 }
@@ -495,16 +500,24 @@ async fn revoke_role(
         .ok_or_else(|| Error::RoleNotFound(id.to_string()))?;
 
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
-    let membership = membership_repo
-        .find_by_user_and_organization(req.user_id, org_id)
-        .await?
-        .ok_or(Error::MembershipNotFound)?;
-    if membership.role_id != id {
-        return Err(Error::InvalidInput(
-            "User does not hold the specified role".to_string(),
-        ));
+    let deleted = membership_repo
+        .delete_with_role(req.user_id, org_id, id)
+        .await?;
+    if !deleted {
+        if membership_repo
+            .find_by_user_and_organization(req.user_id, org_id)
+            .await?
+            .is_some()
+        {
+            return Err(Error::InvalidInput(
+                "User does not hold the specified role".to_string(),
+            ));
+        }
+        return Err(Error::MembershipNotFound);
     }
-    membership_repo.delete(req.user_id, org_id).await?;
+    PgSessionRepository::new((*state.db_pool).clone())
+        .revoke_for_user_and_organization(req.user_id, org_id)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -580,8 +593,14 @@ mod tests {
             validate_member_email("  Alice@Acme.Test  ").ok().as_deref(),
             Some("alice@acme.test")
         );
-        assert!(validate_member_email("   ").is_err());
-        assert!(validate_member_email("not-an-email").is_err());
+        assert!(matches!(
+            validate_member_email("   "),
+            Err(Error::Validation { .. })
+        ));
+        assert!(matches!(
+            validate_member_email("not-an-email"),
+            Err(Error::Validation { .. })
+        ));
     }
 
     #[test]

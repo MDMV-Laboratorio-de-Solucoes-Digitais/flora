@@ -114,6 +114,15 @@ pub trait MembershipRepository: Send + Sync + std::fmt::Debug {
         role_id: Uuid,
     ) -> crate::Result<Membership>;
 
+    /// Atomically delete a membership only when it currently holds `role_id`.
+    /// Returns `true` if a row was deleted, `false` otherwise.
+    async fn delete_with_role(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        role_id: Uuid,
+    ) -> crate::Result<bool>;
+
     /// Delete a membership.
     async fn delete(&self, user_id: Uuid, organization_id: Uuid) -> crate::Result<()>;
 }
@@ -400,6 +409,13 @@ pub trait SessionRepository: Send + Sync + std::fmt::Debug {
 
     /// Revoke all sessions for a user.
     async fn revoke_all_for_user(&self, user_id: Uuid) -> crate::Result<()>;
+
+    /// Revoke all sessions for a user scoped to a single organization.
+    async fn revoke_for_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+    ) -> crate::Result<()>;
 
     /// Clean up expired sessions.
     async fn clean_expired(&self) -> crate::Result<usize>;

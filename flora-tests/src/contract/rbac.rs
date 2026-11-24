@@ -272,6 +272,43 @@ mod db {
         Ok(())
     }
 
+    async fn mint_org_session(
+        pool: &PgPool,
+        config: &Config,
+        user: &User,
+        org_id: uuid::Uuid,
+        prefix: &str,
+    ) -> anyhow::Result<String> {
+        let jti = format!("jti-{prefix}-{}", uuid::Uuid::now_v7());
+        let now = Utc::now();
+        let _session = PgSessionRepository::new(pool.clone())
+            .create(Session {
+                id: uuid::Uuid::now_v7(),
+                user_id: user.id,
+                organization_id: org_id,
+                jti: jti.clone(),
+                refresh_token_id: None,
+                client_ip: None,
+                user_agent: None,
+                expires_at: now + Duration::seconds(3600),
+                last_activity_at: now,
+                is_active: true,
+                created_at: now,
+                updated_at: now,
+            })
+            .await?;
+        Ok(encode_token(
+            &FloraClaims::new(
+                user.id,
+                jti,
+                org_id,
+                &user.email,
+                config.app.session_ttl_secs,
+            ),
+            &config.app.jwt_secret,
+        ))
+    }
+
     async fn seed_additional_member(
         state: &AppState,
         config: &Config,
@@ -290,34 +327,7 @@ mod db {
         let _membership = PgMembershipRepository::new(pool.clone())
             .create(Membership::new(user.id, org_id, role.id))
             .await?;
-        let jti = format!("jti-{prefix}-{}", uuid::Uuid::now_v7());
-        let now = Utc::now();
-        let _session = PgSessionRepository::new(pool)
-            .create(Session {
-                id: uuid::Uuid::now_v7(),
-                user_id: user.id,
-                organization_id: org_id,
-                jti: jti.clone(),
-                refresh_token_id: None,
-                client_ip: None,
-                user_agent: None,
-                expires_at: now + Duration::seconds(3600),
-                last_activity_at: now,
-                is_active: true,
-                created_at: now,
-                updated_at: now,
-            })
-            .await?;
-        let token = encode_token(
-            &FloraClaims::new(
-                user.id,
-                jti,
-                org_id,
-                &user.email,
-                config.app.session_ttl_secs,
-            ),
-            &config.app.jwt_secret,
-        );
+        let token = mint_org_session(&pool, config, &user, org_id, prefix).await?;
         Ok((user, token))
     }
 
@@ -356,15 +366,77 @@ mod db {
         Ok(())
     }
 
-    async fn assert_assign_and_revoke_lifecycle(
+    async fn assert_add_member_validation_edges(
         state: &AppState,
         admin_token: &str,
-        org_id: uuid::Uuid,
-        target_user_id: uuid::Uuid,
-        reader_role_id: uuid::Uuid,
-        editor_role_id: uuid::Uuid,
+        valid_role_id: uuid::Uuid,
         other_org_role_id: uuid::Uuid,
+        active_email: &str,
     ) -> anyhow::Result<()> {
+        let pool = (*state.db_pool).clone();
+        let (status, _) = request(
+            state,
+            "POST",
+            "/members",
+            Some(admin_token),
+            Some(serde_json::json!({ "email": "not-an-email", "role_id": valid_role_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::UNPROCESSABLE_ENTITY);
+
+        let uniq = uuid::Uuid::now_v7().simple().to_string();
+        let inactive = PgUserRepository::new(pool.clone())
+            .create(User::new(
+                &format!("inactive-{uniq}@example.test"),
+                "Inactive",
+            ))
+            .await?;
+        let _ = sqlx::query("UPDATE users SET is_active = false WHERE id = $1")
+            .bind(inactive.id)
+            .execute(&pool)
+            .await?;
+        let (status, _) = request(
+            state,
+            "POST",
+            "/members",
+            Some(admin_token),
+            Some(serde_json::json!({ "email": inactive.email, "role_id": valid_role_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::NOT_FOUND);
+
+        let (status, _) = request(
+            state,
+            "POST",
+            "/members",
+            Some(admin_token),
+            Some(serde_json::json!({ "email": active_email, "role_id": other_org_role_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::NOT_FOUND);
+
+        let (status, _) = request(
+            state,
+            "POST",
+            &format!("/{valid_role_id}/assign"),
+            Some(admin_token),
+            Some(serde_json::json!({ "user_id": inactive.id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::NOT_FOUND);
+        Ok(())
+    }
+
+    async fn assert_assign_and_revoke_lifecycle(
+        state: &AppState,
+        admin: &Seed,
+        target_user_id: uuid::Uuid,
+        target_token: &str,
+        role_ids: (uuid::Uuid, uuid::Uuid, uuid::Uuid),
+    ) -> anyhow::Result<()> {
+        let (reader_role_id, editor_role_id, other_org_role_id) = role_ids;
+        let org_id = admin.org.id;
+        let admin_token = &admin.token;
         let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
         let initial_membership = membership_repo
             .find_by_user_and_organization(target_user_id, org_id)
@@ -421,6 +493,11 @@ mod db {
                 .await?
                 .is_none()
         );
+        let (status, _) = request(state, "GET", "/members", Some(target_token), None).await?;
+        anyhow::ensure!(
+            status == StatusCode::UNAUTHORIZED,
+            "revoked member token must be rejected, got {status}"
+        );
         Ok(())
     }
 
@@ -435,7 +512,6 @@ mod db {
             &[Permission::OrgRead, Permission::RoleWrite],
         )
         .await?;
-
         let role_repo = PgRoleRepository::new(pool.clone());
         let reader_role = create_org_role(
             &role_repo,
@@ -454,9 +530,8 @@ mod db {
         let (_, reader_token) =
             seed_additional_member(&state, &config, admin.org.id, reader_role.clone(), "reader")
                 .await?;
-
         let uniq = uuid::Uuid::now_v7().simple().to_string();
-        let target_user = PgUserRepository::new(pool)
+        let target_user = PgUserRepository::new(pool.clone())
             .create(User::new(
                 &format!("target-{uniq}@example.test"),
                 "Target Member",
@@ -466,11 +541,19 @@ mod db {
 
         let (status, _) = request(&state, "GET", "/members", None, None).await?;
         anyhow::ensure!(status == StatusCode::UNAUTHORIZED);
-
         let (status, members) =
             request(&state, "GET", "/members", Some(&reader_token), None).await?;
         anyhow::ensure!(status == StatusCode::OK);
         assert_member_list_sanitized(&members, other_org.user_id)?;
+
+        assert_add_member_validation_edges(
+            &state,
+            &admin.token,
+            reader_role.id,
+            other_org.role.id,
+            &target_user.email,
+        )
+        .await?;
 
         let add_payload = serde_json::json!({
             "email": target_user.email.to_uppercase(),
@@ -485,7 +568,6 @@ mod db {
         )
         .await?;
         anyhow::ensure!(status == StatusCode::FORBIDDEN);
-
         let (status, added) = request(
             &state,
             "POST",
@@ -500,7 +582,6 @@ mod db {
                 && added["role_id"] == serde_json::json!(reader_role.id),
             "unexpected add member response {status}: {added}"
         );
-
         let (status, _) = request(
             &state,
             "POST",
@@ -511,14 +592,17 @@ mod db {
         .await?;
         anyhow::ensure!(status == StatusCode::CONFLICT);
 
+        let target_token =
+            mint_org_session(&pool, &config, &target_user, admin.org.id, "target").await?;
+        let (status, _) = request(&state, "GET", "/members", Some(&target_token), None).await?;
+        anyhow::ensure!(status == StatusCode::OK);
+
         assert_assign_and_revoke_lifecycle(
             &state,
-            &admin.token,
-            admin.org.id,
+            &admin,
             target_user.id,
-            reader_role.id,
-            editor_role.id,
-            other_org.role.id,
+            &target_token,
+            (reader_role.id, editor_role.id, other_org.role.id),
         )
         .await
     }
