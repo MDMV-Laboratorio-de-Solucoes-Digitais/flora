@@ -50,6 +50,7 @@ FLOORS = {
     "workspace": 3,
     "rbac": 3,
     "bootstrap": 13,
+    "hitl": 3,
 }
 
 JOB_RE = re.compile(r"^  ([A-Za-z0-9][A-Za-z0-9_-]*):\s*$")

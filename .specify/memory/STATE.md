@@ -1215,3 +1215,24 @@ anterior foi alterada.
   - `bun run test:e2e` (Chromium + `flora-api` + `vite preview` + Postgres 18.7 `127.0.0.1:15433`): **`4 passed (59.9s)`** e **`14/14` auditorias WCAG 2.2 AA: `sem achados`**; capturas em <https://gist.github.com/lfgranja/6cef0d5c451c7050df6fa80aa2489468>.
 - **Contagens (`find`)**: `specs/` `109` dirs (`583` arquivos), `.specify/assessments/` `107` (`453`), `.specify/validations/` `105` (`122`), `.specify/releases/` `105` (`105`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
 - **Briefing (`auth`/`rbac`) / R4 / R7**: `docs/governance/2026-11-23-119-briefing-compreensao.md`, `docs/governance/2026-11-23-119-rbac-roles-admin-ui.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.11.0`), `converge.md`, issues `#405`..`#408`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), PR de promoção `dev -> main` e deploy manual em staging/produção via Coolify (`workflow_dispatch`).
+
+
+## Sessão: flora - endpoint HTTP RBAC para emissão de recibo HITL (POST /api/v1/hitl/receipts) (ciclo 120, append-only)
+
+- **Identidade e baseline (`2026-11-24`, Bloco 0.c / Bloco 5)**:
+  - `session_title`: `flora - endpoint HTTP RBAC para emissão de recibo HITL (POST /api/v1/hitl/receipts)` · `session_id`: `20261124-071000-orch-v49`
+  - Branch: `feature/120-hitl-receipt-http-endpoint` · Worktree: `.specify/queue/worktrees/120-hitl-receipt-http-endpoint` · Baseline `github/dev`: `e47983874`
+  - Escolha 80/20 (`2000/3125`, `IMPLEMENTAÇÃO`, **`BF-03 -> fechado`**): expor endpoint HTTP RBAC (`Permission::OrgAdmin`) `POST /api/v1/hitl/receipts` sobre `HitlReceiptAdapter` / `HitlReceiptPort` (`#411`–`#413`).
+- **Entrega (`FR-001`..`FR-004`, SemVer MINOR `0.11.0 -> 0.12.0`)**:
+  - `flora-core/src/error.rs`: `Error::ServiceUnavailable(_)` destacado para HTTP `503 SERVICE_UNAVAILABLE` sanitizado (`{"error":"service_unavailable","message":"Service temporarily unavailable"}`) + teste unitário `service_unavailable_returns_sanitized_503_without_internal_detail`.
+  - `flora-api/src/routes/hitl.rs` & `flora-api/src/routes/mod.rs`: rota `/api/v1/hitl/receipts` com `EmitHitlReceiptRequest` (`#[serde(deny_unknown_fields)]`), `can_emit_hitl_receipt`, `build_decision` (`operator_id` exclusivo da sessão autenticada), `require_hitl_operator`, ordenação `validate_decision` (`422`) antes de `Error::Configuration` → `Error::ServiceUnavailable` (`503` sem vazar `FLORA_HITL__HMAC_SECRET`), log sanitizado e `3` testes unitários.
+  - `flora-tests/src/contract/{mod.rs,hitl.rs}` + lockstep `scripts/ci/check_gate_integrity.py` & `.github/workflows/rust.yml`: perna `hitl: 3` (`82 -> 85` pisos DB).
+- **Evidência local (`[EV]`, `task-1870`, `task-1883`)**:
+  - `TDD RED` (`task-1870`): `0 passed; 3 failed` (`404 Not Found: null`) antes de montar `/api/v1/hitl/receipts`.
+  - `cargo fmt --all -- --check`: exit `0`; `cargo clippy --workspace --all-targets -- -D warnings`: `0` erros.
+  - `cargo deny check bans licenses sources`: `bans ok, licenses ok, sources ok`.
+  - `cargo test --workspace`: `flora-api` `53 passed` (incl. `3/3` em `routes::hitl::tests`), `flora-core` `36 + 21 passed`, `flora-tests` `36 passed; 85 ignored`.
+  - `python3 scripts/ci/check_gate_integrity.py && python3 scripts/ci/check_deploy_workflows.py && python3 scripts/ci/check_deploy_workflows.py --self-test`: `gate-integrity: PASS` (`all 11 db contract floors intact (85 total)`), `deploy-workflows: PASS`, `deploy-workflow-self-test: PASS`.
+  - `cargo test -p flora-tests contract::hitl::db::db_ -- --ignored --test-threads=1` (PG 18.7 `127.0.0.1:15433`): **`3 passed; 0 failed`** (`1.11s`).
+- **Contagens (`find`)**: `specs/` `110` dirs (`588` arquivos), `.specify/assessments/` `108` (`458`), `.specify/validations/` `106` (`125`), `.specify/releases/` `106` (`106`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`auth / rbac / hitl`) / R4 / R7**: `docs/governance/2026-11-24-120-briefing-compreensao.md`, `docs/governance/2026-11-24-120-hitl-receipt-http-endpoint.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.12.0`), `converge.md`, issues `#411`–`#413`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), promoção `dev -> main` e deploy manual no Coolify (`workflow_dispatch`).
