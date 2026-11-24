@@ -219,6 +219,39 @@ export const t = {
 	'error.updateRole': 'Falha ao atualizar papel',
 	'error.deleteRole': 'Falha ao excluir papel',
 
+	// Membros da organização (RBAC)
+	'members.title': 'Membros e atribuição de papéis',
+	'members.description':
+		'Visualize os membros da organização, altere o papel atribuído ou remova vínculos. Administradores não podem rebaixar ou remover a própria conta.',
+	'members.loading': 'Carregando membros...',
+	'members.refresh': 'Atualizar membros',
+	'members.empty': 'Nenhum membro encontrado nesta organização.',
+	'members.you': 'Você',
+	'members.roleLabel': 'Papel de {name}',
+	'members.saveRole': 'Salvar papel',
+	'members.saveRoleAria': 'Salvar papel de {name}',
+	'members.remove': 'Remover',
+	'members.removeAria': 'Remover membro {name}',
+	'members.addTitle': 'Adicionar membro existente',
+	'members.emailLabel': 'E-mail do usuário',
+	'members.emailPlaceholder': 'usuario@empresa.com',
+	'members.roleSelectLabel': 'Papel inicial',
+	'members.addSubmit': 'Adicionar membro',
+	'members.emailInvalid': 'Informe um e-mail válido.',
+	'members.roleRequired': 'Selecione um papel para o membro.',
+	'members.forbidden': 'Você não tem permissão para gerenciar membros nesta organização.',
+	'members.notFound': 'Usuário ativo ou papel não encontrado para esta organização.',
+	'members.duplicate': 'Este usuário já é membro desta organização.',
+	'members.roleConflict':
+		'O papel deste membro foi alterado recentemente. Atualize a lista e tente novamente.',
+	'members.added': 'Membro adicionado: {name}',
+	'members.roleUpdated': 'Papel atualizado para {name}: {role}',
+	'members.removed': 'Membro removido: {name}',
+	'error.loadMembers': 'Falha ao carregar membros',
+	'error.addMember': 'Falha ao adicionar membro',
+	'error.assignRole': 'Falha ao atualizar papel do membro',
+	'error.revokeRole': 'Falha ao remover membro',
+
 	// Tarefas e quadro Kanban
 	'tasks.title': 'Tarefas',
 	'tasks.description':

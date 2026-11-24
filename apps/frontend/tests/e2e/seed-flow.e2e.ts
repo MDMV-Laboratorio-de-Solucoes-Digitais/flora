@@ -357,9 +357,10 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(darkThemeButton).toHaveAttribute('aria-pressed', 'true');
 	await expect(lightThemeButton).toHaveAttribute('aria-pressed', 'false');
 	await expect(page.getByText(t['theme.statusDark'], { exact: true })).toBeVisible();
+	const rolesSection = page.getByRole('region', { name: t['roles.title'] });
 	await expect(page.getByRole('heading', { name: t['roles.title'], level: 2 })).toBeVisible();
-	await expect(page.getByText('Admin', { exact: true })).toBeVisible();
-	await expect(page.getByText(t['roles.builtin'], { exact: true }).first()).toBeVisible();
+	await expect(rolesSection.getByText('Admin', { exact: true })).toBeVisible();
+	await expect(rolesSection.getByText(t['roles.builtin'], { exact: true }).first()).toBeVisible();
 	await auditAccessibility(page, '/settings (roles dark mode)');
 	await capture(page, '18-settings-roles-dark.png');
 
@@ -375,11 +376,11 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await page.getByRole('button', { name: t['roles.create'], exact: true }).click();
 	const createRoleResponse = await createRolePromise;
 	expect(createRoleResponse.status()).toBe(201);
-	await expect(page.getByText(roleName, { exact: true })).toBeVisible();
+	await expect(rolesSection.getByText(roleName, { exact: true })).toBeVisible();
 
 	await page.reload();
 	await settleAnimations(page);
-	await expect(page.getByText(roleName, { exact: true })).toBeVisible();
+	await expect(rolesSection.getByText(roleName, { exact: true })).toBeVisible();
 
 	await page
 		.getByRole('button', { name: format('roles.edit', { name: roleName }), exact: true })
@@ -394,7 +395,7 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await page.getByRole('button', { name: t['roles.save'], exact: true }).click();
 	const updateRoleResponse = await updateRolePromise;
 	expect(updateRoleResponse.status()).toBe(200);
-	await expect(page.getByText(updatedRoleName, { exact: true })).toBeVisible();
+	await expect(rolesSection.getByText(updatedRoleName, { exact: true })).toBeVisible();
 
 	await page.emulateMedia({ colorScheme: 'light' });
 	await lightThemeButton.click();
@@ -412,7 +413,7 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 
 	await page.reload();
 	await settleAnimations(page);
-	await expect(page.getByText(updatedRoleName, { exact: true })).toBeVisible();
+	await expect(rolesSection.getByText(updatedRoleName, { exact: true })).toBeVisible();
 	await expect(lightThemeButton).toHaveAttribute('aria-pressed', 'true');
 	await expect
 		.poll(() =>
@@ -451,5 +452,96 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 		.click();
 	const deleteRoleResponse = await deleteRolePromise;
 	expect(deleteRoleResponse.status()).toBe(204);
-	await expect(page.getByText(updatedRoleName, { exact: true })).toHaveCount(0);
+	await expect(rolesSection.getByText(updatedRoleName, { exact: true })).toHaveCount(0);
+
+	// 10. Organization members RBAC UI (/settings): list seeded members, assign role + reload persistence + restore, revoke & re-add, WCAG & capture.
+	const membersSection = page.getByRole('region', { name: t['members.title'] });
+	const membersHeading = page.getByRole('heading', { name: t['members.title'], level: 2 });
+	await expect(membersHeading).toBeVisible();
+	await expect(membersSection.getByText('Alice Admin', { exact: true })).toBeVisible();
+	await expect(membersSection.getByText(t['members.you'], { exact: true })).toBeVisible();
+	await expect(
+		membersSection.getByRole('button', {
+			name: format('members.removeAria', { name: 'Alice Admin' }),
+			exact: true
+		})
+	).toHaveCount(0);
+	await expect(
+		membersSection.getByRole('button', {
+			name: format('members.saveRoleAria', { name: 'Alice Admin' }),
+			exact: true
+		})
+	).toHaveCount(0);
+	await expect(membersSection.getByText('Bob Builder', { exact: true })).toBeVisible();
+	await expect(membersSection.getByText('Carol Viewer', { exact: true })).toBeVisible();
+
+	const bobRoleSelect = page.getByLabel(format('members.roleLabel', { name: 'Bob Builder' }), {
+		exact: true
+	});
+	await bobRoleSelect.selectOption({ label: 'Viewer' });
+	const assignViewerPromise = page.waitForResponse(
+		(response) =>
+			/\/api\/v1\/roles\/[^/]+\/assign$/.test(new URL(response.url()).pathname) &&
+			response.request().method() === 'POST'
+	);
+	await page
+		.getByRole('button', {
+			name: format('members.saveRoleAria', { name: 'Bob Builder' }),
+			exact: true
+		})
+		.click();
+	const assignViewerResponse = await assignViewerPromise;
+	expect(assignViewerResponse.status()).toBe(204);
+
+	await page.reload();
+	await settleAnimations(page);
+	await expect(bobRoleSelect.locator('option:checked')).toHaveText('Viewer');
+
+	await bobRoleSelect.selectOption({ label: 'Member' });
+	const restoreMemberPromise = page.waitForResponse(
+		(response) =>
+			/\/api\/v1\/roles\/[^/]+\/assign$/.test(new URL(response.url()).pathname) &&
+			response.request().method() === 'POST'
+	);
+	await page
+		.getByRole('button', {
+			name: format('members.saveRoleAria', { name: 'Bob Builder' }),
+			exact: true
+		})
+		.click();
+	const restoreMemberResponse = await restoreMemberPromise;
+	expect(restoreMemberResponse.status()).toBe(204);
+
+	const revokeCarolPromise = page.waitForResponse(
+		(response) =>
+			/\/api\/v1\/roles\/[^/]+\/revoke$/.test(new URL(response.url()).pathname) &&
+			response.request().method() === 'POST'
+	);
+	await page
+		.getByRole('button', {
+			name: format('members.removeAria', { name: 'Carol Viewer' }),
+			exact: true
+		})
+		.click();
+	const revokeCarolResponse = await revokeCarolPromise;
+	expect(revokeCarolResponse.status()).toBe(204);
+	await expect(page.getByText('carol@acme.test', { exact: true })).toHaveCount(0);
+
+	await page.getByLabel(t['members.emailLabel'], { exact: true }).fill('carol@acme.test');
+	await page
+		.getByLabel(t['members.roleSelectLabel'], { exact: true })
+		.selectOption({ label: 'Viewer' });
+	const addCarolPromise = page.waitForResponse(
+		(response) =>
+			new URL(response.url()).pathname === '/api/v1/roles/members' &&
+			response.request().method() === 'POST'
+	);
+	await page.getByRole('button', { name: t['members.addSubmit'], exact: true }).click();
+	const addCarolResponse = await addCarolPromise;
+	expect(addCarolResponse.status()).toBe(201);
+	await expect(page.getByText('carol@acme.test', { exact: true })).toBeVisible();
+
+	await membersHeading.scrollIntoViewIfNeeded();
+	await auditAccessibility(page, '/settings (members light mode)');
+	await capture(page, '20-settings-members-light.png');
 });

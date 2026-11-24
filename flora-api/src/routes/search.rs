@@ -70,9 +70,10 @@ async fn search(
 
     // Verify membership
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
-    let _ = membership_repo
+    let _membership = membership_repo
         .find_by_user_and_organization(auth.user_id, org_id)
-        .await?;
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
 
     let query = params.q.trim().to_string();
     if query.is_empty() {

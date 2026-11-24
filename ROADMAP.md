@@ -338,3 +338,11 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Ciclo 121 (`1500/3125`, **`BF-04 -> fechado`**): seletor interativo de tema claro/escuro (`ThemeSelector.svelte`, `ThemeStore.svelte.ts`, `utils/theme.ts` `flora.theme`) em `/settings`, correção WCAG `:root --destructive: 0 84.2% 40%`, polimento `RoleManager.svelte`, Passo 9 E2E (`4 passed`, `14/14 WCAG 2.2 AA: sem achados`, capturas em Gist `62253fe7a30a00b665e8277ae7b719cf`), issues `#415`–`#418`, SemVer MINOR `0.12.0 -> 0.13.0`.
 - Próximo candidato 80/20 mapeado: UI + endpoints de atribuição/revogação de papéis e listagem/convite de membros da organização (`BF-02` remanescente, `member:*` / `/api/v1/rbac/roles/{id}/assign`) ou avaliação final dos itens com bloqueio externo (`BF-05` RLS runtime / `BF-06` bootstrap expiry).
 - **[NV]** CI remoto do PR 121, ACR independente, staging real, Forgejo e produção; histórico preservado.
+
+
+## Estado verificado — 2026-11-24 (ciclo 122; append-only)
+
+- Recontagem via `find` (`feature/122-org-members-rbac-management` sobre `github/dev@8f984adb7`): `specs/` `112` diretórios (`598` arquivos, `001`–`122`), `.specify/assessments/` `110` (`468`), `.specify/validations/` `108` (`131`), `.specify/releases/` `108` (`108`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 122 (**`BF-02 -> fechado`**, encerrando todos os itens acionáveis `BF-01`–`BF-04` do `backlog_de_fechamento`): `MembershipRepository::update_role`, `GET/POST /api/v1/roles/members`, hardening de `assign_role`/`revoke_role` (`403` auto-rebaixamento/auto-revogação), lockstep DB `rbac: 3 -> 5` (`85 -> 87`), `MemberStore.svelte.ts` (`5/5` TDD) + `MemberManager.svelte` em `/settings`, Passo 10 E2E (`4 passed (37.5s)`, `15/15` WCAG `sem achados`, Gist `2458075a6526da72fd23bd43cf9f2fda`), Briefing `auth`/`rbac` (`#420`–`#423`) e SemVer MINOR `0.13.0 -> 0.14.0`.
+- `backlog_de_fechamento` acionável encerrado (`BF-01`–`BF-04` todos `fechado`); restam apenas bloqueios externos/operacionais (`BF-05` ativação de RLS runtime mediante autorização SE e `BF-06` expiração de `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` em `2026-11-29T23:59:59Z`).
+- **[NV]** CI remoto do PR 122, ACR independente, staging real, Forgejo e produção; histórico preservado.
