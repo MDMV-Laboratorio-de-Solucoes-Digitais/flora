@@ -1,11 +1,21 @@
-name: Build & Deploy Flora Staging (GHCR -> Coolify)
+name: Build & Deploy Flora API — Staging (GHCR -> Coolify)
 
-# 037: deploy is deliberately NOT part of the autonomous push/PR/merge gate.
-# The push-to-dev trigger is disabled: running this workflow publishes to GHCR and
-# calls the Coolify webhook (a real deploy), which stays outside merge automation.
-# Re-enabling it is a separate CD policy decision, not a CI gate change.
+# Manual ONLY (ADR-0003): a webhook call is a real deploy and is never part of
+# push/PR/merge automation. Staging is fed from `dev`; production from `main`.
+# The deploy step fails closed when the webhook secret is missing so a run can
+# never look green while skipping the deploy.
 on:
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Trigger the Coolify webhook after publishing the image"
+        type: boolean
+        required: false
+        default: true
+
+concurrency:
+  group: deploy-flora-staging-api-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -13,13 +23,18 @@ permissions:
 
 jobs:
   build-and-push:
+    if: ${{ github.ref == 'refs/heads/dev' }}
     runs-on: ubuntu-24.04-arm
-    # GitHub Actions forbids `secrets.*` inside `if:`. Hoist to job-level env.
     env:
-      HAS_HOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK != '' }}
+      DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_API_DEPLOY_WEBHOOK }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Fail closed when the deploy webhook is missing
+        if: ${{ inputs.deploy && env.DEPLOY_WEBHOOK == '' }}
+        run: |
+          echo "::error::COOLIFY_STAGING_API_DEPLOY_WEBHOOK is not configured; refusing a deploy that would silently skip."
+          exit 1
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -38,8 +53,11 @@ jobs:
             ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:staging
             ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:${{ github.sha }}
 
-      - name: Trigger Coolify Staging Deploy
-        if: ${{ env.HAS_HOOK == 'true' }}
+      - name: Trigger Coolify staging API deploy
+        if: ${{ inputs.deploy }}
+        env:
+          WEBHOOK_URL: ${{ env.DEPLOY_WEBHOOK }}
+          API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
         run: |
-          curl -fsS -X POST "${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+          curl --fail --silent --show-error --max-time 30 -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $API_TOKEN"
