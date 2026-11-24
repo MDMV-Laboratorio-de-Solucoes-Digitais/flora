@@ -44,6 +44,11 @@
 		selected = [];
 	}
 
+	function cancelEditing() {
+		resetForm();
+		errorMessage = '';
+	}
+
 	function startEditing(role: RoleItem) {
 		if (isMutating || !canModifyRole(role)) return;
 		editingRoleId = role.id;
@@ -136,11 +141,15 @@
 			observedContextKey = null;
 			roleStore.clear();
 			resetForm();
+			errorMessage = '';
+			successMessage = '';
 			return;
 		}
 		if (key !== observedContextKey) {
 			observedContextKey = key;
 			resetForm();
+			errorMessage = '';
+			successMessage = '';
 			void loadRoles();
 		}
 	});
@@ -244,7 +253,7 @@
 				{editingRoleId ? t['roles.save'] : t['roles.create']}
 			</Button>
 			{#if editingRoleId}
-				<Button type="button" variant="outline" disabled={isMutating} onclick={resetForm}>
+				<Button type="button" variant="outline" disabled={isMutating} onclick={cancelEditing}>
 					{t['roles.cancel']}
 				</Button>
 			{/if}

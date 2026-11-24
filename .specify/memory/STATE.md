@@ -1236,3 +1236,20 @@ anterior foi alterada.
   - `cargo test -p flora-tests contract::hitl::db::db_ -- --ignored --test-threads=1` (PG 18.7 `127.0.0.1:15433`): **`3 passed; 0 failed`** (`1.11s`).
 - **Contagens (`find`)**: `specs/` `110` dirs (`588` arquivos), `.specify/assessments/` `108` (`458`), `.specify/validations/` `106` (`125`), `.specify/releases/` `106` (`106`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
 - **Briefing (`auth / rbac / hitl`) / R4 / R7**: `docs/governance/2026-11-24-120-briefing-compreensao.md`, `docs/governance/2026-11-24-120-hitl-receipt-http-endpoint.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.12.0`), `converge.md`, issues `#411`–`#413`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), promoção `dev -> main` e deploy manual no Coolify (`workflow_dispatch`).
+
+
+## Sessão: flora - seletor interativo de tema claro/escuro em /settings e contraste destrutivo WCAG (ciclo 121, append-only)
+
+- **Identidade e baseline (`2026-11-24`, Bloco 0.c / Bloco 5)**:
+  - `session_title`: `flora - seletor interativo de tema claro/escuro em /settings e contraste destrutivo WCAG` · `session_id`: `20261124-075500-orch-v49`
+  - Branch: `feature/121-settings-theme-selector` · Worktree: `.specify/queue/worktrees/121-settings-theme-selector` · Baseline `github/dev`: `2ff91e229`
+  - Escolha 80/20 (`1500/3125`, `IMPLEMENTAÇÃO` + `CORREÇÃO`, **`BF-04 -> fechado`**): seletor interativo de tema claro/escuro em `/settings`, correção WCAG `:root --destructive` e polimento `RoleManager` (`#415`–`#418`).
+- **Entrega (`FR-001`..`FR-004`, SemVer MINOR `0.12.0 -> 0.13.0`)**:
+  - `apps/frontend/src/lib/utils/theme.ts` & `src/lib/state/ThemeStore.svelte.ts`: utilitários puros injetáveis (`flora.theme`, `parseThemePreference`, `resolveInitialTheme`, `syncThemeClass`, `applyThemePreference`) + store Svelte 5 Runes + `4` testes TDD (`tests/unit/theme.test.ts`).
+  - `apps/frontend/src/lib/components/settings/ThemeSelector.svelte`, `src/lib/i18n/pt-BR.ts` & `src/routes/(app)/settings/+page.svelte`: card `Aparência` (`Claro` / `Escuro`, `aria-pressed`, `role="group"`, `aria-live="polite"`).
+  - `apps/frontend/src/routes/layout.css` & `src/lib/components/rbac/RoleManager.svelte`: `:root --destructive` ajustado para `0 84.2% 40%` (mantendo `.dark`); `cancelEditing()` limpa `errorMessage` e `$effect` limpa `errorMessage`/`successMessage` ao trocar ou limpar contexto.
+  - `apps/frontend/tests/e2e/seed-flow.e2e.ts`: Passo 9 clicando nos botões `Claro`/`Escuro` e validando persistência pós-`page.reload()` + Gist `62253fe7a30a00b665e8277ae7b719cf`.
+- **Evidência local (`[EV]`, `task-2015`, `task-2049`, `task-2063`)**:
+  - `TDD RED` (`task-2015`): `Cannot find module '$lib/state/ThemeStore.svelte'` (exit `1`) → GREEN (`task-2049`): `bun run check` (`0 errors and 0 warnings`), `bun run lint` (`exit 0`), Vitest `server` (`20/20` arquivos, `84/84` testes), `vite build` (`1m 2s`, exit `0`), `check_gate_integrity.py` (`PASS`, `85` pisos), `check_deploy_workflows.py` + `--self-test` (`PASS`), e `bun run test:e2e` (**`4 passed (1.4m)`**, **`14/14` WCAG 2.2 AA: `sem achados`**).
+- **Contagens (`find`)**: `specs/` `111` dirs (`593` arquivos), `.specify/assessments/` `109` (`463`), `.specify/validations/` `107` (`128`), `.specify/releases/` `107` (`107`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Governança / R4 / R7**: `docs/governance/2026-11-24-121-settings-theme-selector.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.13.0`), `converge.md`, issues `#415`–`#418`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), promoção `dev -> main` e deploy manual no Coolify (`workflow_dispatch`).

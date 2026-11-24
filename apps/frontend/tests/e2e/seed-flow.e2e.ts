@@ -345,12 +345,18 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await auditAccessibility(page, '/tasks (dark mode)');
 	await capture(page, '17-tasks-dark-mode.png');
 
-	// 9. RBAC roles admin UI (/settings): list built-ins, create (POST 201), reload persistence, edit (PATCH 200), audit dark + light, delete (DELETE 204).
+	// 9. Theme selector & RBAC roles admin UI (/settings): verify dark selector state, audit dark, create (POST 201), reload persistence, edit (PATCH 200), switch theme via UI + reload persistence, audit light, delete (DELETE 204).
 	await page.goto('/settings');
 	await expect
 		.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
 		.toBe(true);
 	await settleAnimations(page);
+	await expect(page.getByRole('heading', { name: t['theme.title'], level: 2 })).toBeVisible();
+	const lightThemeButton = page.getByRole('button', { name: t['theme.light'], exact: true });
+	const darkThemeButton = page.getByRole('button', { name: t['theme.dark'], exact: true });
+	await expect(darkThemeButton).toHaveAttribute('aria-pressed', 'true');
+	await expect(lightThemeButton).toHaveAttribute('aria-pressed', 'false');
+	await expect(page.getByText(t['theme.statusDark'], { exact: true })).toBeVisible();
 	await expect(page.getByRole('heading', { name: t['roles.title'], level: 2 })).toBeVisible();
 	await expect(page.getByText('Admin', { exact: true })).toBeVisible();
 	await expect(page.getByText(t['roles.builtin'], { exact: true }).first()).toBeVisible();
@@ -391,17 +397,49 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await expect(page.getByText(updatedRoleName, { exact: true })).toBeVisible();
 
 	await page.emulateMedia({ colorScheme: 'light' });
-	await page.evaluate(() => {
-		try {
-			localStorage.removeItem('flora.theme');
-		} catch {
-			// Ignore storage cleanup errors.
-		}
-		document.documentElement.classList.remove('dark');
-	});
+	await lightThemeButton.click();
+	await expect(lightThemeButton).toHaveAttribute('aria-pressed', 'true');
+	await expect(darkThemeButton).toHaveAttribute('aria-pressed', 'false');
+	await expect(page.getByText(t['theme.statusLight'], { exact: true })).toBeVisible();
+	await expect
+		.poll(() =>
+			page.evaluate(() => ({
+				isDark: document.documentElement.classList.contains('dark'),
+				stored: localStorage.getItem('flora.theme')
+			}))
+		)
+		.toEqual({ isDark: false, stored: 'light' });
+
+	await page.reload();
 	await settleAnimations(page);
+	await expect(page.getByText(updatedRoleName, { exact: true })).toBeVisible();
+	await expect(lightThemeButton).toHaveAttribute('aria-pressed', 'true');
+	await expect
+		.poll(() =>
+			page.evaluate(() => ({
+				isDark: document.documentElement.classList.contains('dark'),
+				stored: localStorage.getItem('flora.theme')
+			}))
+		)
+		.toEqual({ isDark: false, stored: 'light' });
 	await auditAccessibility(page, '/settings (roles light mode)');
 	await capture(page, '19-settings-roles-light.png');
+
+	await darkThemeButton.click();
+	await expect(darkThemeButton).toHaveAttribute('aria-pressed', 'true');
+	await expect
+		.poll(() =>
+			page.evaluate(() => ({
+				isDark: document.documentElement.classList.contains('dark'),
+				stored: localStorage.getItem('flora.theme')
+			}))
+		)
+		.toEqual({ isDark: true, stored: 'dark' });
+	await lightThemeButton.click();
+	await expect(lightThemeButton).toHaveAttribute('aria-pressed', 'true');
+	await expect
+		.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+		.toBe(false);
 
 	const deleteRolePromise = page.waitForResponse(
 		(response) =>
