@@ -118,6 +118,7 @@ jobs:
           run_leg workspace     contract::workspace::db::db_  3
           run_leg rbac          contract::rbac::db::db_     3
           run_leg bootstrap     contract::bootstrap::tests::db_ 13
+          run_leg hitl          contract::hitl::db::db_      3
 
   # 028: FASE 0 closure — informational supply-chain gates. Neither blocks merges yet;
   # promotion to required checks requires CODEOWNERS and a review window (Fatia B).

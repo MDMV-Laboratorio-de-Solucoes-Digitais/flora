@@ -6,6 +6,7 @@
 pub mod auth;
 pub mod bootstrap;
 pub mod files;
+pub mod hitl;
 pub mod messaging;
 pub mod notifications;
 pub mod rbac;

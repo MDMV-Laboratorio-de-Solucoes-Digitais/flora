@@ -322,3 +322,11 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 - Ciclo 119 (`1280/3125`, UI CRUD de papéis RBAC de `BF-02` fechada): `RoleItem`/`utils/roles.ts`/`api/roles.ts`/`RoleStore.svelte.ts` (`9/9` Vitest), `RoleManager.svelte` + `pt-BR.ts` em `/settings` (papéis nativos somente leitura e CRUD completo em personalizados com isolamento multi-contexto), ajuste WCAG em `layout.css` (`:root --primary`/`--ring: 152 76% 25%`, `5.85:1`), Passo 9 E2E em `.dark` e claro (`4 passed`, `14/14 WCAG 2.2 AA: sem achados`, capturas em Gist `6cef0d5c451c7050df6fa80aa2489468`) e Briefing `auth`/`rbac` (`#405`–`#408`), SemVer `0.10.1 -> 0.11.0`. PR `#404` já havia aterrissado em `github/dev@42c38bf52` com workflows manuais de deploy por ambiente (`ADR-0003`) e validadores `check_deploy_workflows.py`.
 - Próximo candidato 80/20 mapeado: endpoint HTTP para `HitlReceiptAdapter` (`BF-03`), seletor de tema em `/settings` (`BF-04`) ou UI de atribuição de papéis a membros da organização (`member:*`, item remanescente de RBAC).
 - **[NV]** CI remoto do PR 119, ACR independente, staging real, Forgejo e produção; histórico preservado.
+
+
+## Estado verificado — 2026-11-24 (ciclo 120; append-only)
+
+- Recontagem via `find` (`feature/120-hitl-receipt-http-endpoint` sobre `github/dev@e47983874`): `specs/` `110` diretórios (`588` arquivos, `001`–`120`), `.specify/assessments/` `108` (`458`), `.specify/validations/` `106` (`125`), `.specify/releases/` `106` (`106`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 120 (`2000/3125`, **`BF-03 -> fechado`**): `Error::ServiceUnavailable` → `503` sanitizado (`flora-core/src/error.rs`), rota RBAC `POST /api/v1/hitl/receipts` (`flora-api/src/routes/{hitl.rs,mod.rs}`), `3` contratos DB (`flora-tests/src/contract/hitl.rs`), trava lockstep `hitl: 3` (`82 -> 85`), Briefing `auth/rbac/hitl` (`#411`–`#413`) e SemVer MINOR `0.11.0 -> 0.12.0`.
+- Próximo candidato 80/20 mapeado: seletor interativo de tema escuro/claro em `/settings` (`BF-04`) + contraste `:root --destructive` em tema claro, ou UI de atribuição/revogação de papéis a membros (`BF-02` remanescente).
+- **[NV]** CI remoto do PR 120, ACR independente, staging real, Forgejo e produção; histórico preservado.
