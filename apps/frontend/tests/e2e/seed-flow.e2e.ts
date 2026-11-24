@@ -63,7 +63,7 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	test.setTimeout(180_000);
 	const suffix = crypto.randomUUID().slice(0, 8);
 	runSql(
-		`DELETE FROM notifications WHERE user_id = '${ALICE_ID}'::uuid; DELETE FROM files WHERE organization_id = '${ACME_ID}'::uuid;`
+		`DELETE FROM notifications WHERE user_id = '${ALICE_ID}'::uuid; DELETE FROM files WHERE organization_id = '${ACME_ID}'::uuid; DELETE FROM roles WHERE organization_id = '${ACME_ID}'::uuid AND is_builtin = false AND name LIKE 'Auditor E2E %';`
 	);
 
 	// 1. select-org proves the auth state was read on the frontend origin with a
@@ -345,6 +345,52 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await auditAccessibility(page, '/tasks (dark mode)');
 	await capture(page, '17-tasks-dark-mode.png');
 
+	// 9. RBAC roles admin UI (/settings): list built-ins, create (POST 201), reload persistence, edit (PATCH 200), audit dark + light, delete (DELETE 204).
+	await page.goto('/settings');
+	await expect
+		.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+		.toBe(true);
+	await settleAnimations(page);
+	await expect(page.getByRole('heading', { name: t['roles.title'], level: 2 })).toBeVisible();
+	await expect(page.getByText('Admin', { exact: true })).toBeVisible();
+	await expect(page.getByText(t['roles.builtin'], { exact: true }).first()).toBeVisible();
+	await auditAccessibility(page, '/settings (roles dark mode)');
+	await capture(page, '18-settings-roles-dark.png');
+
+	const roleName = `Auditor E2E ${suffix}`;
+	const updatedRoleName = `Auditor E2E ${suffix} Editado`;
+	await page.getByLabel(t['roles.name'], { exact: true }).fill(roleName);
+	await page.getByLabel(t['roles.descriptionLabel'], { exact: true }).fill('Auditoria E2E');
+	await page.getByLabel('org:read', { exact: true }).check();
+	const createRolePromise = page.waitForResponse(
+		(response) =>
+			new URL(response.url()).pathname === '/api/v1/roles' && response.request().method() === 'POST'
+	);
+	await page.getByRole('button', { name: t['roles.create'], exact: true }).click();
+	const createRoleResponse = await createRolePromise;
+	expect(createRoleResponse.status()).toBe(201);
+	await expect(page.getByText(roleName, { exact: true })).toBeVisible();
+
+	await page.reload();
+	await settleAnimations(page);
+	await expect(page.getByText(roleName, { exact: true })).toBeVisible();
+
+	await page
+		.getByRole('button', { name: format('roles.edit', { name: roleName }), exact: true })
+		.click();
+	await page.getByLabel(t['roles.name'], { exact: true }).fill(updatedRoleName);
+	await page.getByLabel('task:read', { exact: true }).check();
+	const updateRolePromise = page.waitForResponse(
+		(response) =>
+			/\/api\/v1\/roles\/[^/]+$/.test(new URL(response.url()).pathname) &&
+			response.request().method() === 'PATCH'
+	);
+	await page.getByRole('button', { name: t['roles.save'], exact: true }).click();
+	const updateRoleResponse = await updateRolePromise;
+	expect(updateRoleResponse.status()).toBe(200);
+	await expect(page.getByText(updatedRoleName, { exact: true })).toBeVisible();
+
+	await page.emulateMedia({ colorScheme: 'light' });
 	await page.evaluate(() => {
 		try {
 			localStorage.removeItem('flora.theme');
@@ -353,4 +399,19 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 		}
 		document.documentElement.classList.remove('dark');
 	});
+	await settleAnimations(page);
+	await auditAccessibility(page, '/settings (roles light mode)');
+	await capture(page, '19-settings-roles-light.png');
+
+	const deleteRolePromise = page.waitForResponse(
+		(response) =>
+			/\/api\/v1\/roles\/[^/]+$/.test(new URL(response.url()).pathname) &&
+			response.request().method() === 'DELETE'
+	);
+	await page
+		.getByRole('button', { name: format('roles.delete', { name: updatedRoleName }), exact: true })
+		.click();
+	const deleteRoleResponse = await deleteRolePromise;
+	expect(deleteRoleResponse.status()).toBe(204);
+	await expect(page.getByText(updatedRoleName, { exact: true })).toHaveCount(0);
 });

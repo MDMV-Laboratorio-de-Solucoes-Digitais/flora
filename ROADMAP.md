@@ -314,3 +314,11 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 ### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
 
 - Remediação ACR PR `#403` (`72547119`): `set_oidc_subject_if_absent` atômico (`flora-core`), `email_verified == Some(true)`, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação de `issuer` no Discovery + `validate_jwks_uri` estrita, sanitização de erros `Error::OidcProvider` e remoção de `base64` em `flora-tests/Cargo.toml` (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` total). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.
+
+
+## Estado verificado — 2026-11-24 (ciclo 119; append-only)
+
+- Recontagem via `find` (`feature/119-rbac-roles-admin-ui` sobre `github/dev@42c38bf52`): `specs/` `109` diretórios (`583` arquivos, `001`–`119`), `.specify/assessments/` `107` (`453`), `.specify/validations/` `105` (`122`), `.specify/releases/` `105` (`105`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 119 (`1280/3125`, UI CRUD de papéis RBAC de `BF-02` fechada): `RoleItem`/`utils/roles.ts`/`api/roles.ts`/`RoleStore.svelte.ts` (`9/9` Vitest), `RoleManager.svelte` + `pt-BR.ts` em `/settings` (papéis nativos somente leitura e CRUD completo em personalizados com isolamento multi-contexto), ajuste WCAG em `layout.css` (`:root --primary`/`--ring: 152 76% 25%`, `5.85:1`), Passo 9 E2E em `.dark` e claro (`4 passed`, `14/14 WCAG 2.2 AA: sem achados`, capturas em Gist `6cef0d5c451c7050df6fa80aa2489468`) e Briefing `auth`/`rbac` (`#405`–`#408`), SemVer `0.10.1 -> 0.11.0`. PR `#404` já havia aterrissado em `github/dev@42c38bf52` com workflows manuais de deploy por ambiente (`ADR-0003`) e validadores `check_deploy_workflows.py`.
+- Próximo candidato 80/20 mapeado: endpoint HTTP para `HitlReceiptAdapter` (`BF-03`), seletor de tema em `/settings` (`BF-04`) ou UI de atribuição de papéis a membros da organização (`member:*`, item remanescente de RBAC).
+- **[NV]** CI remoto do PR 119, ACR independente, staging real, Forgejo e produção; histórico preservado.
