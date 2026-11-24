@@ -172,6 +172,16 @@ export const t = {
 	// Configurações
 	'settings.title': 'Configurações e administração',
 
+	// Tema e aparência
+	'theme.title': 'Aparência',
+	'theme.description':
+		'Escolha entre o tema claro ou escuro. A preferência fica salva neste navegador.',
+	'theme.groupLabel': 'Seleção de tema da interface',
+	'theme.light': 'Claro',
+	'theme.dark': 'Escuro',
+	'theme.statusLight': 'Tema atual: claro.',
+	'theme.statusDark': 'Tema atual: escuro.',
+
 	// Papéis e permissões (RBAC)
 	'roles.title': 'Papéis e permissões',
 	'roles.description':

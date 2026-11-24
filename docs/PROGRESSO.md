@@ -517,3 +517,12 @@ permanecem intactas; apenas acréscimos.
 - **Contagens (`find`)**: `specs/` `110` dirs (`588` arquivos), `.specify/assessments/` `108` (`458`), `.specify/validations/` `106` (`125`), `.specify/releases/` `106` (`106`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
 - **R6 / Artefatos**: issues `#411`–`#413`; `specs/120-hitl-receipt-http-endpoint/*`, `.specify/validations/120-hitl-receipt-http-endpoint/{test-roadmap,evidence,validate}.md`, `.specify/releases/120-hitl-receipt-http-endpoint/release.md` (`0.11.0 -> 0.12.0`), `docs/governance/2026-11-24-120-briefing-compreensao.md`, `docs/governance/2026-11-24-120-hitl-receipt-http-endpoint.md`.
 - **[NV]**: CI remoto do PR em `dev`, ACR independente, promoção `dev -> main` e staging/produção.
+
+
+## Estado verificado — 2026-11-24 (ciclo 121; append-only)
+
+- **Entrega (`1500/3125`, `BF-04 -> fechado`)**: utilitários `utils/theme.ts` (`flora.theme`) + `ThemeStore.svelte.ts` (Svelte 5 Runes, TDD `4/4` em `theme.test.ts`), componente acessível `ThemeSelector.svelte` em `/settings` + chaves `pt-BR.ts`, ajuste WCAG `:root --destructive` (`0 84.2% 40%` mantendo `.dark`), polimento `RoleManager.svelte` e Passo 9 E2E interativo (`Claro`/`Escuro` + `page.reload()`).
+- **Evidência local (`[EV]`, `task-2015`, `task-2049`, `task-2063` sobre `github/dev@2ff91e229`)**: `TDD RED` (`exit 1`) → `bun run check` (`0/0`), `bun run lint` (`exit 0`), Vitest `server` (`20` arquivos / `84` testes), `vite build` (`1m 2s`), `check_gate_integrity.py` (`PASS`, `85` pisos intactos), `check_deploy_workflows.py` + `--self-test` (`PASS`), `bun run test:e2e` (**`4 passed (1.4m)`**, **`14/14` WCAG 2.2 AA: `sem achados`**) e capturas publicadas em <https://gist.github.com/lfgranja/62253fe7a30a00b665e8277ae7b719cf>.
+- **Contagens (`find`)**: `specs/` `111` dirs (`593` arquivos), `.specify/assessments/` `109` (`463`), `.specify/validations/` `107` (`128`), `.specify/releases/` `107` (`107`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **R6 / Artefatos**: issues `#415`–`#418`; `specs/121-settings-theme-selector/*`, `.specify/validations/121-settings-theme-selector/{test-roadmap,evidence,validate}.md`, `.specify/releases/121-settings-theme-selector/release.md` (`0.12.0 -> 0.13.0`), `docs/governance/2026-11-24-121-settings-theme-selector.md`.
+- **[NV]**: CI remoto do PR em `dev`, ACR independente, promoção `dev -> main` e staging/produção.
