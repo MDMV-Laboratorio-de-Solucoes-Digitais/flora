@@ -382,3 +382,11 @@ permanece como registro do momento da medição; nenhuma linha foi reescrita.
 ### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
 
 - Remediação ACR PR `#403` (`72547119`): `UserRepository::set_oidc_subject_if_absent` atômico, `email_verified == Some(true)` obrigatório, `oidc_http_client()` (`Policy::none()` + timeouts), checagem de `issuer` no Discovery, `validate_jwks_uri` estrita contra prefix bypass/userinfo, sanitização de `Error::OidcProvider` e cobertura ampliada (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` pisos). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.
+
+
+### Estado verificado — 2026-11-24 (ciclo 119; append-only)
+
+- Recontagem via `find` (`feature/119-rbac-roles-admin-ui` sobre `github/dev@42c38bf52`): `specs/` `109` diretórios (`583` arquivos), `.specify/assessments/` `107` (`453`), `.specify/validations/` `105` (`122`), `.specify/releases/` `105` (`105`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 119 (`1280/3125`, UI CRUD de papéis RBAC de `BF-02` concluída): `RoleItem`, `utils/roles.ts`, `api/roles.ts`, `RoleStore.svelte.ts` (`9/9` Vitest), `RoleManager.svelte` + chaves `pt-BR` em `/settings`, ajuste `:root --primary`/`--ring` (`152 76% 25%`, `5.85:1` em tema claro), Passo 9 E2E Chromium + WCAG 2.2 AA (`18-settings-roles-dark.png` e `19-settings-roles-light.png` em Gist público) e Briefing `auth`/`rbac` (`#405`–`#408`), SemVer `0.10.1 -> 0.11.0`.
+- Gate local (`[EV]`, `task-1679`, `task-1692`): `bun run check` (`0/0`), `bun run lint` (exit `0`), Vitest `server` (`19` arquivos / `80` testes), `vite build` (`15.92s`), `check_gate_integrity.py` PASS (`82` pisos), `check_deploy_workflows.py` + `--self-test` PASS, e `bun run test:e2e` (**`4 passed (59.9s)`**, **`14/14` WCAG 2.2 AA: `sem achados`**).
+- **[NV]** CI remoto do PR 119 em `dev`, ACR independente, promoção `dev -> main` e deploy/produção no Coolify; histórico preservado.

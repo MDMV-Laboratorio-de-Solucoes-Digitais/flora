@@ -1194,3 +1194,24 @@ anterior foi alterada.
 
 - **Achados endereçados (`72547119`)**: exigência de `email_verified == Some(true)` em `IdTokenClaims` / `exchange_code_and_verify_id_token`, método atômico `UserRepository::set_oidc_subject_if_absent` (`flora-core/src/{traits/repository.rs,repositories/user_repository.rs}`) vinculando contas locais sem `oidc_subject` (`NULL`) apenas uma vez enquanto ativas, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação do `issuer` no Discovery, `validate_jwks_uri` estrita (`url::Host`, bloqueando `http://localhost.evil.com` e userinfo), sanitização de mensagens `Error::OidcProvider`, remoção da aresta `base64` não usada de `flora-tests` no `Cargo.lock` e ampliação dos testes em `oidc.rs` (`9/9`), `registration.rs` (`email_verified=false`, `exp=-3600s`, `http://localhost.evil.com/keys`) e `contract/auth.rs` (vinculação atômica + rejeição hijack `401`).
 - **Evidência local (`task-1323`)**: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo deny check bans licenses sources` (`bans ok, licenses ok, sources ok`), `cargo test --workspace` (`flora-api` `50 passed`, `flora-core` `35+21`, `flora-tests` `36 passed; 82 ignored`), `check_gate_integrity.py` PASS (`82` total) e `contract::auth::db_` **`25 passed; 0 failed`** (`77.95s` em Postgres 18.7). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.
+
+
+## Sessão: flora - UI CRUD de administração de papéis RBAC em /settings (ciclo 119, append-only)
+
+- **Identidade e baseline (`2026-11-24`, Bloco 0.c / Bloco 5)**:
+  - `session_title`: `flora - UI CRUD de administração de papéis RBAC em /settings` · `session_id`: `20261123-210500-orch-v49`
+  - Branch: `feature/119-rbac-roles-admin-ui` · Worktree: `.specify/queue/worktrees/119-rbac-roles-admin-ui` · Baseline `github/dev`: `42c38bf52`
+  - Escolha 80/20 (`1280/3125`, `IMPLEMENTAÇÃO`): fechar a lacuna CRUD de administração de papéis RBAC (`/api/v1/roles`) de `BF-02` em `/settings`, com DoD verificável em Vitest + Chromium Playwright real + WCAG 2.2 AA (`#405`–`#408`).
+- **Entrega (`FR-001`..`FR-004`, SemVer MINOR `0.10.1 -> 0.11.0`)**:
+  - `apps/frontend/src/lib/types/models.ts`, `src/lib/utils/roles.ts` (`ROLE_PERMISSION_OPTIONS` com 27 permissões canônicas sem `*`, normalização e validação), `src/lib/api/roles.ts` (`GET/POST/PATCH/DELETE /api/v1/roles`), `src/lib/state/RoleStore.svelte.ts` (`syncContext` + `loadSequence` + `pendingLoad`) e `tests/unit/roles.test.ts` (`9` casos).
+  - `apps/frontend/src/lib/components/rbac/RoleManager.svelte`, `src/routes/(app)/settings/+page.svelte`, `src/lib/i18n/pt-BR.ts` (papéis nativos somente leitura com badge `Nativo`, CRUD completo em personalizados, proteção anti-loop em `$effect` e mapeamento `403`/`409` em `pt-BR`).
+  - `apps/frontend/src/routes/layout.css`: ajuste de `:root` `--primary` e `--ring` para `152 76% 25%` (mantendo `.dark` inalterado), elevando o contraste no tema claro de `2.72:1` para `5.85:1` (WCAG 2.2 AA).
+  - `apps/frontend/tests/e2e/seed-flow.e2e.ts` (Passo 9): cobertura em `.dark` e claro com `page.reload()`, `POST 201`, `PATCH 200`, `DELETE 204` e capturas `18-settings-roles-dark.png` / `19-settings-roles-light.png`.
+- **Evidência local (`[EV]`, `task-1679`, `task-1692`)**:
+  - `bun run check`: `svelte-check found 0 errors and 0 warnings`; `bun run lint`: `prettier --check . && eslint .` exit `0`.
+  - `bun run test:unit -- --run --project server`: `Test Files 19 passed (19)`, `Tests 80 passed (80)` (incl. `9/9` em `roles.test.ts`).
+  - `VITE_API_URL=http://127.0.0.1:3000 bun run build`: `✓ built in 15.92s`, exit `0`.
+  - `python3 scripts/ci/check_gate_integrity.py && python3 scripts/ci/check_deploy_workflows.py && python3 scripts/ci/check_deploy_workflows.py --self-test`: `gate-integrity: PASS` (`82` pisos DB intactos), `deploy-workflows: PASS`, `deploy-workflow-self-test: PASS`.
+  - `bun run test:e2e` (Chromium + `flora-api` + `vite preview` + Postgres 18.7 `127.0.0.1:15433`): **`4 passed (59.9s)`** e **`14/14` auditorias WCAG 2.2 AA: `sem achados`**; capturas em <https://gist.github.com/lfgranja/6cef0d5c451c7050df6fa80aa2489468>.
+- **Contagens (`find`)**: `specs/` `109` dirs (`583` arquivos), `.specify/assessments/` `107` (`453`), `.specify/validations/` `105` (`122`), `.specify/releases/` `105` (`105`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`auth`/`rbac`) / R4 / R7**: `docs/governance/2026-11-23-119-briefing-compreensao.md`, `docs/governance/2026-11-23-119-rbac-roles-admin-ui.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.11.0`), `converge.md`, issues `#405`..`#408`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), PR de promoção `dev -> main` e deploy manual em staging/produção via Coolify (`workflow_dispatch`).

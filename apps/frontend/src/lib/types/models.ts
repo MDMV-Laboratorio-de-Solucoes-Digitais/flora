@@ -81,3 +81,11 @@ export interface NotificationItem {
 	isRead: boolean;
 	createdAt: ISO8601Date;
 }
+
+export interface RoleItem {
+	id: UUID;
+	name: string;
+	description: string | null;
+	permissions: string[];
+	isBuiltin: boolean;
+}

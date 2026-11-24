@@ -172,6 +172,43 @@ export const t = {
 	// Configurações
 	'settings.title': 'Configurações e administração',
 
+	// Papéis e permissões (RBAC)
+	'roles.title': 'Papéis e permissões',
+	'roles.description':
+		'Papéis definem o que cada membro pode fazer nesta organização. Papéis nativos são imutáveis.',
+	'roles.loading': 'Carregando papéis...',
+	'roles.refresh': 'Atualizar',
+	'roles.empty': 'Nenhum papel encontrado nesta organização.',
+	'roles.builtin': 'Nativo',
+	'roles.custom': 'Personalizado',
+	'roles.allPermissions': 'Todas as permissões',
+	'roles.noPermissions': 'Sem permissões',
+	'roles.createTitle': 'Criar papel personalizado',
+	'roles.editTitle': 'Editar papel personalizado',
+	'roles.name': 'Nome do papel',
+	'roles.namePlaceholder': 'Ex.: Auditor',
+	'roles.descriptionLabel': 'Descrição (opcional)',
+	'roles.permissionsLegend': 'Permissões',
+	'roles.create': 'Criar papel',
+	'roles.save': 'Salvar alterações',
+	'roles.cancel': 'Cancelar',
+	'roles.created': 'Papel criado: {name}',
+	'roles.updated': 'Papel atualizado: {name}',
+	'roles.edit': 'Editar papel {name}',
+	'roles.editShort': 'Editar',
+	'roles.delete': 'Excluir papel {name}',
+	'roles.deleteShort': 'Excluir',
+	'roles.deleted': 'Papel excluído: {name}',
+	'roles.nameRequired': 'Informe o nome do papel.',
+	'roles.permissionsRequired': 'Selecione ao menos uma permissão.',
+	'roles.permissionInvalid': 'Permissão inválida selecionada.',
+	'roles.duplicateName': 'Já existe um papel com este nome nesta organização.',
+	'roles.forbidden': 'Você não tem permissão para gerenciar papéis nesta organização.',
+	'error.loadRoles': 'Falha ao carregar papéis',
+	'error.createRole': 'Falha ao criar papel',
+	'error.updateRole': 'Falha ao atualizar papel',
+	'error.deleteRole': 'Falha ao excluir papel',
+
 	// Tarefas e quadro Kanban
 	'tasks.title': 'Tarefas',
 	'tasks.description':
