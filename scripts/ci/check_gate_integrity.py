@@ -48,7 +48,7 @@ FLOORS = {
     "files": 7,
     "tasks": 4,
     "workspace": 3,
-    "rbac": 3,
+    "rbac": 5,
     "bootstrap": 13,
     "hitl": 3,
 }

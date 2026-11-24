@@ -11,7 +11,9 @@ use axum::{
     http::StatusCode,
     routing::{get, post},
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -19,13 +21,14 @@ use crate::extractors::auth::AuthExtractor;
 use crate::state::AppState;
 use flora_core::error::{Error, Result};
 use flora_core::models::{Membership, Permission};
-use flora_core::repositories::{PgMembershipRepository, PgRoleRepository};
-use flora_core::traits::{MembershipRepository, RoleRepository};
+use flora_core::repositories::{PgMembershipRepository, PgRoleRepository, PgUserRepository};
+use flora_core::traits::{MembershipRepository, RoleRepository, UserRepository};
 
 /// Creates the RBAC (role-based access control) router.
 pub fn create_rbac_router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_roles).post(create_role))
+        .route("/members", get(list_members).post(add_member))
         .route(
             "/{id}",
             get(get_role).patch(update_role).delete(delete_role),
@@ -58,9 +61,37 @@ pub struct UpdateRoleRequest {
 
 /// Request body for assigning or revoking a role on a user.
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct UserRoleRequest {
     /// Target user identifier.
     pub user_id: Uuid,
+}
+
+/// Request body for adding an existing active user to the caller's organization.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AddMemberRequest {
+    /// Existing user's email address (trimmed and lowercased server-side).
+    pub email: String,
+    /// Organization role identifier to assign on membership creation.
+    pub role_id: Uuid,
+}
+
+/// Public view of an organization member (omits password hash, OIDC subject and profile).
+#[derive(Debug, Serialize)]
+pub struct OrganizationMemberResponse {
+    /// Member user identifier.
+    pub user_id: Uuid,
+    /// Member email address.
+    pub email: String,
+    /// Member display name.
+    pub display_name: String,
+    /// Assigned role identifier in the active organization.
+    pub role_id: Uuid,
+    /// Assigned role name in the active organization.
+    pub role_name: String,
+    /// Timestamp when the membership started.
+    pub joined_at: DateTime<Utc>,
 }
 
 /// Validates and converts permission strings from a request body.
@@ -116,6 +147,46 @@ fn can_manage_roles(role: &flora_core::models::Role) -> bool {
 /// Pure guard for modifying/deleting a role: built-ins are immutable by SE decision.
 const fn can_modify_role(role: &flora_core::models::Role) -> bool {
     !role.is_builtin
+}
+
+/// Normalizes and validates an email address for adding an existing user as member.
+fn validate_member_email(raw: &str) -> Result<String> {
+    let normalized = raw.trim().to_lowercase();
+    if normalized.is_empty() || !normalized.contains('@') {
+        return Err(Error::InvalidInput("Valid email is required".to_string()));
+    }
+    Ok(normalized)
+}
+
+/// Prevents self-demotion through member role reassignment.
+fn can_change_member_role(actor_user_id: Uuid, target_user_id: Uuid) -> bool {
+    actor_user_id != target_user_id
+}
+
+/// Prevents self-revocation through member removal.
+fn can_revoke_member(actor_user_id: Uuid, target_user_id: Uuid) -> bool {
+    actor_user_id != target_user_id
+}
+
+/// Resolve the verified session organization and require an active membership with read access.
+async fn require_org_reader(state: &AppState, auth: &AuthExtractor) -> Result<Uuid> {
+    let org_id = auth
+        .require_org()
+        .map_err(|_| Error::OrganizationContextRequired)?;
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let membership = membership_repo
+        .find_by_user_and_organization(auth.user_id, org_id)
+        .await?
+        .ok_or_else(|| Error::Forbidden("Not a member".to_string()))?;
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let role = role_repo
+        .find_by_id_and_organization(membership.role_id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(membership.role_id.to_string()))?;
+    if !can_list_roles(&role) {
+        return Err(Error::Forbidden("Insufficient permissions".to_string()));
+    }
+    Ok(org_id)
 }
 
 /// Resolve the verified session organization and require an admin membership role.
@@ -283,7 +354,108 @@ async fn delete_role(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// `POST /api/v1/roles/{id}/assign` — Assign a role to a user in the caller's org.
+/// `GET /api/v1/roles/members` — List members and their assigned roles in the caller's organization.
+async fn list_members(
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+) -> Result<Json<Vec<OrganizationMemberResponse>>> {
+    let org_id = require_org_reader(&state, &auth).await?;
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let memberships = membership_repo.find_by_organization_id(org_id).await?;
+    if memberships.is_empty() {
+        return Ok(Json(Vec::new()));
+    }
+
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let roles = role_repo.find_by_organization_id(org_id).await?;
+    let role_names: HashMap<Uuid, String> =
+        roles.into_iter().map(|role| (role.id, role.name)).collect();
+
+    let user_ids: Vec<Uuid> = memberships.iter().map(|m| m.user_id).collect();
+    let user_repo = PgUserRepository::new((*state.db_pool).clone());
+    let users = user_repo.find_by_ids(&user_ids).await?;
+    let users_by_id: HashMap<Uuid, flora_core::models::User> =
+        users.into_iter().map(|user| (user.id, user)).collect();
+
+    let mut response = Vec::with_capacity(memberships.len());
+    for membership in memberships {
+        if let Some(user) = users_by_id.get(&membership.user_id) {
+            let role_name = role_names
+                .get(&membership.role_id)
+                .cloned()
+                .unwrap_or_else(|| "Member".to_string());
+            response.push(OrganizationMemberResponse {
+                user_id: membership.user_id,
+                email: user.email.clone(),
+                display_name: user.display_name.clone(),
+                role_id: membership.role_id,
+                role_name,
+                joined_at: membership.joined_at,
+            });
+        }
+    }
+
+    response.sort_by(|a, b| {
+        a.display_name
+            .cmp(&b.display_name)
+            .then_with(|| a.email.cmp(&b.email))
+            .then_with(|| a.user_id.cmp(&b.user_id))
+    });
+
+    Ok(Json(response))
+}
+
+/// `POST /api/v1/roles/members` — Add an existing active user to the caller's organization.
+async fn add_member(
+    State(state): State<AppState>,
+    auth: AuthExtractor,
+    Json(req): Json<AddMemberRequest>,
+) -> Result<(StatusCode, Json<OrganizationMemberResponse>)> {
+    let org_id = require_org_admin(&state, &auth).await?;
+    let email = validate_member_email(&req.email)?;
+
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let role = role_repo
+        .find_by_id_and_organization(req.role_id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(req.role_id.to_string()))?;
+
+    let user_repo = PgUserRepository::new((*state.db_pool).clone());
+    let user = user_repo
+        .find_by_email(&email)
+        .await?
+        .filter(|candidate| candidate.is_active)
+        .ok_or_else(|| Error::UserNotFound(email.clone()))?;
+
+    let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    if membership_repo
+        .find_by_user_and_organization(user.id, org_id)
+        .await?
+        .is_some()
+    {
+        return Err(Error::DuplicateEntry(
+            "User is already a member of this organization".to_string(),
+        ));
+    }
+
+    let created = membership_repo
+        .create(Membership::new(user.id, org_id, role.id))
+        .await?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(OrganizationMemberResponse {
+            user_id: user.id,
+            email: user.email,
+            display_name: user.display_name,
+            role_id: role.id,
+            role_name: role.name,
+            joined_at: created.joined_at,
+        }),
+    ))
+}
+
+/// `POST /api/v1/roles/{id}/assign` — Reassign an existing organization member's role atomically.
 async fn assign_role(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
@@ -291,6 +463,9 @@ async fn assign_role(
     Json(req): Json<UserRoleRequest>,
 ) -> Result<StatusCode> {
     let org_id = require_org_admin(&state, &auth).await?;
+    if !can_change_member_role(auth.user_id, req.user_id) {
+        return Err(Error::Forbidden("Cannot change own role".to_string()));
+    }
     let role_repo = PgRoleRepository::new((*state.db_pool).clone());
     let _target_role = role_repo
         .find_by_id_and_organization(id, org_id)
@@ -298,28 +473,37 @@ async fn assign_role(
         .ok_or_else(|| Error::RoleNotFound(id.to_string()))?;
 
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
-    if membership_repo
-        .find_by_user_and_organization(req.user_id, org_id)
-        .await?
-        .is_some()
-    {
-        membership_repo.delete(req.user_id, org_id).await?;
-    }
-    let _membership = membership_repo
-        .create(Membership::new(req.user_id, org_id, id))
-        .await?;
+    let _updated = membership_repo.update_role(req.user_id, org_id, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// `POST /api/v1/roles/{id}/revoke` — Remove the user's membership (and role) from the org.
+/// `POST /api/v1/roles/{id}/revoke` — Remove an organization member holding the specified role.
 async fn revoke_role(
-    Path(_id): Path<Uuid>,
+    Path(id): Path<Uuid>,
     State(state): State<AppState>,
     auth: AuthExtractor,
     Json(req): Json<UserRoleRequest>,
 ) -> Result<StatusCode> {
     let org_id = require_org_admin(&state, &auth).await?;
+    if !can_revoke_member(auth.user_id, req.user_id) {
+        return Err(Error::Forbidden("Cannot revoke own membership".to_string()));
+    }
+    let role_repo = PgRoleRepository::new((*state.db_pool).clone());
+    let _target_role = role_repo
+        .find_by_id_and_organization(id, org_id)
+        .await?
+        .ok_or_else(|| Error::RoleNotFound(id.to_string()))?;
+
     let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+    let membership = membership_repo
+        .find_by_user_and_organization(req.user_id, org_id)
+        .await?
+        .ok_or(Error::MembershipNotFound)?;
+    if membership.role_id != id {
+        return Err(Error::InvalidInput(
+            "User does not hold the specified role".to_string(),
+        ));
+    }
     membership_repo.delete(req.user_id, org_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -388,5 +572,25 @@ mod tests {
             Some((false, false, false, true, true)),
             "RoleResponse must omit tenant/timestamps and keep id/permissions"
         );
+    }
+
+    #[test]
+    fn validate_member_email_normalizes_and_rejects_invalid() {
+        assert_eq!(
+            validate_member_email("  Alice@Acme.Test  ").ok().as_deref(),
+            Some("alice@acme.test")
+        );
+        assert!(validate_member_email("   ").is_err());
+        assert!(validate_member_email("not-an-email").is_err());
+    }
+
+    #[test]
+    fn self_demotion_and_self_revocation_are_blocked() {
+        let actor = Uuid::now_v7();
+        let other = Uuid::now_v7();
+        assert!(!can_change_member_role(actor, actor));
+        assert!(can_change_member_role(actor, other));
+        assert!(!can_revoke_member(actor, actor));
+        assert!(can_revoke_member(actor, other));
     }
 }

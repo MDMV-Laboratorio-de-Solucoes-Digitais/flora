@@ -106,6 +106,14 @@ pub trait MembershipRepository: Send + Sync + std::fmt::Debug {
     /// Create a new membership.
     async fn create(&self, membership: Membership) -> crate::Result<Membership>;
 
+    /// Atomically update a member's role within an existing organization membership.
+    async fn update_role(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        role_id: Uuid,
+    ) -> crate::Result<Membership>;
+
     /// Delete a membership.
     async fn delete(&self, user_id: Uuid, organization_id: Uuid) -> crate::Result<()>;
 }

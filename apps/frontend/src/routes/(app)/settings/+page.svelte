@@ -1,5 +1,6 @@
 <script lang="ts">
 	import OrganizationManager from '$lib/components/organization/OrganizationManager.svelte';
+	import MemberManager from '$lib/components/rbac/MemberManager.svelte';
 	import RoleManager from '$lib/components/rbac/RoleManager.svelte';
 	import ThemeSelector from '$lib/components/settings/ThemeSelector.svelte';
 	import WorkspaceCreate from '$lib/components/workspace/WorkspaceCreate.svelte';
@@ -14,5 +15,6 @@
 		<OrganizationManager />
 		<WorkspaceCreate />
 		<RoleManager />
+		<MemberManager />
 	</div>
 </div>

@@ -34,6 +34,7 @@ mod db {
     struct Seed {
         org: Organization,
         role: Role,
+        user_id: uuid::Uuid,
         token: String,
     }
 
@@ -108,7 +109,12 @@ mod db {
             ),
             &config.app.jwt_secret,
         );
-        Ok(Seed { org, role, token })
+        Ok(Seed {
+            org,
+            role,
+            user_id: user.id,
+            token,
+        })
     }
 
     async fn request(
@@ -263,6 +269,343 @@ mod db {
             "custom patch status {status}: {body}"
         );
         anyhow::ensure!(body["name"] == "Renamed", "name not updated: {body}");
+        Ok(())
+    }
+
+    async fn seed_additional_member(
+        state: &AppState,
+        config: &Config,
+        org_id: uuid::Uuid,
+        role: Role,
+        prefix: &str,
+    ) -> anyhow::Result<(User, String)> {
+        let pool = (*state.db_pool).clone();
+        let uniq = uuid::Uuid::now_v7().simple().to_string();
+        let user = PgUserRepository::new(pool.clone())
+            .create(User::new(
+                &format!("{prefix}-{uniq}@example.test"),
+                "Additional Member",
+            ))
+            .await?;
+        let _membership = PgMembershipRepository::new(pool.clone())
+            .create(Membership::new(user.id, org_id, role.id))
+            .await?;
+        let jti = format!("jti-{prefix}-{}", uuid::Uuid::now_v7());
+        let now = Utc::now();
+        let _session = PgSessionRepository::new(pool)
+            .create(Session {
+                id: uuid::Uuid::now_v7(),
+                user_id: user.id,
+                organization_id: org_id,
+                jti: jti.clone(),
+                refresh_token_id: None,
+                client_ip: None,
+                user_agent: None,
+                expires_at: now + Duration::seconds(3600),
+                last_activity_at: now,
+                is_active: true,
+                created_at: now,
+                updated_at: now,
+            })
+            .await?;
+        let token = encode_token(
+            &FloraClaims::new(
+                user.id,
+                jti,
+                org_id,
+                &user.email,
+                config.app.session_ttl_secs,
+            ),
+            &config.app.jwt_secret,
+        );
+        Ok((user, token))
+    }
+
+    async fn create_org_role(
+        repo: &PgRoleRepository,
+        org_id: uuid::Uuid,
+        name: &str,
+        perms: &[Permission],
+    ) -> anyhow::Result<Role> {
+        let mut role = Role::new(org_id, name);
+        for permission in perms {
+            role.add_permission(*permission);
+        }
+        Ok(repo.create(role).await?)
+    }
+
+    fn assert_member_list_sanitized(
+        members: &Value,
+        other_user_id: uuid::Uuid,
+    ) -> anyhow::Result<()> {
+        let listed = members
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected array: {members}"))?;
+        anyhow::ensure!(listed.len() == 2, "expected 2 org members, got {listed:?}");
+        anyhow::ensure!(
+            listed.iter().all(|m| {
+                m.as_object().is_some_and(|o| {
+                    !o.contains_key("password_hash")
+                        && !o.contains_key("oidc_subject")
+                        && !o.contains_key("profile")
+                        && o["user_id"] != serde_json::json!(other_user_id)
+                })
+            }),
+            "member response leaked sensitive fields or other tenant: {listed:?}"
+        );
+        Ok(())
+    }
+
+    async fn assert_assign_and_revoke_lifecycle(
+        state: &AppState,
+        admin_token: &str,
+        org_id: uuid::Uuid,
+        target_user_id: uuid::Uuid,
+        reader_role_id: uuid::Uuid,
+        editor_role_id: uuid::Uuid,
+        other_org_role_id: uuid::Uuid,
+    ) -> anyhow::Result<()> {
+        let membership_repo = PgMembershipRepository::new((*state.db_pool).clone());
+        let initial_membership = membership_repo
+            .find_by_user_and_organization(target_user_id, org_id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("membership missing after add"))?;
+        let (status, _) = request(
+            state,
+            "POST",
+            &format!("/{other_org_role_id}/assign"),
+            Some(admin_token),
+            Some(serde_json::json!({ "user_id": target_user_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::NOT_FOUND);
+
+        let (status, _) = request(
+            state,
+            "POST",
+            &format!("/{editor_role_id}/assign"),
+            Some(admin_token),
+            Some(serde_json::json!({ "user_id": target_user_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::NO_CONTENT);
+        let updated = membership_repo
+            .find_by_user_and_organization(target_user_id, org_id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("membership disappeared after assign"))?;
+        anyhow::ensure!(updated.role_id == editor_role_id);
+        anyhow::ensure!(updated.joined_at == initial_membership.joined_at);
+
+        let (status, _) = request(
+            state,
+            "POST",
+            &format!("/{reader_role_id}/revoke"),
+            Some(admin_token),
+            Some(serde_json::json!({ "user_id": target_user_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::CONFLICT);
+
+        let (status, _) = request(
+            state,
+            "POST",
+            &format!("/{editor_role_id}/revoke"),
+            Some(admin_token),
+            Some(serde_json::json!({ "user_id": target_user_id })),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::NO_CONTENT);
+        anyhow::ensure!(
+            membership_repo
+                .find_by_user_and_organization(target_user_id, org_id)
+                .await?
+                .is_none()
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 122)"]
+    async fn db_rbac_members_list_add_assign_and_revoke_lifecycle() -> anyhow::Result<()> {
+        let (state, config) = db_state().await?;
+        let pool = (*state.db_pool).clone();
+        let admin = seed_member(
+            &state,
+            &config,
+            &[Permission::OrgRead, Permission::RoleWrite],
+        )
+        .await?;
+
+        let role_repo = PgRoleRepository::new(pool.clone());
+        let reader_role = create_org_role(
+            &role_repo,
+            admin.org.id,
+            "ReaderRole",
+            &[Permission::OrgRead],
+        )
+        .await?;
+        let editor_role = create_org_role(
+            &role_repo,
+            admin.org.id,
+            "EditorRole",
+            &[Permission::OrgRead, Permission::TaskWrite],
+        )
+        .await?;
+        let (_, reader_token) =
+            seed_additional_member(&state, &config, admin.org.id, reader_role.clone(), "reader")
+                .await?;
+
+        let uniq = uuid::Uuid::now_v7().simple().to_string();
+        let target_user = PgUserRepository::new(pool)
+            .create(User::new(
+                &format!("target-{uniq}@example.test"),
+                "Target Member",
+            ))
+            .await?;
+        let other_org = seed_member(&state, &config, &[Permission::OrgAdmin]).await?;
+
+        let (status, _) = request(&state, "GET", "/members", None, None).await?;
+        anyhow::ensure!(status == StatusCode::UNAUTHORIZED);
+
+        let (status, members) =
+            request(&state, "GET", "/members", Some(&reader_token), None).await?;
+        anyhow::ensure!(status == StatusCode::OK);
+        assert_member_list_sanitized(&members, other_org.user_id)?;
+
+        let add_payload = serde_json::json!({
+            "email": target_user.email.to_uppercase(),
+            "role_id": reader_role.id,
+        });
+        let (status, _) = request(
+            &state,
+            "POST",
+            "/members",
+            Some(&reader_token),
+            Some(add_payload.clone()),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::FORBIDDEN);
+
+        let (status, added) = request(
+            &state,
+            "POST",
+            "/members",
+            Some(&admin.token),
+            Some(add_payload.clone()),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::CREATED
+                && added["user_id"] == serde_json::json!(target_user.id)
+                && added["role_id"] == serde_json::json!(reader_role.id),
+            "unexpected add member response {status}: {added}"
+        );
+
+        let (status, _) = request(
+            &state,
+            "POST",
+            "/members",
+            Some(&admin.token),
+            Some(add_payload),
+        )
+        .await?;
+        anyhow::ensure!(status == StatusCode::CONFLICT);
+
+        assert_assign_and_revoke_lifecycle(
+            &state,
+            &admin.token,
+            admin.org.id,
+            target_user.id,
+            reader_role.id,
+            editor_role.id,
+            other_org.role.id,
+        )
+        .await
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 122)"]
+    async fn db_rbac_members_prevents_self_demotion_and_self_revocation() -> anyhow::Result<()> {
+        let (state, config) = db_state().await?;
+        let admin = seed_member(
+            &state,
+            &config,
+            &[Permission::OrgAdmin, Permission::RoleWrite],
+        )
+        .await?;
+        let pool = (*state.db_pool).clone();
+        let viewer_role = PgRoleRepository::new(pool.clone())
+            .create({
+                let mut r = Role::new(admin.org.id, "ViewerSelfCheck");
+                r.add_permission(Permission::OrgRead);
+                r
+            })
+            .await?;
+
+        let (status, body) = request(
+            &state,
+            "POST",
+            &format!("/{}/assign", viewer_role.id),
+            Some(&admin.token),
+            Some(serde_json::json!({ "user_id": admin.user_id })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::FORBIDDEN,
+            "self-demotion via assign must return 403, got {status}: {body}"
+        );
+
+        let (status, body) = request(
+            &state,
+            "POST",
+            &format!("/{}/revoke", admin.role.id),
+            Some(&admin.token),
+            Some(serde_json::json!({ "user_id": admin.user_id })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::FORBIDDEN,
+            "self-revocation via revoke must return 403, got {status}: {body}"
+        );
+
+        let (status, _) = request(
+            &state,
+            "POST",
+            "/members",
+            Some(&admin.token),
+            Some(serde_json::json!({
+                "email": "someone@example.test",
+                "role_id": viewer_role.id,
+                "extra": true
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::UNPROCESSABLE_ENTITY,
+            "unknown field in AddMemberRequest must be rejected, got {status}"
+        );
+
+        let (status, _) = request(
+            &state,
+            "POST",
+            &format!("/{}/assign", viewer_role.id),
+            Some(&admin.token),
+            Some(serde_json::json!({
+                "user_id": uuid::Uuid::now_v7(),
+                "extra": true
+            })),
+        )
+        .await?;
+        anyhow::ensure!(
+            status == StatusCode::UNPROCESSABLE_ENTITY,
+            "unknown field in UserRoleRequest must be rejected, got {status}"
+        );
+
+        let membership = PgMembershipRepository::new(pool)
+            .find_by_user_and_organization(admin.user_id, admin.org.id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("admin membership must remain intact"))?;
+        anyhow::ensure!(membership.role_id == admin.role.id);
         Ok(())
     }
 }
