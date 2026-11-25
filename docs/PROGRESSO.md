@@ -616,3 +616,7 @@ permanecem intactas; apenas acréscimos.
 - **Entrega**: ação “Excluir” com confirmação inline acessível em `FilePreview`; callback `handleDeleted` em `+page.svelte` remove o item do `FileStore` somente após `204`; chaves pt-BR `file.delete*`/`files.deleted`; Passo 5d no smoke E2E. Backend, migrations, gate e required checks inalterados.
 - **Evidência local ([EV])**: `bun run check` 4902 arquivos/0 erros; `bun run lint` exit 0; `check_gate_integrity.py` PASS (87 pisos, 07:03:50Z→07:15:40Z); `git diff --check` RC 0. Roteiro/evidência em `.specify/validations/124-file-delete-ui/`.
 - **[NV]/bloqueios**: contrato DB não reexecutado localmente (checksum antigo em `:5432`) e E2E local não repetido após as três falhas do ciclo 123; `db-tests`/`e2e-browser` remotos são a autoridade e serão colados no PR. PR #433 (`dev→main`) permanece escalado ao SWE; nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.
+
+### Resultado — ciclo 124 (2026-11-25T07:38Z, append-only)
+
+- `[EV]` PR #435 mesclado em `dev` (`bfc51d100317`, 07:37:25Z); required checks e `e2e-browser` remoto SUCCESS no head `40d299e246` ([run](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45568843684/job/139050220020)). ACR `correct`, 3 P3 corrigidos. E2E local `blocked`; automação de provisionamento segue como pendência ao SWE. PR #433 (`dev→main`) segue escalado; nenhum merge de `main`/deploy executado por agente.
