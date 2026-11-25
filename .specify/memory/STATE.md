@@ -1297,3 +1297,14 @@ anterior foi alterada.
 ### Suplemento — gate (2026-11-25T02:01Z, append-only)
 
 - `[EV]` `python3 scripts/ci/check_gate_integrity.py` PASS (`87` pisos, `GATE_RC=0`) na worktree `assess-intake-backfill-20261125`, com `TMPDIR` gravável. CI remoto e merge permanecem **[NV]** neste ponto.
+
+## Sessão: flora - backfill/regularização de research (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T022000Z-assess-research`; branch `assessment/assess-research-backfill-20261125`; worktree `.specify/queue/worktrees/assess-research-backfill-20261125`; base `github/dev@e88dc8e4d`.
+- **Entrega**: 13 `research.md` novos (`040`/`041`/`042`/`086`–`095`) e 5 regularizados (`107`–`110`, `113`) no formato canônico de 8 seções; nenhum veredito, intake, spec, gate, CI ou código alterado.
+- **Evidência local ([EV])**: 18/18 com Slug exato, 7–13 fontes, `Evidence Against` e `[NEEDS CLARIFICATION:]`; paths não-symlink; `git diff --check` RC 0.
+- **[NV]**: gate/CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge, force-push ou toque em trabalho alheio.
+
+### Suplemento — gate (2026-11-25T02:29Z, append-only)
+
+- `[EV]` `python3 scripts/ci/check_gate_integrity.py` PASS (`87` pisos, `GATE_RC=0`) na worktree `assess-research-backfill-20261125`, com `TMPDIR` gravável. CI remoto e merge permanecem **[NV]** neste ponto.
