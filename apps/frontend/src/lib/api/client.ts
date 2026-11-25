@@ -138,6 +138,28 @@ export const ApiClient = {
 		return (body as T) ?? ({} as T);
 	},
 
+	/**
+	 * Download binary content with the same auth lifecycle as `request()`.
+	 * `request()` parses the body as text/JSON and therefore cannot be reused
+	 * for binary downloads; this method keeps the Bearer header, 401 lock and
+	 * pt-BR error mapping without consuming the Blob.
+	 */
+	async downloadBlob(endpoint: string): Promise<Blob> {
+		const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+		const headers = new Headers();
+		if (authState.token) headers.set('Authorization', `Bearer ${authState.token}`);
+
+		const response = await fetch(url, { headers });
+		if (response.status === 401) {
+			authState.lockSession();
+			throw apiErrorFromResponse(response, url, await parseResponseBody(response), 'unauthorized');
+		}
+		if (!response.ok) {
+			throw apiErrorFromResponse(response, url, await parseResponseBody(response));
+		}
+		return response.blob();
+	},
+
 	/** GET /api/v1/search?q=… — authoritative Postgres FTS. */
 	async search(parameters: { q: string; type?: string; limit?: number }): Promise<SearchResponse> {
 		const query = new URLSearchParams({ q: parameters.q });

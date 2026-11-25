@@ -1,12 +1,26 @@
 <script lang="ts">
+	import { ApiClient } from '$lib/api/client';
+	import { apiErrorMessage, t } from '$lib/i18n';
 	import type { FileAttachment } from '$lib/types/models';
-	import { API_BASE_URL } from '$lib/api/client';
-	import { t } from '$lib/i18n';
 
 	let { file } = $props<{ file: FileAttachment }>();
+	let errorMessage = $state<string | null>(null);
 
-	function getDownloadUrl() {
-		return `${API_BASE_URL}/api/v1/files/download/${file.id}`;
+	async function download() {
+		errorMessage = null;
+		try {
+			const blob = await ApiClient.downloadBlob(`/api/v1/files/download/${file.id}`);
+			const url = URL.createObjectURL(blob);
+			const anchor = document.createElement('a');
+			anchor.href = url;
+			anchor.download = file.fileName;
+			document.body.append(anchor);
+			anchor.click();
+			anchor.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 1000);
+		} catch (error) {
+			errorMessage = apiErrorMessage(error, 'file.downloadFailed');
+		}
 	}
 </script>
 
@@ -22,11 +36,14 @@
 	<div class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 		{file.fileName}
 	</div>
-	<a
-		href={getDownloadUrl()}
+	<button
+		type="button"
+		onclick={download}
 		class="text-blue-700 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-		download
 	>
 		{t['file.download']}
-	</a>
+	</button>
 </div>
+{#if errorMessage}
+	<p role="alert" class="mt-1 text-red-700 dark:text-red-400">{errorMessage}</p>
+{/if}

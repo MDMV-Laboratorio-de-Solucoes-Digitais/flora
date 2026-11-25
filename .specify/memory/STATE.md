@@ -1344,3 +1344,11 @@ anterior foi alterada.
 ### Suplemento — gate (2026-11-25T05:29Z, append-only)
 
 - `[EV]` gate local: 1ª execução timeout em 1200 s na compilação; 2ª **PASS** (`87` pisos, `GATE_RC=0`, 05:26:55Z→05:29:02Z) com target aquecido, `TMPDIR` gravável e `CARGO_BUILD_JOBS=2`. CI remoto segue `[NV]` até o head do PR.
+
+## Decisão 80/20 — ciclo 123 download autenticado (2026-11-25T05:50Z, append-only)
+
+- **session_title**: `flora - corrige download autenticado de arquivos em /files`; `session_id`: `orch-20261125T054000Z-lightsout`; branch `fix/123-authorized-file-download`; worktree `.specify/queue/worktrees/lightsout-20261125`; base `github/dev@74f1eda10b17`.
+- **Critério**: `impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`, denominador **3125**. Candidato `BF-07` (CORREÇÃO): download em `/files` usa `<a href>` sem `Authorization` e retorna 401 no endpoint autenticado; impact 5 × confidence 5 × fechamento 4 × effort⁻¹ 4 × risk⁻¹ 4 = **1600/3125**. Alternativas: delete na UI 720, WS revalidação 432, quota transacional 384, deep-link de busca 144.
+- **Consumidor**: membro autenticado que fez upload e clica em “Baixar” em `/files` — comportamento observável, não artefato do ciclo.
+- **DoD**: com sessão válida, o clique em “Baixar” executa `fetch` com `Authorization: Bearer`, recebe `200` e gera download com o nome/bytes do arquivo; `401` continua acionando `authState.lockSession()`. Prova: `cd apps/frontend && bun run test:unit -- --run --project server tests/unit/filesDownload.test.ts` e `bun run test:e2e -- --grep "authorized download"`. Fecha `BF-07` (e contribui para o P0 “upload/download real” de `OBJETIVO.md`).
+- **Fluxo**: R5 (bug reportado) com `.specify/bugs/authorized-file-download-401/{bug,assessment,fix,test}.md`; gate autoritativo `check_gate_integrity.py` e CI GitHub permanecem inalterados.

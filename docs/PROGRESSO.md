@@ -601,3 +601,11 @@ permanecem intactas; apenas acréscimos.
 ### Suplemento — gate (2026-11-25T05:29Z, append-only)
 
 - `[EV]` gate determinístico: primeira execução excedeu 1200 s durante compilação (sem `GATE_RC`); segunda com target aquecido **PASS** — `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (05:26:55Z→05:29:02Z). Nenhuma mudança de código; detalhes em `evidence.md`.
+
+## Ciclo 123 — download autenticado em /files (2026-11-25, append-only)
+
+- **Âncora**: `session_title` = `flora - corrige download autenticado de arquivos em /files`; branch `fix/123-authorized-file-download`; base `github/dev@74f1eda10b17`. Critério 80/20 `impacto5 × confiança5 × fechamento4 × esforço⁻¹4 × risco⁻¹4 = 1600/3125` — CORREÇÃO `BF-07`, consumidor = membro autenticado em `/files`.
+- **Entrega**: `ApiClient.downloadBlob` envia Bearer e trava sessão em 401; `FilePreview` troca `<a>` por botão com object URL e alerta pt-BR via `apiErrorMessage`; nova chave `file.downloadFailed`; teste unitário (2 casos) e Passo 5c no E2E; bug flow em `.specify/bugs/authorized-file-download-401/`; `.gitignore` passa a ignorar artefatos Playwright.
+- **Evidência local ([EV])**: `bun run check` 4902 arquivos/0 erros; `bun run lint` exit 0; Vitest 2/2; `check_gate_integrity.py` PASS (87 pisos, 05:48:17Z→06:03:01Z); `git diff --check` RC 0.
+- **Bloqueio registrado**: E2E local `evidence_status: blocked` após três tentativas (webServer 120 s; migration checksum em `:5432`; `CI=true`/porta ocupada; 900 s sem assertion). `e2e-browser` é advisory; required checks remotos são a autoridade de merge. Automação de provisionamento E2E (PG18 fresco + `dev-mint` pré-compilado + reuse) vai como próximo passo ao SWE. Detalhes em `.specify/validations/123-authorized-file-download/evidence.md`.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.
