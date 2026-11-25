@@ -3,8 +3,14 @@
 	import { apiErrorMessage, t } from '$lib/i18n';
 	import type { FileAttachment } from '$lib/types/models';
 
-	let { file } = $props<{ file: FileAttachment }>();
+	let { file, onDelete } = $props<{
+		file: FileAttachment;
+		onDelete?: (deleted: FileAttachment) => void;
+	}>();
+
 	let errorMessage = $state<string | null>(null);
+	let isConfirmingDelete = $state(false);
+	let isDeleting = $state(false);
 
 	async function download() {
 		errorMessage = null;
@@ -21,6 +27,29 @@
 		} catch (error) {
 			errorMessage = apiErrorMessage(error, 'file.downloadFailed');
 		}
+	}
+
+	async function remove() {
+		errorMessage = null;
+		if (!isConfirmingDelete) {
+			isConfirmingDelete = true;
+			return;
+		}
+		isDeleting = true;
+		try {
+			await ApiClient.request(`/api/v1/files/${file.id}`, { method: 'DELETE' });
+			onDelete?.(file);
+			isConfirmingDelete = false;
+		} catch (error) {
+			errorMessage = apiErrorMessage(error, 'file.deleteFailed');
+		} finally {
+			isDeleting = false;
+		}
+	}
+
+	function cancelDelete() {
+		isConfirmingDelete = false;
+		errorMessage = null;
 	}
 </script>
 
@@ -43,6 +72,35 @@
 	>
 		{t['file.download']}
 	</button>
+	{#if isConfirmingDelete}
+		<button
+			type="button"
+			onclick={remove}
+			disabled={isDeleting}
+			aria-label={`${t['file.deleteConfirm']} ${file.fileName}`}
+			class="text-red-700 underline hover:text-red-800 disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
+		>
+			{t['file.deleteConfirm']}
+		</button>
+		<button
+			type="button"
+			onclick={cancelDelete}
+			disabled={isDeleting}
+			aria-label={`${t['file.deleteCancel']} ${file.fileName}`}
+			class="text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+		>
+			{t['file.deleteCancel']}
+		</button>
+	{:else}
+		<button
+			type="button"
+			onclick={remove}
+			aria-label={`${t['file.delete']} ${file.fileName}`}
+			class="text-red-700 underline hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+		>
+			{t['file.delete']}
+		</button>
+	{/if}
 </div>
 {#if errorMessage}
 	<p role="alert" class="mt-1 text-red-700 dark:text-red-400">{errorMessage}</p>
