@@ -1319,3 +1319,10 @@ anterior foi alterada.
 ### Suplemento — gate (2026-11-25T03:33Z, append-only)
 
 - `[EV]` gate local: FAIL→FAIL→PASS. Causas ambientais: SIGABRT em `aws-lc-sys` (memória/swap) e ENOSPC em `chrono-tz` (btrfs metadata); após `cargo clean` no target próprio e `CARGO_BUILD_JOBS=2`, `gate-integrity: PASS` (`87` pisos, `GATE_RC=0`, 03:18:11Z→03:32:52Z). Sem código/gate/CI alterados; CI remoto observado via PR #428.
+
+## Sessão: flora - backfill/regularização de concept (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T035000Z-assess-shape`; branch `assessment/assess-shape-backfill-20261125`; worktree `.specify/queue/worktrees/assess-shape-backfill-20261125`; base SHA remoto `266437bbfa` (ref local stale).
+- **Entrega**: 54 `concept.md` (30 novos, 2 reescritos, 22 ao lado de `shape.md` fino) + 1 `problem.md` de pré-requisito em `116`. Nenhum veredito/intake/research/spec/gate/CI/código alterado; `shape.md`/`define.md` antigos intactos.
+- **Evidência local ([EV])**: 54/54 com Slug exato, 3 opções e seções canônicas; gate PASS (`87` pisos, `GATE_RC=0`, 03:50:13Z→04:00:27Z); `git diff --check` RC 0.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
