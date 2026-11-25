@@ -26,7 +26,7 @@
 
 ## Recommendation
 
-**Option A**. O problem.md coloca como metas fechar a lacuna de evidência do pin e registrar o resultado determinístico do run, preservando o sinal advisory de supply-chain sem alterar comportamento. O gatilho `workflow_dispatch` é parte do próprio workflow (decision.md), então não é necessária autorização adicional. É a opção que produz a evidência faltante, registra o desfecho inclusive se falhar e mantém o diff sem código, conforme as métricas de sucesso.
+**Option A**. O `define.md` coloca como metas fechar a lacuna de evidência do pin e registrar o resultado determinístico do run, preservando o sinal advisory de supply-chain sem alterar comportamento. O gatilho `workflow_dispatch` é parte do próprio workflow (decision.md), então não é necessária autorização adicional. É a opção que produz a evidência faltante, registra o desfecho inclusive se falhar e mantém o diff sem código, conforme as métricas de sucesso.
 
 ## Out of Scope (for the recommended option)
 

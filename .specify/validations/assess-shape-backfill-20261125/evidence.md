@@ -5,11 +5,11 @@
 | Passo | Ação | Saída observada | Resultado | Captura |
 |---|---|---|---|---|
 | 1 | Resolver paths | `.specify dir True symlink False inside True`; idem `.specify/assessments` | PASS | Bloco A |
-| 2 | Contar artefatos | 54 `concept.md` (52 novos + 2 reescritos) + 1 `problem.md` novo (`116`) | PASS | Bloco A |
+| 2 | Contar artefatos | 54 `concept.md` (52 novos + 2 reescritos) + 15 `problem.md` novos (`116` + 14 do `048`–`066`) | PASS | Bloco A |
 | 3 | Formato canônico | 54/54 com H1, Slug, Recommended option, 3 opções e campos obrigatórios | PASS | Bloco A |
 | 4 | Conteúdo | 3 opções por arquivo; Recommendation, Out of Scope e Assumptions presentes | PASS | Bloco A |
 | 5 | Gate determinístico | PASS, 87 contratos, `GATE_RC=0` | PASS | Bloco B |
-| 6 | Higiene | `DIFFCHECK_RC=0`; 55 paths no status | PASS | Bloco C |
+| 6 | Higiene | `DIFFCHECK_RC=0`; paths autorizados no status | PASS | Bloco C |
 | 7 | Preservação alheia | checkout sujo/worktrees alheias intactos; #410 mesclado por humano, não tocado | PASS | Bloco C |
 
 ## Bloco A — verificação determinística (resumo)
@@ -72,7 +72,7 @@ OK  112-wcag-fixes bytes 4562 options 3
 OK  113-bug-status bytes 4483 options 3
 OK  116-chat-author-identity bytes 4918 options 3
 SHAPE_BACKFILL_OK 54 / 54
-116 has problem: True
+problem.md prerequisites: 15/15 presentes (116 + 048,049,050,051,052,055,057,058,060,061,062,063,065,066)
 ```
 
 `bytes` = UTF-8 bytes; `options` = contagem de `### Option`. `shape.md`/`define.md` antigos permaneceram intactos.
@@ -99,7 +99,7 @@ Resultado local; checks remotos no head exato do PR são registrados separadamen
 
 ```text
 === STATUS ===
-54 concept.md + 1 problem.md (116), paths autorizados
+54 concept.md + 15 problem.md, paths autorizados
 === DIFF CHECK ===
 DIFFCHECK_RC=0
 ```

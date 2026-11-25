@@ -4,7 +4,7 @@
 
 ## Escopo
 
-Criar `concept.md` em 30 assessments sem `shape.md`/`concept.md`, reescrever 2 `concept.md` finos e criar 22 `concept.md` ao lado de `shape.md` fino. Como `116-chat-author-identity` não tinha `problem.md` (pré-requisito do comando), o artefato equivalente local `define.md` foi usado para gerar o `problem.md` canônico; os `shape.md`/`define.md` antigos não foram alterados.
+Criar `concept.md` em 30 assessments sem `shape.md`/`concept.md`, reescrever 2 `concept.md` finos e criar 22 `concept.md` ao lado de `shape.md` fino. Como 15 diretórios (`116` + 14 do subconjunto `048`–`066`) não tinham `problem.md` (pré-requisito do comando), o artefato equivalente local `define.md` foi usado para gerar o `problem.md` canônico; os `shape.md`/`define.md` antigos não foram alterados.
 
 ## Pré-condições
 
@@ -15,7 +15,7 @@ Criar `concept.md` em 30 assessments sem `shape.md`/`concept.md`, reescrever 2 `
 ## Passos
 
 1. **Segurança de caminho** — resolver os diretórios e afirmar `is_dir`, não symlink, dentro da raiz. Automatizável: sim. Captura: terminal.
-2. **Contagem** — 54 `concept.md` (52 novos + 2 reescritos) e 1 `problem.md` novo de pré-requisito (`116`). Automatizável: sim. Captura: terminal.
+2. **Contagem** — 54 `concept.md` (52 novos + 2 reescritos) e 15 `problem.md` novos de pré-requisito (`116` + 14 do `048`–`066`). Automatizável: sim. Captura: terminal.
 3. **Formato canônico** — H1 `# Concept:`, `Slug` exato, `Recommended option`, 2–3 `### Option`, cada uma com Sketch/Appetite/Trade-offs/Rabbit holes, `Recommendation`, `Out of Scope` e `Assumptions to Validate`. Automatizável: sim. Captura: terminal.
 4. **Conteúdo** — opções distintas, appetite honesto, recomendação ligada a goals/métricas do problema, nenhuma spec/API/tarefa detalhada; fatos antigos preservados nas 2 reescritas. Automatizável: sim (texto) + inspeção. Captura: terminal.
 5. **Gate determinístico** — `python3 scripts/ci/check_gate_integrity.py` com `TMPDIR` gravável e `cargo clean` prévio no target da worktree. Esperado: `PASS`, exit 0. Automatizável: sim. Captura: terminal.
@@ -24,4 +24,4 @@ Criar `concept.md` em 30 assessments sem `shape.md`/`concept.md`, reescrever 2 `
 
 ## Rollback
 
-Remover os 53 arquivos criados e reverter os 2 reescritos via commit reverso explícito; nada mais é tocado. Nenhuma mudança de runtime, gate ou CI.
+Remover os 67 arquivos criados (54 `concept.md` menos 2 reescritos = 52 novos, mais 15 `problem.md`) e reverter os 2 reescritos via commit reverso explícito; nada mais é tocado. Nenhuma mudança de runtime, gate ou CI.

@@ -26,7 +26,7 @@
 
 ## Recommendation
 
-Recomendo a **Option A**. Ela atende aos requisitos de `define.md` — reconhecer os caminhos reais e legados, manter os demais no limite genérico e cobrir os casos com testes sem servidor — respeitando a decisão de não alterar limites, janelas, estado ou respostas. A forma isolada é a que melhor protege contra a regressão futura apontada em `problem.md`.
+Recomendo a **Option A**. Ela atende aos requisitos de `define.md` — reconhecer os caminhos reais e legados, manter os demais no limite genérico e cobrir os casos com testes sem servidor — respeitando a decisão de não alterar limites, janelas, estado ou respostas. A forma isolada é a que melhor protege contra a regressão futura apontada em `intake.md` (os testes atuais cobrem só o contador, não o casamento de path).
 
 ## Out of Scope (for the recommended option)
 
