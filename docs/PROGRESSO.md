@@ -549,3 +549,13 @@ permanecem intactas; apenas acréscimos.
 
 - Gate determinístico na worktree isolada: 1ª execução FAIL por `/tmp` 100% (`cargo` rc=101, nenhum teste descoberto); 2ª com `TMPDIR` gravável **PASS**, `all 11 db contract floors intact (87 total)`, `GATE_RC=0` (01:10:15Z→01:23:42Z). Ambiente/local; checks remotos seguem **[NV]** até o head do PR.
 - ACR independente (`research`): `changes_requested` com 1 HIGH (evidência de gate/PR não colada), 1 MEDIUM (contradição em autorizações) e 1 LOW (snapshot de status desatualizado); os três achados foram corrigidos em `evidence.md`, `decision.md` e no snapshot final antes do commit. Nenhum achado determinístico crítico.
+
+## Estado verificado — 2026-11-25 (backfill de intake; append-only)
+
+- **Entrega**: `intake.md` criado nos 13 assessments que tinham apenas `decision.md`: `040`, `041`, `042`, `086`–`095`. Cada arquivo segue o formato canônico de `/speckit.assess.intake` (título, Slug, Created, Source, Type, Idea as captured, Restated, Origin & Context, 5–7 `[NEEDS CLARIFICATION:]`), com conteúdo extraído de `decision.md` e `specs/<slug>/spec.md`. Nenhum veredito, spec, gate, CI ou código alterado.
+- **Evidência local ([EV])**: `INTAKE_BACKFILL_OK 13/13`, tamanhos 2.230–2.876 bytes, `git diff --check` RC 0, paths reais e dentro da worktree. Roteiro em `.specify/validations/assess-intake-backfill-20261125/test-roadmap.md`.
+- **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo no head do PR; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
+
+### Suplemento — gate (2026-11-25T02:01Z, append-only)
+
+- `[EV]` gate determinístico na worktree isolada: `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (01:51:56Z→02:01:29Z, `TMPDIR` gitignored). Checks remotos do PR seguem **[NV]** até observação ao vivo no head exato.
