@@ -302,6 +302,26 @@ pub trait FileRepository: Send + Sync + std::fmt::Debug {
     /// Create a new file record.
     async fn create(&self, file: File) -> crate::Result<File>;
 
+    /// Create a new file record while enforcing aggregate org/workspace quotas.
+    ///
+    /// The usage check and the insert run in one transaction under advisory
+    /// locks, so concurrent creates cannot both spend the same free bytes.
+    /// Active usage is the sum of non-deleted `files.size_bytes` for the
+    /// organization and, when present, for the `(organization_id, workspace_id)`
+    /// pair. On overflow the incoming size is reported as `size` and the
+    /// configured limit as `max`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::FileTooLarge` when the new file would exceed either
+    /// configured limit, or a database error mapped by `Error::from_sqlx`.
+    async fn create_with_quota(
+        &self,
+        file: File,
+        org_limit_bytes: u64,
+        workspace_limit_bytes: u64,
+    ) -> crate::Result<File>;
+
     /// Update a file.
     async fn update(&self, id: Uuid, file: File) -> crate::Result<File>;
 

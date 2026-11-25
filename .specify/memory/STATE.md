@@ -1391,3 +1391,13 @@ anterior foi alterada.
 ### Verificação local concluída — ciclo 125 (2026-11-25T08:20Z, append-only)
 
 - `[EV]` `cargo test -p flora-tests db_ws_revoked_after_connect_rejected -- --ignored --test-threads=1` 1 passed com PG18 descartável (container temporário removido); `cargo fmt --all -- --check` RC 0; `cargo check -p flora-api` 0 erros; `cargo clippy -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS (88 pisos, 08:16:34Z→08:17:16Z). CI remoto permanece `[NV]` até o head do PR.
+
+## Decisão 80/20 — ciclo 126 quota agregada (2026-11-25T15:35Z, append-only)
+
+- **session_title**: `flora - quota agregada transacional`; `session_id`: `orch-20261125T153000Z-lightsout4`; branch `fix/126-aggregate-quota`; base `github/dev@cbf39dbb22c0` (PR #433 MERGED em `main` por `lfgranja` às 14:57:14Z — não reaberto por agente).
+- **Critério**: `impacto4 × confiança4 × fechamento3 × esforço⁻¹2 × risco⁻¹4 = 384/3125`; alternativa deep-link de busca = 144 e exige decisão de produto sobre destaque/query params. Consumidor: membro/admin que faz uploads sucessivos no mesmo workspace e precisa que a quota agregada seja respeitada (P0 `ROADMAP.md:72`, `OBJETIVO.md:69`).
+- **DoD**: upload `413` quando `SUM(size_bytes)` ativo + novo arquivo excede limite de org/workspace, em transação com `pg_advisory_xact_lock` sem nova migration; ambos os caminhos (`upload_file` e `create_file`) usam o mesmo método; contrato DB `db_aggregate_quota_rejects_second_upload` cobre 201 → 413, 1 linha no DB e 0 blob órfão; piso `files` 7→8 em lockstep; gate PASS (89 pisos) e CI verde. Fora de escopo: restore de soft-deleted sem bytes, purge/storage cleanup e deep-link de busca.
+
+### Verificação local concluída — ciclo 126 (2026-11-25T15:42Z, append-only)
+
+- `[EV]` `cargo test -p flora-tests db_aggregate_quota_rejects_second_upload -- --ignored --test-threads=1` 1 passed e `contract::files::db_` 8 passed em PG18 descartável (`:15436`); `cargo fmt --all -- --check` RC 0; `cargo check -p flora-core -p flora-api -p flora-tests` 0 erros; `cargo clippy -p flora-core -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS (89 pisos, 15:40:59Z→15:41:01Z). Um erro de compilação do teste por `Config` não importado foi corrigido e o re-run passou. CI remoto permanece `[NV]` até o head do PR.

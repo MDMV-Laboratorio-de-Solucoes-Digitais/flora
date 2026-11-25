@@ -14,7 +14,7 @@ mod db_files {
     };
     use flora_core::{
         config::Config,
-        models::{Membership, Organization, Role, Session, User, Workspace},
+        models::{Membership, Organization, Pagination, Role, Session, User, Workspace},
         repositories::{
             PgFileRepository, PgMembershipRepository, PgMessageRepository,
             PgNotificationRepository, PgOrganizationRepository, PgRoleRepository,
@@ -135,7 +135,9 @@ mod db_files {
         user_id: Uuid,
     }
 
-    async fn db_state() -> anyhow::Result<Option<(AppState, Config)>> {
+    async fn db_state_with_config(
+        configure: impl FnOnce(&mut Config),
+    ) -> anyhow::Result<Option<(AppState, Config)>> {
         let Some(url) = std::env::var("FLORA_DATABASE__POSTGRES_URL")
             .ok()
             .or_else(|| std::env::var("DATABASE_URL").ok())
@@ -151,8 +153,13 @@ mod db_files {
         let uniq = Uuid::now_v7().simple().to_string();
         config.storage.local_path = format!("/tmp/flora-test-storage-{uniq}");
         config.storage.max_upload_bytes = 1024 * 1024;
+        configure(&mut config);
         let state = make_test_state(pool, &config);
         Ok(Some((state, config)))
+    }
+
+    async fn db_state() -> anyhow::Result<Option<(AppState, Config)>> {
+        db_state_with_config(|_| {}).await
     }
 
     async fn seed_user_org_workspace(state: &AppState, config: &Config) -> anyhow::Result<Seed> {
@@ -246,6 +253,20 @@ mod db_files {
     async fn json_body(resp: axum::response::Response) -> anyhow::Result<Value> {
         let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await?;
         Ok(serde_json::from_slice(&bytes)?)
+    }
+
+    async fn count_files_in_dir(path: &std::path::Path) -> anyhow::Result<usize> {
+        if !tokio::fs::try_exists(path).await? {
+            return Ok(0);
+        }
+        let mut entries = tokio::fs::read_dir(path).await?;
+        let mut count = 0;
+        while let Some(entry) = entries.next_entry().await? {
+            if entry.file_type().await?.is_file() {
+                count += 1;
+            }
+        }
+        Ok(count)
     }
 
     #[tokio::test]
@@ -788,6 +809,107 @@ mod db_files {
             list_workspace_files(&app, &seed.token, seed.org.id, seed.workspace.id).await?;
         assert_eq!(items_after, Vec::<Value>::new());
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 126)"]
+    async fn db_aggregate_quota_rejects_second_upload() -> anyhow::Result<()> {
+        // 10-byte aggregate quota and two 6-byte uploads: the first is accepted,
+        // the second would bring the active total to 12 bytes and must be rejected.
+        let Some((state, config)) = db_state_with_config(|config| {
+            config.storage.org_quota_bytes = 10;
+            config.storage.workspace_quota_bytes = 10;
+        })
+        .await?
+        else {
+            return Ok(());
+        };
+        let seed = seed_user_org_workspace(&state, state.config.as_ref()).await?;
+        let pool = (*state.db_pool).clone();
+        let app = files_app(state);
+
+        let boundary = "flora-quota-boundary";
+        let first_body = multipart_body(
+            boundary,
+            &[],
+            Some(("file", "first.txt", "text/plain", b"abcdef")),
+        );
+        let req = Request::builder()
+            .method("POST")
+            .uri(format!(
+                "/api/v1/files/upload?workspace_id={}",
+                seed.workspace.id
+            ))
+            .header("authorization", format!("Bearer {}", seed.token))
+            .header("x-organization-id", seed.org.id.to_string())
+            .header(
+                header::CONTENT_TYPE,
+                format!("multipart/form-data; boundary={boundary}"),
+            )
+            .body(Body::from(first_body))?;
+        let resp = app.clone().oneshot(req).await?;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        let created = json_body(resp).await?;
+        let first_id = created["id"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("missing id for accepted upload"))?
+            .to_string();
+
+        let second_body = multipart_body(
+            boundary,
+            &[],
+            Some(("file", "second.txt", "text/plain", b"ghijkl")),
+        );
+        let req = Request::builder()
+            .method("POST")
+            .uri(format!(
+                "/api/v1/files/upload?workspace_id={}",
+                seed.workspace.id
+            ))
+            .header("authorization", format!("Bearer {}", seed.token))
+            .header("x-organization-id", seed.org.id.to_string())
+            .header(
+                header::CONTENT_TYPE,
+                format!("multipart/form-data; boundary={boundary}"),
+            )
+            .body(Body::from(second_body))?;
+        let resp = app.oneshot(req).await?;
+        assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
+        let rejected = json_body(resp).await?;
+        assert_eq!(rejected["error"], "file_too_large");
+
+        let file_repo = PgFileRepository::new(pool);
+        let page = file_repo
+            .find_by_workspace_id(
+                seed.org.id,
+                seed.workspace.id,
+                Pagination {
+                    limit: 100,
+                    offset: 0,
+                },
+            )
+            .await?;
+        assert_eq!(page.items.len(), 1, "only the accepted upload is persisted");
+        assert_eq!(page.items[0].id.to_string(), first_id);
+
+        let root = std::path::Path::new(config.storage.local_path.as_str());
+        assert_eq!(
+            count_files_in_dir(&root.join(".tmp")).await?,
+            0,
+            "no orphan .part blob in configured temp storage"
+        );
+        let files_dir = root
+            .join("orgs")
+            .join(seed.org.id.to_string())
+            .join("workspaces")
+            .join(seed.workspace.id.to_string())
+            .join("files");
+        assert_eq!(
+            count_files_in_dir(&files_dir).await?,
+            1,
+            "only the accepted upload has a stored blob"
+        );
         Ok(())
     }
 }
