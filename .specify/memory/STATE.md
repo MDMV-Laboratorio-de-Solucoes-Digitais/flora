@@ -1273,3 +1273,121 @@ anterior foi alterada.
 - **Remediação ACR Rodada 1 (`#424`, 2026-11-24T20:35Z, append-only)**:
   - ACR `6cb4c881` (`REPROVADO`, `1H/1M/4L`) remediado localmente: `MembershipRepository::delete_with_role` atômico + `SessionRepository::revoke_for_user_and_organization` em `revoke_role`, checagem explícita de membership em `flora-api/src/routes/search.rs`, `validate_member_email` com `Error::Validation` (`422`), expansão de contrato DB em `flora-tests/src/contract/rbac.rs` (`401` pós-revogação, `422`, `404` inativo/cross-org) e correções em `MemberManager.svelte` + `pt-BR.ts` (`members.roleConflict`, selo `Você` exato, `roleStore.syncContext`, reset de `addRoleId`, `novalidate`) + asserções E2E.
   - Revalidação local `[EV]` pós-edição: `fmt/clippy/deny/test --workspace` (`55/55`, `36+21`, `36/87`), `contract::rbac::db` **`5/5`**, `contract::search::db` **`8/8`**, `check_gate_integrity.py` (`87` pisos), frontend `check/lint/89 testes/build` e `test:e2e` (**`4 passed (1.9m)`**, **`15/15` WCAG 2.2 AA `sem achados`**). PR `#424` re-submetido para CI remoto + ACR Rodada 2 (`[NV]` até conclusão).
+
+## Sessão: flora - avaliação de ferramentas auto-evolutivas (Sanderson NDC 2026; append-only)
+
+- **Identidade e baseline**: `session_title` = `flora - avaliacao self-evolving dev tools (Sanderson NDC 2026)`; `session_id` = `orch-20261124T210500Z-sanderson`; branch `assessment/avaliacao-selfevolving-tools-flora`; worktree `.specify/queue/worktrees/sanderson-selfevolve-20261124`; base `github/dev@0ef79ec60` (`origin`/Forgejo defasado em `1910d1c7d`). `FONTE_FACTORY` = aparato de assesses e prompt 80/20, não autoridade.
+- **Decisão 80/20**: nenhum candidato elegante. Filtro do Bloco 5 (`impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`) não produz `fechamento > 0` para P01–P34: o gap BUG-111-01/02/03 foi fechado em `6288a8569` `[EV]`; os demais são já cobertos, documentais ou dependem de churn/dependência proibida. Escalonamento ao SWE é o desfecho, sem abrir ciclo de implementação artificial (0.9).
+- **Entrega**: 5 artefatos em `.specify/assessments/avaliacao-harness-sanderson-flora/`, brief em `docs/research/2026-11-24-sanderson-selfevolving-tools.md`, espelho em `docs/governance/2026-11-25-avaliacao-harness-sanderson-flora.md`, roteiro e evidência em `.specify/validations/avaliacao-harness-sanderson-flora/`. 34 vereditos: ADOPT 5, ADAPT 10, DEFER 9, AVOID 6, REJECT 4.
+- **Evidência local ([EV])**: verificação determinística em 2026-11-25T01:00:21Z — `intake-structure: OK`; `decision-rows=34 invalid=0`; `verdict-go=True`; `research-urls=90`; `git diff --check` RC 0. Contagens: specs 112, assessments 111, validations 109, releases 108, bugs 8, docs/research 138 na raiz/150 total.
+- **[NV]**: gate remoto/CI, ACR independente, PR #410 (`dev→main`), deploy, promoção e eficácia das advertências de segurança em produção. Nenhum merge de `main`, auto-merge, force-push, alteração de proteção, credencial ou instalação de skill. Worktrees e arquivos sujos alheios intactos.
+
+### Suplemento — gate e ACR (2026-11-25T01:24Z, append-only)
+
+- `[EV]` gate local: 1ª execução FAIL por `/tmp` 100%, 2ª com `TMPDIR` em diretório gitignored **PASS** (`87` pisos, `GATE_RC=0`, 01:10:15Z→01:23:42Z). CI remoto do PR permanece **[NV]**.
+- ACR independente: `changes_requested` (1 HIGH/1 MEDIUM/1 LOW), todos corrigidos antes do commit: saídas reais do gate e do PR #410 em `evidence.md`, escopo de escrita esclarecido em `decision.md`, snapshot final de status atualizado. Nenhum merge, deploy, auto-merge ou force-push.
+
+## Sessão: flora - backfill de intake de 13 assessments (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T014500Z-assess-intake`; branch `assessment/assess-intake-backfill-20261125`; worktree `.specify/queue/worktrees/assess-intake-backfill-20261125`; base `github/dev@7ac614425`.
+- **Entrega**: 13 `intake.md` criados em `.specify/assessments/{040,041,042,086..095}-*/`, todos validados (`INTAKE_BACKFILL_OK 13/13`), sem alterar `decision.md`, specs, gate, CI ou código.
+- **Evidência local ([EV])**: paths não-symlink dentro do repo, 13 arquivos com estrutura SpecKit completa e 5–7 incógnitas por intake, `git diff --check` RC 0.
+- **[NV]**: gate/CI remoto, ACR e merge até observação ao vivo. Nenhum merge de `main`, deploy, auto-merge, force-push ou toque em trabalho alheio.
+
+### Suplemento — gate (2026-11-25T02:01Z, append-only)
+
+- `[EV]` `python3 scripts/ci/check_gate_integrity.py` PASS (`87` pisos, `GATE_RC=0`) na worktree `assess-intake-backfill-20261125`, com `TMPDIR` gravável. CI remoto e merge permanecem **[NV]** neste ponto.
+
+## Sessão: flora - backfill/regularização de research (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T022000Z-assess-research`; branch `assessment/assess-research-backfill-20261125`; worktree `.specify/queue/worktrees/assess-research-backfill-20261125`; base `github/dev@e88dc8e4d`.
+- **Entrega**: 13 `research.md` novos (`040`/`041`/`042`/`086`–`095`) e 5 regularizados (`107`–`110`, `113`) no formato canônico de 8 seções; nenhum veredito, intake, spec, gate, CI ou código alterado.
+- **Evidência local ([EV])**: 18/18 com Slug exato, 7–13 fontes, `Evidence Against` e `[NEEDS CLARIFICATION:]`; paths não-symlink; `git diff --check` RC 0.
+- **[NV]**: gate/CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge, force-push ou toque em trabalho alheio.
+
+### Suplemento — gate (2026-11-25T02:29Z, append-only)
+
+- `[EV]` `python3 scripts/ci/check_gate_integrity.py` PASS (`87` pisos, `GATE_RC=0`) na worktree `assess-research-backfill-20261125`, com `TMPDIR` gravável. CI remoto e merge permanecem **[NV]** neste ponto.
+
+## Sessão: flora - backfill/regularização de problem definition (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T025000Z-assess-define`; branch `assessment/assess-define-backfill-20261125`; worktree `.specify/queue/worktrees/assess-define-backfill-20261125`; base `github/dev@df75b1bcd`.
+- **Entrega**: 42 `problem.md` no formato canônico — 30 novos, 5 reescritos (`010`, `020`–`023`), 7 novos ao lado de `define.md` fino (`107`–`113`). Nenhum veredito/intake/research/spec/gate/CI/código alterado.
+- **Evidência local ([EV])**: 42/42 com Slug exato, 8 seções, Users/Stakeholders, métricas com baseline, Cost of Inaction e `[NEEDS CLARIFICATION:]`; paths não-symlink; `git diff --check` RC 0.
+- **[NV]**: gate/CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge, force-push ou toque em trabalho alheio.
+
+### Suplemento — gate (2026-11-25T03:33Z, append-only)
+
+- `[EV]` gate local: FAIL→FAIL→PASS. Causas ambientais: SIGABRT em `aws-lc-sys` (memória/swap) e ENOSPC em `chrono-tz` (btrfs metadata); após `cargo clean` no target próprio e `CARGO_BUILD_JOBS=2`, `gate-integrity: PASS` (`87` pisos, `GATE_RC=0`, 03:18:11Z→03:32:52Z). Sem código/gate/CI alterados; CI remoto observado via PR #428.
+
+## Sessão: flora - backfill/regularização de concept (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T035000Z-assess-shape`; branch `assessment/assess-shape-backfill-20261125`; worktree `.specify/queue/worktrees/assess-shape-backfill-20261125`; base SHA remoto `266437bbfa` (ref local stale).
+- **Entrega**: 54 `concept.md` (30 novos, 2 reescritos, 22 ao lado de `shape.md` fino) + 15 `problem.md` de pré-requisito (`116` + 14 do `048`–`066`). Nenhum veredito/intake/research/spec/gate/CI/código alterado; `shape.md`/`define.md` antigos intactos.
+- **Evidência local ([EV])**: 54/54 com Slug exato, 3 opções e seções canônicas; gate PASS (`87` pisos, `GATE_RC=0`, 03:50:13Z→04:00:27Z); `git diff --check` RC 0.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
+
+## Sessão: flora - revisita canônica de decision.md (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T042500Z-assess-decide`; branch `assessment/assess-decide-revisit-20261125`; worktree `.specify/queue/worktrees/assess-decide-revisit-20261125`; base SHA remoto `f13d321c7a2b`.
+- **Entrega**: 62 `decision.md` no formato canônico (6 critérios, Verdict, racional, handoff), 62 × `go` preservando o histórico; `problem.md`/`concept.md` criados para `114` e `115`. Nenhum intake/research/spec/gate/CI/código alterado.
+- **Evidência local ([EV])**: 62/62 com scorecard válido e veredito histórico; gate PASS (`87` pisos, `GATE_RC=0`, 04:38:21Z→04:48:58Z); `git diff --check` RC 0.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
+
+## Sessão: flora - canonicalização final de decision.md (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T050500Z-assess-decide-final`; branch `assessment/assess-decide-final-20261125`; worktree `.specify/queue/worktrees/assess-decide-final-20261125`; base SHA remoto `2b2658e9b21f`.
+- **Entrega**: 42 `decision.md` canônicos, completando 111/111; 42 × `go` preservando o histórico, incluindo matriz P01–P34 do Sanderson e 188 IDs do assessment de arquitetura. Nenhum spec/gate/CI/código alterado.
+- **Evidência local ([EV])**: 42/42 com scorecard de 6 critérios e seções condicionais; `ALL_CANONICAL 111/111`; `git diff --check` RC 0. Gate em verificação neste ciclo.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja`, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
+
+### Suplemento — gate (2026-11-25T05:29Z, append-only)
+
+- `[EV]` gate local: 1ª execução timeout em 1200 s na compilação; 2ª **PASS** (`87` pisos, `GATE_RC=0`, 05:26:55Z→05:29:02Z) com target aquecido, `TMPDIR` gravável e `CARGO_BUILD_JOBS=2`. CI remoto segue `[NV]` até o head do PR.
+
+## Decisão 80/20 — ciclo 123 download autenticado (2026-11-25T05:50Z, append-only)
+
+- **session_title**: `flora - corrige download autenticado de arquivos em /files`; `session_id`: `orch-20261125T054000Z-lightsout`; branch `fix/123-authorized-file-download`; worktree `.specify/queue/worktrees/lightsout-20261125`; base `github/dev@74f1eda10b17`.
+- **Critério**: `impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`, denominador **3125**. Candidato `BF-07` (CORREÇÃO): download em `/files` usa `<a href>` sem `Authorization` e retorna 401 no endpoint autenticado; impact 5 × confidence 5 × fechamento 4 × effort⁻¹ 4 × risk⁻¹ 4 = **1600/3125**. Alternativas: delete na UI 720, WS revalidação 432, quota transacional 384, deep-link de busca 144.
+- **Consumidor**: membro autenticado que fez upload e clica em “Baixar” em `/files` — comportamento observável, não artefato do ciclo.
+- **DoD**: com sessão válida, o clique em “Baixar” executa `fetch` com `Authorization: Bearer`, recebe `200` e gera download com o nome/bytes do arquivo; `401` continua acionando `authState.lockSession()`. Prova: `cd apps/frontend && bun run test:unit -- --run --project server tests/unit/filesDownload.test.ts` e `bun run test:e2e -- --grep "authorized download"`. Fecha `BF-07` (e contribui para o P0 “upload/download real” de `OBJETIVO.md`).
+- **Fluxo**: R5 (bug reportado) com `.specify/bugs/authorized-file-download-401/{bug,assessment,fix,test}.md`; gate autoritativo `check_gate_integrity.py` e CI GitHub permanecem inalterados.
+
+## Escalonamento ao SWE — promoção #433 (2026-11-25T06:50Z, append-only)
+
+- **Contexto**: `session_title` = `flora - corrige download autenticado de arquivos em /files`; PR de ciclo [#432](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/432) mesclado em `dev` em `f2967373ead0` às 06:41:14Z; PR de promoção [#433](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/433) aberto para `dev→main`. Nenhum agente mesclou `main`, executou deploy, habilitou auto-merge ou force-pushou.
+- **Inventário implementado**: `downloadBlob` com Bearer/lock em 401; `FilePreview` com botão e object URL; chave `file.downloadFailed`; 2 testes unitários; Passo 5c no smoke; bug flow e roteiro/evidência; `.gitignore` para artefatos Playwright. PRs [#425](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/425)–[#431](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/431) normalizaram 111/111 assessments. Fora de escopo: backend, migration, gate, required checks, ADR, credenciais e deploy.
+- **Evidência confirmada**: `[EV]` gate local PASS (87 pisos, 05:48:17Z→06:03:01Z); check/lint/unit 2/2 PASS; required checks remotos SUCCESS no head exato `f2967373ead0`; `[EV]` `e2e-browser` remoto SUCCESS (`4 passed`) em `fc88a0930540e066cd143319b8bb155fbfeceb69`, [run](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45561750102/job/139026845488). E2E local `blocked` por três falhas de provisionamento, registrado sem fingimento; automação pendente. Correção ao comando de prova do parágrafo anterior: o E2E é o smoke completo (`bun run test:e2e`), não um `--grep`.
+- **ACR — idas e vindas**: autor `orch-20261125T054000Z-lightsout` → revisor independente. PR #432 `correct` (2 P3); promoção #433 R1 `changes_requested` (1 alta, 2 médias: e2e remoto antes `[NV]`, `mirror` FAIL omitido, rollback em branch errado) corrigidas no corpo; R2 `correct` 0 achados. URLs de comentários no corpo do PR #433.
+- **O que resta ao SWE**: decidir promoção em `main`; investigar `mirror` FAIL por divergência do espelho Forgejo ([job](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45562452695/job/139029160384)); conferir proteção de branch/ausência de auto-merge e force-push; validar download em produção se promovido; agendar script de provisionamento E2E local; observar expiração de `FLORA_BOOTSTRAP__*` até 29/11 e autorizações SE para RLS/mutação CI. Nenhum agente executou esses passos.
+- **Riscos/rollback**: se promovido, reverter o merge de promoção em `main` e sincronizar `dev`; reverter apenas `f2967373` em `dev` não remove código de `main`. Efeitos de produção permanecem `[NV]`.
+
+## Decisão 80/20 — ciclo 124 exclusão de arquivos (2026-11-25T07:10Z, append-only)
+
+- **session_title**: `flora - exclusao de arquivos em /files`; `session_id`: `orch-20261125T070400Z-lightsout2`; branch `fix/124-file-delete-ui`; worktree `.specify/queue/worktrees/lightsout-124`; base `github/dev@cab1cab8ed74` (PR #433 de promoção está GREEN e escalado ao SWE — não mesclado por agente).
+- **Critério**: `impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`, denominador **3125**. Candidato escolhido: `BF-residual` — exclusão de arquivos em `/files` (IMPLEMENTAÇÃO de UI sobre backend pronto): 4 × 5 × 4 × 3 × 3 = **720/3125**. Alternativas: WS pós-handshake 432, quota agregada 384, deep-link de busca 144.
+- **Consumidor**: dono de arquivo em `/files` que precisa removê-lo; comportamento ausente → a lista só oferece “Baixar” (`FilePreview.svelte:39-45`), embora `DELETE /api/v1/files/{id}` exista (`files.rs:98,308-329`), seja coberto por contrato (`contract/files.rs:483-548`) e `FileStore.removeFile` esteja órfão (`FileStore.svelte.ts:20-22`).
+- **DoD**: cada arquivo em `/files` tem ação “Excluir” com confirmação acessível; o clique envia `DELETE` autenticado, só remove o item local após `204`, mostra erro pt-BR em `403`/outras falhas, e o arquivo não reaparece após `page.reload()`; `auditAccessibility` continua sem achados. Comandos de prova: `cd apps/frontend && bun run check && bun run lint && bun run test:e2e` e `python3 scripts/ci/check_gate_integrity.py`. Fecha o item residual P0 “arquivos básicos” de `OBJETIVO.md:69` / `ROADMAP.md:72`.
+- **Fora de escopo**: backend, migrations, gate floors, required checks, papéis `file:delete` (contrato atual usa owner_id), login, deploy e promoção `main`.
+
+### Resultado e evidência remota — ciclo 124 (2026-11-25T07:38Z, append-only)
+
+- `[EV]` PR [#435](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/435) mesclado em `dev` em `bfc51d100317` às 07:37:25Z; required checks SUCCESS no head `40d299e246`; `e2e-browser` remoto SUCCESS com o Passo 5d ([run](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45568843684/job/139050220020)); E2E local permanece `blocked` por provisionamento. ACR `correct` com 3 P3 corrigidos. Nenhum merge de `main`/deploy por agente.
+
+## Decisão 80/20 — ciclo 125 revalidação WS (2026-11-25T08:05Z, append-only)
+
+- **session_title**: `flora - revalidacao de sessao no websocket`; `session_id`: `orch-20261125T080000Z-lightsout3`; branch `fix/125-ws-session-revalidation`; base `github/dev@4f619cb28e8d` (PR #433 de promoção GREEN e escalado ao SWE, não mesclado por agente).
+- **Critério**: `impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`, denominador **3125**. Candidato escolhido: revalidação de sessão pós-handshake no WS: 4 × 3 × 3 × 3 × 4 = **432/3125**. Alternativas: quota agregada 384, deep-link de busca 144.
+- **Consumidor**: membro autenticado cuja sessão é revogada por logout/rebaixamento com `/api/v1/ws` aberto; hoje `websocket.rs:116-150,183-201` valida apenas no upgrade e `handle_socket:482-519` captura `user_id/org_id` para toda a vida do socket, permitindo Subscribe/SendMessage/fanout após revogação.
+- **DoD**: (1) token/JTI retido no socket e revalidado por `verify_bearer_token` em ações do cliente e no fanout com TTL de 30 s (não por frame); (2) sessão revogada/expirada produz `WsServerMessage::Error{code:"SESSION_INVALID"}` + close `1008` e encerra o loop; (3) erro de serviço (500) não desconecta; (4) contrato DB novo prova revogação após conexão sem novo handshake, com piso `websocket` 8→9 em lockstep; (5) gate PASS (88 pisos) e CI verde. Cliente já trata `1008`/`unauthorized` com `authState.lockSession()`, sem mudança de frontend.
+- **Fora de escopo**: multi-node/Valkey, rotação de token via query sem reconectar, mudança de contrato REST, ticket de quota e deep-link de busca.
+
+### Resultado local — ciclo 125 revalidação WS (2026-11-25T08:09Z, append-only)
+
+- `[EV]` Código/contrato/floors implementados nos 8 paths do ciclo: `websocket.rs` revalida com TTL de 30 s e encerra com `SESSION_INVALID`/`1008` em `401` (erro de serviço preserva o socket, token nunca logado); `contract/websocket.rs:298` cobre revogação pós-conexão sem novo handshake; `check_gate_integrity.py:45` e `rust.yml:113` elevam o piso `websocket` a 9 em lockstep. `rustfmt --edition 2024 --check` RC 0; `git diff --check` RC 0.
+- `[NV]` Contrato DB não rodado neste worker (requer `FLORA_DATABASE__POSTGRES_URL`), gate/CI remoto não observados aqui; o gate PASS de 88 pisos é critério de aceite a ser confirmado pelo orquestrador. Nenhum stage/commit/push/merge/deploy executado.
+- **Comandos de prova ao orquestrador**: `cargo test -p flora-tests contract::websocket::db_ws_revoked_after_connect_rejected -- --ignored --test-threads=1`; `python3 scripts/ci/check_gate_integrity.py` com `TMPDIR` gravável (esperado 88 pisos); required checks `rust-build`/`db-tests` no head do PR. Detalhes em `.specify/validations/125-ws-session-revalidation/evidence.md`.
+
+### Verificação local concluída — ciclo 125 (2026-11-25T08:20Z, append-only)
+
+- `[EV]` `cargo test -p flora-tests db_ws_revoked_after_connect_rejected -- --ignored --test-threads=1` 1 passed com PG18 descartável (container temporário removido); `cargo fmt --all -- --check` RC 0; `cargo check -p flora-api` 0 erros; `cargo clippy -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS (88 pisos, 08:16:34Z→08:17:16Z). CI remoto permanece `[NV]` até o head do PR.

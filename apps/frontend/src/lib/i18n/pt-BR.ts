@@ -135,10 +135,16 @@ export const t = {
 
 	// Arquivos
 	'file.download': 'Baixar',
+	'file.downloadFailed': 'Falha no download do arquivo.',
 	'file.selectInput': 'Selecionar arquivo para envio',
 	'file.tooLarge': 'Arquivo muito grande. O tamanho máximo é 10 MB.',
 	'file.workspaceRequired': 'É necessário selecionar um workspace antes de enviar arquivos.',
 	'file.uploadFailed': 'Falha no envio.',
+	'file.delete': 'Excluir',
+	'file.deleteConfirm': 'Confirmar exclusão',
+	'file.deleteCancel': 'Cancelar exclusão',
+	'file.deleteFailed': 'Falha ao excluir o arquivo.',
+	'files.deleted': 'Arquivo excluído: {name}',
 	'files.title': 'Arquivos',
 	'files.description': 'Envie e baixe arquivos do workspace selecionado.',
 	'files.workspace': 'Workspace',

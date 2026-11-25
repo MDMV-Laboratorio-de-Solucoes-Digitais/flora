@@ -1,128 +1,36 @@
-# Decision: 100 — recuperação do administrador real via opt-in explícito (wildcard `*`)
+# Decision: 100 — Recuperação do administrador real via opt-in explícito (wildcard `*`)
 
 - **Slug**: 100-admin-recovery
-- **Decidido**: 2026-11-21
-- **Verdict**: **go**
-- **Branch**: `feature/100-admin-recovery` @ `9cf6775a7bd46395648ca3491536535373e0de6b`
-- **Âncora**: `.specify/feature.json` → `specs/100-admin-recovery`
-- **Evidência**: investigação local determinística + relato de produção (após 098)
-- **Artefatos revisados**: intake | research | define | shape | spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (original 2026-11-21) | specs/100-admin-recovery/{spec,plan,tasks,analyze,converge}.md | relato de produção após 098
 
-## Contexto / problema — causa raiz determinística
+## Scorecard
 
-Relato de produção após o ciclo 098: `GET /api/v1/bootstrap/status` informa
-`available = false` (organizações existem),
-`FLORA_BOOTSTRAP__ADMIN_EMAIL` e `FLORA_BOOTSTRAP__ADMIN_PASSWORD` estão presentes
-e corretos, mas o startup registra `applied = false` e o aviso de que o e-mail
-não corresponde a usuário. A cadeia explica os fatos sem falha intermitente:
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | Após 098, `GET /api/v1/bootstrap/status` reportava `available = false` (organizações existem) e o startup logava `applied = false` com o aviso "does not match an existing user": a recuperação fazia `find_by_email` exata e o e-mail configurado não existe em `users` (`intake.md:7-19`; `research.md:1-3`). |
+| Evidence strength | adequate | Relato de produção coerente com leitura direta de `bootstrap.rs:96-128` (ambas as variáveis presentes, normalização, busca exata, `Ok(false)` sem UPDATE), `app_state.rs:93-99` e contratos `bootstrap.rs:340-407,441-483`; e-mail real, `is_active`, `created_at` e env efetiva **[NV]** (`research.md:1-11,27-34`). |
+| Value vs. inaction | strong | Com `POST /bootstrap` fechado por conflito e o e-mail do administrador desconhecido, não havia saída para reaplicar a senha: o bloqueio de produção persistia após 098 (`intake.md:Sinal`; `define.md:5`). |
+| Feasibility / appetite | adequate | Um único token de opt-in na variável existente (`*`), consulta pontual do primeiro usuário ativo por ordem determinística e UPDATE idempotente; sem nova chave, rota ou infraestrutura, mas com risco de selecionar a conta ativa mais antiga (`shape.md:3-24,29-31`). |
+| Strategic fit | strong | Estende o mecanismo de 098 de forma estreita e reversível, sem alterar login, JWT, `POST /bootstrap`, advisory lock, rate limit, OIDC, gates ou constituição (`define.md:FR-005,Fora de escopo`; `converge.md:Fronteira preservada`). |
+| Risk posture | adequate | `*` é inválido como e-mail e portanto opt-in explícito; nenhum fallback em typo, ordem determinística (`created_at ASC, id ASC LIMIT 1`) e log sem senha/hash/e-mail real mitigam ativação acidental e vazamento; sem role filter, a conta alvo só é confirmável no ambiente real **[NV]** (`shape.md:29-37`; `converge.md:[NV]`). |
 
-1. `flora-core/src/config/bootstrap.rs:102-107` — ambas as variáveis estão
-   presentes, logo a recuperação não é ignorada por configuração incompleta.
-2. `bootstrap.rs:108-111` — o e-mail é normalizado (`trim().to_lowercase()`) e
-   buscado **exatamente** com `repo.find_by_email()`.
-3. `bootstrap.rs:112-116` — o e-mail configurado não existe em `users`: aviso
-   "does not match an existing user" e `Ok(false)` sem UPDATE. É o ramo
-   observado.
-4. `flora-api/src/routes/bootstrap.rs` / contrato
-   `flora-tests/src/contract/bootstrap.rs:441-483` — com organizações
-   pré-existentes, `POST /bootstrap` retorna conflito; não há como recriar o
-   administrador.
-5. `flora-api/src/state/app_state.rs:93-99` — `applied` é logado; o valor
-   `false` é observável e confirma o diagnóstico.
-6. `flora-api/src/routes/auth.rs:451-460` — o login permanece com 401 genérico;
-   a correção atua apenas no hash armazenado.
+## Verdict & Rationale
 
-Não há indício de problema de rede, DNS, migração ausente ou valor de env
-incorreto. O e-mail configurado não é o e-mail do administrador real, que é
-desconhecido de quem opera.
+Veredito histórico **`go`** de 2026-11-21 preservado: branch `feature/100-admin-recovery` @ `9cf6775a7bd46395648ca3491536535373e0de6b` (SHA completo registrado), âncora `.specify/feature.json` → `specs/100-admin-recovery`, evidência local determinística + relato de produção após 098. A decisão original registrou cinco compromissos FR-001..FR-005, três critérios SC-001..SC-003 e oito tarefas T001..T008 (todas concluídas), com analyze `critical=0`, `requirements_covered=5/5`, `fr=5/5`, `sc=3/3`, `tasks=8/8`, `errors=[]` (`specs/100-admin-recovery/analyze.md`). A cadeia: `flora-core/src/config/bootstrap.rs:102-107` exigia ambas as variáveis (presentes, logo não era esse o ramo); `:108` normalizava o e-mail com `trim().to_lowercase()`; `:110-116` fazia `find_by_email` exata, emitia `tracing::warn!` ("does not match an existing user; startup password skipped") e retornava `Ok(false)` sem escrita — o ramo observado; `:119-128` gravava o hash via UPDATE incondicional quando o e-mail existia; `flora-api/src/routes/mod.rs`/contrato `flora-tests/src/contract/bootstrap.rs:441-483` mostravam `POST /bootstrap` em conflito com organizações pré-existentes; `app_state.rs:93-99` registrava `applied = false`; `auth.rs:451-460` mantinha o 401 genérico. A extensão escolhida foi o token literal `*` em `FLORA_BOOTSTRAP__ADMIN_EMAIL` — aceito por `BootstrapConfig::validate()` somente com a senha presente e comparado exatamente após `trim()` — como único opt-in: seleção do primeiro usuário ativo (`is_active = true`, `ORDER BY created_at ASC, id ASC LIMIT 1`, sem filtro de role) e sobrescrita idempotente (`UPDATE users SET password_hash = $2, password_updated_at = $3 WHERE id = $1`, `bootstrap.rs:120-128`), com hash Argon2id via `PasswordService` antes da escrita; todo outro valor, inclusive typo, permanecia na busca exata, sem fallback (`define.md:FR-001..FR-003`; `converge.md:11-16`). Observabilidade sem segredo (`app_state.rs:93-99`; `bootstrap.rs:112-116,130`; `skip_serializing`/`Debug [REDACTED]`) e documentação em `.env.example:32-39` de remover as variáveis após o login completaram o contrato (`shape.md:17-24`). A seleção do login em 101 passou a espelhar esta mesma consulta — evolução documentada, não contradição do `go`. Estado real do DB de produção (e-mail do administrador, `is_active`, `created_at`, valor efetivo das variáveis) e login ao vivo permanecem **[NV]**; nenhuma credencial foi lida e nenhuma requisição de login/bootstrap foi executada contra produção; filtro de logging real, Deploy/Coolify, IdP externo e allowlist OIDC também **[NV]**; gate do alvo registrado como PASS no handoff, sem reexecução neste artefato (`research.md:[NV]`).
 
-## Decisão
+## If needs-clarification
 
-Registrar o ciclo 100 como **recuperação do administrador real por opt-in
-explícito**, com cinco compromissos rastreáveis (FR-001..FR-005), três critérios
-(SC-001..SC-003) e oito tarefas (T001..T008, todas concluídas):
+- **Blocking questions**: N/A (veredito `go`; as incógnitas abaixo ficam em aberto para o handoff).
+- **Revisit stage**: N/A.
 
-1. **Wildcard explícito (FR-001 / T002)**: o token literal `*` em
-   `FLORA_BOOTSTRAP__ADMIN_EMAIL` — aceito por `BootstrapConfig::validate()`
-   (`bootstrap.rs:57-81`) somente com a senha presente — é o único valor que
-   ativa a seleção; nenhuma chave nova. Todo outro valor continua exigindo
-   e-mail válido (FR-001).
-2. **Seleção (FR-002 / T003)**: com `*`, `apply_startup_password()` escolhe o
-   primeiro usuário ativo (`is_active = true`, `ORDER BY created_at ASC, id ASC
-   LIMIT 1`). Fora do opt-in, a busca por e-mail permanece exata e, sem
-   correspondência, resulta em aviso e `applied = false` — **sem fallback** em
-   typo.
-3. **Sobrescrita idempotente (FR-003 / T004)**:
-   `UPDATE users SET password_hash = $2, password_updated_at = $3 WHERE id = $1`
-   (`bootstrap.rs:120-128`), incondicional quanto ao hash pré-existente, com
-   senha validada e hasheada via `PasswordService` antes da escrita;
-   reaplicações são estáveis e sem efeitos colaterais.
-4. **Log sem segredo (FR-004 / T005)**: `app_state.rs:93-99` registra `applied`;
-   `bootstrap.rs:112-116,130` registra o motivo do skip e o `user_id`
-   sobrescrito, sem senha, hash ou e-mail real. Redaction e `skip_serializing`
-   permanecem.
-5. **Testes e env (FR-005 / T006–T008)**: contratos e testes unitários cobrem
-   opt-in, seleção, typo sem fallback, nenhum usuário ativo, senha inválida e
-   ausência de segredo; `.env.example:32-39` documenta o token e a remoção das
-   variáveis após o login. Gates do alvo PASS (handoff), fronteira preservada.
+## If go — Handoff to `/speckit.specify`
 
-## Evidência de entrada
-
-- Baseline `9cf6775a7bd46395648ca3491536535373e0de6b`, branch
-  `feature/100-admin-recovery`.
-- Relato de produção: `status.available = false`, env presente, `applied = false`
-  e aviso de e-mail inexistente.
-- `flora-core/src/config/bootstrap.rs:57-81,96-132` — validação (que hoje
-  rejeita `*`), busca exata, aviso, hash e UPDATE incondicional.
-- `flora-core/src/traits/repository.rs:16-45` — sem método de "primeiro usuário
-  ativo"; a seleção é uma consulta pontual no caminho de recuperação.
-- `flora-api/src/state/app_state.rs:93-99` — `applied` logado no startup.
-- `flora-tests/src/contract/bootstrap.rs:340-407,441-483` e
-  `flora-tests/src/contract/auth.rs:1104-1173` — suítes existentes a ajustar,
-  não a substituir.
-- `.env.example:32-39` — documentação das variáveis temporárias.
-
-## Racional
-
-**go.** O bloqueio é consequência direta de quatro pontos verificáveis:
-organizações existem (bootstrap fechado), o env aponta para um e-mail
-inexistente, a busca é exata e o retorno é logado como `false`. A extensão é
-isolada: um token que não é e-mail válido (`*`) ativa explicitamente a seleção
-do primeiro usuário ativo e a sobrescrita idempotente do hash; qualquer outro
-valor — inclusive um typo — não altera o comportamento de 098. Nenhum gate,
-contrato de login, JWT, rate limit, lock ou infraestrutura é alterado. Todos os
-FR/SC são verificáveis por contratos e inspeção locais; o diff é reversível e a
-fronteira é preservada. O custo aceito é a possibilidade de selecionar o usuário
-ativo mais antigo quando houver mais de um — mitigada pelo opt-in explícito,
-pela ordem determinística e pela orientação de remover as variáveis após o
-login.
-
-## [NV]
-
-- Estado real do DB de produção (e-mail do administrador, `is_active`,
-  `created_at`, valor efetivo das variáveis) e login ao vivo: **[NV]**. Nenhuma
-  credencial foi lida e nenhuma requisição de login/bootstrap foi executada
-  contra produção nesta investigação.
-- Filtro de logging real, Deploy/Coolify, IdP externo e allowlist OIDC: **[NV]** —
-  independentes deste ciclo; o veredito autoriza apenas a recuperação local.
-- Correção não executada contra produção neste artefato; o gate do alvo está
-  registrado como PASS no handoff consolidado e este documento não reexecutou
-  gates, build, testes ou formatters.
-
-## Fora de âmbito
-
-Mudanças em `analyze/`, `converge/`, `validate/`, `release/`,
-`.specify/memory/STATE.md` ou `PROGRESSO*`; alteração de required checks,
-workflows, ADRs ou constituição; mudança no contrato do `POST /bootstrap`, no
-advisory lock, no formato do 401, no JWT ou no rate limit; IDP externo,
-allowlist OIDC, nova variável de configuração, interface de "esqueci minha
-senha" ou API pública de troca de senha. Nenhuma senha real é fornecida ou
-registrada neste ciclo.
-
-## Handoff
-
-`/speckit.specify` — especificar a recuperação como requisitos verificáveis
-(FR-001..FR-005 / SC-001..SC-003) e tarefas T001..T008, com o wildcard `*` como
-opt-in explícito, seleção determinística do primeiro usuário ativo, sobrescrita
-idempotente, nenhum fallback em typo, resultado observável sem segredo, testes e
-documentação de env e fronteira preservada.
+- **Problem**: Recuperação de 098 não alcançava o administrador real porque o e-mail configurado não existe no DB, o `POST /bootstrap` está fechado e o e-mail correto é desconhecido de quem opera (`intake.md:Sinal`; `define.md:5`).
+- **Chosen approach**: Opt-in explícito com o literal `*` em `FLORA_BOOTSTRAP__ADMIN_EMAIL` (com `ADMIN_PASSWORD`), sem nova variável: seleção determinística do primeiro usuário ativo e sobrescrita idempotente do hash; qualquer outro valor continua com busca exata e `applied = false`, sem fallback (`shape.md:3-24`).
+- **In scope / out of scope**:
+  - **In (FR-001..FR-005 / SC-001..SC-003 / T001..T008)**: `flora-core/src/config/bootstrap.rs` — validação do token `*` após `trim()` somente com senha presente, `select primeiro ativo` por `is_active = true ORDER BY created_at ASC, id ASC LIMIT 1`, aviso e `Ok(false)` sem usuário ativo, UPDATE incondicional de `password_hash`/`password_updated_at`, log sem senha/hash/e-mail real; contratos em `flora-tests/src/contract/bootstrap.rs:340-407,441-483` e auth `auth.rs:1104-1173` (opt-in, e-mail inexistente, typo sem fallback, nenhum ativo, senha inválida, 401 preservado, sem segredo); `.env.example:32-39` documenta o token e a remoção das variáveis (`define.md:FR-001..FR-005`; `shape.md:5-24`).
+  - **Out/deferred/NV**: contrato do `POST /bootstrap` (201/409), advisory lock, emissão de sessão, formato do 401, JWT, rate limit `PasswordLogin` e fluxo OIDC; nova variável de configuração, UI, "esqueci minha senha" ou API de troca de senha; IdP externo; `analyze/`, `converge/`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`; gates, workflows, ADRs e constituição; nenhuma senha real fornecida ou registrada (`define.md:Fora de escopo`; `converge.md:Fronteira preservada`).
+- **Success metrics**: com `*`, restart seleciona o administrador real, sobrescreve o hash e login com o e-mail real e a senha do env retorna 200 com sessão OIDC, sem reaplicação indevida após remover as variáveis (baseline: `applied = false` e 401); somente `*` ativa a seleção — typo continua em busca exata sem escrita (baseline: nenhuma seleção por wildcard); nenhuma senha/hash/e-mail real em log, resposta, teste ou artefato, com `applied`, motivo do skip e `user_id` observáveis; analyze `critical=0`, `5/5`, `3/3`, `8/8` (`define.md:SC-001..SC-003`; `analyze.md:9-18,44`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: quem é o administrador real e quais são `is_active`/`created_at` da conta no DB de produção (**[NV]**)?]; [NEEDS CLARIFICATION: qual é o valor efetivo de `ADMIN_EMAIL`/`ADMIN_PASSWORD` no serviço e o login ao vivo foi executado após o deploy (**[NV]**)?]; [NEEDS CLARIFICATION: com múltiplos usuários ativos, a conta mais antiga selecionada pelo `*` é a administradora esperada (**[NV]**)?]; [NEEDS CLARIFICATION: o filtro de logging de produção permite observar `applied`, o warn de skip e o `user_id` (**[NV]**)?]; [NEEDS CLARIFICATION: as variáveis temporárias foram removidas e a API reiniciada após o login?] (`research.md:[NV]`; `converge.md:[NV]`).

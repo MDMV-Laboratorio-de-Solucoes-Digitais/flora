@@ -535,3 +535,99 @@ permanecem intactas; apenas acréscimos.
 - **Contagens (`find`)**: `specs/` `112` dirs (`598` arquivos), `.specify/assessments/` `110` (`468`), `.specify/validations/` `108` (`131`), `.specify/releases/` `108` (`108`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
 - **R6 / Artefatos**: issues `#420`–`#423`; `docs/governance/2026-11-24-122-briefing-compreensao.md`, `specs/122-org-members-rbac-management/*`, `.specify/validations/122-org-members-rbac-management/*`, `.specify/releases/122-org-members-rbac-management/release.md` (`0.13.0 -> 0.14.0`).
 - **[NV]**: CI remoto do PR em `dev`, ACR independente, promoção `dev -> main` e staging/produção.
+
+## Estado verificado — 2026-11-25 (assessment Sanderson; append-only)
+
+- **Entrega (documental, sem código)**: assessment `avaliacao-harness-sanderson-flora` com `intake.md`, `research.md`, `define.md`, `shape.md`, `decision.md` (`**Veredito: go**`), 34 decisões (ADOPT 5 / ADAPT 10 / DEFER 9 / AVOID 6 / REJECT 4), brief `docs/research/2026-11-24-sanderson-selfevolving-tools.md`, espelho `docs/governance/2026-11-25-avaliacao-harness-sanderson-flora.md` e roteiro/evidência em `.specify/validations/avaliacao-harness-sanderson-flora/`.
+- **Pesquisa `[EV]`/fontes**: 18 investigações paralelas + síntese; 90 URLs primárias em `research.md`; legendas VTT do vídeo em inglês (00:10–56:17); cobertura idiomática real en+pt-BR com docs oficiais em es/fr/de/zh/ja; injeções em E2B docs, PR #410, A2UI e site zh registradas e ignoradas. Correções factuais: "~400 PRs" é inferência; 500k linhas é o último PR da migração Rust; AHP compõe ACP e gera schemas, não servidor.
+- **Contagens (`find`) na worktree**: `specs/` 112 dirs (598 arquivos), `.specify/assessments/` 111 (473), `.specify/validations/` 109 (132), `.specify/releases/` 108 (108), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 138 `.md` na raiz sem `index.md` (150 no total com subpastas).
+- **Verificação local ([EV])**: paths reais e dentro do repo, 5 artefatos não-vazios, `intake-structure: OK`, `decision-rows=34 invalid=0`, `verdict-go=True`, `git diff --check` sem saída. Resultado do gate determinístico e status remoto são registrados em `evidence.md` quando observados ao vivo; até então **[NV]**.
+- **80/20**: sem candidato elegível em P01–P34. BUG-111-01/02/03, único gap com consumidor nomeado apontado pela pesquisa, já foi corrigido em `6288a8569` (ancestral de `github/dev`) `[EV]`. Demais propostas já cobertas, documentais ou incompatíveis com `debloat`/VPS barata.
+- **[NV]**: CI/PR remoto, ACR, promoção `dev→main` e deploy; nenhum merge de `main`, auto-merge, force-push, credencial ou skill instalada. Trabalho alheio preservado.
+
+### Suplemento — gate e ACR (2026-11-25T01:24Z, append-only)
+
+- Gate determinístico na worktree isolada: 1ª execução FAIL por `/tmp` 100% (`cargo` rc=101, nenhum teste descoberto); 2ª com `TMPDIR` gravável **PASS**, `all 11 db contract floors intact (87 total)`, `GATE_RC=0` (01:10:15Z→01:23:42Z). Ambiente/local; checks remotos seguem **[NV]** até o head do PR.
+- ACR independente (`research`): `changes_requested` com 1 HIGH (evidência de gate/PR não colada), 1 MEDIUM (contradição em autorizações) e 1 LOW (snapshot de status desatualizado); os três achados foram corrigidos em `evidence.md`, `decision.md` e no snapshot final antes do commit. Nenhum achado determinístico crítico.
+
+## Estado verificado — 2026-11-25 (backfill de intake; append-only)
+
+- **Entrega**: `intake.md` criado nos 13 assessments que tinham apenas `decision.md`: `040`, `041`, `042`, `086`–`095`. Cada arquivo segue o formato canônico de `/speckit.assess.intake` (título, Slug, Created, Source, Type, Idea as captured, Restated, Origin & Context, 5–7 `[NEEDS CLARIFICATION:]`), com conteúdo extraído de `decision.md` e `specs/<slug>/spec.md`. Nenhum veredito, spec, gate, CI ou código alterado.
+- **Evidência local ([EV])**: `INTAKE_BACKFILL_OK 13/13`, tamanhos 2.269–2.936 bytes (`git show HEAD:<file> | wc -c`), `git diff --check` RC 0, paths reais e dentro da worktree. Roteiro em `.specify/validations/assess-intake-backfill-20261125/test-roadmap.md`.
+- **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo no head do PR; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
+
+### Suplemento — gate (2026-11-25T02:01Z, append-only)
+
+- `[EV]` gate determinístico na worktree isolada: `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (01:51:56Z→02:01:29Z, `TMPDIR` gitignored). Checks remotos do PR seguem **[NV]** até observação ao vivo no head exato.
+
+## Estado verificado — 2026-11-25 (backfill de research; append-only)
+
+- **Entrega**: `research.md` criado em 13 assessments (`040`, `041`, `042`, `086`–`095`) e regularizado em outros 5 (`107`–`110`, `113`, antes com menos de 900 bytes/fora do formato). Todos seguem as 8 seções de `/speckit.assess.research`: Users & Demand, Prior Art, Market & Context, Data & Constraints, Evidence Against the Idea, Gaps & Open Questions, Sources (além de Slug/Created/confidence). Nenhum veredito, intake, spec, gate, CI ou código alterado.
+- **Evidência local ([EV])**: `RESEARCH_BACKFILL_OK 18/18`; 7–13 fontes por arquivo; `Evidence Against` e `[NEEDS CLARIFICATION:]` presentes em todos; fatos antigos dos 5 arquivos regularizados preservados; `git diff --check` RC 0. Roteiro em `.specify/validations/assess-research-backfill-20261125/test-roadmap.md`.
+- **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
+
+### Suplemento — gate (2026-11-25T02:29Z, append-only)
+
+- `[EV]` gate determinístico na worktree isolada: `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (02:24:18Z→02:29:26Z, `TMPDIR` gitignored). Checks remotos do PR seguem **[NV]** até observação ao vivo no head exato.
+
+## Estado verificado — 2026-11-25 (backfill de define; append-only)
+
+- **Entrega**: `problem.md` canônico criado em 30 assessments sem `define.md`/`problem.md`, reescrito em 5 com artefato fino (`010`, `020`–`023`) e criado em 7 ao lado de `define.md` fino (`107`–`113`). Nenhum veredito, intake, research, spec, gate, CI ou código alterado; `define.md` dos 7 permanece intacto.
+- **Evidência local ([EV])**: `DEFINE_BACKFILL_OK 42/42`; H1, Slug e 7 seções presentes; Users/Stakeholders, `baseline:` em Success Metrics, Cost of Inaction e `[NEEDS CLARIFICATION:]` em todos; `git diff --check` RC 0. Roteiro em `.specify/validations/assess-define-backfill-20261125/test-roadmap.md`.
+- **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
+
+### Suplemento — gate (2026-11-25T03:33Z, append-only)
+
+- `[EV]` gate local: 1ª tentativa FAIL por `aws-lc-sys` SIGABRT sob pressão de memória; 2ª FAIL por ENOSPC em `chrono-tz` (btrfs metadata cheio); 3ª **PASS** após `cargo clean` no target da worktree e `CARGO_BUILD_JOBS=2` — `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (03:18:11Z→03:32:52Z). Nenhuma mudança de código; detalhes em `evidence.md`.
+
+## Estado verificado — 2026-11-25 (backfill de concept; append-only)
+
+- **Entrega**: `concept.md` canônico em 54 assessments — 30 novos, 2 reescritos (`010`, `020`) e 22 criados ao lado de `shape.md` fino. Cada arquivo traz 2–3 opções (Sketch/Appetite/Trade-offs/Rabbit holes), Recommendation ligada a goals/métricas, Out of Scope e Assumptions to Validate. `shape.md`/`define.md` antigos intactos. Como `116` não tinha `problem.md`, o equivalente local `define.md` foi usado para gerar o pré-requisito canônico.
+- **Evidência local ([EV])**: `SHAPE_BACKFILL_OK 54/54`, 3 opções por arquivo, 15 `problem.md` de pré-requisito presentes (`116` + 14 do `048`–`066`), `git diff --check` RC 0; gate determinístico `PASS` (`87` pisos, `GATE_RC=0`, 03:50:13Z→04:00:27Z, após `cargo clean` no target da worktree). Roteiro/evidência em `.specify/validations/assess-shape-backfill-20261125/`.
+- **[NV]**: checks remotos/ACR/merge até observação ao vivo; PR #410 foi mesclado por `lfgranja` às 02:56:17Z, não por esta sessão. Nenhum merge de `main`, deploy, auto-merge ou force-push executado aqui.
+
+## Estado verificado — 2026-11-25 (revisita de decide; append-only)
+
+- **Entrega**: 62 `decision.md` reescritos no formato canônico de `/speckit.assess.decide` (scorecard de 6 critérios, Verdict, racional e handoff). Todos os vereditos históricos `go` foram preservados; nenhuma mudança de veredito. Como `114` e `115` tinham apenas `define.md`/`shape.md`, seus `problem.md` e `concept.md` canônicos foram criados como pré-requisitos.
+- **Evidência local ([EV])**: `DECIDE_REVISIT_OK 62/62`, `verdicts {'go': 62}`, `git diff --check` RC 0; gate determinístico `PASS` (`87` pisos, `GATE_RC=0`, 04:38:21Z→04:48:58Z, após `cargo clean`). Roteiro/evidência em `.specify/validations/assess-decide-revisit-20261125/`.
+- **[NV]**: checks remotos/ACR/merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, não por esta sessão. Nenhum merge de `main`, deploy, auto-merge ou force-push executado aqui.
+
+## Estado verificado — 2026-11-25 (canonicalização final de decide; append-only)
+
+- **Entrega**: os 42 `decision.md` restantes foram reescritos com scorecard canônico, completando 111/111 assessments normalizados. Todos os vereditos históricos `go` foram preservados; matriz P01–P34 e contagens do Sanderson e os 188 IDs do assessment de arquitetura multiagente foram mantidos.
+- **Evidência local ([EV])**: `FINAL_DECIDE_OK 42/42`, `ALL_CANONICAL 111/111`, `git diff --check` RC 0. Gate/CI remoto em verificação neste ciclo; roteiro em `.specify/validations/assess-decide-final-20261125/`.
+- **[NV]**: gate remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja`, não por esta sessão. Nenhum merge de `main`, deploy, auto-merge ou force-push executado aqui.
+
+### Suplemento — gate (2026-11-25T05:29Z, append-only)
+
+- `[EV]` gate determinístico: primeira execução excedeu 1200 s durante compilação (sem `GATE_RC`); segunda com target aquecido **PASS** — `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (05:26:55Z→05:29:02Z). Nenhuma mudança de código; detalhes em `evidence.md`.
+
+## Ciclo 123 — download autenticado em /files (2026-11-25, append-only)
+
+- **Âncora**: `session_title` = `flora - corrige download autenticado de arquivos em /files`; branch `fix/123-authorized-file-download`; base `github/dev@74f1eda10b17`. Critério 80/20 `impacto5 × confiança5 × fechamento4 × esforço⁻¹4 × risco⁻¹4 = 1600/3125` — CORREÇÃO `BF-07`, consumidor = membro autenticado em `/files`.
+- **Entrega**: `ApiClient.downloadBlob` envia Bearer e trava sessão em 401; `FilePreview` troca `<a>` por botão com object URL e alerta pt-BR via `apiErrorMessage`; nova chave `file.downloadFailed`; teste unitário (2 casos) e Passo 5c no E2E; bug flow em `.specify/bugs/authorized-file-download-401/`; `.gitignore` passa a ignorar artefatos Playwright.
+- **Evidência local ([EV])**: `bun run check` 4902 arquivos/0 erros; `bun run lint` exit 0; Vitest 2/2; `check_gate_integrity.py` PASS (87 pisos, 05:48:17Z→06:03:01Z); `git diff --check` RC 0.
+- **Bloqueio registrado**: E2E local `evidence_status: blocked` após três tentativas (webServer 120 s; migration checksum em `:5432`; `CI=true`/porta ocupada; 900 s sem assertion). `e2e-browser` é advisory; required checks remotos são a autoridade de merge. Automação de provisionamento E2E (PG18 fresco + `dev-mint` pré-compilado + reuse) vai como próximo passo ao SWE. Detalhes em `.specify/validations/123-authorized-file-download/evidence.md`.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.
+
+## Ciclo 124 — exclusão de arquivos em /files (2026-11-25, append-only)
+
+- **Âncora**: `session_title` = `flora - exclusao de arquivos em /files`; branch `fix/124-file-delete-ui`; base `github/dev@cab1cab8ed74`. Critério 80/20 `impacto4 × confiança5 × fechamento4 × esforço⁻¹3 × risco⁻¹3 = 720/3125` — IMPLEMENTAÇÃO residual de P0 “arquivos básicos”, consumidor = dono do arquivo em `/files`.
+- **Entrega**: ação “Excluir” com confirmação inline acessível em `FilePreview`; callback `handleDeleted` em `+page.svelte` remove o item do `FileStore` somente após `204`; chaves pt-BR `file.delete*`/`files.deleted`; Passo 5d no smoke E2E. Backend, migrations, gate e required checks inalterados.
+- **Evidência local ([EV])**: `bun run check` 4902 arquivos/0 erros; `bun run lint` exit 0; `check_gate_integrity.py` PASS (87 pisos, 07:03:50Z→07:15:40Z); `git diff --check` RC 0. Roteiro/evidência em `.specify/validations/124-file-delete-ui/`.
+- **[NV]/bloqueios**: contrato DB não reexecutado localmente (checksum antigo em `:5432`) e E2E local não repetido após as três falhas do ciclo 123; `db-tests`/`e2e-browser` remotos são a autoridade e serão colados no PR. PR #433 (`dev→main`) permanece escalado ao SWE; nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.
+
+### Resultado — ciclo 124 (2026-11-25T07:38Z, append-only)
+
+- `[EV]` PR #435 mesclado em `dev` (`bfc51d100317`, 07:37:25Z); required checks e `e2e-browser` remoto SUCCESS no head `40d299e246` ([run](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45568843684/job/139050220020)). ACR `correct`, 3 P3 corrigidos. E2E local `blocked`; automação de provisionamento segue como pendência ao SWE. PR #433 (`dev→main`) segue escalado; nenhum merge de `main`/deploy executado por agente.
+
+## Ciclo 125 — revalidação de sessão no WebSocket (2026-11-25T08:09Z, append-only)
+
+- **Âncora**: `session_title` = `flora - revalidacao de sessao no websocket`; branch `fix/125-ws-session-revalidation`; base `github/dev@4f619cb28e8d`; critério `4 × 3 × 3 × 3 × 4 = 432/3125` (STATE.md:1377-1383). Consumidor = membro com `/api/v1/ws` aberto cuja sessão é revogada por logout/rebaixamento.
+- **Entrega**: `verify_ws_session` público usa `verify_bearer_token` e compara user/org; `websocket_handler` retém o token e o passa a `handle_socket`; revalidação TTL de 30 s (`std::time`) antes de ações do cliente (Ping exceto) e antes do fanout do hub; `401` envia `Error{SESSION_INVALID}` + `Close(1008)` e encerra o loop, enquanto `500` apenas loga e preserva o socket; token nunca é logado. Novo contrato DB `db_ws_revoked_after_connect_rejected`; piso `websocket` 8→9 em lockstep (`check_gate_integrity.py`/`rust.yml`). Nenhum frontend, migration, ADR, constituição ou credencial tocado.
+- **Evidência local ([EV])**: `rustfmt --edition 2024 --check` nos dois arquivos Rust RC 0; `git diff --check` RC 0; exatamente 8 paths do ciclo. Roteiro/evidência em `.specify/validations/125-ws-session-revalidation/`.
+- **[NV]**: contrato DB não executado neste worker (requer Postgres); gate agregado e required checks remotos seguem `[NV]` até execução/observação ao vivo no head do PR — baseline do gate já está em execução na janela principal. Nenhum commit, push, merge, deploy ou stage executado.
+
+### Verificação local concluída — ciclo 125 (2026-11-25T08:20Z, append-only)
+
+- `[EV]` Contrato DB executado com PG18 descartável em `:15435`: `db_ws_revoked_after_connect_rejected` 1 passed / 0 failed (08:17:49Z→08:17:51Z). `cargo fmt --all -- --check` RC 0; `cargo check -p flora-api` 0 erros; `cargo clippy -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS com 88 pisos (08:16:34Z→08:17:16Z). Required checks remotos seguem `[NV]` até o head do PR.

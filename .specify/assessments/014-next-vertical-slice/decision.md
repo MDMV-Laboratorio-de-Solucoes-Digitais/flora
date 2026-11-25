@@ -1,75 +1,36 @@
-# Decision: 014 — Next vertical slice
+# Decision: 014 — Next vertical slice (WS session authority + protocol)
 
-**Verdict:** **go** (scoped)
+- **Slug**: 014-next-vertical-slice
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | problem.md | concept.md | decision.md (anterior) | 013 artifacts | docs/research/2026-11-16-013-websocket-session-authority.md | docs/research/2026-11-16-seed-vps-profile-audit.md
 
-## Chosen slice
-**A — WebSocket session authority + protocol alignment.**  
-Primary 80/20 for cycle 014: enforce DB-backed session authority on `/ws` (parity with HTTP), align endpoint/token transport and minimal frontend↔backend WS protocol/close behavior so authenticated, tenant-correct realtime use is possible and safe-by-default. **Do not** take on full fanout/registry/sync (B) or broad operability refactors (C) as the primary deliverable, except narrowly required compatibility hooks.
+## Scorecard
 
-## Justification (evidence)
-- **Security/P0:** HTTP extractors already validate `jti` in Postgres (012, PR #215), but `flora-api/src/routes/websocket.rs` performs JWT-only decode pre-upgrade with no DB session/revocation/expiry enforcement — inconsistent trust boundary (ROADMAP P0.1; `docs/research/2026-11-16-013-websocket-session-authority.md`).
-- **Usability/contract:** frontend `WsClient` targets `/api/v1/ws?token=` and a divergent event/sync model while backend serves `/ws` with header auth and tagged envelopes; browser interop is effectively broken (`apps/frontend/src/lib/api/websocket.ts`, 013 research).
-- **Sequencing leverage:** 013 delivered REST persistence; A is prerequisite for reliable realtime delivery/fanout (B) and avoids building push features on unauthenticated/misaligned foundations.
-- **VPS fit:** reuses existing Postgres/session services, no new mandatory infra; handshake-only or low-frequency revalidation fits 2 vCPU/4 GB better than premature stateful fanout complexity.
-- **Research consensus:** multilingual/industry practice favors pre-upgrade auth, DB-backed revocation checks (jti/session), generic failures, bounded revocation windows, and careful browser token transport (see `research.md`).
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | `/ws` faz upgrade com JWT decode apenas (`routes/websocket.rs:100-141,281`), sem `validate_session(jti)`/active/expiry/revogação, enquanto HTTP já é DB-backed desde 012; FE alvo `/api/v1/ws?token=` vs backend `/ws` com header, envelopes divergentes (`problem.md:4,12-14`; `research.md:11-13`). |
+| Evidence strength | adequate | Auditoria de código + pesquisa multilíngue (EN/pt-BR/es/de/fr/zh-CN; ja/ko/ru triangulados NV) com consenso: autenticar antes do upgrade, authority em DB por `jti`, transporte browser-safe, janela de revogação explícita (`research.md:4,20-30`; decisão anterior:38-46). |
+| Value vs. inaction | strong | Fecha trust boundary inconsistente na mesma data plane org-scoped e destrava uso confiável de WS no browser; é pré-requisito de fanout (B) e evita construir push sobre base não autenticada (`intake.md:15-16`; decisão anterior:10-12). |
+| Feasibility / appetite | adequate | Reaproveita `session_service`/helper de 012, sem novo serviço obrigatório; complexidade moderada em transporte de token no browser, janela de revogação e contrato FE (`intake.md:12-17`; decisão anterior:48-56). |
+| Strategic fit | strong | ROADMAP P0.1/P0.2 e perfil Seed VPS 2 vCPU/4 GB; handshake-only ou revalidação esporádica com jitter cabe no orçamento, ao contrário de fanout stateful prematuro (`intake.md:7-10,25`; decisão anterior:13-14,65-70). |
+| Risk posture | adequate | Fail-closed com erros genéricos, nunca logar token, `1008`/`SESSION_INVALID` na invalidação, non-goals duros para fanout/sync e docs de janela de revogação; NVs explícitos (`research.md:22-25`; decisão anterior:48-75). |
 
-## Scope (in) — file-by-file implementation checklist
-> Planned targets (confirm exact symbols/paths at implementation time; keep diff minimal).
+## Verdict & Rationale
 
-### Backend (authority & transport)
-- `flora-api/src/extractors/auth.rs` — factor shared token verification helper (e.g. `verify_bearer_token(token, state) -> Result<VerifiedSession, _>` or equivalent) reusing existing JWT decode + `SessionService::validate_session(jti)` + active/expiry/user/org checks; keep HTTP extractor behavior/messages unchanged.
-- `flora-api/src/extractors/mod.rs` (and any re-export/call sites) — expose helper for WS/other callers as needed.
-- `flora-api/src/routes/websocket.rs` — resolve token from supported transports (prefer `Authorization: Bearer` + documented browser fallback such as query/subprotocol; never log token), call shared verifier **before** `on_upgrade`; return generic 401/500 consistent with HTTP; pass verified `user_id/org_id/jti` into socket handler; retain/ensure channel-org ownership checks on message actions; define nil-org handling; optionally add minimal periodic `jti` revalidation/`SESSION_INVALID`+`1008` close if low-risk (or document handshake-only window).
-- `flora-api/src/routes/mod.rs` — align/alias WS route path with frontend (`/ws` and/or `/api/v1/ws`) as decided.
-- `flora-api/src/state/*` (only if required) — no new services expected; wire existing `session_service` access already available.
+Veredito histórico **`go (scoped)` preservado como `go`**. O scorecard sustenta a Opção A — WS session authority + alinhamento de protocolo — sobre B (fanout/delivery) e C (operabilidade Seed/VPS), conforme `intake.md:12-21`. Base: `dev @530d63fea` (cycle 013 merged, PR #216, CI green). Fatos preservados: HTTP extractors já validam `jti` no Postgres (012/PR #215) mas `flora-api/src/routes/websocket.rs` decodifica JWT sem checagem de sessão; `apps/frontend/src/lib/api/websocket.ts` usa `/api/v1/ws?token=` e eventos (`workspace.user.removed`, `/messages/sync`) que o backend não implementa; tagged envelopes `Subscribe/Unsubscribe/SendMessage/Ping` ↔ `Subscribed/.../NewMessage/MessageSent/Pong/Error`, com `SendMessage` checando dono da org e persistindo, mas sem registry/fanout. A ressalva de janela de revogação (handshake-only vs recheck jittered), o tradeoff de transporte no browser e os NVs (nenhum runtime measurement, browser e2e ou CI remoto neste assessment; ja/ko/ru limitados) reforçam o recorte, não o invertem. C e B seguem como slices futuros.
 
-### Frontend (protocol/transport/lifecycle)
-- `apps/frontend/src/lib/api/websocket.ts` — point to agreed WS URL/path, send token via agreed transport, parse backend tagged envelopes (`Subscribed/Unsubscribed/NewMessage/MessageSent/Pong/Error`) minimally, remove/guard broken assumptions (`/messages/sync` call, `workspace.user.removed` contract) with safe behavior, stop blind reconnect on auth/policy failure (invoke auth invalidation/lock as appropriate), add bounded backoff+jitter for retryable disconnects.
-- `apps/frontend/src/routes/(app)/+layout.svelte` (and auth/org state integration points) — ensure disconnect/reconnect on logout, token refresh, and org switch so socket context matches verified session/org.
-- `apps/frontend/src/lib/api/client.ts` / auth state modules (only if needed) — no behavior change required unless exposing token/refresh hooks for WS lifecycle.
+## If needs-clarification
 
-### Tests & docs
-- `flora-api/src/extractors/auth.rs` (tests) and/or `flora-api/src/routes/websocket.rs` (tests) — unit tests for token transport parsing/precedence and WS envelope (de)serialization helpers where applicable.
-- `flora-tests/src/contract/*` or `flora-tests/src/integration/*` (add `websocket`/session module as appropriate) — **DB-gated** handshake/session matrix: accept valid; reject revoked/inactive, expired, missing, user mismatch, org mismatch (generic); nil-org parity; same-org send/persist ok; cross-org channel action forbidden. Use disposable Postgres 18 + deterministic session fixtures.
-- `.github/workflows/rust.yml` — include new DB-gated tests in `db-tests` job (env-gated/`--ignored` pattern consistent with repo) when implemented.
-- `apps/frontend/tests/unit/*` (e.g. websocket client/mappers) — URL/transport, envelope handling, auth-failure no-infinite-retry, reconnect classification.
-- `docs/dev-smoke.md` and/or `docs/research/*` (assessment follow-up) — document WS auth path/transport, revocation window, and manual smoke steps (NV if not executed).
+- **Blocking questions**: N/A (veredito `go`; transporte de token, janela de revogação e schema de revalidação seguem como carried-forward).
+- **Revisit stage**: N/A.
 
-## Deterministic verification plan
-1. `cargo fmt --all -- --check`
-2. `cargo clippy --workspace --all-targets -- -D warnings` (record any scoped fallback if required by preexisting lint surface)
-3. `cargo test -p flora-core --lib`
-4. `cargo test -p flora-api` (unit tests, incl. new extractor/ws unit cases)
-5. `cargo test -p flora-tests --lib`
-6. **DB-gated (Postgres 18 disposable, alt-port ok):** `FLORA_DATABASE__POSTGRES_URL=... cargo test -p flora-tests <ws/session contract filter> -- --ignored --test-threads=1` (and wire into CI `db-tests` job)
-7. `cd apps/frontend && bun run check && bun run lint && bun run test:unit -- --run --project server && bun run build`
-8. **NV (environment-dependent / follow-up):** live browser e2e against running API+DB (+Valkey if enabled), real OIDC/JWKS flows, multi-client realtime fanout/delivery, `/messages/sync` behavior, long-lived revocation push semantics, default-port smoke when 5432 unavailable conflicts absent, `apps/web`.
+## If go — Handoff to `/speckit.specify`
 
-## Risks and mitigations
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Browser token transport tradeoff (query/subprotocol vs header/cookie) | Leakage if logged/cached; implementation complexity | Never log tokens, prefer short-lived credentials, document choice, support safest feasible transport; keep generic errors. |
-| Handshake-only revocation leaves residual window | Revoked session usable until reconnect/expiry | Document explicitly; prefer low-frequency periodic/jittered recheck if cheap; bound TTLs. |
-| FE/BE contract churn | Regressions in chat/auth UX | Minimal envelope mapping, isolate client changes, unit tests, keep REST as correctness path. |
-| DB dependency on handshake/recheck | Added latency/load, fail-closed on DB issues | Reuse indexed `jti` lookup, low recheck frequency, preserve 500-on-unavailable semantics; VPS pool sizing noted. |
-| Scope creep into fanout/sync | Slips schedule, adds stateful complexity | Hard non-goals; `Subscribe` remains ack-only unless trivial; defer registry/NOTIFY/Valkey fanout to B. |
-| Nil-org / pre-selection sessions | Ambiguous WS access | Align with HTTP `require_org`/product rule; test explicitly. |
-
-## Non-goals (014)
-- Full realtime fanout/subscription registry, multi-client broadcast correctness guarantees, cross-node delivery, Valkey/NOTIFY-driven push architecture (beyond documenting options).
-- `/api/v1/messages/sync` implementation, message history replay/catch-up protocol, presence/typing/read receipts, edit/delete realtime events taxonomy expansion.
-- File upload/download/binary storage, attachments, DM UX, channel membership/roles UI, search/notifications wiring.
-- OIDC/JWKS e2e, browser Playwright e2e, `apps/web`, deploy/merge/release/secrets, production rollout.
-- Broad Seed/VPS refactor (compose profiles, pool rewiring, making Meilisearch optional at boot, SQLite claims) except incidental doc notes — **candidate follow-up slice C**.
-
-## Debloat / VPS notes
-- **No new mandatory services.** Reuse Postgres + existing `sessions`/`session_service`; avoid introducing ticket stores/pubsub dependencies in 014.
-- Prefer a small shared verifier over duplicating auth logic or adding auth frameworks.
-- Keep revalidation (if added) infrequent and jittered; handshake-only is acceptable for Seed if residual window is documented.
-- Realtime correctness remains **DB/REST-authoritative**; push is best-effort (aligns with LISTEN/NOTIFY & pubsub fire-and-forget realities). For 2 vCPU/4 GB, defer heavy fanout/state until measured need.
-- Seed operability gaps (optional services, pool/config, mem limits) remain tracked in `docs/research/2026-11-16-seed-vps-profile-audit.md` for subsequent slice prioritization.
-
-## NV / assumptions
-- No live runtime measurements, browser e2e, or CI remote execution performed in this assessment.
-- Exact DB schema/index sufficiency for WS revalidation frequency assumed adequate given 012 usage; confirm during implementation.
-- ja/ko/ru-language primary sources limited in this run; no conflicting guidance identified.
+- **Problem**: O caminho realtime não é seguro, autoritativo nem utilizável pelo cliente: `/ws` aceita upgrade com JWT-only (sem DB `jti`/revogação/expiração) e o frontend usa path/transporte/eventos incompatíveis, deixando sessões revogadas vivas e tenant/lifecycle semântica indefinida (`problem.md:4,18-22`).
+- **Chosen approach**: Opção A — extrair helper compartilhado (`verify_bearer_token(token, state) -> VerifiedSession`) reaproveitando JWT decode + `SessionService::validate_session(jti)` (ativo/expiry/user/org) e usá-lo também no handshake `/ws` antes de `on_upgrade`; alinhar path/transporte (Bearer + fallback browser documentado, nunca logar token), envelopes e close (`SESSION_INVALID`/`1008`) com erros genéricos 401/500 (decisão anterior:19-36; `research.md:28-30`).
+- **In scope / out of scope**:
+  - **In (backend)**: `flora-api/src/extractors/auth.rs` (helper compartilhado) e `extractors/mod.rs`, `flora-api/src/routes/websocket.rs` (resolver token por transporte, verificar antes do upgrade, passar `user_id/org_id/jti` ao handler, checagens de org do canal, nil-org, recheque opcional jittered), `routes/mod.rs` (alinhar/aliar `/ws` e `/api/v1/ws`); **FE**: `apps/frontend/src/lib/api/websocket.ts` (URL/transporte, envelopes tagged, sem retry cego em falha de auth, backoff limitado + jitter), `(app)/+layout.svelte` (rebind em logout/refresh/troca de org); **testes/docs**: unit tests de transporte/envelope, contratos DB-gated PG18 (matriz aceito/rejeitado: válido, revogado/inativo, expirado, ausente, user/org mismatch, nil-org, cross-org), job `db-tests`, Vitest e `docs/dev-smoke.md` (decisão anterior:19-46).
+  - **Out / NV**: fanout/registry/broadcast multi-client/cross-node, Valkey/NOTIFY push, `/api/v1/messages/sync`, replay/histórico, presença/typing/receipts, anexos/DMs/UX de roles, search/notifications, OIDC/JWKS e2e, Playwright, `apps/web`, deploy/merge/release/secrets, refator ampla Seed/VPS (candidato C). NV: medições live, e2e browser, CI remoto, sufiência do schema/índice para revalidação, ja/ko/ru (decisão anterior:58-75).
+- **Success metrics**: Handshake WS aplica a mesma autoridade de sessão do HTTP (assinatura + `jti` ativo/não expirado/user/org consistente) com falhas genéricas pré-upgrade; path/transporte documentados e determinísticos; compatibilidade mínima FE↔BE para connect/auth/error/close sem retry infinito; tenancy preservada no handshake e nas ações de mensagem; matriz DB-gated cobrindo aceite/rejeição (problem.md:30-35; decisão anterior:33,44-46).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: qual transporte de token no browser adotar (cookie HttpOnly/SameSite, ticket one-shot via subprotocol, ou query fallback) e como evitar vazamento em logs?]; [NEEDS CLARIFICATION: janela de revogação — handshake-only, recheck jittered 60–300s ou push invalidation?]; [NEEDS CLARIFICATION: regra de rebind/disconnect em logout, refresh e troca de org?]; [NEEDS CLARIFICATION: como tratar nil-org no WS em paridade com `require_org()`?]. NV-1: nenhuma medição live/browser e2e/CI remoto neste assessment (`research.md:61-63`; decisão anterior:72-75).
