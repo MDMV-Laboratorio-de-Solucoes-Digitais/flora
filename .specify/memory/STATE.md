@@ -1308,3 +1308,10 @@ anterior foi alterada.
 ### Suplemento — gate (2026-11-25T02:29Z, append-only)
 
 - `[EV]` `python3 scripts/ci/check_gate_integrity.py` PASS (`87` pisos, `GATE_RC=0`) na worktree `assess-research-backfill-20261125`, com `TMPDIR` gravável. CI remoto e merge permanecem **[NV]** neste ponto.
+
+## Sessão: flora - backfill/regularização de problem definition (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T025000Z-assess-define`; branch `assessment/assess-define-backfill-20261125`; worktree `.specify/queue/worktrees/assess-define-backfill-20261125`; base `github/dev@df75b1bcd`.
+- **Entrega**: 42 `problem.md` no formato canônico — 30 novos, 5 reescritos (`010`, `020`–`023`), 7 novos ao lado de `define.md` fino (`107`–`113`). Nenhum veredito/intake/research/spec/gate/CI/código alterado.
+- **Evidência local ([EV])**: 42/42 com Slug exato, 8 seções, Users/Stakeholders, métricas com baseline, Cost of Inaction e `[NEEDS CLARIFICATION:]`; paths não-symlink; `git diff --check` RC 0.
+- **[NV]**: gate/CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge, force-push ou toque em trabalho alheio.

@@ -569,3 +569,9 @@ permanecem intactas; apenas acréscimos.
 ### Suplemento — gate (2026-11-25T02:29Z, append-only)
 
 - `[EV]` gate determinístico na worktree isolada: `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (02:24:18Z→02:29:26Z, `TMPDIR` gitignored). Checks remotos do PR seguem **[NV]** até observação ao vivo no head exato.
+
+## Estado verificado — 2026-11-25 (backfill de define; append-only)
+
+- **Entrega**: `problem.md` canônico criado em 30 assessments sem `define.md`/`problem.md`, reescrito em 5 com artefato fino (`010`, `020`–`023`) e criado em 7 ao lado de `define.md` fino (`107`–`113`). Nenhum veredito, intake, research, spec, gate, CI ou código alterado; `define.md` dos 7 permanece intacto.
+- **Evidência local ([EV])**: `DEFINE_BACKFILL_OK 42/42`; H1, Slug e 7 seções presentes; Users/Stakeholders, `baseline:` em Success Metrics, Cost of Inaction e `[NEEDS CLARIFICATION:]` em todos; `git diff --check` RC 0. Roteiro em `.specify/validations/assess-define-backfill-20261125/test-roadmap.md`.
+- **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
