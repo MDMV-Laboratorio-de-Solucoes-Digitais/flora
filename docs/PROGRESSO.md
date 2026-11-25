@@ -569,3 +569,13 @@ permanecem intactas; apenas acréscimos.
 ### Suplemento — gate (2026-11-25T02:29Z, append-only)
 
 - `[EV]` gate determinístico na worktree isolada: `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (02:24:18Z→02:29:26Z, `TMPDIR` gitignored). Checks remotos do PR seguem **[NV]** até observação ao vivo no head exato.
+
+## Estado verificado — 2026-11-25 (backfill de define; append-only)
+
+- **Entrega**: `problem.md` canônico criado em 30 assessments sem `define.md`/`problem.md`, reescrito em 5 com artefato fino (`010`, `020`–`023`) e criado em 7 ao lado de `define.md` fino (`107`–`113`). Nenhum veredito, intake, research, spec, gate, CI ou código alterado; `define.md` dos 7 permanece intacto.
+- **Evidência local ([EV])**: `DEFINE_BACKFILL_OK 42/42`; H1, Slug e 7 seções presentes; Users/Stakeholders, `baseline:` em Success Metrics, Cost of Inaction e `[NEEDS CLARIFICATION:]` em todos; `git diff --check` RC 0. Roteiro em `.specify/validations/assess-define-backfill-20261125/test-roadmap.md`.
+- **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
+
+### Suplemento — gate (2026-11-25T03:33Z, append-only)
+
+- `[EV]` gate local: 1ª tentativa FAIL por `aws-lc-sys` SIGABRT sob pressão de memória; 2ª FAIL por ENOSPC em `chrono-tz` (btrfs metadata cheio); 3ª **PASS** após `cargo clean` no target da worktree e `CARGO_BUILD_JOBS=2` — `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (03:18:11Z→03:32:52Z). Nenhuma mudança de código; detalhes em `evidence.md`.
