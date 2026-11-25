@@ -579,3 +579,9 @@ permanecem intactas; apenas acréscimos.
 ### Suplemento — gate (2026-11-25T03:33Z, append-only)
 
 - `[EV]` gate local: 1ª tentativa FAIL por `aws-lc-sys` SIGABRT sob pressão de memória; 2ª FAIL por ENOSPC em `chrono-tz` (btrfs metadata cheio); 3ª **PASS** após `cargo clean` no target da worktree e `CARGO_BUILD_JOBS=2` — `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (03:18:11Z→03:32:52Z). Nenhuma mudança de código; detalhes em `evidence.md`.
+
+## Estado verificado — 2026-11-25 (backfill de concept; append-only)
+
+- **Entrega**: `concept.md` canônico em 54 assessments — 30 novos, 2 reescritos (`010`, `020`) e 22 criados ao lado de `shape.md` fino. Cada arquivo traz 2–3 opções (Sketch/Appetite/Trade-offs/Rabbit holes), Recommendation ligada a goals/métricas, Out of Scope e Assumptions to Validate. `shape.md`/`define.md` antigos intactos. Como `116` não tinha `problem.md`, o equivalente local `define.md` foi usado para gerar o pré-requisito canônico.
+- **Evidência local ([EV])**: `SHAPE_BACKFILL_OK 54/54`, 3 opções por arquivo, 15 `problem.md` de pré-requisito presentes (`116` + 14 do `048`–`066`), `git diff --check` RC 0; gate determinístico `PASS` (`87` pisos, `GATE_RC=0`, 03:50:13Z→04:00:27Z, após `cargo clean` no target da worktree). Roteiro/evidência em `.specify/validations/assess-shape-backfill-20261125/`.
+- **[NV]**: checks remotos/ACR/merge até observação ao vivo; PR #410 foi mesclado por `lfgranja` às 02:56:17Z, não por esta sessão. Nenhum merge de `main`, deploy, auto-merge ou force-push executado aqui.
