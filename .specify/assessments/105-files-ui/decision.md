@@ -1,57 +1,52 @@
 # Decision: 105 — Tela de arquivos e limite coerente
 
 - **Slug**: 105-files-ui
-- **Decidido**: 2026-11-21
-- **Verdict**: **go**
-- **Branch**: `feature/105-files-ui` @ `c5e4f886ee91125cfe1215c436c144476fe42415`
-- **Âncora**: `.specify/feature.json` → `specs/105-files-ui`
-- **Evidência**: roteiro item 8 + inspeção determinística do baseline `c5e4f886e`; upload 201/download 200 com `FLORA_STORAGE__LOCAL_PATH` gravável relatados como entrada do ciclo
-- **Artefatos revisados**: intake | research | define | shape | spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go (decisão original 2026-11-21, preservada)
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (anterior) | roteiro `docs/governance/2026-11-21-roteiro-staging-flora.md:159-164` | upload 201/download 200 relatados como entrada | spec/plan/tasks 105
 
-## Contexto / problema — causa raiz determinística
+## Scorecard
 
-O item 8 do roteiro (`docs/governance/2026-11-21-roteiro-staging-flora.md:159-164`) exige upload válido, preview/download e erro pt-BR “Arquivo muito grande...” com nada gravado. No baseline `c5e4f886e` isso não é executável pela interface:
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | Item 8 do roteiro exige upload, preview/download e erro pt-BR com nada gravado, mas não há rota `/files` nem link, e o cliente aceita 50 MB contra 10 MB do servidor (`roteiro:159-164`; `files.ts:2`; `storage.rs:35-37,54`). |
+| Evidence strength | adequate | Inspeção determinística do baseline `c5e4f886e` e upload 201/download 200 relatados como entrada do ciclo; reexecução ao vivo, gates e navegador **[NV]** (`intake.md`; `research.md:1-13`). |
+| Value vs. inaction | strong | Liga componentes e endpoints órfãos e alinha a mensagem ao limite real sem tocar em autorização, tenant, schema ou contrato de API (`decisão anterior:42`). |
+| Feasibility / appetite | adequate | Uma página no padrão de `/tasks`, um link com nova chave pt-BR, uma constante e testes de fronteira; sem endpoint, estado global ou dependência nova (`shape.md`; `decisão anterior:25-30`). |
+| Strategic fit | strong | Backend continua autoridade sobre limite/tenant/gravação; `enforceAuth`, websocket e padrão de sidebar preservados; serviço obrigatório novo inexistente (`define.md:FR-001..FR-005`). |
+| Risk posture | adequate | Guard de tamanho roda antes do `fetch` e o servidor aplica `min(...)` antes de gravar, garantindo "nada gravado"; lista volátil e erro genérico registrados como dívida/**[NV]** (`decisão anterior:42,46-49`). |
 
-1. `apps/frontend/src/routes/(app)/` não tem `files/`; `+layout.svelte:122-151` só oferece `/channels`, `/dms` e `/tasks`, e `pt-BR.ts:48-57` não tem `nav.files`.
-2. Os blocos existem, mas não são usados: `FileUpload.svelte:8-54` (upload com guards e callback), `FilePreview.svelte:5-27` (nome + link de download), `apps/frontend/src/lib/state/FileStore.svelte.ts:3-16` (`fileStore`, sem consumidor).
-3. O backend já fecha o ciclo: `flora-api/src/routes/files.rs:81-89,127-204,247-296` expõe upload e download; `FileAttachmentResponse` (`:60-73`) gera `rust_fs_url = /api/v1/files/download/{id}` (`:110`). Upload 201/download 200 foram observados na entrada do ciclo com armazenamento local gravável.
-4. O limite do cliente é maior que o do servidor: `apps/frontend/src/lib/utils/files.ts:2` usa 50 MB; `flora-core/src/config/storage.rs:35-37,54` configura 10 MB e `flora-core/src/services/file_service.rs:139-155` aplica o mínimo antes de gravar. Entre 10 e 50 MB o `fetch` é feito, o servidor recusa e `FileUpload.svelte:49-52` mostra `file.uploadFailed`, não a mensagem do roteiro.
-5. `apps/frontend/tests/unit/fileUpload.test.ts:1-12` cobre apenas 10 bytes e 100/51 MB; a fronteira de 10 MB não é provada.
+## Verdict & Rationale
 
-Não há falha intermitente: é uma lacuna de ligação entre peças existentes mais uma constante desatualizada no cliente.
+Veredito histórico **`go` preservado**; nenhum critério é `weak`/`unknown` e os artefatos não trazem contradição. Registro original de 2026-11-21, branch `feature/105-files-ui` @ `c5e4f886ee91125cfe1215c436c144476fe42415`, âncora `.specify/feature.json` → `specs/105-files-ui` (cujo `spec.md` modelo é substituído por spec real), evidência do roteiro item 8 e inspeção determinística do baseline `c5e4f886e`, com upload 201/download 200 e `FLORA_STORAGE__LOCAL_PATH` gravável relatados como entrada do ciclo.
 
-## Decisão
+Causa determinística e dupla: `apps/frontend/src/routes/(app)/` não tem `files/`, `+layout.svelte:122-151` só oferece `/channels`, `/dms`, `/tasks` e `pt-BR.ts:48-57` não tem `nav.files`; os blocos existem mas não são usados — `FileUpload.svelte:8-54` (guards, callback), `FilePreview.svelte:5-27` (nome + link de download), `FileStore.svelte.ts:3-16` (`fileStore`, sem consumidor). O backend já fecha o ciclo: `flora-api/src/routes/files.rs:81-89,127-204,247-296` expõe upload/download, `FileAttachmentResponse` (`:60-73`) gera `rust_fs_url = /api/v1/files/download/{id}` (`:110`). O limite do cliente é maior que o do servidor: `apps/frontend/src/lib/utils/files.ts:2` usa 50 MB, enquanto `flora-core/src/config/storage.rs:35-37,54` fixa 10 MB e `flora-core/src/services/file_service.rs:139-155` aplica o mínimo antes de gravar; entre 10 e 50 MB o `fetch` é feito, o servidor recusa e `FileUpload.svelte:49-52` mostra `file.uploadFailed`, não a mensagem do roteiro. `tests/unit/fileUpload.test.ts:1-12` cobre apenas 10 bytes e 100/51 MB, sem provar a fronteira de 10 MB. Não há falha intermitente: é lacuna de ligação mais constante desatualizada.
 
-Registrar o ciclo 105 como **Tela de arquivos e limite coerente**, com cinco compromissos rastreáveis (FR-001..FR-005), três critérios (SC-001, SC-002, SC-003) e oito tarefas (T001, T002, T003, T004, T005, T006, T007, T008; fila de implementação neste artefato):
-1. **Rota `/files` (FR-001 / T004)**: criar `apps/frontend/src/routes/(app)/files/+page.svelte` no padrão de `/tasks` (`tasks/+page.svelte:41-51,116-141`): workspaces via `GET /api/v1/workspaces`, preferência `authState.workspaceId`, guard auth/org, `FileUpload` ligado a `fileStore.addFile` e lista `fileStore.files` via `FilePreview`. Sem endpoint ou estado global novo; a lista é da sessão.
-2. **Navegação (FR-002 / T005)**: nova chave `nav.files: 'Arquivos'` em `pt-BR.ts:48-57` e um `Button href="/files"` com ícone `@lucide/svelte` após `/tasks` (`+layout.svelte:142-149`), com o mesmo padrão de sidebar recolhida. `enforceAuth` (`:36-46`), os `$effect` (`:57-86`) e o dropdown (`:168-216`) permanecem idênticos; `TranslationKey` (`pt-BR.ts:188`) reconhece a chave automaticamente.
-3. **Limite e mensagem (FR-003 / T002)**: exportar `MAX_UPLOAD_BYTES = 10 * 1024 * 1024` em `utils/files.ts`, aceitar `0 <= sizeBytes <= MAX_UPLOAD_BYTES` com `Number.isFinite` e trocar `file.tooLarge` (`pt-BR.ts:103`) para “Arquivo muito grande. O tamanho máximo é 10 MB.” — espelhando `storage.rs:35-37,54` e `file_service.rs:139-155`. Nenhuma outra chave muda.
-4. **Fronteira testada (FR-004 / T003)**: ampliar `tests/unit/fileUpload.test.ts` com 0 e 10 MB exato aprovados, 10 MB + 1, 50 MB, 100 MB, negativo/`NaN`/`Infinity` recusados, e asserções da constante e do texto; projeto `server` do Vitest (`vite.config.ts:49`) com `requireAssertions` (`:28`).
-5. **Fronteira e dívida (FR-005 / T001, T006, T007, T008)**: diff restrito a cinco arquivos de implementação e aos artefatos do ciclo 105; dívidas registradas como fora de escopo/**[NV]** (lista volátil, erro genérico do servidor, número duplicado no texto, “< 50 MB” do roteiro); sem backend, gates, required checks, `analyze/`, `converge/`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, workflows, ADRs, changelog ou constituição; factory somente leitura; sem commit.
-## Evidência de entrada
+| Compromisso rastreável | Conteúdo preservado |
+|---|---|
+| FR-001 / T004 — rota `/files` | Criar `apps/frontend/src/routes/(app)/files/+page.svelte` no padrão de `/tasks` (`tasks/+page.svelte:41-51,116-141`): workspaces via `GET /api/v1/workspaces`, preferência `authState.workspaceId`, guard auth/org, `FileUpload` ligado a `fileStore.addFile`, lista `fileStore.files` via `FilePreview`; sem endpoint ou estado global novo (lista da sessão). |
+| FR-002 / T005 — navegação | Nova chave `nav.files: 'Arquivos'` em `pt-BR.ts:48-57` e `Button href="/files"` com ícone `@lucide/svelte` após `/tasks` (`+layout.svelte:142-149`), mesmo padrão de sidebar recolhida; `enforceAuth` (`:36-46`), `$effect` (`:57-86`) e dropdown (`:168-216`) intactos; `TranslationKey` (`:188`) reconhece a chave. |
+| FR-003 / T002 — limite e mensagem | Exportar `MAX_UPLOAD_BYTES = 10 * 1024 * 1024` em `utils/files.ts`, aceitar `0 <= sizeBytes <= MAX_UPLOAD_BYTES` com `Number.isFinite`; trocar `file.tooLarge` (`pt-BR.ts:103`) para "Arquivo muito grande. O tamanho máximo é 10 MB.", espelhando `storage.rs:35-37,54` e `file_service.rs:139-155`; nenhuma outra chave muda. |
+| FR-004 / T003 — fronteira testada | Ampliar `tests/unit/fileUpload.test.ts` com 0 e 10 MB exato aprovados, 10 MB + 1, 50 MB, 100 MB, negativo/`NaN`/`Infinity` recusados e asserções da constante e do texto; projeto `server` do Vitest (`vite.config.ts:49`) com `requireAssertions` (`:28`). |
+| FR-005 / T001, T006–T008 — fronteira/dívida | Diff restrito a cinco arquivos de implementação e artefatos do ciclo 105; dívidas fora de escopo/**[NV]** (lista volátil, erro genérico do servidor, número duplicado no texto, "< 50 MB" do roteiro); sem backend, gates, `analyze/`, `converge/`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, workflows, ADRs, changelog ou constituição; factory somente leitura; sem commit. |
 
-- Baseline `c5e4f886e`, branch `feature/105-files-ui`; `.specify/feature.json` aponta para `specs/105-files-ui` (cujo `spec.md` era modelo e é substituído por spec real).
-- `docs/governance/2026-11-21-roteiro-staging-flora.md:159-164` — item 8 e o esperado em `:164`.
-- `apps/frontend/src/routes/(app)/+layout.svelte:7-19,122-151` e `apps/frontend/src/lib/i18n/pt-BR.ts:48-57,101-105,188` — sem link, sem rota, limite no texto.
-- `apps/frontend/src/lib/components/files/FileUpload.svelte:8-54`, `FilePreview.svelte:5-27`, `apps/frontend/src/lib/state/FileStore.svelte.ts:3-16`, `apps/frontend/src/lib/types/models.ts:65-72` — blocos prontos.
-- `flora-api/src/routes/files.rs:60-73,81-89,104-113,127-204,247-296`, `flora-core/src/config/storage.rs:30-37,54`, `flora-core/src/services/file_service.rs:139-155` — contrato e limite efetivo, sem alteração.
-- `apps/frontend/src/routes/(app)/tasks/+page.svelte:41-51,116-141`, `apps/frontend/tests/unit/fileUpload.test.ts:1-12`, `apps/frontend/vite.config.ts:27-53` — padrões de página e de teste.
+Critérios preservados: **SC-001, SC-002, SC-003** (upload válido, erro pt-BR "Arquivo muito grande..." com nada gravado, download funcionando e fronteira/artefatos preservados). Fila **T001–T008**. Racional histórico: a lacuna é de ligação e coerência, não de capacidade — o servidor já recebe e devolve arquivos (201/200 observados), os componentes já implementam guards/callback/download e `/tasks` mostra como selecionar workspace e proteger a rota; uma página, um link e uma constante alinhada a 10 MB fecham o item 8 sem tocar em autorização, tenant, schema ou contrato de API; o guard roda antes do `fetch` (`FileUpload.svelte:20-23`), garantindo mensagem pt-BR e "nada gravado" sem depender do erro do servidor; a única chave nova de i18n é o rótulo do link.
 
-## Racional
+**[NV]** preservados: reexecução de upload/download ao vivo e execução de `npm run test:unit`, `check`, `lint`, build e gates (a verificação ao vivo é entrada relatada; consolidação no handoff); aparência de `/files`, do link "Arquivos" e da mensagem em navegador real (validada por construção); listagem persistente por workspace, mapeamento de erros genéricos e injeção do limite no texto i18n (dívida, fora do ciclo); números de linha referem-se a `c5e4f886e`; nenhum segredo, token real ou dado de produção lido ou registrado.
 
-**go.** A lacuna é de ligação e de coerência, não de capacidade: o servidor já recebe e devolve arquivos (201/200 observados), os componentes já implementam guards, callback e download, e a página `/tasks` já mostra como selecionar workspace e proteger a rota. Uma página nova, um link e uma constante alinhada a 10 MB fecham o item 8 sem tocar em autorização, tenant, schema ou contrato de API. O guard de tamanho roda antes do `fetch` (`FileUpload.svelte:20-23`), então a fronteira de 10 MB garante a mensagem pt-BR e “nada gravado” sem depender do erro do servidor; os testes de fronteira tornam isso verificável. Registrar a lista como volátil e o erro genérico como dívida mantém o ciclo honesto: não inventamos endpoint de listagem nem mapeamento de erro só para embelezar a tela. A única chave nova de i18n é a do rótulo do link; `enforceAuth`, websocket, gates e required checks permanecem idênticos.
+Fora de âmbito preservado: mudanças em `analyze.md`, `converge.md`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, gates, required checks, workflows, ADRs, constituição ou changelog; mudança em `files.rs`, `storage.rs`, `file_service.rs`, `AuthState`, chat, DMs, busca, notificações, rotas além de `/files`, flags, schema ou migrações; edição do roteiro; deploy, escrita em staging/produção e commits.
 
-## [NV]
+## If needs-clarification
 
-- Reexecução de upload/download ao vivo e execução de `npm run test:unit`, `check`, `lint`, build e gates: **[NV]** neste artefato — a verificação ao vivo é entrada relatada; consolidação no handoff.
-- Aparência de `/files`, do link “Arquivos” e da mensagem em navegador real: **[NV]** — validada por construção sobre os padrões existentes, não medida aqui.
-- Listagem persistente de arquivos por workspace, mapeamento dos erros genéricos do servidor e injeção do limite no texto i18n: **[NV]** / dívida — fora do ciclo 105.
-- Números de linha referem-se a `c5e4f886e`; nenhum segredo, token real ou dado de produção foi lido ou registrado neste ciclo.
+- **Blocking questions**: N/A (veredito `go`; nenhuma pergunta bloqueante registrada nos artefatos).
+- **Revisit stage**: N/A.
 
-## Fora de âmbito
+## If go — Handoff to `/speckit.specify`
 
-Mudanças em `analyze.md`, `converge.md`, `validate/`, `release/`, `.specify/memory/STATE.md`, `PROGRESSO*` ou `AGENTS.md`; alteração de required checks, gates, workflows, ADRs, constituição ou changelog; mudança em `flora-api/src/routes/files.rs`, `flora-core/src/config/storage.rs`, `flora-core/src/services/file_service.rs`, `AuthState`, chat, DMs, busca, notificações, rotas além de `/files`, flags, schema ou migrações; edição do roteiro; deploy, escrita em staging/produção e commits.
-
-## Handoff
-
-`/speckit.specify` — especificar a tela de arquivos como requisitos verificáveis (FR-001..FR-005 / SC-001..SC-003) e fila T001..T008: rota `/files` com seletor de workspace e lista da sessão, link “Arquivos” com `nav.files`, limite de 10 MB alinhado ao servidor com mensagem pt-BR e testes de fronteira. Testes, gates, reexecução ao vivo e validação em navegador ficam no handoff **[NV]**.
+- **Problem**: O item 8 do roteiro não pode ser executado pela interface — não há rota `/files` nem link "Arquivos", os blocos de upload/preview/store estão órfãos e o cliente aceita 50 MB contra os 10 MB efetivos do servidor, exibindo erro genérico em vez da mensagem pt-BR.
+- **Chosen approach**: Ligar blocos existentes: página `/files` no padrão de `/tasks`, link `nav.files`, `MAX_UPLOAD_BYTES = 10 * 1024 * 1024` espelhando a config e `file.tooLarge` corrigido, com testes de fronteira no Vitest.
+- **In scope / out of scope**:
+  - **In**: FR-001..FR-005 / SC-001..SC-003 e fila T001..T008; `files/+page.svelte` (novo), `+layout.svelte`, `pt-BR.ts`, `utils/files.ts`, `fileUpload.test.ts`; dívidas registradas.
+  - **Out/NV**: backend (`files.rs`, `storage.rs`, `file_service.rs`), `AuthState`, chat/DMs/busca/notificações, listagem persistente, mapeamento de erro, edição do roteiro, rotas/flags/schema/migrações; `analyze/`, `converge/`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, gates, workflows, ADRs, changelog, constituição; reexecução ao vivo, testes/gates e navegador **[NV]**.
+- **Success metrics**: upload válido (inclusive 10 MB exato) e download 200 pela tela; 10 MB + 1, 50/100 MB, negativo/`NaN`/`Infinity` recusados no cliente com "Arquivo muito grande. O tamanho máximo é 10 MB." e nada gravado; fronteira provada por asserções da constante e do texto.
+- **Carried-forward open questions**: `[NV]` upload/download ao vivo, `npm run test:unit`/`check`/`lint`/build/gates e aparência em navegador; `[NV]` listagem persistente, erro genérico do servidor, número duplicado no i18n e texto "< 50 MB" do roteiro — nenhuma bloqueia o `go`.

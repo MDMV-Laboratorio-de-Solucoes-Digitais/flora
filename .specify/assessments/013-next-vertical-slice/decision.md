@@ -1,55 +1,36 @@
-# Decision: 013 — Next vertical slice
+# Decision: 013 — Next vertical slice (workspace→channel→message, REST-first)
 
-**Verdict:** **go** (scoped)
+- **Slug**: 013-next-vertical-slice
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | problem.md | concept.md | decision.md (anterior) | 012 decision/intake/research | docs/research/2026-11-15-012-frontend-api-contract-audit.md
 
-## Chosen slice
-**A. Workspace→channel→message persistence+read (REST-first) with minimal wiring fixes.** Delivers the highest-value Seed capability still missing: a tenant-safe, persisted communication path usable from `apps/frontend` in a selected workspace, without new infra and without depending on broken realtime fanout.
+## Scorecard
 
-## Justification (evidence)
-- P0 priority: `OBJETIVO.md`/`ROADMAP.md` require persisted canais/mensagens and a verifiable core e2e slice.
-- Feasibility: backend already implements channel/message persistence and core routes (`flora-api/src/routes/channels.rs`), but is blocked by missing channel listing, dropped `thread_id`, path-tenancy gap (C19), and FE DTO/ID wiring (C4,C5,C12; hardcoded non-UUID channels).
-- Higher ROI than B/C: (B) needs binary storage plumbing/routes (currently metadata-only JSON, C7–C8); (C) fixes WS authority/protocol but leaves chat unusable without contract+listing fixes.
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | O happy path de comunicação do Seed está quebrado: não há listagem de canais, `thread_id` é descartado, path-tenancy (C19) não é validado e o FE usa IDs hardcoded não-UUID, com divergência snake_case↔camelCase (C4,C5,C12,C13) (`research.md:10-13`; `problem.md:4`). |
+| Evidence strength | adequate | Auditoria frontend↔API (C4–C6, C11–C13, C18–C20, C22, C25) + leitura de código (`channels.rs`, `models.ts`, `ChatLayout.svelte`), com plano de verificação determinística (DTO/serialização, DB-gated PG18, Vitest); e2e real/NV (`research.md:3-7,19`; decisão anterior:34-41). |
+| Value vs. inaction | strong | É a maior fatia P0 ainda faltante após 012: entrega comunicação persistida e legível em workspace selecionado, sem nova infra; B (binários) exige storage plumbing (C7–C8) e C (WS) não destrava o fluxo sem contratos/listing (`intake.md:11-18`; decisão anterior:10-11). |
+| Feasibility / appetite | adequate | Backend já persiste canais/mensagens (`flora-api/src/routes/channels.rs`), o escopo é majoritariamente contrato/wiring/tenancy + mapper isolado; incerteza de schema do `thread_id` é risco NV (`research.md:16-18`; decisão anterior:44-47). |
+| Strategic fit | strong | `OBJETIVO.md`/`ROADMAP.md` P0 exigem canais/mensagens persistidas e fatia vertical e2e verificável; Postgres-first, VPS-cheap, sem novos serviços obrigatórios (`intake.md:8,20-22`; `research.md:4`). |
+| Risk posture | adequate | Não-goals duros (fanout/registry WS, binários, DMs UX, OIDC e2e, `apps/web`, deploy/merge), mapper isolado para limitar blast radius no FE e checagens de pertencimento da workspace à org (`decisão anterior:43-52`; `concept.md:19-20`). |
 
-## Implementation checklist (file-by-file, planned)
+## Verdict & Rationale
 
-### Backend
-- `flora-api/src/routes/channels.rs` — add `GET /` (`list_channels`) with `workspace_id` query; require auth/org/membership; verify workspace belongs to org; return `Vec<ChannelResponse>`. Persist `thread_id` in `post_message` (`CreateMessageRequest` + `Message` field). Enforce `channel_id` path matches `msg.channel_id` in `edit_message`/`delete_message` (C19). Add/adjust unit tests for `ChannelResponse`/`MessageResponse` serialization key sets.
-- `flora-core` traits/repositories for channels/messages (`traits/*channel*`, `traits/*message*`, `repositories/*channel*`, `repositories/*message*`, model/schema as needed) — add `list_by_workspace`/`find_by_workspace_id` if absent; ensure thread persistence supported by model/DB (verify migration/schema; NV if schema change required — prefer using existing column if present).
-- `flora-api/src/routes/mod.rs` — no route-shape change expected beyond channels router behavior (confirm).
+Veredito histórico **`go (scoped)` preservado como `go`**. O scorecard confirma a escolha da Opção A — `workspace→channel→message` persistence+read (REST-first) com wiring mínimo — sobre B (upload binário, C7–C8) e C (WS authority/protocolo), conforme `intake.md:10-18`. Base: `dev` após PR #215 (cycle 012 session authority). Os fatos que sustentam o veredito permanecem: backend já implementa persistência em `flora-api/src/routes/channels.rs` mas bloqueia por ausência de `GET /`, `thread_id` dropado, gap de path-tenancy (C19) e DTO/ID drift no FE (C4,C5,C12); o realtime (WS path/auth/protocolo, C6,C20,C25) está separadamente quebrado, tornando REST o caminho confiável. A incerteza de schema do `thread_id`, o risco de escopo (paginação C22, permissões, anexos) e o blast radius no FE são mitigados pelos non-goals e pelo mapper isolado, não invertendo a decisão.
 
-### Frontend
-- `apps/frontend/src/lib/api/mappers.ts` (new) or equivalent — `toChannel`, `toMessage` mapping snake_case→FE model, `fileAttachments: []`.
-- `apps/frontend/src/lib/types/models.ts` — align/extend types only as needed for mapped model (keep mapping explicit; avoid reintroducing drift).
-- `apps/frontend/src/lib/components/chat/ChatLayout.svelte`, `.../thread/ThreadReply.svelte` — use real `channelId` prop/selection, call list/post endpoints with correct payload (`thread_id` for replies), render mapped messages; remove hardcoded `default-channel`/placeholder assumptions; gate or hide broken attachment-send path for 013.
-- `apps/frontend/src/routes/(app)/channels/+page.svelte`, `apps/frontend/src/lib/state/MessageStore.svelte` (+ any channel state/store added) — minimal workspace→channel list/create/select flow feeding chat; remove static demo IDs.
-- `apps/frontend/src/routes/(app)/dms/+page.svelte` — mark NV/placeholder-safe (no fake UUID calls) unless trivially aligned.
-- `apps/frontend/src/routes/(app)/+layout.svelte` — replace hardcoded "Recent Channels" with real list or neutral empty state (minimal).
+## If needs-clarification
 
-### Tests / docs
-- `flora-tests/src/contract/messaging.rs` (replace `Ok(())` stubs) and/or DB-gated tests — DTO key snapshot, create/list channels by workspace, post/list messages, thread_id persisted/read, edit/delete rejects mismatched `channel_id` path (C19), cross-org isolation.
-- `apps/frontend/tests/unit/*` — mapper unit tests (`sender_id→authorId`, `thread_id`, `fileAttachments` default, no crash on render shape).
-- `apps/frontend/tests/integration/*` (as applicable) — REST chat flow against mocked fetch.
-- `docs/dev-smoke.md` / assessment evidence — optional manual REST smoke steps (NV if not run).
+- **Blocking questions**: N/A (veredito `go`; questões de schema `thread_id` e paginação seguem como carried-forward).
+- **Revisit stage**: N/A.
 
-## Deterministic verification plan
-1. `cargo fmt --all -- --check`
-2. `cargo clippy --workspace --all-targets -- -D warnings` (or scoped crates if workspace lints heavy; record)
-3. `cargo test -p flora-core --lib`
-4. `cargo test -p flora-tests --lib`
-5. DB-gated (Postgres 18, disposable/alt-port ok): `FLORA_DATABASE__POSTGRES_URL=... cargo test -p flora-tests contract::messaging::db_ -- --ignored --test-threads=1` and include in CI `db-tests` job when added.
-6. `cd apps/frontend && bun run check && bun run lint && bun run test:unit -- --run --project server && bun run build`
-7. NV (environment/explicit): full smoke with running API+DB in default ports, real OIDC/JWKS, WS realtime fanout/delivery, e2e browser flow, `apps/web`.
+## If go — Handoff to `/speckit.specify`
 
-## Risks
-- **Schema uncertainty:** `thread_id`/message schema support must be confirmed; if migration needed, keep 013 to existing columns or split (NV risk).
-- **Scope creep:** realtime fanout, attachments, channel permissions/DM model, pagination correctness (C22) can expand quickly — enforce non-goals.
-- **FE blast radius:** chat/layout/store changes can regress tasks/auth shell; mitigate with mapper isolation and existing deterministic checks.
-- **Tenancy edge cases:** list-by-workspace must not leak other org data; rely on workspace ownership + membership checks.
-
-## Non-goals (013)
-- WS broadcast/subscription registry, Valkey fanout, `/messages/sync`, WS session DB authority, reconnect/backoff redesign (C6,C20,C25 partial) — follow-up.
-- File binary upload/download/storage, attachment persistence/linking (C7,C8,C13).
-- DMs UX, channel membership/roles UI, search/notifications wiring, task listing semantics fix (C11), cross-tenant workspace_id hardening for tasks/files (C18) except incidental, OIDC e2e, `apps/web`, deploy/merge.
-
-## Debloat notes
-- REST-first on Postgres avoids adding/depending on realtime infra for correctness; no new mandatory services. Favor a small mapper module over generating/duplicating types. Defer pagination/cursor polish until needed.
+- **Problem**: Usuários SMB não conseguem completar o happy path de comunicação do Seed no `apps/frontend`: canais não são descobertos/criados em contexto, mensagens não podem ser listadas/postadas em UUIDs reais e os campos divergem (C4,C5,C12,C13) (`problem.md:4`).
+- **Chosen approach**: Opção A — fatia REST-first `workspace→channel→message`, tenant-safe e persistida: adicionar `GET /channels?workspace_id=` com auth/org/membership, persistir `thread_id`, validar `channel_id` do path em edit/delete (C19), mapper explícito snake_case→camelCase no FE e fluxo mínimo workspace→canal→mensagem; realtime, anexos e binários ficam de fora (`concept.md:4-28`; decisão anterior:5-6,13-32).
+- **In scope / out of scope**:
+  - **In (backend)**: `flora-api/src/routes/channels.rs` (`list_channels`, persistência de `thread_id`, checagem `channel_id` path vs body em edit/delete, testes de serialização); traits/repositórios `flora-core` (`list_by_workspace`/`find_by_workspace_id`, threading conforme schema); `apps/frontend/src/lib/api/mappers.ts` (`toChannel`/`toMessage`, `fileAttachments: []`), `models.ts`, `ChatLayout.svelte`/`ThreadReply.svelte` (IDs reais, payload `thread_id`), `channels/+page.svelte`, `MessageStore.svelte`, `(app)/+layout.svelte`; `flora-tests/src/contract/messaging.rs` (substituir stubs `Ok(())`), testes unitários dos mappers (decisão anterior:15-31).
+  - **Out / NV**: WS broadcast/subscription registry, Valkey fanout, `/messages/sync`, WS session DB authority, reconnect/backoff (C6,C20,C25 parcial); upload/download binário e anexos (C7,C8,C13); UX de DMs, UI de membership/roles, search/notifications, semântica de listagem de tasks (C11), hardening cross-tenant de `workspace_id` em tasks/files (C18) salvo incidental, OIDC e2e, `apps/web`, deploy/merge; schema do `thread_id` se exigir migração — manter coluna existente ou dividir (NV) (decisão anterior:44-52).
+- **Success metrics**: Membro em org/workspace selecionado consegue listar/criar canal, postar e ler mensagens persistidas (incluindo reply/thread id) via REST com contratos consistentes e tenancy preservada; testes determinísticos fixam DTOs, persistência/leitura e C19 sem depender de OIDC/WS (`problem.md:17-19`; decisão anterior:29-41).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: o schema suporta `thread_id` sem migração?]; [NEEDS CLARIFICATION: honrar `before`/paginação (C22) agora ou diferir?]; [NEEDS CLARIFICATION: como tratar DMs (`dms/+page.svelte`) sem UUIDs falsos?]; [NEEDS CLARIFICATION: quando retomar WS authority/fanout (C6,C20,C25) e anexos (C7,C8,C13)?]. NV: smoke completo com API+DB em portas padrão, OIDC/JWKS real, fanout/delivery WS, e2e browser, `apps/web` (decisão anterior:41).

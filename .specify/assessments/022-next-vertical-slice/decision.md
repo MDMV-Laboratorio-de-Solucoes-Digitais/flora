@@ -1,42 +1,36 @@
-# Decision: 022 — Next vertical slice
+# Decision: 022 — Next vertical slice (dedup no banco, degradação fail-open e CI DB-gated)
 
-**Verdict:** **go** (scoped)
+- **Slug**: 022-next-vertical-slice
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | problem.md | concept.md | decision.md (anterior) | R1 docs 022 (6, via intake/research) | auditorias `ses_e1c0bc4e5`, `ses_e1c0bc4c8`
 
-## Chosen slice
+## Scorecard
 
-**S1 — DB-enforced notification dedup + search fail-open degradation contract + CI DB-gated enforcement (disposable PostgreSQL 18, Seed/VPS).**  
-Primary 80/20 for cycle 022: make unread notification dedup deterministic and race-safe at the database level, harden search behavior to fail-open to the Postgres FTS correctness baseline on Meilisearch query errors, and enforce relevant DB-gated contracts in CI.
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | A dedup do 021 é query-before-insert não-lida e race-prone, sem unicidade no banco; falhas de consulta não degradam explicitamente para PG e nem todas as suítes DB-gated rodam na CI (`problem.md:7-14`). |
+| Evidence strength | adequate | R1 (`2026-11-16-022-{meilisearch-indexing-hooks-reindex-parity-vps,meilisearch-pg-coherence-degradation-contract-vps,notification-idempotency-unassign-semantics,db-meilisearch-gated-test-harness,macro-search-notification-reference-flows,meilisearch-vps-resource-ops}.md`) e 2 auditorias convergem; correção do predicado do índice parcial e staleness do Meilisearch exigem verificação PG18 (`research.md:6-13`). |
+| Value vs. inaction | strong | Elimina duplicatas não-lidas sob concorrência/retries com migração pequena, melhora resiliência da busca sem novo serviço e amplia proteção contra regressões na CI (`decisão anterior:17`; `research.md:9`). |
+| Feasibility / appetite | adequate | Índice parcial + `ON CONFLICT DO NOTHING` e alteração do job `db-tests` são baratos, mas exigem que `create` retorne `Option` e que callers tratem supressão como sucesso (`research.md:11-12`). |
+| Strategic fit | strong | Mantém PG FTS como base transacional de correção e contrato operacional explícito de degradação, alinhado ao perfil Seed/VPS (`intake.md:6-9`; `research.md:8`). |
+| Risk posture | adequate | Arbiter do índice deve casar com o `ON CONFLICT`; supressão geral de unread é hardening intencional e o frescor do Meilisearch saudável continua NV (`research.md:11-13`; `concept.md:9`). |
 
-## Justification (evidence)
+## Verdict & Rationale
 
-- **Roadmap fit:** `OBJETIVO.md`/`ROADMAP.md` define 022 as Meilisearch paridade/contrato operacional explícito de degradação (mantendo fallback PG determinístico), endurecimento de idempotência/dedup com cobertura de concorrência/transições quando viável, e contratos DB-gated/CI verde (Meilisearch-gated quando viável).
-- **Convergent R1:** `docs/research/2026-11-16-022-{meilisearch-indexing-hooks-reindex-parity-vps,meilisearch-pg-coherence-degradation-contract-vps,notification-idempotency-unassign-semantics,db-meilisearch-gated-test-harness,macro-search-notification-reference-flows,meilisearch-vps-resource-ops}.md` and audits (`ses_e1c0bc4e5`, `ses_e1c0bc4c8`) converge on: PG FTS as correctness baseline; Meilisearch mutation hooks/freshness as higher-risk/infra-sensitive without task-awaitable harness; partial-unique unread dedup + `ON CONFLICT DO NOTHING` as the strongest cheap deterministic fix for TOCTOU duplicates; keep U0 unassign semantics; CI DB-gated enforcement as high-value/low-cost.
-- **Value/80/20:** eliminates the main assignment/reply unread-duplicate race with a small additive migration and conflict-safe insert, improves search resilience without new mandatory services, and increases deterministic regression protection in CI.
+Veredito histórico **`go (scoped)` preservado como `go`**; nenhum critério é `weak`/`unknown` e os artefatos não trazem contradição. S1 é o 80/20 do ciclo 022: índice único parcial `UNIQUE (user_id, event_type, target_id) WHERE is_read = false` com `INSERT ... ON CONFLICT ... DO NOTHING RETURNING` (`NotificationRepository::create` passa a devolver `Option`; supressão não é erro), eliminando a janela TOCTOU do guard do 021; manutenção da semântica U0 (unassign não emite `Assignment`) e entrega best-effort pós-persist; fail-open da busca para PG FTS em erro de consulta do Meilisearch, preservando precedência quando saudável; e extensão do job `db-tests` com `contract::search::db_`, `contract::notifications::db_` e `contract::files::db_` em PG18 descartável. Baseline `dev@b5be7d16f` (021 merged, PR #224, CI verde); convergência dos seis docs R1 e das auditorias (`ses_e1c0bc4e5`, `ses_e1c0bc4c8`). Hooks de indexação, task-await, rebuild, Meilisearch-gated CI e outbox/tx-coupling permanecem NV — o contrato de degradação é explícito sobre isso.
 
-## Scope summary (in)
+## If needs-clarification
 
-- Notification dedup/idempotency:
-  - Additive migration creating partial unique index for unread notifications: `UNIQUE (user_id, event_type, target_id) WHERE is_read = false`.
-  - Make `NotificationRepository::create` conflict-safe/idempotent for that arbiter (`INSERT ... ON CONFLICT ... WHERE is_read = false DO NOTHING RETURNING ...`, return `Option<Notification>`; suppression is not an error). Update trait/impl and callers to treat suppression as success.
-  - Keep 021 transition semantics (notify on effective assign/reassign to non-actor; no notification on unassign/self/no-op) and best-effort, post-persist delivery (no tx-coupling/outbox).
-- Search degradation/contract:
-  - Preserve precedence: when Meilisearch service is configured, attempt Meilisearch search first; on Meilisearch query failure, log warning and fall back to PG FTS (`search_pg`) for the same request (fail-open to correctness baseline).
-  - Keep PG fallback deterministic/tenant+soft-delete safe and contract-compatible.
-  - Explicit contract: Meilisearch freshness/parity requires mutation-indexing hooks, async task guarantees, and rebuild tooling not implemented in 022 (NV/deferred); PG fallback remains authoritative for guaranteed multi-entity parity.
-- Deterministic verification/CI:
-  - Extend DB-gated contracts to assert conflict-safe unread dedup suppression/idempotent behavior and preserve existing search/notification invariants.
-  - Add `contract::search::db_`, `contract::notifications::db_`, and `contract::files::db_` to `.github/workflows/rust.yml` `db-tests` job (disposable PostgreSQL 18, `--ignored --test-threads=1`).
-- SDD artifacts, local verification, PR/CI green (incl. `db-tests`), merge/sync, planning updates for 023. No frontend changes.
+- **Blocking questions**: N/A (veredito `go`; as quatro perguntas abaixo seguem como carried-forward, não bloqueantes).
+- **Revisit stage**: N/A.
 
-## Key risks
+## If go — Handoff to `/speckit.specify`
 
-1. **Migration/arbiter correctness:** partial unique index predicate must exactly match `ON CONFLICT` inference; wrong shape can fail inserts or miss dedup. Mitigate with targeted SQL/migration and DB-gated tests on disposable PG18.
-2. **Behavioral change (dedup scope):** unread duplicate suppression now applies to same `(user_id,event_type,target_id)` across notification types (including Reply retries) — intended hardening, but must not suppress legitimate distinct events. Mitigate by scoping to unread-only + same target/type and preserving read/reassignment behavior.
-3. **Meilisearch staleness remains:** fallback-on-error does not fix drift when Meilisearch responds with stale/empty-but-successful results. Mitigate with explicit deferred-NV contract and preserved PG fallback path/tests.
-
-## NVs / non-goals
-
-- NV: Meilisearch mutation-indexing hooks (task/file/message), delete-on-soft-delete propagation, async task waiting/completion handling, rebuild/backfill tooling, Meilisearch-gated deterministic CI/harness, cross-engine ranking/snippet parity.
-- NV: outbox/tx-coupling, coalescing upsert/read-state policy changes, unassign-specific notification event/recipients, mentions/completion/realtime/push delivery, notification `target_url` exposure.
-- NV: `pg_trgm`/i18n/CJK relevance, channel/workspace-level ACL in search, 2vCPU/4GB perf/load/OOM/restore benchmarks, frontend adoption/e2e/multi-client.
-- Non-goals: new mandatory services, crate convergence, Meilisearch removal, multi-node infra.
+- **Problem**: Dedup de notificações depende de consulta best-effort sem garantia do banco, busca não degrada explicitamente em erro do backend preferencial e contratos DB-gated de busca/notificações/arquivos não são executados na CI (`problem.md:7-14`).
+- **Chosen approach**: S1 — unread dedup imposto por índice parcial + `ON CONFLICT DO NOTHING`, search fail-open para `search_pg` em erro do Meilisearch com precedência inalterada quando saudável, e enforcement dos contratos DB-gated no `db-tests` (`concept.md:5-10`; `decisão anterior:9-20`).
+- **In scope / out of scope**:
+  - **In**: migração aditiva do índice parcial; `create` conflict-safe com `Option<Notification>` e callers atualizados; transições 021 e best-effort preservadas; fallback em erro de consulta com log de warning; contratos DB-gated de dedup/supressão e invariantes existentes; `.github/workflows/rust.yml` (`db-tests`, PG18, `--ignored --test-threads=1`); SDD/validação/release, PR/CI verde, merge/sync, planejamento para 023. Sem mudança de frontend.
+  - **Out/NV**: hooks de indexação Meilisearch (task/file/message), delete-on-soft-delete, espera por tarefas assíncronas, rebuild/backfill, CI/harness ancorado no Meilisearch, equivalência de ranking/snippets, outbox/tx-coupling, política de coalescência/estado de leitura, evento específico para unassign, menções/completion/realtime/push, exposição de `target_url`, `pg_trgm`/i18n/CJK, ACL por canal/workspace, benchmarks 2vCPU/4GB, e2e/multi-client, novos serviços obrigatórios, convergência de crates, remoção do Meilisearch e infra multi-nó.
+- **Success metrics**: Inserções concorrentes/repetidas do mesmo `(user_id,event_type,target_id)` não-lido não produzem mais de uma notificação ativa; erro de consulta no backend preferencial resulta em resposta coerente com a base PG sem degradar tenant/soft-delete; suítes DB-gated de busca, notificações e arquivos executam na CI em PG18; notificações legítimas de tipos/alvos distintos continuam visíveis (`problem.md:29-33`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: a supressão de duplicatas se aplica a todos os tipos de notificação não-lida ou apenas a `Assignment`?]; [NEEDS CLARIFICATION: após a leitura, uma nova notificação para o mesmo alvo deve ser permitida?]; [NEEDS CLARIFICATION: a degradação para PG em erro de consulta deve ser silenciosa ao cliente ou explicitada na resposta?]; [NEEDS CLARIFICATION: o frescor do Meilisearch quando responde com sucesso, mas desatualizado, deve ser tratado neste ciclo?] (`problem.md:39-42`).

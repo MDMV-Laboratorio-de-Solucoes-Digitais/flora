@@ -1,60 +1,52 @@
 # Decision: 104 — Identidade da sessão na navegação
 
 - **Slug**: 104-session-identity
-- **Decidido**: 2026-11-21
-- **Verdict**: **go**
-- **Branch**: `feature/104-session-identity` @ `23ff4bc809caccff2cbc9018521d8762f308ddeb`
-- **Âncora**: `.specify/feature.json` → `specs/104-session-identity`
-- **Evidência**: inspeção determinística do baseline `23ff4bc809` (código do frontend, claim do JWT e configuração do Vitest)
-- **Artefatos revisados**: intake | research | define | shape | spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go (decisão original 2026-11-21, preservada)
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (anterior) | baseline `23ff4bc809` (frontend, claim JWT, Vitest) | spec/plan/tasks 104
 
-## Contexto / problema — causa raiz determinística
+## Scorecard
 
-O menu do usuário em `apps/frontend/src/routes/(app)/+layout.svelte:182-185` interpola `t['nav.userName']` e `t['nav.userEmail']`, que são literais fixos em `apps/frontend/src/lib/i18n/pt-BR.ts:53-54` (`Nome do usuário`, `usuario@flora.app`). A identidade real da sessão já existe e está acessível sem requisição nova:
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | O dropdown interpola literais fixos (`+layout.svelte:182-185`, `pt-BR.ts:53-54`) para toda sessão, exibindo identidade falsa embora `FloraClaims.email` já exista (`jwt.rs:25,51`; `intake.md:7-20`). |
+| Evidence strength | adequate | Inspeção determinística do baseline `23ff4bc809` em código, claim e infraestrutura Vitest; execução de testes/gates e validação em navegador **[NV]** (`research.md:1-12`). |
+| Value vs. inaction | strong | Correção pequena de fidelidade da interface sem backend, rota, flag ou autorização nova; reaproveita token já presente no cliente (`decisão anterior:45`). |
+| Feasibility / appetite | adequate | Helper puro fail-closed, um `$derived` no layout e testes Vitest determinísticos no projeto `server` já configurado (`shape.md`; `define.md:FR-001..FR-004`). |
+| Strategic fit | strong | Preserva contrato de i18n (literais como único fallback), `enforceAuth`, websocket e autoridade do servidor sobre assinatura, sem serviço novo (`define.md:FR-003,FR-005`). |
+| Risk posture | adequate | Payload lido apenas para exibição, nunca para autorização; anomalias retornam `null` sem log/exceção; dívida do chat e navegador **[NV]** (`decisão anterior:28-32,47-52`). |
 
-1. `flora-core/src/utils/jwt.rs:17-33` — `FloraClaims` contém `pub email: String` (`:25`); `FloraClaims::new` (`:38-55`) preenche a claim com `email.to_string()` (`:51`).
-2. `flora-core/src/utils/jwt.rs:96-104` — `decode_token` valida assinatura e expiração no servidor; o navegador não tem a chave e não deve verificar assinatura.
-3. `apps/frontend/src/lib/state/AuthState.svelte.ts:36,69-81,87-99` — `token` é `$state<string | null>` e é atualizado em `login` e `setOrganization`.
-4. `apps/frontend/src/routes/(app)/+layout.svelte:5,36,58,66,70` — o layout já importa e lê `authState.token`; apenas o trecho do dropdown ignora a sessão.
-5. `apps/frontend/vite.config.ts:27-53` — Vitest já tem o projeto `server` (node), que descobre `tests/**/*.{test,spec}.{js,ts}` (`:49`), com `requireAssertions` (`:28`).
-6. `apps/frontend/src/lib/components/chat/ChatLayout.svelte:124,130` e `pt-BR.ts:80` — `Usuário <id>` por autor é um problema vizinho que exige lookup de usuários; fora de escopo.
+## Verdict & Rationale
 
-Não há falha intermitente: o componente exibe constantes do dicionário e nunca consulta a claim.
+Veredito histórico **`go` preservado**; nenhum critério é `weak`/`unknown` e os artefatos não trazem contradição. Registro original de 2026-11-21, branch `feature/104-session-identity` @ `23ff4bc809caccff2cbc9018521d8762f308ddeb`, âncora `.specify/feature.json` → `specs/104-session-identity`, evidência de inspeção determinística do baseline `23ff4bc809` (código do frontend, claim do JWT e configuração do Vitest).
 
-## Decisão
+Causa determinística: `t['nav.userName']`/`t['nav.userEmail']` (`apps/frontend/src/routes/(app)/+layout.svelte:182-185`) são literais `Nome do usuário`/`usuario@flora.app` em `apps/frontend/src/lib/i18n/pt-BR.ts:53-54`. A identidade real já está acessível: `FloraClaims` contém `pub email: String` (`flora-core/src/utils/jwt.rs:17-33,25`), preenchida por `FloraClaims::new` (`:38-55,51`); `decode_token` valida assinatura e expiração no servidor (`:96-104`); `authState.token` é `$state` atualizado em `login`/`setOrganization` (`apps/frontend/src/lib/state/AuthState.svelte.ts:36,69-81,87-99,170`); o layout já lê o token (`:5,36,58,66,70`); Vitest tem o projeto `server` em `apps/frontend/vite.config.ts:27-53` (`:49`, `requireAssertions` em `:28`). O caso vizinho `Usuário <id>` no chat (`ChatLayout.svelte:118-131,124,130`; `pt-BR.ts:80`) exige lookup de usuários e fica fora de escopo. Não há falha intermitente: o componente nunca consulta a claim.
 
-Registrar o ciclo 104 como **Identidade da sessão na navegação**, com cinco compromissos rastreáveis (FR-001..FR-005), três critérios (SC-001..SC-003) e oito tarefas (T001..T008, fila de implementação neste artefato):
+| Compromisso rastreável | Conteúdo preservado |
+|---|---|
+| FR-001 / T002 — helper puro | `emailFromToken(token: string \| null \| undefined): string \| null` em `apps/frontend/src/lib/utils/jwt.ts`; exatamente 3 segmentos não vazios, `-`→`+`, `_`→`/`, padding, `atob`, `TextDecoder`, `JSON.parse` em `try/catch`; objeto não-array com `email` string não vazia; qualquer anomalia → `null`, sem log, efeito colateral ou autorização. |
+| FR-002 / T003 — reatividade | `const userEmail = $derived(emailFromToken(authState.token) ?? t['nav.userEmail']);` no layout, segundo `<span>` mostra `userEmail`; `enforceAuth` (`:34-44`), `$effect` de websocket (`:63-84`) e rotas intactos. |
+| FR-003 / T003 — nome e fallback | Primeiro `<span>` mostra a parte local do e-mail quando real (ex.: `qa-admin`) e `t['nav.userName']` quando o helper retorna `null`; `pt-BR.ts:53-54` intacto e único fallback; nenhuma outra chave de i18n muda. |
+| FR-004 / T004–T005 — testes | `apps/frontend/tests/unit/jwt.test.ts` cobre payload válido, base64url sem padding/UTF-8 e fail-closed (token nulo/vazio, 2/4 segmentos, base64/JSON inválidos, `email` ausente/vazio/não-string, payload array/`null`), com asserções explícitas no projeto `server`. |
+| FR-005 / T006–T008 — fronteira/dívida | Diff restrito a `jwt.ts`, `jwt.test.ts`, `+layout.svelte` e artefatos do ciclo 104; dívida do chat fora de escopo/**[NV]**; sem backend, gates, `analyze/`, `converge/`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, workflows, ADRs, changelog ou constituição; factory somente leitura; sem commit. |
 
-1. **Helper puro (FR-001 / T002)**: `emailFromToken(token: string | null | undefined): string | null` em `apps/frontend/src/lib/utils/jwt.ts`. Decodifica apenas o payload base64url (3 segmentos, `-`/`_`, padding, `atob`, `TextDecoder`, `JSON.parse` em `try/catch`), exige objeto não-array com `email` string não vazia; qualquer anomalia → `null`. Sem log, sem efeito colateral e sem uso para autorização.
-2. **Reatividade no layout (FR-002 / T003)**: `const userEmail = $derived(emailFromToken(authState.token) ?? t['nav.userEmail']);` em `+layout.svelte`; segundo `<span>` mostra `userEmail`. `enforceAuth` (`:34-44`), o `$effect` de websocket (`:63-84`) e rotas permanecem intactos.
-3. **Nome e fallback (FR-003 / T003)**: primeiro `<span>` mostra a parte local do e-mail quando ele é real (por exemplo `qa-admin`) e `t['nav.userName']` quando o helper retorna `null`. `pt-BR.ts:53-54` fica intacto e é o único fallback; nenhuma outra chave de i18n muda.
-4. **Testes (FR-004 / T004–T005)**: `apps/frontend/tests/unit/jwt.test.ts` cobre payload válido, base64url sem padding/UTF-8 e os caminhos fail-closed (token nulo/vazio, segmentos errados, base64/JSON inválidos, `email` ausente/vazio/não-string, payload array ou `null`), com asserções explícitas no projeto `server` do Vitest.
-5. **Fronteira e dívida (FR-005 / T006–T008)**: diff restrito a `jwt.ts`, `jwt.test.ts`, `+layout.svelte` e artefatos do ciclo 104; dívida do chat registrada como fora de escopo/**[NV]**; sem backend, gates, required checks, `analyze/`, `converge/`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, workflows, ADRs, changelog ou constituição; factory somente leitura; sem commit.
+Critérios preservados: **SC-001** sessão com `qa-admin@flora.test` mostra `qa-admin` e o e-mail, sem recarregar quando o token muda; **SC-002** token ausente/corrompido → `null` e fallback `Nome do usuário`/`usuario@flora.app`, sem exceção, log ou valor parcial; **SC-003** nenhuma rota, autorização, claim, assinatura, gate, flag, schema ou chave de i18n adicional alterada. Fila **T001–T008**. Racional histórico: a lacuna é de apresentação e a correção não tem efeito transversal; helper puro com fail-closed evita exceções; `$derived` mantém o menu correto após troca de token; os literais preservam i18n e a experiência pré-login; a leitura do payload é explicitamente não-autoritativa e a validação de assinatura permanece só no servidor (`jwt.rs:96-104`); testes determinísticos não exigem navegador, rede ou fixture; a dívida do chat fica para ciclo próprio.
 
-## Evidência de entrada
+**[NV]** preservados: execução de `npm run test:unit`, `check`, `lint`, build e gates (apenas inspeção documental; consolidação no handoff); validação visual do menu e da troca de conta/organização em navegador real (reatividade por `$derived`, não medida); resolução de `Usuário <id>` no chat e eventual cache/lookup de usuários (dívida, fora do ciclo); números de linha referem-se a `23ff4bc809`; nenhum segredo, token real ou dado de produção lido ou registrado.
 
-- Baseline `23ff4bc809`, branch `feature/104-session-identity` criada a partir desse HEAD; `.specify/feature.json` aponta para `specs/104-session-identity`.
-- `apps/frontend/src/routes/(app)/+layout.svelte:182-185` e `apps/frontend/src/lib/i18n/pt-BR.ts:53-54` — literais na navegação.
-- `flora-core/src/utils/jwt.rs:17-33,38-55,96-104` — claim `email`, emissão e validação servidora da assinatura.
-- `apps/frontend/src/lib/state/AuthState.svelte.ts:36,69-81,87-99,170` — token reativo e sua atualização.
-- `apps/frontend/vite.config.ts:27-53`, `apps/frontend/package.json:15,47` e `apps/frontend/tests/unit/tasks-query.test.ts:1-21` — infraestrutura e convenção de testes.
-- `apps/frontend/src/lib/components/chat/ChatLayout.svelte:118-131` e `pt-BR.ts:80` — dívida do chat, fora de escopo.
+Fora de âmbito preservado: mudanças em `analyze.md`, `converge.md`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, gates, required checks, workflows, ADRs, constituição ou changelog; mudança em `jwt.rs`, `AuthState`, `ChatLayout.svelte`, no dicionário `pt-BR.ts` (inclusive `chat.author`), rotas, flags, schema ou migrações; uso do e-mail decodificado para autorização ou verificação de assinatura no cliente; deploy, escrita em staging/produção e commits.
 
-## Racional
+## If needs-clarification
 
-**go.** A lacuna é de apresentação e tem correção pequena, verificável e sem efeito transversal: a claim já é emitida (`jwt.rs:25,51`), o token já chega ao cliente (`AuthState.svelte.ts:36`) e o layout já o lê em outras partes (`+layout.svelte:36,58`). Um helper puro com fail-closed evita exceções e valores parciais na interface, e o `$derived` mantém o menu correto quando o token muda. Manter os literais do dicionário como fallback preserva o contrato de i18n e a experiência antes do login, sem inventar chaves nem traduções. A leitura do payload é explicitamente não-autoritativa: nenhuma rota, flag ou decisão de acesso passa a depender dela, e a validação de assinatura continua apenas no servidor (`jwt.rs:96-104`). Os testes Vitest são determinísticos e não exigem navegador, rede ou fixture. A dívida do chat fica documentada para um ciclo próprio, com lookup de usuários, sem ampliar este escopo.
+- **Blocking questions**: N/A (veredito `go`; nenhuma pergunta bloqueante registrada nos artefatos).
+- **Revisit stage**: N/A.
 
-## [NV]
+## If go — Handoff to `/speckit.specify`
 
-- Execução de `npm run test:unit`, `check`, `lint`, build e gates: **[NV]** neste artefato — consolidada no handoff; apenas inspeção documental aqui.
-- Validação visual do menu e da troca de conta/organização em navegador real: **[NV]** — a reatividade é garantida por `$derived`, não medida neste artefato.
-- Resolução de `Usuário <id>` no chat e eventual cache/lookup de usuários: **[NV]** / dívida — fora de escopo do ciclo 104.
-- Números de linha referem-se a `23ff4bc809`; nenhum segredo, token real ou dado de produção foi lido ou registrado neste ciclo.
-
-## Fora de âmbito
-
-Mudanças em `analyze.md`, `converge.md`, `validate/`, `release/`, `.specify/memory/STATE.md`, `PROGRESSO*` ou `AGENTS.md`; alteração de required checks, gates, workflows, ADRs, constituição ou changelog; mudança em `flora-core/src/utils/jwt.rs`, `AuthState`, `ChatLayout.svelte`, no dicionário `pt-BR.ts` (inclusive `chat.author`), em rotas, flags, schema ou migrações; uso do e-mail decodificado para autorização ou verificação de assinatura no cliente; deploy, escrita em staging/produção e commits.
-
-## Handoff
-
-`/speckit.specify` — especificar a identidade da sessão na navegação como requisitos verificáveis (FR-001..FR-005 / SC-001..SC-003) e fila T001..T008, com helper puro fail-closed, `$derived` no layout, literais do dicionário apenas como fallback, cobertura Vitest e dívida do chat registrada. Testes, gates e validação em navegador ficam no handoff **[NV]**.
+- **Problem**: O menu do usuário exibe sempre `Nome do usuário`/`usuario@flora.app`, embora a claim `email` da sessão já esteja no token e o layout já o leia (`+layout.svelte:182-185`, `pt-BR.ts:53-54`, `jwt.rs:25,51`, `AuthState.svelte.ts:36`).
+- **Chosen approach**: `emailFromToken` puro e fail-closed em `lib/utils/jwt.ts` + `$derived` no layout, com os literais do dicionário apenas como fallback e leitura explicitamente não-autoritativa.
+- **In scope / out of scope**:
+  - **In**: FR-001..FR-005 / SC-001..SC-003, fila T001..T008; `jwt.ts`, `jwt.test.ts`, `+layout.svelte`, casos positivos e negativos no projeto `server` do Vitest, dívida do chat registrada.
+  - **Out/NV**: backend/`jwt.rs`, `AuthState`, `ChatLayout.svelte`, `chat.author`, autorização a partir do payload, verificação de assinatura no cliente, rotas/flags/schema/migrações; `analyze/`, `converge/`, `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`, gates, workflows, ADRs, changelog, constituição; testes/gates/navegador e resolução do chat **[NV]**.
+- **Success metrics**: com `qa-admin@flora.test`, o menu mostra `qa-admin` e `qa-admin@flora.test` e acompanha mudanças de `authState.token` sem reload; token ausente/corrompido → `null` e fallback, sem exceção ou log; a assinatura continua validada apenas no servidor.
+- **Carried-forward open questions**: `[NV]` `npm run test:unit`, `check`, `lint`, build e gates; `[NV]` validação visual em navegador e troca de conta/organização; `[NV]` dívida do chat (`Usuário <id>`) com lookup de usuários — nenhuma bloqueia o `go`.

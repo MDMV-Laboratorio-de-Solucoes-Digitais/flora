@@ -1333,3 +1333,14 @@ anterior foi alterada.
 - **Entrega**: 62 `decision.md` no formato canônico (6 critérios, Verdict, racional, handoff), 62 × `go` preservando o histórico; `problem.md`/`concept.md` criados para `114` e `115`. Nenhum intake/research/spec/gate/CI/código alterado.
 - **Evidência local ([EV])**: 62/62 com scorecard válido e veredito histórico; gate PASS (`87` pisos, `GATE_RC=0`, 04:38:21Z→04:48:58Z); `git diff --check` RC 0.
 - **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
+
+## Sessão: flora - canonicalização final de decision.md (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T050500Z-assess-decide-final`; branch `assessment/assess-decide-final-20261125`; worktree `.specify/queue/worktrees/assess-decide-final-20261125`; base SHA remoto `2b2658e9b21f`.
+- **Entrega**: 42 `decision.md` canônicos, completando 111/111; 42 × `go` preservando o histórico, incluindo matriz P01–P34 do Sanderson e 188 IDs do assessment de arquitetura. Nenhum spec/gate/CI/código alterado.
+- **Evidência local ([EV])**: 42/42 com scorecard de 6 critérios e seções condicionais; `ALL_CANONICAL 111/111`; `git diff --check` RC 0. Gate em verificação neste ciclo.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja`, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
+
+### Suplemento — gate (2026-11-25T05:29Z, append-only)
+
+- `[EV]` gate local: 1ª execução timeout em 1200 s na compilação; 2ª **PASS** (`87` pisos, `GATE_RC=0`, 05:26:55Z→05:29:02Z) com target aquecido, `TMPDIR` gravável e `CARGO_BUILD_JOBS=2`. CI remoto segue `[NV]` até o head do PR.

@@ -1,106 +1,36 @@
 # Decision: 095 — Deploy do frontend Flora
 
 - **Slug**: 095-frontend-deploy
-- **Decidido**: 2026-11-20
-- **Verdict**: **go**
-- **Branch**: `feature/095-frontend-deploy` @ `29b34aefe`
-- **Âncora**: `.specify/feature.json` → `specs/095-frontend-deploy`
-- **Artefatos revisados**: spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | problem.md | concept.md | decision.md (original 2026-11-20) | specs/095-frontend-deploy/{spec,plan,tasks,analyze,converge}.md | STATE.md:817-830 e docs/PROGRESSO.md:283-297 (registro append-only)
 
-## Contexto / Problema — causa raiz determinística
+## Scorecard
 
-O FQDN `flora.mdmv.qzz.io` **não serve o frontend**; ele serve a API Rust. A cadeia
-de evidência é determinística, não intermitente:
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | O FQDN `flora.mdmv.qzz.io` servia a imagem da API (`docker-staging.yml` com `context: .` e `Dockerfile` raiz, `cargo build --release -p flora-api`): `/` e `/tasks` retornavam 404 enquanto `/health`, `/metrics` e `/llms.txt` respondiam como rotas da API; cadeia determinística, não intermitente (`problem.md:7-11`; `decision.md:12-34`). |
+| Evidence strength | adequate | Leitura direta de `Dockerfile`, workflows, `apps/frontend/Dockerfile`, `docker-entrypoint.sh` e `static/config.js`, mais registro append-only do desfecho remoto (`STATE.md:826-830`); hosts remotos não reconsultados (**[NV]**) e desvio entre publicação prevista no GHCR e build direto do Git no Coolify documentado (`research.md:38,49`). |
+| Value vs. inaction | strong | Sem a separação de origens a aplicação permanece inacessível no FQDN: medição registrada em 2026-11-20T23:13:59Z (`/` → 404 com corpo vazio, `/tasks` e `/login` → 404) enquanto o dev local servia 200 (`research.md:50`; `problem.md:31`). |
+| Feasibility / appetite | adequate | Opção A, appetite `medium`: imagem `flora-web` própria, `workflow_dispatch` manual, DNS/FQDN e config de runtime/CORS verificáveis por smoke de rotas; execução remota e respostas HTTP finais **[NV]** nos artefatos do ciclo (`concept.md:10-16`). |
+| Strategic fit | strong | Corrige a causa publicada em vez do sintoma e preserva ADR-0003 — deploy manual, fora do gate de merge, sem trigger automático — dando continuidade ao estado registrado no ciclo 093 (`research.md:21-22`; `concept.md:18`). |
+| Risk posture | adequate | CORS sem `*`, origem web exata e nenhum required check novo reduzem o risco; consumidores não identificados das rotas de API no FQDN original e estratégia de rollback não validada para o build direto do Git no Coolify permanecem como incógnitas (`research.md:41-42`; `concept.md:24,34`). |
 
-1. `.github/workflows/docker-staging.yml` (gatilho apenas `workflow_dispatch`)
-   publica a imagem construída com `context: .`, ou seja, pelo `Dockerfile` da
-   raiz, sob as tags `ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:staging`
-   e `:${{ github.sha }}`.
-2. O `Dockerfile` da raiz compila `-p flora-api` e a imagem final contém somente
-   `/usr/local/bin/flora-api` com `EXPOSE 3000` — nenhum asset do SvelteKit.
-3. Por isso `/health`, `/metrics` e `/llms.txt` respondem como rotas da API no
-   FQDN, enquanto `/` e `/tasks` retornam 404: as rotas da aplicação nunca foram
-   publicadas nessa origem.
-4. `apps/frontend/Dockerfile` existe (`node:22-alpine`, build
-   `adapter-node` → `build/index.js`), mas nenhum workflow publica essa imagem;
-   o frontend não é servido em nenhum FQDN.
-5. Mesmo que o frontend fosse servido, `apps/frontend/static/config.js` e
-   `DEFAULT_API_BASE_URL` apontam para `http://localhost:3000`; sem runtime
-   config gerada no deploy, o browser chamaria localhost. A allowlist
-   `FLORA_APP__CORS_ORIGINS` (em `flora-core/src/config/app.rs`) contém apenas
-   origens de loopback, sem `https://flora.mdmv.qzz.io`.
+## Verdict & Rationale
 
-Não há indício de falha de rede, DNS intermitente ou build quebrado: o served
-content e o código de deploy explicam integralmente o 404 nas rotas da app.
+Veredito histórico **`go`** de 2026-11-20 preservado: branch `feature/095-frontend-deploy` @ `29b34aefe`, âncora `.specify/feature.json` → `specs/095-frontend-deploy`. O diagnóstico registrado é integralmente determinístico — o workflow `docker-staging.yml` publicava `context: .` pelo `Dockerfile` da raiz, que compilava somente `-p flora-api` e continha apenas `/usr/local/bin/flora-api` (`EXPOSE 3000`); `apps/frontend/Dockerfile` existia (`node:22-alpine`, build `adapter-node`) mas nenhum workflow o publicava; os defaults de `apps/frontend/static/config.js` e `DEFAULT_API_BASE_URL` apontavam para `http://localhost:3000` e `FLORA_APP__CORS_ORIGINS` (`flora-core/src/config/app.rs`) continha só origens de loopback, com `AppConfig::validate()` rejeitando `*`. A decisão registrou seis compromissos FR-001..FR-006, três critérios SC-001..SC-003 e oito tarefas T001..T008, com analyze `critical=0`, `requirements_covered=6/6`, `fr=6/6`, `sc=3/3`, `tasks=8/8`, `errors=[]` (`specs/095-frontend-deploy/analyze.md`). O fechamento append-only registrou `/`, `/tasks` e `/config.js` → 200 em `flora.mdmv.qzz.io`, `/health` e `/llms.txt` → 200 em `flora-api.mdmv.qzz.io`, preflight CORS → 200, deploy Coolify `kwzqvvvkeldq2zmyxa12fu3g` `finished` e PRs #324, #325 e #326 mesclados em `dev` (`STATE.md:826-830`; `docs/PROGRESSO.md:292-297`); o desvio real foi o GHCR ter permanecido privado (401 no pull) e o app `Flora Web` passar a buildar direto do Git (`branch=dev`, `base_directory=/apps/frontend`), e a decisão descrevia `CMD node build/index.js` enquanto o arquivo efetivo usa `ENTRYPOINT ["docker-entrypoint.sh"]` com `import` de `build/index.js` (`research.md:36-39`). Nada disso contradiz o `go`: são fatos históricos e premissas pendentes, não uma reversão do veredito. Fluxo E2E autenticado e healthcheck do Coolify (sem health check configurado) permanecem **[NV]** (`research.md:49`), bem como o estado remoto atual, não reconsultado nesta passagem.
 
-## Decisão
+## If needs-clarification
 
-Registrar o ciclo 095 como **deploy do frontend em origem própria**, com seis
-compromissos rastreáveis (FR-001..FR-006) e oito tarefas (T001..T008):
+- **Blocking questions**: N/A (veredito `go`; as incógnitas abaixo ficam em aberto para o handoff).
+- **Revisit stage**: N/A.
 
-1. **Imagem web (FR-001 / SC-001)**: criar a imagem `flora-web` a partir de
-   `apps/frontend/Dockerfile` (`context: apps/frontend`); não reaproveitar a
-   imagem da API para o FQDN do frontend.
-2. **Publicação manual (FR-002 / SC-003)**: publicar `flora-web` no GHCR por `.github/workflows/docker-frontend.yml`
-   `workflow_dispatch`, com tags `:production` e `:${{ github.sha }}`, sem criar
-   trigger automático de push/PR/merge e sem mexer em required checks.
-3. **FQDNs (FR-003 / SC-001)**: `flora.mdmv.qzz.io` passa a servir o frontend
-   (`/`, `/tasks`); a API passa a `flora-api.mdmv.qzz.io`
-   (`/health`, `/metrics`, `/llms.txt`).
-4. **Config de runtime (FR-004 / SC-002)**: gerar `config.js` no container a partir de
-   `FLORA_API_BASE_URL`, sobrescrevendo
-   `globalThis.__FLORA_CONFIG__.apiBaseUrl`; os defaults comitados permanecem
-   seguros para dev local.
-5. **CORS (FR-005 / SC-002)**: incluir a origem exata `https://flora.mdmv.qzz.io` em
-   `FLORA_APP__CORS_ORIGINS`, sem curinga, preservando as origens locais e a
-   consistência com a checagem de origem do websocket.
-6. **Verificação e fronteira (FR-006 / SC-003)**: smoke de rotas, headers CORS e
-   `config.js`; diff restrito aos artefatos do ciclo e ao deploy, sem tocar em
-   `validate/`, `release/` ou `.specify/memory/STATE.md`.
+## If go — Handoff to `/speckit.specify`
 
-## Evidência de entrada
-
-- Baseline `29b34aefe`, branch `feature/095-frontend-deploy`.
-- `.github/workflows/docker-staging.yml`: `context: .`, `workflow_dispatch`,
-  tags `flora:staging` / `flora:<sha>` e webhook de deploy Coolify condicionado
-  a `COOLIFY_DEPLOY_WEBHOOK`.
-- `Dockerfile` da raiz: `cargo build --release -p flora-api`, imagem final só
-  `flora-api` (porta 3000).
-- `apps/frontend/Dockerfile`: estágio builder `node:22-alpine` + `npm ci` +
-  `npm run build`; runtime `node:22-alpine` com `build/`, `node_modules/` e
-  `CMD node build/index.js`.
-- `apps/frontend/static/config.js`: `apiBaseUrl: "http://localhost:3000"`,
-  `wsBaseUrl: null`; `src/app.html` carrega `%sveltekit.assets%/config.js` e
-  `src/lib/api/client.ts` resolve a base a partir de `__FLORA_CONFIG__`.
-- `.env.example`: `FLORA_APP__CORS_ORIGINS` com apenas origens `localhost` /
-  `127.0.0.1` (portas 5173/4173); `AppConfig::validate()` rejeita `*`.
-
-## Racional
-
-**go.** O defeito observado (404 em `/` e `/tasks`, respostas de API em
-`/health`, `/metrics`, `/llms.txt`) é a consequência exata do que o workflow
-publica e do que o `Dockerfile` da raiz contém. A correção é uma separação de
-imagens e de origens, com config de runtime e allowlist CORS explícitas — todas
-verificáveis por inspeção de arquivos e por smoke de rotas. Nenhuma mudança de
-gate, schema ou contrato da API é necessária; o diff é reversível.
-
-## [NV]
-
-- A publicação no GHCR, o deploy no Coolify, a configuração de DNS/FQDN e as
-  respostas HTTP remotas **não foram executadas nem observadas neste snapshot**:
-  permanecem **[NV]**. O veredito `go` autoriza o ciclo; não afirma deploy pronto.
-- As verificações relatadas no handoff são evidência consolidada; este artefato
-  não reexecutou gates, build, testes ou formatters.
-
-## Fora de âmbito
-
-Mudanças de required checks, gates de CI, API de aplicação, runtime, schema,
-migration, credenciais e produção, bem como qualquer alteração em `validate/`,
-`release/` ou `.specify/memory/STATE.md`.
-
-## Handoff
-
-`/speckit.specify` — especificar o deploy como requisitos verificáveis
-(FR-001..FR-006 / SC-001..SC-003) e tarefas T001..T008, com a imagem `flora-web`
-publicada por workflow manual, os FQDNs separados, o `config.js` gerado de
-`FLORA_API_BASE_URL`, a origem web na allowlist CORS e a fronteira preservada.
+- **Problem**: Rotas da aplicação (`/`, `/tasks`) indisponíveis em `flora.mdmv.qzz.io` porque a origem servia apenas a imagem da API Rust (`decision.md:12-34`; `problem.md:7`).
+- **Chosen approach**: Opção A — separação de origens web/API com publicação manual da imagem `flora-web` construída de `apps/frontend/Dockerfile`; Opção B (web+API na mesma origem/imagem) e Opção C (não publicar, documentar limitação) rejeitadas por manterem a mistura de rotas que impede base de API e CORS coerentes, ou por não atender à métrica central (`concept.md:8-26,28-30`).
+- **In scope / out of scope**:
+  - **In (FR-001..FR-006 / SC-001..SC-003 / T001..T008)**: imagem `flora-web` própria (`context: apps/frontend`, tags `:production` e `:${{ github.sha }}`), publicação somente por `workflow_dispatch`, `flora.mdmv.qzz.io` para web e `flora-api.mdmv.qzz.io` para API, `config.js` gerado em runtime de `FLORA_API_BASE_URL` sobrescrevendo `globalThis.__FLORA_CONFIG__.apiBaseUrl` sem tocar nos defaults comitados, origem exata `https://flora.mdmv.qzz.io` em `FLORA_APP__CORS_ORIGINS` sem `*` e coerente com o origin check do websocket, smoke de rotas/CORS/config e fronteira preservada (`decision.md:38-59`; `converge.md:9-17`).
+  - **Out/deferred/NV**: required checks, gates, ADR-0003, API, runtime, schema, migration, credenciais e produção; triggers automáticos de push/PR/merge; `validate/`, `release/` e `.specify/memory/STATE.md` no diff de implementação (registrados apenas como documentação das fases R4/R7); PR/merge/tag/deploy e observação remota ao vivo; desvio GHCR/Coolify e rollback efetivo **[NV]** (`decision.md:97-101`; `research.md:36-42`).
+- **Success metrics**: `/` e `/tasks` na origem web e `/health`, `/metrics`, `/llms.txt` na origem da API (baseline: 404 em `/` e `/tasks` e respostas de API no mesmo FQDN em 2026-11-20T23:13:59Z); `config.js` com base da API e zero `localhost:3000`, ACAO refletindo a origem web exata; preflight CORS e smoke sem erro (baseline: 200 registrado em `STATE.md:826-830`, remoto atual **[NV]**); publicação manual sem trigger automático e com diff restrito; analyze `critical=0`/`6/6`/`3/3`/`8/8` (`problem.md:33-39`; `analyze.md:9-18,42`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: quais são as configurações atuais de DNS/FQDN e de deploy no Coolify, dado que não foram observadas neste snapshot (**[NV]**)?]; [NEEDS CLARIFICATION: qual é a resposta HTTP real de `/`, `/tasks`, `/health`, `/metrics` e `/llms.txt` nas duas origens após a mudança (**[NV]**)?]; [NEEDS CLARIFICATION: quem detém a autorização para disparar o workflow manual de publicação e promover o deploy?]; [NEEDS CLARIFICATION: existem consumidores de `flora.mdmv.qzz.io` que dependam das rotas da API nessa origem?]; [NEEDS CLARIFICATION: qual estratégia de rollback se aplica se a separação quebrar login ou websocket, dado o build direto do Git no Coolify?]; [NEEDS CLARIFICATION: o header CORS e o `config.js` entregues ao browser foram verificados em produção ou permanecem como contrato especificado (**[NV]**)?]; [NEEDS CLARIFICATION: como o desvio entre a publicação prevista no GHCR (FR-002) e o build direto do Git no Coolify deve ser refletido nos artefatos do ciclo?] (`intake.md:23-28`; `research.md:38-48`).

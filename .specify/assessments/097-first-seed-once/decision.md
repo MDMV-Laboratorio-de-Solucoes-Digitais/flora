@@ -1,106 +1,36 @@
-# Decision: 097 — gating do link "primeira configuração" no bootstrap one-time
+# Decision: 097 — Gating do link "primeira configuração" no bootstrap one-time
 
 - **Slug**: 097-first-seed-once
-- **Decidido**: 2026-11-21
-- **Verdict**: **go**
-- **Branch**: `feature/097-first-seed-once` @ `696849934`
-- **Âncora**: `.specify/feature.json` → `specs/097-first-seed-once`
-- **Diagnóstico**: transcrição `FirstSeedScout` (somente leitura)
-- **Artefatos revisados**: intake | research | define | shape | spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (original 2026-11-21) | specs/097-first-seed-once/{spec,plan,tasks,analyze,converge}.md | transcrição FirstSeedScout (somente leitura)
 
-## Contexto / problema — causa raiz determinística
+## Scorecard
 
-O convite "É uma instalação nova? Fazer primeira configuração" (original
-_"Is this a fresh install? Start First Seed Journey"_) continua na tela de login
-depois de a conta `luis.granja@mdmv.com.br` ter sido criada. A cadeia está toda no
-código comitado e foi confirmada em produção por leitura:
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | O convite "É uma instalação nova? Fazer primeira configuração" é renderizado incondicionalmente em `(auth)/+page.svelte:236-242`, com `isSetup` simulado (`:17`, `:174-175`); o único predicado de "fresh install" vive dentro do `POST /bootstrap` (`bootstrap.rs:276-290`) e não há endpoint de status (`bootstrap.rs:58-59`) (`intake.md:7-17`; `define.md:5`). |
+| Evidence strength | strong | Cadeia determinística por leitura direta com `arquivo:linha`, reforçada por leitura de produção (`GET /` com o texto do link, `GET /api/v1/bootstrap` → 405, `GET /api/v1/organizations` → 401); existência real de conta/organizações e variáveis `FLORA_*` **[NV]** (`research.md:1-12,29-36`). |
+| Value vs. inaction | strong | Criar `luis.granja@mdmv.com.br` não faz o link desaparecer: a nova tentativa só falha no submit com 409 e, ao recarregar, o estado local volta a `false` — UX enganosa em instalação já configurada (`intake.md:10-17`; `define.md:5`). |
+| Feasibility / appetite | adequate | Extração de `installation_is_empty(db)`, um `GET /bootstrap/status` booleano público e uma condição de render com fail-closed; sem alterar `POST`, lock ou critério de organizações, mas exige ajuste de contratos e specs existentes (`shape.md:5-24`; `define.md:FR-001..FR-006`). |
+| Strategic fit | strong | Torna o gating reativo sem transformar status em autorização, preservando a guarda atômica do bootstrap e a fronteira do ciclo; continua a correção de login do ciclo 096 sem reabrir OIDC (`define.md:5,Fora de escopo`; `shape.md:1-4`). |
+| Risk posture | adequate | Resposta `{available: bool}` com `no-store`, sem contagens/e-mails, e fail-closed em erro/404/405/503; custo aceito é um link ausente enquanto a API não responde, preferível a oferecer bootstrap em instalação configurada (`shape.md:26-33`; `define.md:SC-002,SC-003`). |
 
-1. `apps/frontend/src/routes/(auth)/+page.svelte:17` — `isSetup` é estado simulado,
-   sem fonte no backend; `toggleSetup()` (`:174-175`) só o inverte.
-2. `+page.svelte:236-242` — o bloco do link é renderizado **incondicionalmente**
-   no branch de login; não existe consulta nem condição de disponibilidade.
-3. `flora-api/src/routes/bootstrap.rs:58-59` — `create_bootstrap_router()` registra
-   apenas `POST /bootstrap`; `GET /api/v1/bootstrap` em produção responde **405**.
-4. `flora-api/src/routes/bootstrap.rs:276-290` — a única definição de
-   "fresh install" está dentro do `POST`: `pg_advisory_xact_lock` +
-   `COUNT(*) FROM organizations WHERE id <> nil` → 409 `bootstrap already completed`.
-5. `flora-api/src/routes/org.rs:80,90` e `workspace.rs:84,97` exigem sessão;
-   `health.rs:10-28` não expõe estado; logo, não há gating pré-login possível hoje.
-6. `GET https://flora.mdmv.qzz.io/` contém o texto do link em produção;
-   `GET /api/v1/organizations` → 401. O caso 409 já é tratado em
-   `+page.svelte:140-142`, mas apenas no submit — não há reação anterior.
+## Verdict & Rationale
 
-Não há indício de falha intermitente: o comportamento observado é exatamente o
-que o código produz. O erro OIDC reportado (`redirect_uri is not allowed`) é
-independente e foi registrado no ciclo 096 — fora deste âmbito.
+Veredito histórico **`go`** de 2026-11-21 preservado: branch `feature/097-first-seed-once` @ `696849934`, âncora `.specify/feature.json` → `specs/097-first-seed-once`, diagnóstico da transcrição `FirstSeedScout` (somente leitura). A decisão original registrou seis compromissos FR-001..FR-006, três critérios SC-001..SC-003 e dez tarefas T001..T010 (todas concluídas), com analyze `critical=0`, `requirements_covered=6/6`, `fr=6/6`, `sc=3/3`, `tasks=10/10`, `errors=[]` (`specs/097-first-seed-once/analyze.md`). A cadeia observada: `isSetup` sem fonte no backend (`+page.svelte:17`) e `toggleSetup()` que só o inverte (`:174-175`); bloco incondicional em `:236-242`; `create_bootstrap_router()` registrava apenas `POST /bootstrap` (`bootstrap.rs:58-59`, `GET` → 405 em produção); o predicado de "fresh" era `pg_advisory_xact_lock` + `COUNT(*) FROM organizations WHERE id <> nil` dentro do `POST` (`:276-290`, → 409 `bootstrap already completed`); `org.rs:80,90` e `workspace.rs:84,97` exigiam sessão e `health.rs:10-28` não expunha estado; `GET /api/v1/organizations` → 401. A correção escolhida foi reativa e idempotente: helper compartilhado `installation_is_empty(db)`, `GET /api/v1/bootstrap/status` público com `{ "available": bool }` e `Cache-Control: no-store` (somente UX; o `POST` com advisory lock segue como guarda autoritativa), `canBootstrap = $state(false)` com fetch no mount, render condicional, fail-closed em erro de rede/404/405/503 e `409` no submit que remove o link sem navegar (`shape.md:5-24`). O erro OIDC `redirect_uri is not allowed` foi registrado como independente, no ciclo 096, e ficou fora deste âmbito (`intake.md:17`). Estado real do DB de produção (conta, organizations), via de criação da conta e variáveis `FLORA_*` efetivamente definidas permanecem **[NV]** — não há endpoint público de contagem e os hosts SSH falharam com `Connection reset by /run/ssh-unix-local/socket`; nenhum `POST /bootstrap` foi executado na investigação (`research.md:31-36`). Gate do alvo registrado como PASS no handoff consolidado; este artefato não reexecutou gates, build, testes ou formatters.
 
-## Decisão
+## If needs-clarification
 
-Registrar o ciclo 097 como **gating reativo e idempotente do link de primeira
-configuração**, com seis compromissos rastreáveis (FR-001..FR-006), três
-critérios (SC-001..SC-003) e dez tarefas (T001..T010, todas concluídas):
+- **Blocking questions**: N/A (veredito `go`; as incógnitas abaixo ficam em aberto para o handoff).
+- **Revisit stage**: N/A.
 
-1. **Predicado (FR-001 / T001)**: extrair `installation_is_empty(db)` de
-   `bootstrap.rs:276-290`, com o mesmo critério de organizações não-sistema.
-2. **Status (FR-002 / SC-002 / T002)**: `GET /api/v1/bootstrap/status` público →
-   `{ "available": bool }`, `Cache-Control: no-store`, sem dados de usuários;
-   POST + advisory lock seguem como guarda autoritativa.
-3. **Contratos (FR-005 / T003)**: vazio / pós-201 / org pré-existente / usuário
-   órfão / sem `Authorization` / `no-store` / concorrência preservada.
-4. **Frontend (FR-003 / T004–T005)**: `canBootstrap` falso por default, fetch no
-   mount, render condicional e fail-closed em erro de rede/404/405/503.
-5. **Idempotência reativa (FR-004 / T006)**: 409 no submit → `canBootstrap=false`,
-   mensagem legível e sem navegação; OIDC e `isSubmitting` intactos.
-6. **Specs e fecho (FR-006 / T007–T010)**: mocks de status/409/rede, regressão
-   OIDC/bootstrap, gates do alvo PASS e rastreabilidade documental.
+## If go — Handoff to `/speckit.specify`
 
-## Evidência de entrada
-
-- Baseline `696849934`, branch `feature/097-first-seed-once`.
-- `FirstSeedScout`: investigação somente leitura de frontend, bootstrap, rotas,
-  contratos e leitura de produção; nenhum arquivo editado, nenhum gate reexecutado.
-- `flora-api/src/routes/mod.rs:32-33` — sub-router público em `/api/v1`, sem
-  alteração de autenticação necessária para o GET de status.
-- `flora-core/src/migrations/sql/20240818000001_init_schema.sql:5-8` —
-  `users.email` UNIQUE; criação atômica com rollback em 409.
-- `flora-tests/src/contract/bootstrap.rs:138,188,211,229` e
-  `apps/frontend/src/routes/(auth)/login-error.svelte.spec.ts:15,101,138` —
-  suítes existentes a estender, não a substituir.
-
-## Racional
-
-**go.** O defeito é consequência direta de três pontos verificáveis: link
-incondicional no frontend, predicado de "fresh" confinado ao `POST` e ausência de
-endpoint de status. A correção é isolada: uma função extraída, um GET booleano
-somente leitura, uma condição de render e o tratamento reativo de um 409 já
-existente. Nenhum gate, contrato do `POST`, lock, critério de organização ou
-infraestrutura é alterado. Todos os FR/SC são verificáveis por contratos, specs e
-inspeção locais; o diff é reversível e a fronteira é preservada. Falhar fechado
-custa, no pior caso, um link ausente enquanto a API não responde — aceitável
-frente ao risco de oferecer bootstrap em instalação já configurada.
-
-## [NV]
-
-- Existência real de `luis.granja@mdmv.com.br` e de organizations no DB de
-  produção, bem como a via de criação da conta e as variáveis `FLORA_*`
-  efetivamente definidas no serviço: **[NV]**. Não há endpoint público de
-  contagem; hosts SSH falharam com `Connection reset by /run/ssh-unix-local/socket`;
-  nenhum `POST /bootstrap` foi executado na investigação.
-- Configuração de OIDC, allowlist de redirect e deploy remoto: **[NV]** —
-  tratados em ciclos separados; este veredito autoriza apenas o gating local.
-- O gate do alvo está registrado como PASS no handoff consolidado; este artefato
-  não reexecutou gates, build, testes ou formatters.
-
-## Fora de âmbito
-
-Mudanças em `validate/`, `release/`, `.specify/memory/STATE.md` ou `PROGRESSO*`;
-alteração de required checks, workflows, ADRs ou constituição; mudança no
-contrato do `POST /bootstrap`, no advisory lock ou no critério de organizações
-não-sistema; configuração de IdP externo ou correção da allowlist OIDC.
-
-## Handoff
-
-`/speckit.specify` — especificar o gating como requisitos verificáveis
-(FR-001..FR-006 / SC-001..SC-003) e tarefas T001..T010, com status booleano sem
-vazamento de dados, fail-closed no frontend, 409 reativo, contratos/specs
-estendidos e fronteira preservada.
+- **Problem**: Link de primeira configuração aparece mesmo em instalação já configurada porque o frontend não consulta o backend e o predicado de "fresh" só existe dentro do `POST /bootstrap` (`intake.md:7-17`; `define.md:5`).
+- **Chosen approach**: Gating reativo e idempotente com status endpoint mínimo, somente leitura — `installation_is_empty(db)` compartilhada entre `GET /bootstrap/status` e o `POST`, com o `pg_advisory_xact_lock` mantido como guarda autoritativa; Opção de "status como autorização"/maior superfície evitada (`shape.md:3-24,26`).
+- **In scope / out of scope**:
+  - **In (FR-001..FR-006 / SC-001..SC-003 / T001..T010)**: extrair o predicado de `bootstrap.rs:276-290` preservando `COUNT(*) FROM organizations WHERE id <> nil`; `GET /api/v1/bootstrap/status` público, `{available: bool}`, `Cache-Control: no-store`, sem contagens/e-mails/nomes; `canBootstrap = $state(false)` com fetch no mount e render condicional; fail-closed em erro de rede/404/405/503 e 409 reativo com mensagem "Este workspace já foi configurado." sem `goto('/tasks')`; contratos em `flora-tests/src/contract/bootstrap.rs:138,188,211,229` e specs em `login-error.svelte.spec.ts:15,101,138` estendidos, não substituídos (`define.md:FR-001..FR-006`; `shape.md:5-24`).
+  - **Out/deferred/NV**: corrigir OIDC/allowlist de redirect (ciclo 096), IdP externo, contrato do `POST /bootstrap`, advisory lock, critério de organizações não-sistema e emissão de sessão; `validate/`, `release/`, `.specify/memory/STATE.md` e `PROGRESSO*`; required checks, workflows, ADRs e constituição (`define.md:Fora de escopo`; `intake.md:Fronteira`).
+- **Success metrics**: com instalação configurada o link não aparece e em banco vazio continua disponível com `201 → sessão → /tasks` (baseline: link sempre presente); status sem dados sensíveis e `POST` ainda 409 sob o mesmo lock (baseline: nenhum endpoint de status); falha de status esconde o link e 409 no submit remove o link sem navegação (baseline: 409 tratado só no submit); analyze `critical=0`, `6/6`, `3/3`, `10/10` (`define.md:SC-001..SC-003`; `analyze.md:9-18,44`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: existem de fato `luis.granja@mdmv.com.br` e organizations no DB de produção e qual foi a via de criação da conta (**[NV]**)?]; [NEEDS CLARIFICATION: quais variáveis `FLORA_*` estão efetivamente definidas no serviço (**[NV]**)?]; [NEEDS CLARIFICATION: a correção foi observada no ambiente remoto após o deploy, ou permanece apenas verificável por contratos/specs locais (**[NV]**)?]; [NEEDS CLARIFICATION: a configuração de OIDC/allowlist (ciclo 096) foi resolvida em produção?] (`research.md:31-36`; `intake.md:23-28`).

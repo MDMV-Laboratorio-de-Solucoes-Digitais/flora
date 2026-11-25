@@ -591,3 +591,13 @@ permanecem intactas; apenas acréscimos.
 - **Entrega**: 62 `decision.md` reescritos no formato canônico de `/speckit.assess.decide` (scorecard de 6 critérios, Verdict, racional e handoff). Todos os vereditos históricos `go` foram preservados; nenhuma mudança de veredito. Como `114` e `115` tinham apenas `define.md`/`shape.md`, seus `problem.md` e `concept.md` canônicos foram criados como pré-requisitos.
 - **Evidência local ([EV])**: `DECIDE_REVISIT_OK 62/62`, `verdicts {'go': 62}`, `git diff --check` RC 0; gate determinístico `PASS` (`87` pisos, `GATE_RC=0`, 04:38:21Z→04:48:58Z, após `cargo clean`). Roteiro/evidência em `.specify/validations/assess-decide-revisit-20261125/`.
 - **[NV]**: checks remotos/ACR/merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, não por esta sessão. Nenhum merge de `main`, deploy, auto-merge ou force-push executado aqui.
+
+## Estado verificado — 2026-11-25 (canonicalização final de decide; append-only)
+
+- **Entrega**: os 42 `decision.md` restantes foram reescritos com scorecard canônico, completando 111/111 assessments normalizados. Todos os vereditos históricos `go` foram preservados; matriz P01–P34 e contagens do Sanderson e os 188 IDs do assessment de arquitetura multiagente foram mantidos.
+- **Evidência local ([EV])**: `FINAL_DECIDE_OK 42/42`, `ALL_CANONICAL 111/111`, `git diff --check` RC 0. Gate/CI remoto em verificação neste ciclo; roteiro em `.specify/validations/assess-decide-final-20261125/`.
+- **[NV]**: gate remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja`, não por esta sessão. Nenhum merge de `main`, deploy, auto-merge ou force-push executado aqui.
+
+### Suplemento — gate (2026-11-25T05:29Z, append-only)
+
+- `[EV]` gate determinístico: primeira execução excedeu 1200 s durante compilação (sem `GATE_RC`); segunda com target aquecido **PASS** — `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (05:26:55Z→05:29:02Z). Nenhuma mudança de código; detalhes em `evidence.md`.
