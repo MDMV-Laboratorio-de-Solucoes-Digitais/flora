@@ -1286,3 +1286,14 @@ anterior foi alterada.
 
 - `[EV]` gate local: 1ª execução FAIL por `/tmp` 100%, 2ª com `TMPDIR` em diretório gitignored **PASS** (`87` pisos, `GATE_RC=0`, 01:10:15Z→01:23:42Z). CI remoto do PR permanece **[NV]**.
 - ACR independente: `changes_requested` (1 HIGH/1 MEDIUM/1 LOW), todos corrigidos antes do commit: saídas reais do gate e do PR #410 em `evidence.md`, escopo de escrita esclarecido em `decision.md`, snapshot final de status atualizado. Nenhum merge, deploy, auto-merge ou force-push.
+
+## Sessão: flora - backfill de intake de 13 assessments (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T014500Z-assess-intake`; branch `assessment/assess-intake-backfill-20261125`; worktree `.specify/queue/worktrees/assess-intake-backfill-20261125`; base `github/dev@7ac614425`.
+- **Entrega**: 13 `intake.md` criados em `.specify/assessments/{040,041,042,086..095}-*/`, todos validados (`INTAKE_BACKFILL_OK 13/13`), sem alterar `decision.md`, specs, gate, CI ou código.
+- **Evidência local ([EV])**: paths não-symlink dentro do repo, 13 arquivos com estrutura SpecKit completa e 5–7 incógnitas por intake, `git diff --check` RC 0.
+- **[NV]**: gate/CI remoto, ACR e merge até observação ao vivo. Nenhum merge de `main`, deploy, auto-merge, force-push ou toque em trabalho alheio.
+
+### Suplemento — gate (2026-11-25T02:01Z, append-only)
+
+- `[EV]` `python3 scripts/ci/check_gate_integrity.py` PASS (`87` pisos, `GATE_RC=0`) na worktree `assess-intake-backfill-20261125`, com `TMPDIR` gravável. CI remoto e merge permanecem **[NV]** neste ponto.
