@@ -535,3 +535,17 @@ permanecem intactas; apenas acréscimos.
 - **Contagens (`find`)**: `specs/` `112` dirs (`598` arquivos), `.specify/assessments/` `110` (`468`), `.specify/validations/` `108` (`131`), `.specify/releases/` `108` (`108`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
 - **R6 / Artefatos**: issues `#420`–`#423`; `docs/governance/2026-11-24-122-briefing-compreensao.md`, `specs/122-org-members-rbac-management/*`, `.specify/validations/122-org-members-rbac-management/*`, `.specify/releases/122-org-members-rbac-management/release.md` (`0.13.0 -> 0.14.0`).
 - **[NV]**: CI remoto do PR em `dev`, ACR independente, promoção `dev -> main` e staging/produção.
+
+## Estado verificado — 2026-11-25 (assessment Sanderson; append-only)
+
+- **Entrega (documental, sem código)**: assessment `avaliacao-harness-sanderson-flora` com `intake.md`, `research.md`, `define.md`, `shape.md`, `decision.md` (`**Veredito: go**`), 34 decisões (ADOPT 5 / ADAPT 10 / DEFER 9 / AVOID 6 / REJECT 4), brief `docs/research/2026-11-24-sanderson-selfevolving-tools.md`, espelho `docs/governance/2026-11-25-avaliacao-harness-sanderson-flora.md` e roteiro/evidência em `.specify/validations/avaliacao-harness-sanderson-flora/`.
+- **Pesquisa `[EV]`/fontes**: 18 investigações paralelas + síntese; 90 URLs primárias em `research.md`; legendas VTT do vídeo em inglês (00:10–56:17); cobertura idiomática real en+pt-BR com docs oficiais em es/fr/de/zh/ja; injeções em E2B docs, PR #410, A2UI e site zh registradas e ignoradas. Correções factuais: "~400 PRs" é inferência; 500k linhas é o último PR da migração Rust; AHP compõe ACP e gera schemas, não servidor.
+- **Contagens (`find`) na worktree**: `specs/` 112 dirs (598 arquivos), `.specify/assessments/` 111 (473), `.specify/validations/` 109 (132), `.specify/releases/` 108 (108), `.specify/bugs/` 8 (26), `docs/adr/` 8, `docs/research/` 138 `.md` na raiz sem `index.md` (150 no total com subpastas).
+- **Verificação local ([EV])**: paths reais e dentro do repo, 5 artefatos não-vazios, `intake-structure: OK`, `decision-rows=34 invalid=0`, `verdict-go=True`, `git diff --check` sem saída. Resultado do gate determinístico e status remoto são registrados em `evidence.md` quando observados ao vivo; até então **[NV]**.
+- **80/20**: sem candidato elegível em P01–P34. BUG-111-01/02/03, único gap com consumidor nomeado apontado pela pesquisa, já foi corrigido em `6288a8569` (ancestral de `github/dev`) `[EV]`. Demais propostas já cobertas, documentais ou incompatíveis com `debloat`/VPS barata.
+- **[NV]**: CI/PR remoto, ACR, promoção `dev→main` e deploy; nenhum merge de `main`, auto-merge, force-push, credencial ou skill instalada. Trabalho alheio preservado.
+
+### Suplemento — gate e ACR (2026-11-25T01:24Z, append-only)
+
+- Gate determinístico na worktree isolada: 1ª execução FAIL por `/tmp` 100% (`cargo` rc=101, nenhum teste descoberto); 2ª com `TMPDIR` gravável **PASS**, `all 11 db contract floors intact (87 total)`, `GATE_RC=0` (01:10:15Z→01:23:42Z). Ambiente/local; checks remotos seguem **[NV]** até o head do PR.
+- ACR independente (`research`): `changes_requested` com 1 HIGH (evidência de gate/PR não colada), 1 MEDIUM (contradição em autorizações) e 1 LOW (snapshot de status desatualizado); os três achados foram corrigidos em `evidence.md`, `decision.md` e no snapshot final antes do commit. Nenhum achado determinístico crítico.

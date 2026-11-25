@@ -262,3 +262,8 @@ Recontagem via `find` no worktree `feature/121-settings-theme-selector`: `specs/
 ### Estado verificado — 2026-11-24 (ciclo 122; append-only)
 
 Recontagem via `find` no worktree `feature/122-org-members-rbac-management`: `specs/` 112 diretórios (598 arquivos), `.specify/assessments/` 110 diretórios (468 arquivos), `.specify/validations/` 108 diretórios (131 arquivos), `.specify/releases/` 108 diretórios (108 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+
+### Estado verificado — 2026-11-25 (assessment Sanderson; append-only)
+
+Recontagem via `find` na worktree `assessment/avaliacao-selfevolving-tools-flora`: `specs/` 112 diretórios (598 arquivos), `.specify/assessments/` 111 diretórios (473 arquivos), `.specify/validations/` 109 diretórios (132 arquivos), `.specify/releases/` 108 diretórios (108 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` passa a 138 arquivos `.md` na raiz sem `index.md` (150 no total com subpastas), incluindo `2026-11-24-sanderson-selfevolving-tools.md`. Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI/PR remoto, ACR e produção.
