@@ -559,3 +559,13 @@ permanecem intactas; apenas acréscimos.
 ### Suplemento — gate (2026-11-25T02:01Z, append-only)
 
 - `[EV]` gate determinístico na worktree isolada: `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (01:51:56Z→02:01:29Z, `TMPDIR` gitignored). Checks remotos do PR seguem **[NV]** até observação ao vivo no head exato.
+
+## Estado verificado — 2026-11-25 (backfill de research; append-only)
+
+- **Entrega**: `research.md` criado em 13 assessments (`040`, `041`, `042`, `086`–`095`) e regularizado em outros 5 (`107`–`110`, `113`, antes com menos de 900 bytes/fora do formato). Todos seguem as 8 seções de `/speckit.assess.research`: Users & Demand, Prior Art, Market & Context, Data & Constraints, Evidence Against the Idea, Gaps & Open Questions, Sources (além de Slug/Created/confidence). Nenhum veredito, intake, spec, gate, CI ou código alterado.
+- **Evidência local ([EV])**: `RESEARCH_BACKFILL_OK 18/18`; 7–13 fontes por arquivo; `Evidence Against` e `[NEEDS CLARIFICATION:]` presentes em todos; fatos antigos dos 5 arquivos regularizados preservados; `git diff --check` RC 0. Roteiro em `.specify/validations/assess-research-backfill-20261125/test-roadmap.md`.
+- **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
+
+### Suplemento — gate (2026-11-25T02:29Z, append-only)
+
+- `[EV]` gate determinístico na worktree isolada: `gate-integrity: PASS`, 11 legs / 87 contratos, `GATE_RC=0` (02:24:18Z→02:29:26Z, `TMPDIR` gitignored). Checks remotos do PR seguem **[NV]** até observação ao vivo no head exato.
