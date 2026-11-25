@@ -7,10 +7,10 @@
 Reescrever 62 `decision.md` com scorecard canônico de 6 critérios, veredito, racional e handoff, preservando o veredito histórico (`go` em todos os 62). Como `114-wcag-ci-guard` e `115-files-list-persistence` tinham apenas `define.md`/`shape.md`, foram criados seus `problem.md` e `concept.md` canônicos como pré-requisitos do comando.
 
 ## Pré-condições
+- Todos os 62 diretórios têm `intake.md`, `research.md` e `decision.md`; quando `problem.md`/`concept.md` não existem, `define.md`/`shape.md` são os equivalentes locais declarados no campo `Artifacts reviewed` da decisão (114/115 receberam os artefatos canônicos neste ciclo).
 
 - Worktree isolada `assessment/assess-decide-revisit-20261125` a partir do SHA remoto `f13d321c7a2b`.
 - `.specify` e `.specify/assessments` são diretórios reais, não symlinks, dentro da raiz.
-- Todos os 62 diretórios têm `intake.md`, `research.md`, `problem.md` e `concept.md` (os dois últimos criados quando necessário).
 
 ## Passos
 
