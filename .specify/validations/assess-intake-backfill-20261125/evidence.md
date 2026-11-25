@@ -6,9 +6,9 @@
 |---|---|---|---|---|
 | 1 | Resolver paths | `.specify dir True symlink False inside True`; idem para `.specify/assessments` | PASS | Bloco A |
 | 2 | Contar novos intake | `INTAKE_BACKFILL_OK 13 / 13` | PASS | Bloco A |
-| 3 | Validar estrutura SpecKit | 13/13 com título, seções e ≥4 `[NEEDS CLARIFICATION:` | PASS | Bloco A |
-| 4 | Conteúdo não genérico | 2.230–2.876 bytes; cita `decision.md`/`specs/<slug>` | PASS | Bloco A |
-| 5 | Gate determinístico | ver Bloco B | ver Bloco B | Bloco B |
+| 3 | Validar estrutura SpecKit | 13/13 com título, seções e 4–6 `[NEEDS CLARIFICATION:` (entregues: 5–7) | PASS | Bloco A |
+| 4 | Conteúdo não genérico | 2.269–2.936 bytes (`git show HEAD:<file> \| wc -c`); cita `decision.md`/`specs/<slug>` | PASS | Bloco A |
+| 5 | Gate determinístico | PASS, 87 contratos (Bloco B) | PASS | Bloco B |
 | 6 | `git diff --check` | `DIFFCHECK_RC=0`; status com apenas paths autorizados | PASS | Bloco C |
 | 7 | Preservação alheia | checkout sujo e worktrees alheias intactos; PR #410 não mesclado | PASS | Bloco C |
 
@@ -17,21 +17,23 @@
 ```text
 .specify dir True symlink False inside True
 .specify/assessments dir True symlink False inside True
-OK  040-seed-ui-debloat bytes 2325 unknowns 6
-OK  041-rust-dead-crates bytes 2230 unknowns 6
-OK  042-real-rbac-list bytes 2229 unknowns 6
-OK  086-rbac-ci-leg bytes 2730 unknowns 5
-OK  087-bootstrap-ci-leg bytes 2740 unknowns 5
-OK  088-dynamic-gate-oracle bytes 2805 unknowns 5
-OK  089-forgejo-mirror-sync bytes 2608 unknowns 5
-OK  090-rustls-security-bump bytes 2548 unknowns 5
-OK  091-governance-ci-audit bytes 2862 unknowns 6
-OK  092-npm-lock-sync bytes 2685 unknowns 6
-OK  093-sveltekit-security-upgrade bytes 2827 unknowns 6
-OK  094-visao-so-pme bytes 2575 unknowns 7
-OK  095-frontend-deploy bytes 2876 unknowns 6
+OK  040-seed-ui-debloat bytes 2366 unknowns 6
+OK  041-rust-dead-crates bytes 2269 unknowns 6
+OK  042-real-rbac-list bytes 2271 unknowns 6
+OK  086-rbac-ci-leg bytes 2778 unknowns 5
+OK  087-bootstrap-ci-leg bytes 2794 unknowns 5
+OK  088-dynamic-gate-oracle bytes 2853 unknowns 5
+OK  089-forgejo-mirror-sync bytes 2651 unknowns 5
+OK  090-rustls-security-bump bytes 2600 unknowns 5
+OK  091-governance-ci-audit bytes 2936 unknowns 6
+OK  092-npm-lock-sync bytes 2730 unknowns 6
+OK  093-sveltekit-security-upgrade bytes 2874 unknowns 6
+OK  094-visao-so-pme bytes 2636 unknowns 7
+OK  095-frontend-deploy bytes 2920 unknowns 6
 INTAKE_BACKFILL_OK 13 / 13
 ```
+
+Valores de `bytes` acima medidos com `git show HEAD:.specify/assessments/<slug>/intake.md | wc -c`; `unknowns` é a contagem de `[NEEDS CLARIFICATION:` no texto.
 
 ## Bloco B — gate determinístico
 

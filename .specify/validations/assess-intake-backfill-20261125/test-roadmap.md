@@ -14,9 +14,9 @@ Criar `intake.md` ausente em 13 diretórios de `.specify/assessments/` que já p
 
 ## Passos
 
-1. **路径 safety** — resolver `.specify`, `.specify/assessments` e cada diretório de slug; afirmar `is_dir=True`, `is_symlink=False`, `inside=True`. Automatizável: sim. Captura: terminal.
+1. **Segurança de caminho** — resolver `.specify`, `.specify/assessments` e cada diretório de slug; afirmar `is_dir=True`, `is_symlink=False`, `inside=True`. Automatizável: sim. Captura: terminal.
 2. **Contagem** — confirmar exatamente 13 novos `intake.md`, um por slug listado no ledger. Automatizável: sim. Captura: terminal.
-3. **Estrutura SpecKit** — para cada arquivo: `# Idea Intake:`, `## Idea (as captured)`, `## Restated`, `## Origin & Context`, `## First-Glance Unknowns`, `**Slug**: <slug>` e ≥4 `[NEEDS CLARIFICATION:`. Automatizável: sim. Captura: terminal.
+3. **Estrutura SpecKit** — para cada arquivo: `# Idea Intake:`, `## Idea (as captured)`, `## Restated`, `## Origin & Context`, `## First-Glance Unknowns`, `**Slug**: <slug>` e 4–6 `[NEEDS CLARIFICATION:` (contrato do brief; entregues 5–7). Automatizável: sim. Captura: terminal.
 4. **Conteúdo não genérico** — afirmar que cada intake cita `decision.md` e/ou `specs/<slug>/spec.md`, com bytes entre 2.000 e 3.500. Automatizável: sim. Captura: terminal.
 5. **Gate determinístico** — `python3 scripts/ci/check_gate_integrity.py` com `TMPDIR` gravável. Esperado: `PASS`, exit 0. Automatizável: sim. Captura: terminal.
 6. **Higiene** — `git diff --check`, `git status --short`, confirmação de que apenas os paths autorizados foram criados. Automatizável: sim. Captura: terminal.

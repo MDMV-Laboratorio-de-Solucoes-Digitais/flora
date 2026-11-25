@@ -553,7 +553,7 @@ permanecem intactas; apenas acréscimos.
 ## Estado verificado — 2026-11-25 (backfill de intake; append-only)
 
 - **Entrega**: `intake.md` criado nos 13 assessments que tinham apenas `decision.md`: `040`, `041`, `042`, `086`–`095`. Cada arquivo segue o formato canônico de `/speckit.assess.intake` (título, Slug, Created, Source, Type, Idea as captured, Restated, Origin & Context, 5–7 `[NEEDS CLARIFICATION:]`), com conteúdo extraído de `decision.md` e `specs/<slug>/spec.md`. Nenhum veredito, spec, gate, CI ou código alterado.
-- **Evidência local ([EV])**: `INTAKE_BACKFILL_OK 13/13`, tamanhos 2.230–2.876 bytes, `git diff --check` RC 0, paths reais e dentro da worktree. Roteiro em `.specify/validations/assess-intake-backfill-20261125/test-roadmap.md`.
+- **Evidência local ([EV])**: `INTAKE_BACKFILL_OK 13/13`, tamanhos 2.269–2.936 bytes (`git show HEAD:<file> | wc -c`), `git diff --check` RC 0, paths reais e dentro da worktree. Roteiro em `.specify/validations/assess-intake-backfill-20261125/test-roadmap.md`.
 - **[NV]**: gate remoto/CI, ACR e merge até observação ao vivo no head do PR; nenhum merge de `main`, deploy, auto-merge ou force-push. Trabalho alheio preservado.
 
 ### Suplemento — gate (2026-11-25T02:01Z, append-only)
