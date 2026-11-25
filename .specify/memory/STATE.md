@@ -1373,3 +1373,21 @@ anterior foi alterada.
 ### Resultado e evidência remota — ciclo 124 (2026-11-25T07:38Z, append-only)
 
 - `[EV]` PR [#435](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/435) mesclado em `dev` em `bfc51d100317` às 07:37:25Z; required checks SUCCESS no head `40d299e246`; `e2e-browser` remoto SUCCESS com o Passo 5d ([run](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45568843684/job/139050220020)); E2E local permanece `blocked` por provisionamento. ACR `correct` com 3 P3 corrigidos. Nenhum merge de `main`/deploy por agente.
+
+## Decisão 80/20 — ciclo 125 revalidação WS (2026-11-25T08:05Z, append-only)
+
+- **session_title**: `flora - revalidacao de sessao no websocket`; `session_id`: `orch-20261125T080000Z-lightsout3`; branch `fix/125-ws-session-revalidation`; base `github/dev@4f619cb28e8d` (PR #433 de promoção GREEN e escalado ao SWE, não mesclado por agente).
+- **Critério**: `impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`, denominador **3125**. Candidato escolhido: revalidação de sessão pós-handshake no WS: 4 × 3 × 3 × 3 × 4 = **432/3125**. Alternativas: quota agregada 384, deep-link de busca 144.
+- **Consumidor**: membro autenticado cuja sessão é revogada por logout/rebaixamento com `/api/v1/ws` aberto; hoje `websocket.rs:116-150,183-201` valida apenas no upgrade e `handle_socket:482-519` captura `user_id/org_id` para toda a vida do socket, permitindo Subscribe/SendMessage/fanout após revogação.
+- **DoD**: (1) token/JTI retido no socket e revalidado por `verify_bearer_token` em ações do cliente e no fanout com TTL de 30 s (não por frame); (2) sessão revogada/expirada produz `WsServerMessage::Error{code:"SESSION_INVALID"}` + close `1008` e encerra o loop; (3) erro de serviço (500) não desconecta; (4) contrato DB novo prova revogação após conexão sem novo handshake, com piso `websocket` 8→9 em lockstep; (5) gate PASS (88 pisos) e CI verde. Cliente já trata `1008`/`unauthorized` com `authState.lockSession()`, sem mudança de frontend.
+- **Fora de escopo**: multi-node/Valkey, rotação de token via query sem reconectar, mudança de contrato REST, ticket de quota e deep-link de busca.
+
+### Resultado local — ciclo 125 revalidação WS (2026-11-25T08:09Z, append-only)
+
+- `[EV]` Código/contrato/floors implementados nos 8 paths do ciclo: `websocket.rs` revalida com TTL de 30 s e encerra com `SESSION_INVALID`/`1008` em `401` (erro de serviço preserva o socket, token nunca logado); `contract/websocket.rs:298` cobre revogação pós-conexão sem novo handshake; `check_gate_integrity.py:45` e `rust.yml:113` elevam o piso `websocket` a 9 em lockstep. `rustfmt --edition 2024 --check` RC 0; `git diff --check` RC 0.
+- `[NV]` Contrato DB não rodado neste worker (requer `FLORA_DATABASE__POSTGRES_URL`), gate/CI remoto não observados aqui; o gate PASS de 88 pisos é critério de aceite a ser confirmado pelo orquestrador. Nenhum stage/commit/push/merge/deploy executado.
+- **Comandos de prova ao orquestrador**: `cargo test -p flora-tests contract::websocket::db_ws_revoked_after_connect_rejected -- --ignored --test-threads=1`; `python3 scripts/ci/check_gate_integrity.py` com `TMPDIR` gravável (esperado 88 pisos); required checks `rust-build`/`db-tests` no head do PR. Detalhes em `.specify/validations/125-ws-session-revalidation/evidence.md`.
+
+### Verificação local concluída — ciclo 125 (2026-11-25T08:20Z, append-only)
+
+- `[EV]` `cargo test -p flora-tests db_ws_revoked_after_connect_rejected -- --ignored --test-threads=1` 1 passed com PG18 descartável (container temporário removido); `cargo fmt --all -- --check` RC 0; `cargo check -p flora-api` 0 erros; `cargo clippy -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS (88 pisos, 08:16:34Z→08:17:16Z). CI remoto permanece `[NV]` até o head do PR.

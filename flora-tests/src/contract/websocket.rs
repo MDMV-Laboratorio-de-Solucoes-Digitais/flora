@@ -10,7 +10,7 @@ mod db_websocket {
     };
     use chrono::{Duration, Utc};
     use flora_api::{
-        routes::websocket::websocket_handler,
+        routes::websocket::{verify_ws_session, websocket_handler},
         state::{AppState, oidc_transactions::OidcTransactionStore},
     };
     use flora_core::{
@@ -289,6 +289,41 @@ mod db_websocket {
         anyhow::ensure!(
             status == StatusCode::UNAUTHORIZED,
             "expected 401, got {status}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Postgres; set FLORA_DATABASE__POSTGRES_URL (cycle 125)"]
+    async fn db_ws_revoked_after_connect_rejected() -> anyhow::Result<()> {
+        let Some((state, config)) = db_state().await? else {
+            return Ok(());
+        };
+        let user = seed_user(&state, "revoked-after-connect").await?;
+        let org = seed_org(&state, "revoked-after-connect").await?;
+        let jti = format!("jti-ws-revoked-after-connect-{}", Uuid::now_v7());
+        seed_session(
+            &state,
+            user.id,
+            org.id,
+            &jti,
+            true,
+            Utc::now() + Duration::seconds(3600),
+        )
+        .await?;
+        let token = token_for(&config, user.id, &jti, org.id, &user.email);
+
+        verify_ws_session(&token, &state, user.id, org.id)
+            .await
+            .map_err(|status| anyhow::anyhow!("live session rejected with {status}"))?;
+
+        let revoked = state.session_service.revoke_session(&jti).await?;
+        anyhow::ensure!(revoked, "seeded session was not revoked");
+
+        let status = verify_ws_session(&token, &state, user.id, org.id).await;
+        anyhow::ensure!(
+            status == Err(StatusCode::UNAUTHORIZED),
+            "expected 401 after revocation, got {status:?}"
         );
         Ok(())
     }

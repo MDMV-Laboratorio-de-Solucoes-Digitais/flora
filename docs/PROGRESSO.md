@@ -620,3 +620,14 @@ permanecem intactas; apenas acréscimos.
 ### Resultado — ciclo 124 (2026-11-25T07:38Z, append-only)
 
 - `[EV]` PR #435 mesclado em `dev` (`bfc51d100317`, 07:37:25Z); required checks e `e2e-browser` remoto SUCCESS no head `40d299e246` ([run](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/45568843684/job/139050220020)). ACR `correct`, 3 P3 corrigidos. E2E local `blocked`; automação de provisionamento segue como pendência ao SWE. PR #433 (`dev→main`) segue escalado; nenhum merge de `main`/deploy executado por agente.
+
+## Ciclo 125 — revalidação de sessão no WebSocket (2026-11-25T08:09Z, append-only)
+
+- **Âncora**: `session_title` = `flora - revalidacao de sessao no websocket`; branch `fix/125-ws-session-revalidation`; base `github/dev@4f619cb28e8d`; critério `4 × 3 × 3 × 3 × 4 = 432/3125` (STATE.md:1377-1383). Consumidor = membro com `/api/v1/ws` aberto cuja sessão é revogada por logout/rebaixamento.
+- **Entrega**: `verify_ws_session` público usa `verify_bearer_token` e compara user/org; `websocket_handler` retém o token e o passa a `handle_socket`; revalidação TTL de 30 s (`std::time`) antes de ações do cliente (Ping exceto) e antes do fanout do hub; `401` envia `Error{SESSION_INVALID}` + `Close(1008)` e encerra o loop, enquanto `500` apenas loga e preserva o socket; token nunca é logado. Novo contrato DB `db_ws_revoked_after_connect_rejected`; piso `websocket` 8→9 em lockstep (`check_gate_integrity.py`/`rust.yml`). Nenhum frontend, migration, ADR, constituição ou credencial tocado.
+- **Evidência local ([EV])**: `rustfmt --edition 2024 --check` nos dois arquivos Rust RC 0; `git diff --check` RC 0; exatamente 8 paths do ciclo. Roteiro/evidência em `.specify/validations/125-ws-session-revalidation/`.
+- **[NV]**: contrato DB não executado neste worker (requer Postgres); gate agregado e required checks remotos seguem `[NV]` até execução/observação ao vivo no head do PR — baseline do gate já está em execução na janela principal. Nenhum commit, push, merge, deploy ou stage executado.
+
+### Verificação local concluída — ciclo 125 (2026-11-25T08:20Z, append-only)
+
+- `[EV]` Contrato DB executado com PG18 descartável em `:15435`: `db_ws_revoked_after_connect_rejected` 1 passed / 0 failed (08:17:49Z→08:17:51Z). `cargo fmt --all -- --check` RC 0; `cargo check -p flora-api` 0 erros; `cargo clippy -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS com 88 pisos (08:16:34Z→08:17:16Z). Required checks remotos seguem `[NV]` até o head do PR.

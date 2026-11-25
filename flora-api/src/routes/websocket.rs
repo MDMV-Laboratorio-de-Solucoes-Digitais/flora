@@ -4,11 +4,15 @@
 //! enforcing multi-tenancy isolation for all WebSocket operations.
 
 use std::collections::HashSet;
+use std::time::{Duration, Instant};
 
 use axum::{
     extract::{
         Query, State,
-        ws::{WebSocket, WebSocketUpgrade, rejection::WebSocketUpgradeRejection},
+        ws::{
+            CloseFrame, Utf8Bytes, WebSocket, WebSocketUpgrade,
+            rejection::WebSocketUpgradeRejection,
+        },
     },
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
@@ -109,6 +113,37 @@ pub struct WsTokenQuery {
     pub token: Option<String>,
 }
 
+/// Maximum age of a cached session revalidation for an established socket.
+const SESSION_REVALIDATION_TTL: Duration = Duration::from_secs(30);
+
+/// Revalidates a WebSocket token against the DB-backed session authority.
+///
+/// Compares the verified identity and organization with the values captured at
+/// handshake time so a revoked, expired or reassigned session cannot keep using
+/// an established socket. The token itself is never logged.
+///
+/// # Errors
+///
+/// Returns `StatusCode::UNAUTHORIZED` when the token, session, identity or
+/// organization is invalid, and propagates `StatusCode::INTERNAL_SERVER_ERROR`
+/// when the session store is unavailable.
+pub async fn verify_ws_session(
+    token: &str,
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+) -> Result<(), StatusCode> {
+    let verified = crate::extractors::auth::verify_bearer_token(token, state)
+        .await
+        .map_err(|(status, _)| status)?;
+
+    if verified.user_id != user_id || verified.organization_id != org_id {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    Ok(())
+}
+
 /// Handles WebSocket upgrade and connection.
 ///
 /// Validates the bearer token against DB-backed session authority before upgrade
@@ -126,7 +161,7 @@ pub async fn websocket_handler(
     }
 
     // Validate session authority first so invalid auth returns 401 (not 426).
-    let (user_id, org_id) = match extract_org_context(&headers, &params, &state).await {
+    let (token, user_id, org_id) = match extract_org_context(&headers, &params, &state).await {
         Ok(ctx) => ctx,
         Err(status) => {
             tracing::warn!("WebSocket connection rejected");
@@ -147,7 +182,7 @@ pub async fn websocket_handler(
 
     tracing::info!(user_id = %user_id, org_id = %org_id, "WebSocket connection established");
 
-    ws.on_upgrade(move |socket| handle_socket(socket, state, user_id, org_id))
+    ws.on_upgrade(move |socket| handle_socket(socket, state, token, user_id, org_id))
 }
 
 /// Resolves a bearer token from supported transports.
@@ -177,14 +212,15 @@ fn origin_allowed(headers: &HeaderMap, allowed: &[String]) -> bool {
     allowed.iter().any(|entry| entry.as_str() == value)
 }
 
-/// Extracts user and organization context from a verified, DB-backed session.
+/// Extracts the verified token and user/organization context from a DB-backed session.
 ///
-/// Rejects nil organization for WebSocket connections.
+/// The token is owned by the caller so it can be revalidated after the handshake;
+/// nil organizations are rejected for WebSocket connections.
 async fn extract_org_context(
     headers: &HeaderMap,
     params: &WsTokenQuery,
     state: &AppState,
-) -> Result<(Uuid, Uuid), StatusCode> {
+) -> Result<(String, Uuid, Uuid), StatusCode> {
     let Some(token) = resolve_ws_token(headers, params) else {
         return Err(StatusCode::UNAUTHORIZED);
     };
@@ -197,7 +233,7 @@ async fn extract_org_context(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    Ok((verified.user_id, verified.organization_id))
+    Ok((token.to_owned(), verified.user_id, verified.organization_id))
 }
 
 /// Helper function to send a WebSocket message to the client.
@@ -407,38 +443,34 @@ async fn handle_parse_error(
     let _ = send_ws_response(socket, response).await;
 }
 
-async fn handle_client_text(
+/// Dispatches a parsed client message; ping is handled before session revalidation.
+async fn handle_client_message(
     socket: &mut WebSocket,
     state: &AppState,
     user_id: Uuid,
     org_id: Uuid,
     subscriptions: &mut HashSet<Uuid>,
-    text: &str,
+    client_msg: WsClientMessage,
 ) {
-    match serde_json::from_str::<WsClientMessage>(text) {
-        Ok(client_msg) => match client_msg {
-            WsClientMessage::Subscribe { channel_id } => {
-                handle_subscribe(socket, state, user_id, org_id, channel_id, subscriptions).await;
-            }
-            WsClientMessage::Unsubscribe { channel_id } => {
-                handle_unsubscribe(socket, user_id, org_id, channel_id, subscriptions).await;
-            }
-            WsClientMessage::SendMessage {
-                channel_id,
-                content,
-                thread_id,
-            } => {
-                handle_send_message(
-                    socket, state, user_id, org_id, channel_id, content, thread_id,
-                )
-                .await;
-            }
-            WsClientMessage::Ping => {
-                handle_ping(socket).await;
-            }
-        },
-        Err(e) => {
-            handle_parse_error(socket, user_id, org_id, e).await;
+    match client_msg {
+        WsClientMessage::Subscribe { channel_id } => {
+            handle_subscribe(socket, state, user_id, org_id, channel_id, subscriptions).await;
+        }
+        WsClientMessage::Unsubscribe { channel_id } => {
+            handle_unsubscribe(socket, user_id, org_id, channel_id, subscriptions).await;
+        }
+        WsClientMessage::SendMessage {
+            channel_id,
+            content,
+            thread_id,
+        } => {
+            handle_send_message(
+                socket, state, user_id, org_id, channel_id, content, thread_id,
+            )
+            .await;
+        }
+        WsClientMessage::Ping => {
+            handle_ping(socket).await;
         }
     }
 }
@@ -478,12 +510,67 @@ async fn forward_hub_event(
     send_ws_response(socket, response).await.is_ok()
 }
 
+/// Sends a generic session-invalid envelope and closes with policy code 1008.
+async fn close_invalid_session(socket: &mut WebSocket) {
+    let response = WsServerMessage::Error {
+        code: "SESSION_INVALID".to_string(),
+        message: "Invalid or expired session".to_string(),
+    };
+    let _ = send_ws_response(socket, response).await;
+
+    let close = CloseFrame {
+        code: 1008,
+        reason: Utf8Bytes::from("SESSION_INVALID"),
+    };
+    let _ = socket
+        .send(axum::extract::ws::Message::Close(Some(close)))
+        .await;
+}
+
+/// Revalidates the retained token at most once per TTL window.
+///
+/// Returns `false` only when the session is no longer authorized; service
+/// failures are logged and leave the socket open.
+async fn revalidate_before_action(
+    socket: &mut WebSocket,
+    token: &str,
+    state: &AppState,
+    user_id: Uuid,
+    org_id: Uuid,
+    last_verified: &mut Instant,
+) -> bool {
+    if last_verified.elapsed() < SESSION_REVALIDATION_TTL {
+        return true;
+    }
+    *last_verified = Instant::now();
+
+    match verify_ws_session(token, state, user_id, org_id).await {
+        Ok(()) => true,
+        Err(StatusCode::UNAUTHORIZED) => {
+            tracing::warn!(%user_id, %org_id, "WebSocket session invalid after handshake");
+            close_invalid_session(socket).await;
+            false
+        }
+        Err(status) => {
+            tracing::warn!(%user_id, %org_id, %status, "WebSocket session revalidation unavailable");
+            true
+        }
+    }
+}
+
 /// Handles an established WebSocket connection.
-async fn handle_socket(mut socket: WebSocket, state: AppState, user_id: Uuid, org_id: Uuid) {
+async fn handle_socket(
+    mut socket: WebSocket,
+    state: AppState,
+    token: String,
+    user_id: Uuid,
+    org_id: Uuid,
+) {
     tracing::info!(%user_id, %org_id, "WebSocket connection handled");
 
     let mut subscriptions: HashSet<Uuid> = HashSet::new();
     let mut hub_rx = state.realtime_hub.subscribe();
+    let mut last_verified = Instant::now();
 
     loop {
         tokio::select! {
@@ -499,12 +586,37 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, user_id: Uuid, or
                 };
 
                 if let axum::extract::ws::Message::Text(text) = msg {
-                    handle_client_text(&mut socket, &state, user_id, org_id, &mut subscriptions, &text).await;
+                    let parsed = serde_json::from_str::<WsClientMessage>(&text);
+                    if !matches!(&parsed, Ok(WsClientMessage::Ping))
+                        && !revalidate_before_action(
+                            &mut socket, &token, &state, user_id, org_id, &mut last_verified,
+                        ).await
+                    {
+                        break;
+                    }
+                    match parsed {
+                        Ok(WsClientMessage::Ping) => {
+                            handle_ping(&mut socket).await;
+                        }
+                        Ok(client_msg) => {
+                            handle_client_message(
+                                &mut socket, &state, user_id, org_id, &mut subscriptions, client_msg,
+                            ).await;
+                        }
+                        Err(e) => {
+                            handle_parse_error(&mut socket, user_id, org_id, e).await;
+                        }
+                    }
                 }
             }
             hub = hub_rx.recv() => {
                 match hub {
                     Ok(envelope) => {
+                        if !revalidate_before_action(
+                            &mut socket, &token, &state, user_id, org_id, &mut last_verified,
+                        ).await {
+                            break;
+                        }
                         if !forward_hub_event(&mut socket, org_id, &subscriptions, envelope).await {
                             break;
                         }
