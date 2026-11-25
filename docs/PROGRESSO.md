@@ -631,3 +631,10 @@ permanecem intactas; apenas acréscimos.
 ### Verificação local concluída — ciclo 125 (2026-11-25T08:20Z, append-only)
 
 - `[EV]` Contrato DB executado com PG18 descartável em `:15435`: `db_ws_revoked_after_connect_rejected` 1 passed / 0 failed (08:17:49Z→08:17:51Z). `cargo fmt --all -- --check` RC 0; `cargo check -p flora-api` 0 erros; `cargo clippy -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS com 88 pisos (08:16:34Z→08:17:16Z). Required checks remotos seguem `[NV]` até o head do PR.
+
+## Ciclo 126 — quota agregada transacional (2026-11-25T15:42Z, append-only)
+
+- **Âncora**: `session_title` = `flora - quota agregada transacional`; branch `fix/126-aggregate-quota`; base `github/dev@cbf39dbb22c0`; critério 384/3125 — fecha residual P0 `ROADMAP.md:72`/`OBJETIVO.md:69`.
+- **Entrega**: `create_with_quota` transacional com `pg_advisory_xact_lock`, `SUM(size_bytes)` ativo por org/workspace e `INSERT` na mesma transação; `upload_file`/`create_file` usam o mesmo caminho; contrato DB `db_aggregate_quota_rejects_second_upload` cobre 201 → 413, 1 linha e 0 blob órfão; piso `files` 7→8 em lockstep. Nenhuma migration, rota ou required check alterado.
+- **Evidência local ([EV])**: contrato 1 passed e suíte `contract::files::db_` 8 passed em PG18 descartável em `:15436` (15:39:15Z→15:39:29Z); `cargo fmt --all -- --check` RC 0; `cargo check -p flora-core -p flora-api -p flora-tests` 0 erros; `cargo clippy -p flora-core -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS com 89 pisos (15:40:59Z→15:41:01Z); `git diff --check` RC 0. Roteiro/evidência em `.specify/validations/126-aggregate-quota/`.
+- **[NV]**: required checks remotos no head do PR e efeitos de produção. Nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.

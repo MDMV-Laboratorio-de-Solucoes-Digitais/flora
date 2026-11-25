@@ -194,7 +194,15 @@ impl FileService {
         file.workspace_id = Some(workspace_id);
         file.checksum = Some(checksum);
 
-        match self.file_repo.create(file).await {
+        match self
+            .file_repo
+            .create_with_quota(
+                file,
+                self.config.org_quota_bytes,
+                self.config.workspace_quota_bytes,
+            )
+            .await
+        {
             Ok(created) => {
                 tracing::info!(file_id = %created.id, org_id = %org_id, workspace_id = %workspace_id, "File uploaded");
                 Ok(UploadedFile { file: created })
@@ -258,7 +266,14 @@ impl FileService {
             file.metadata = meta;
         }
 
-        let created = self.file_repo.create(file).await?;
+        let created = self
+            .file_repo
+            .create_with_quota(
+                file,
+                self.config.org_quota_bytes,
+                self.config.workspace_quota_bytes,
+            )
+            .await?;
         tracing::info!(file_id = %created.id, org_id = %org_id, uploader_id = %uploader_id, "File record created");
         Ok(created)
     }
