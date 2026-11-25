@@ -63,7 +63,7 @@ Observação de método: research coleta e cita; não decide, não desenha solu�
 
 ## Sources
 
-- `system` | `.specify/assessments/089-forgejo-mirror-sync/intake.md:1-42` | lido diretamente 2026-11-24 | policy: system (repo local) | confidence: high.
+- `system` | `.specify/assessments/089-forgejo-mirror-sync/intake.md:1-40` | lido diretamente 2026-11-24 | policy: system (repo local) | confidence: high.
 - `system` | `.specify/assessments/089-forgejo-mirror-sync/decision.md:1-85` | lido diretamente 2026-11-24 | policy: system (repo local) | confidence: high.
 - `system` | `specs/089-forgejo-mirror-sync/spec.md:9-177` e `plan.md:13-58` | lidos diretamente 2026-11-24 | policy: system (repo local) | confidence: high.
 - `system` | `.github/workflows/mirror-to-forgejo.yml:1-87` (gatilhos, secrets, guarda FF, push de tags) | lido diretamente 2026-11-24 | policy: system (repo local) | confidence: high.
