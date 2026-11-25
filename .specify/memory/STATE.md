@@ -1326,3 +1326,10 @@ anterior foi alterada.
 - **Entrega**: 54 `concept.md` (30 novos, 2 reescritos, 22 ao lado de `shape.md` fino) + 15 `problem.md` de pré-requisito (`116` + 14 do `048`–`066`). Nenhum veredito/intake/research/spec/gate/CI/código alterado; `shape.md`/`define.md` antigos intactos.
 - **Evidência local ([EV])**: 54/54 com Slug exato, 3 opções e seções canônicas; gate PASS (`87` pisos, `GATE_RC=0`, 03:50:13Z→04:00:27Z); `git diff --check` RC 0.
 - **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
+
+## Sessão: flora - revisita canônica de decision.md (append-only)
+
+- **Identidade e baseline**: `session_id` = `orch-20261125T042500Z-assess-decide`; branch `assessment/assess-decide-revisit-20261125`; worktree `.specify/queue/worktrees/assess-decide-revisit-20261125`; base SHA remoto `f13d321c7a2b`.
+- **Entrega**: 62 `decision.md` no formato canônico (6 critérios, Verdict, racional, handoff), 62 × `go` preservando o histórico; `problem.md`/`concept.md` criados para `114` e `115`. Nenhum intake/research/spec/gate/CI/código alterado.
+- **Evidência local ([EV])**: 62/62 com scorecard válido e veredito histórico; gate PASS (`87` pisos, `GATE_RC=0`, 04:38:21Z→04:48:58Z); `git diff --check` RC 0.
+- **[NV]**: CI remoto, ACR e merge até observação ao vivo; PR #410 mesclado por `lfgranja` às 02:56:17Z, sem intervenção desta sessão. Nenhum merge de `main`, deploy ou force-push.
