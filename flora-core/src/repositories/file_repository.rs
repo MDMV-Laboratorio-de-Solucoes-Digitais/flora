@@ -8,6 +8,15 @@ use crate::error::{Error, Result};
 use crate::models::{File, Pagination};
 use crate::traits::FileRepository;
 
+/// Insert statement shared by plain and quota-checked file creation.
+const INSERT_FILE_SQL: &str = concat!(
+    "INSERT INTO files (id, organization_id, owner_id, workspace_id, file_type, name, size_bytes, ",
+    "storage_path, checksum, metadata) ",
+    "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ",
+    "RETURNING id, organization_id, owner_id, workspace_id, file_type, name, size_bytes, ",
+    "storage_path, checksum, metadata, is_deleted, created_at, updated_at",
+);
+
 /// `PostgreSQL` implementation of the `FileRepository` trait.
 #[derive(Debug)]
 pub struct PgFileRepository {
@@ -85,26 +94,109 @@ impl FileRepository for PgFileRepository {
     }
 
     async fn create(&self, file: File) -> Result<File> {
-        let created = sqlx::query_as::<_, File>(
-            "INSERT INTO files (id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
-                                 storage_path, checksum, metadata)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-             RETURNING id, organization_id, owner_id, workspace_id, file_type, name, size_bytes,
-                       storage_path, checksum, metadata, is_deleted, created_at, updated_at",
+        let created = sqlx::query_as::<_, File>(INSERT_FILE_SQL)
+            .bind(file.id)
+            .bind(file.organization_id)
+            .bind(file.owner_id)
+            .bind(file.workspace_id)
+            .bind(&file.file_type)
+            .bind(&file.name)
+            .bind(file.size_bytes)
+            .bind(&file.storage_path)
+            .bind(&file.checksum)
+            .bind(&file.metadata)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(Error::from_sqlx)?;
+        Ok(created)
+    }
+
+    async fn create_with_quota(
+        &self,
+        file: File,
+        org_limit_bytes: u64,
+        workspace_limit_bytes: u64,
+    ) -> Result<File> {
+        let mut tx = self.pool.begin().await.map_err(Error::from_sqlx)?;
+        let org_id = file.organization_id;
+        let incoming = u64::try_from(file.size_bytes).unwrap_or(0);
+
+        // Always take the org lock before the workspace lock so concurrent
+        // writers cannot wait on each other in opposite orders.
+        let _org_lock = sqlx::query("SELECT pg_advisory_xact_lock(hashtext($1))")
+            .bind(format!("flora:files:quota:org:{org_id}"))
+            .execute(&mut *tx)
+            .await
+            .map_err(Error::from_sqlx)?;
+
+        if let Some(workspace_id) = file.workspace_id {
+            let _workspace_lock = sqlx::query("SELECT pg_advisory_xact_lock(hashtext($1))")
+                .bind(format!(
+                    "flora:files:quota:workspace:{org_id}:{workspace_id}"
+                ))
+                .execute(&mut *tx)
+                .await
+                .map_err(Error::from_sqlx)?;
+        }
+
+        let used_org: i64 = sqlx::query_scalar(
+            "SELECT COALESCE(SUM(size_bytes), 0)::bigint
+             FROM files
+             WHERE organization_id = $1 AND is_deleted = false",
         )
-        .bind(file.id)
-        .bind(file.organization_id)
-        .bind(file.owner_id)
-        .bind(file.workspace_id)
-        .bind(&file.file_type)
-        .bind(&file.name)
-        .bind(file.size_bytes)
-        .bind(&file.storage_path)
-        .bind(&file.checksum)
-        .bind(&file.metadata)
-        .fetch_one(&self.pool)
+        .bind(org_id)
+        .fetch_one(&mut *tx)
         .await
         .map_err(Error::from_sqlx)?;
+        let used_org = u64::try_from(used_org).unwrap_or(0);
+        match used_org.checked_add(incoming) {
+            Some(total) if total <= org_limit_bytes => {}
+            _ => {
+                return Err(Error::FileTooLarge {
+                    size: incoming,
+                    max: org_limit_bytes,
+                });
+            }
+        }
+
+        if let Some(workspace_id) = file.workspace_id {
+            let used_workspace: i64 = sqlx::query_scalar(
+                "SELECT COALESCE(SUM(size_bytes), 0)::bigint
+                 FROM files
+                 WHERE organization_id = $1 AND workspace_id = $2 AND is_deleted = false",
+            )
+            .bind(org_id)
+            .bind(workspace_id)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(Error::from_sqlx)?;
+            let used_workspace = u64::try_from(used_workspace).unwrap_or(0);
+            match used_workspace.checked_add(incoming) {
+                Some(total) if total <= workspace_limit_bytes => {}
+                _ => {
+                    return Err(Error::FileTooLarge {
+                        size: incoming,
+                        max: workspace_limit_bytes,
+                    });
+                }
+            }
+        }
+
+        let created = sqlx::query_as::<_, File>(INSERT_FILE_SQL)
+            .bind(file.id)
+            .bind(file.organization_id)
+            .bind(file.owner_id)
+            .bind(file.workspace_id)
+            .bind(&file.file_type)
+            .bind(&file.name)
+            .bind(file.size_bytes)
+            .bind(&file.storage_path)
+            .bind(&file.checksum)
+            .bind(&file.metadata)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(Error::from_sqlx)?;
+        tx.commit().await.map_err(Error::from_sqlx)?;
         Ok(created)
     }
 

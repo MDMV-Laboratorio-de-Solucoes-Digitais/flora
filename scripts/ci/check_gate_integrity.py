@@ -45,7 +45,7 @@ FLOORS = {
     "websocket": 9,
     "search": 8,
     "notifications": 6,
-    "files": 7,
+    "files": 8,
     "tasks": 4,
     "workspace": 3,
     "rbac": 5,
