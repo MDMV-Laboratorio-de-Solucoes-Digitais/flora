@@ -171,6 +171,20 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 	await auditAccessibility(page, '/files (populated after reload)');
 	await capture(page, '06-files-persisted-after-reload.png');
 
+	// 5c. authorized download: the UI must fetch with Bearer, not a bare <a href>.
+	const downloadResponsePromise = page.waitForResponse(
+		(response) =>
+			response.url().includes('/api/v1/files/download/') && response.request().method() === 'GET'
+	);
+	const downloadPromise = page.waitForEvent('download');
+	await page.getByRole('button', { name: t['file.download'] }).click();
+	const downloadResponse = await downloadResponsePromise;
+	expect(downloadResponse.status()).toBe(200);
+	expect(downloadResponse.request().headers()['authorization']).toMatch(/^Bearer /);
+	const download = await downloadPromise;
+	expect(download.suggestedFilename()).toBe(uploadedFileName);
+	await capture(page, '07-files-authorized-download.png');
+
 	// 6. notifications — honest navigation (no /dms sidebar link or fake AI drawer) and org-scoped /notifications.
 	await expect(page.getByRole('link', { name: t['nav.directMessages'] })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: t['nav.openAiPanel'] })).toHaveCount(0);

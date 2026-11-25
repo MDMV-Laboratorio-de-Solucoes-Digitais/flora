@@ -171,3 +171,7 @@ guide-to-strict-rust.md
 
 # runtime orchestration queue (append-only ledger + per-agent worktrees)
 .specify/queue/
+
+# generated Playwright E2E artifacts (runtime only)
+apps/frontend/playwright-report/
+apps/frontend/test-results/
