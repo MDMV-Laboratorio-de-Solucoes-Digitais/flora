@@ -1,12 +1,26 @@
 # Decision — avaliação harness Sanderson aplicada ao Flora
 
-**Data**: 2026-11-24 · **Slug**: `avaliacao-harness-sanderson-flora` · **Fase**: 05 decide
+- **Slug**: avaliacao-harness-sanderson-flora
+- **Decided**: 2026-11-25
+- **Verdict**: go (assessment documental original 2026-11-24, preservado; nenhuma implementação autorizada)
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (anterior) | relatórios 01–18 em `/tmp/sanderson-research/` | validação `.specify/validations/avaliacao-harness-sanderson-flora/{evidence,test-roadmap}.md`
 
-**Veredito: go**
+## Scorecard
 
-Assessment documental, sem implementação. Base do ALVO: `github/dev@0ef79ec60`; oráculo: `python3 scripts/ci/check_gate_integrity.py`. F/D/I/V = 1–5 (viabilidade em Flora / benefício a consumidor nomeado / interesse estratégico / segurança-custo-ops), todos `[INF]` calibrados pela precedência (1) evidência local/governança do ALVO, (2) fonte primária oficial, (3) reportagem/opinião. `[EV]` = comando+saída dos relatórios 01–18 (nada reexecutado); `[NV]` = não verificado ao vivo. Fundamentação, fontes com título/URL/data, cobertura idiomática, correções factuais e injeções em `research.md`.
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | 34 propostas didáticas de um vídeo foram tratadas como bloco único; sem triagem por ID, experimentos perigosos (shell irrestrito, auto-modificação) tendem a virar requisito de produto (`define.md:Problema`; `intake.md:Inventário`). |
+| Evidence strength | adequate | 18 relatórios, 845 linhas, fontes primárias com título/URL/data e pares independentes; scores F/D/I/V são `[INF]`, vídeo/AHP só em en e [NV] parcial — comandos `[EV]` não reexecutados neste decide (`research.md:confidence,Cobertura idiomática`). |
+| Value vs. inaction | strong | Registro autônomo de 34 vereditos com alternativas mais baratas e seguras, sem nenhum candidato 80/20 válido e com lacunas reais do backlog explicitamente não fechadas (`decisão anterior:69-71`). |
+| Feasibility / appetite | adequate | Assessment documental e somente leitura: nenhuma implementação de runtime, gate, rota ou dependência; todo `ADAPT`/`ADOPT` exige ciclo SDD próprio (`shape.md:Opções,Trade-off central`). |
+| Strategic fit | strong | Prioriza previsibilidade, tenancy e VPS barata, preservando o oráculo `check_gate_integrity.py`, ADR-0003, constituição v1.4.0 e o precedente de 188 decisões sem implementação (`research.md:Market & Context`; `decisão anterior:73-80`). |
+| Risk posture | strong | Nenhuma autorização de implementação, merge, deploy, credencial, skill instalada ou toque em trabalho alheio; injeções em páginas/PR registradas e ignoradas (`decisão anterior:82-90`; `research.md:Injeções detectadas`). |
 
-## Matriz final (P01–P34)
+## Verdict & Rationale
+
+Veredito histórico **`go` preservado**; nenhum critério é `weak`/`unknown`. Data original 2026-11-24, assessment documental sem implementação. Base do ALVO: `github/dev@0ef79ec60`; oráculo: `python3 scripts/ci/check_gate_integrity.py`. F/D/I/V = 1–5 (viabilidade em Flora / benefício a consumidor nomeado / interesse estratégico / segurança-custo-ops), todos `[INF]` calibrados pela precedência (1) evidência local/governança do ALVO, (2) fonte primária oficial, (3) reportagem/opinião. `[EV]` = comando+saída dos relatórios 01–18 (nada reexecutado); `[NV]` = não verificado ao vivo. Fundamentação, fontes com título/URL/data, cobertura idiomática, correções factuais e injeções permanecem em `research.md`.
+
+**Matriz final (P01–P34) — lista completa preservada:**
 
 | ID | Proposta | Veredito | F | D | I | V | Justificativa (Flora) | Alternativa preferida | Risco / mitigação |
 |---|---|---|---|---|---|---|---|---|---|
@@ -45,46 +59,27 @@ Assessment documental, sem implementação. Base do ALVO: `github/dev@0ef79ec60`
 | P33 | ferramentas próprias | ADAPT | 4 | 3 | 4 | 3 | Diferenciador real é o domínio (`HitlReceipt`/`metrics_payload`, LGPD/HITL) que Copilot/Cursor não conhecem; adaptar o ACI no harness existente. | Copilot/Claude Code + MCP + gates compartilhados | Ferramenta órfã/churn / dry-run + custo por resolução |
 | P34 | OS alucinado como arquitetura | REJECT | 1 | 1 | 2 | 1 | `OBJETIVO.md`/`AGENTS.md` são non-goals; demo provocativa, nenhum fornecedor oferece esse "OS". | Manter A2UI como UI generativa delimitada | UI não determinística / REJECT como arquitetura |
 
-## Contagem
+**Contagem preservada**: ADOPT 5 (P06, P26, P27, P28, P31) · ADAPT 10 (P02, P04, P07, P08, P11, P12, P14, P23, P29, P33) · DEFER 9 (P01, P05, P13, P16, P17, P19, P25, P30, P32) · AVOID 6 (P09, P15, P18, P20, P22, P24) · REJECT 4 (P03, P10, P21, P34). Total 34. Vereditos utilizados: ADAPT, ADOPT, DEFER, AVOID, REJECT.
 
-ADOPT 5 (P06, P26, P27, P28, P31) · ADAPT 10 (P02, P04, P07, P08, P11, P12, P14, P23, P29, P33) · DEFER 9 (P01, P05, P13, P16, P17, P19, P25, P30, P32) · AVOID 6 (P09, P15, P18, P20, P22, P24) · REJECT 4 (P03, P10, P21, P34). Total 34. Vereditos utilizados: ADAPT, ADOPT, DEFER, AVOID, REJECT.
+**Divergências resolvidas** (precedência: (1) evidência local/governança do ALVO, (2) fonte primária oficial, (3) reportagem/opinião): P01: 14 ADOPT vs 02/11 DEFER → **DEFER** (sem loop em Flora e omp já é o harness); P04/P05: 14 ADOPT vs 02 ADAPT/DEFER e 11 DEFER → **ADAPT** (handoff)/**DEFER** (sem consumidor); P08: 14/11 ADOPT vs 04 ADAPT → **ADAPT** (já coberto por omp/`rmcp`, sem nova dependência); P10: 03 REJECT vs 14 DEFER vs 11 AVOID → **REJECT** irrestrito, ADOPT só status-only (constituição v1.4.0); P11: 03/14 ADOPT vs 15/11 ADAPT → **ADAPT** (eval é observação, não novo porteiro); P13: 06/11 DEFER vs 16 ADAPT(diagramas) → **DEFER** (worktrees alheios, diagramas via Archify); P15: 14 ADAPT vs 06/11 AVOID → **AVOID** (auto-modificação proibida sem PR+aprovação); P22: 11 REJECT vs 07 AVOID(cru)/ADOPT(JSON) → **AVOID** do HTML cru, JSON validado é a via aceita (OWASP); P23: 07 ADOPT vs 11 DEFER → **ADAPT** (transporte tipado e runes existem); P26/P29: 07/14 ADOPT vs 11 ADAPT/DEFER → **ADOPT** (painel sobre dado real)/**ADAPT** (`never_gates`); P32: 11 ADOPT(cadência) vs 15 DEFER → **DEFER** como meta, medir como observação (DORA/METR + `health.rs`); 80/20: 11 propõe BUG-111 → **inválido**, já corrigido em `6288a8569`, ancestor de `github/dev`.
 
-## Divergências resolvidas
+**Candidato 80/20 — preservado**: **Não há candidato válido que feche um gap real do backlog Flora.** (a) O único com gap nomeado veio de 11 (BUG-111-01/02/03), mas foi corrigido em `6288a8569`, ancestor de `github/dev` — descartado por autoridade local; (b) 04 e 05 concluem explicitamente "nenhum"; (c) os demais estão já cobertos (P02/P19/P27/P28/P32), são documentais/sem consumidor (P01/P05/P14/P17/P19/P30) ou exigem dependência/churn/auto-modificação proibida; (d) as lacunas reais restantes — DMs placeholder (`STATE.md:924,933`), zero-state de staging (`PROGRESSO.md:462`), remoção de `FLORA_BOOTSTRAP__*` até 29/11, E2E autenticado [NV], canário C6 RLS e mutação workspace-wide/CI (`specs/110/analyze.md:19`) — não são fechadas por nenhuma ideia P01–P34. **Quase-candidato (não contabilizado):** P11 como assess evidence-only em `specs/110-mutation-pilot/` (consumidor Maintainer; prova `python3 scripts/ci/check_gate_integrity.py` → PASS [EV] + dry-run do `eval_stealth_etapa1.py` **[NV]**) — falta item de backlog formal e prova ao vivo, e eval não pode virar 5º check.
 
-Precedência aplicada: (1) evidência local/governança do ALVO, (2) fonte primária oficial, (3) reportagem/opinião.
+**O que não muda**: nenhum arquivo de `flora-core`/`flora-api`/`flora-tests`/frontend/migrations/gate/workflow/ADR/spec alterado (precedente: 188 decisões, zero implementação); `python3 scripts/ci/check_gate_integrity.py` continua o oráculo único (`frontend-build`, `rust-build`, `db-tests`, `dependency-review`), eval é observação, nunca porteiro; ADR-0003 (merge por máquina sob checks verdes) e constituição v1.4.0 proíbem auto-modificação de gates/harness/políticas sem PR+aprovação; PR #410 (promoção `dev`→`main` @`0ef79ec`) não é mesclado, `origin` é espelho e `github` é canônico; worktrees e arquivos sujos alheios intactos, nenhuma branch própria criada, nenhuma skill instalada, nenhuma credencial ou URL inventada; PostgreSQL 18 com migrations append-only, pt-BR canônico + runes e lints Rust estritos permanecem; MCP read-only/`rmcp` pinned, memória opaca e Briefings de Compreensão seguem vigentes.
 
-- P01: 14 ADOPT vs 02/11 DEFER → **DEFER**; sem loop em Flora e omp já é o harness (local).
-- P04/P05: 14 ADOPT vs 02 ADAPT/DEFER e 11 DEFER → **ADAPT** (handoff) / **DEFER** (sem consumidor).
-- P08: 14/11 ADOPT vs 04 ADAPT → **ADAPT**; já coberto por omp/`rmcp`, sem nova dependência (local).
-- P10: 03 REJECT vs 14 DEFER vs 11 AVOID → **REJECT** irrestrito, ADOPT só status-only (constituição v1.4.0).
-- P11: 03/14 ADOPT vs 15/11 ADAPT → **ADAPT**; eval é observação, não novo porteiro (local).
-- P13: 06/11 DEFER vs 16 ADAPT(diagramas) → **DEFER**; worktrees alheios, diagramas via Archify.
-- P15: 14 ADAPT vs 06/11 AVOID → **AVOID**; auto-modificação proibida sem PR+aprovação (local).
-- P22: 11 REJECT vs 07 AVOID(cru)/ADOPT(JSON) → **AVOID** do HTML cru; JSON validado é a via aceita (OWASP).
-- P23: 07 ADOPT vs 11 DEFER → **ADAPT**; transporte tipado e runes já existem (local).
-- P26/P29: 07/14 ADOPT vs 11 ADAPT/DEFER → **ADOPT** (painel sobre dado real) / **ADAPT** (`never_gates`).
-- P32: 11 ADOPT(cadência) vs 15 DEFER → **DEFER** como meta; medir como observação (DORA/METR + `health.rs`).
-- 80/20: 11 propõe BUG-111 → **inválido**: já corrigido em `6288a8569`, ancestor de `github/dev` (local).
+**Autorizações não concedidas**: nenhuma autorização para implementar runtime de agente, loop próprio, tools de arquivo/shell novas, endpoint AHP, renderizador de HTML, catálogo de apps ou persistência alternativa; nenhuma para alterar `scripts/ci/check_gate_integrity.py`, required checks, proteção de branch, ADR-0003, constituição v1.4.0, migrations, workflows ou paths protegidos, e nenhum eval vira 5º check; nenhuma para mesclar PR #410 ou qualquer PR, promover `dev`→`main`, deploy, force-push, tag/release, criar branch própria ou tocar trabalho alheio; nenhuma para instalar skills/dependências/serviços pagos obrigatórios ou incluir credencial/segredo/URL inventada; nenhuma para expor FS/shell ao browser, aceitar HTML cru/`innerHTML` com dado não confiável ou registrar veredito automático de revisão como gate. Escopo de escrita original: apenas os cinco artefatos do slug, roteiro/evidência de validação, `decision brief` em `docs/research/`, espelho em `docs/governance/` e três notas append-only (`PROGRESSO`, `STATE`, `index`); nenhum path de código/produto/gate/workflow alterado; commit/push segue ADR-0003 somente após gates locais e ACR. Vereditos `ADAPT`/`ADOPT` são direção de projeto, não ordem de implementação: toda mudança exige ciclo SDD próprio, PR versionado, gates verdes e revisão humana quando aplicável.
 
-## Candidato 80/20
+## If needs-clarification
 
-**Não há candidato válido que feche um gap real do backlog Flora.** (a) O único com gap nomeado veio de 11 (BUG-111-01/02/03), mas foi corrigido em `6288a8569`, ancestor de `github/dev` — descartado por autoridade local. (b) 04 e 05 concluem explicitamente "nenhum". (c) Os demais estão já cobertos (P02/P19/P27/P28/P32), são documentais/sem consumidor (P01/P05/P14/P17/P19/P30) ou exigem dependência/churn/auto-modificação proibida. (d) As lacunas reais restantes — DMs placeholder (`STATE.md:924,933`), zero-state de staging (`PROGRESSO.md:462`), remoção de `FLORA_BOOTSTRAP__*` até 29/11, E2E autenticado [NV], canário C6 RLS e mutação workspace-wide/CI (`specs/110/analyze.md:19`) — não são fechadas por nenhuma ideia P01–P34. **Quase-candidato (não contabilizado):** P11 como assess evidence-only em `specs/110-mutation-pilot/` (consumidor Maintainer; prova `python3 scripts/ci/check_gate_integrity.py` → PASS [EV] + dry-run do `eval_stealth_etapa1.py` **[NV]**) — falta item de backlog formal e prova ao vivo, e eval não pode virar 5º check.
+- **Blocking questions**: N/A (veredito `go`; os `[NEEDS CLARIFICATION]` do intake foram resolvidos pela matriz P01–P34 e pelas fontes primárias, restando apenas itens **[NV]** não bloqueantes).
+- **Revisit stage**: N/A (verificar apenas os itens **[NV]** — E2E autenticado, legendas pt/es do vídeo, AHP fora do en, produção e proteção de branch via API — quando houver autorização e acesso; não reabre o veredito).
 
-## O que não muda
+## If go — Handoff to `/speckit.specify`
 
-- Nenhum arquivo de `flora-core`/`flora-api`/`flora-tests`/frontend/migrations/gate/workflow/ADR/spec alterado; assessment é documental (precedente: 188 decisões, zero implementação).
-- `python3 scripts/ci/check_gate_integrity.py` continua o oráculo único (`frontend-build`, `rust-build`, `db-tests`, `dependency-review`); eval é observação, nunca porteiro.
-- ADR-0003 (merge por máquina sob checks verdes) e constituição v1.4.0: proibida auto-modificação de gates/harness/políticas sem PR+aprovação.
-- PR #410 (promoção `dev`→`main` @`0ef79ec`) não é mesclado; `origin` é espelho, `github` é canônico.
-- Worktrees e arquivos sujos alheios intactos; nenhuma branch própria criada; nenhuma skill instalada; nenhuma credencial ou URL inventada.
-- PostgreSQL 18 com migrations append-only, pt-BR canônico + runes e lints Rust estritos permanecem; MCP read-only/`rmcp` pinned, memória opaca e Briefings de Compreensão (precedentes) seguem vigentes.
-
-## Autorizações não concedidas
-
-- Nenhuma autorização para implementar runtime de agente, loop próprio, tools de arquivo/shell novas, endpoint AHP, renderizador de HTML, catálogo de apps ou persistência alternativa no Flora.
-- Nenhuma autorização para alterar `scripts/ci/check_gate_integrity.py`, required checks, proteção de branch, ADR-0003, constituição v1.4.0, migrations, workflows ou paths protegidos; nenhum eval vira 5º check.
-- Nenhuma autorização para mesclar PR #410 ou qualquer PR, promover `dev`→`main`, fazer deploy, force-push, tag/release, criar branch própria ou tocar worktrees/branches/arquivos sujos alheios.
-- Nenhuma autorização para instalar skills, Dependências ou serviços pagos obrigatórios; nenhuma credencial, segredo ou URL inventada foi incluída.
-- Nenhuma autorização para expor FS/shell ao browser, aceitar HTML cru/`innerHTML` com dado não confiável ou registrar veredito automático de revisão como gate.
-- Escopo de escrita deste assessment: apenas os cinco artefatos do diretório do slug, o roteiro/evidência de validação, o `decision brief` em `docs/research/`, o espelho em `docs/governance/` e as três notas append-only (`PROGRESSO`, `STATE`, `index`). Nenhum path de código/produto/gate/workflow é alterado. Commit/push da branch de assessment segue ADR-0003 somente após gates locais e ACR; não autoriza merge de `main`, deploy ou tocar trabalho alheio.
-- Os vereditos `ADAPT`/`ADOPT` são direção de projeto, não ordem de implementação: toda mudança exige ciclo SDD próprio, PR versionado, gates verdes e revisão humana quando aplicável.
+- **Problem**: 34 propostas heterogêneas de uma palestra sem autoridade sobre o Flora precisavam de decisão por ID, com alternativas e sem transformar demo didática em requisito de produto; o registro cobre a matriz completa e o candidato 80/20 (`define.md:Pergunta que este assessment responde`; `decisão anterior:69-71`).
+- **Chosen approach**: Não reimplementar o harness no Flora; adotar capacidades como convenções de engenharia, comprar ferramentas prontas e manter AHP/UI generativa fora do produto até demanda comprovada. Contagens: ADOPT 5 / ADAPT 10 / DEFER 9 / AVOID 6 / REJECT 4 (34 IDs na matriz acima).
+- **In scope / out of scope**:
+  - **In**: matriz P01–P34 com F/D/I/V `[INF]`, alternativas, riscos e mitigação; divergências resolvidas por precedência; candidato 80/20 negativo; nada é autorizado para implementação sem ciclo SDD próprio.
+  - **Out/NV**: runtime de agente, shell/FS expostos, endpoint AHP, HTML cru/`innerHTML`, catálogo infinito, persistência agnóstica no produto, gate/required checks/ADR/constituição/migrations/workflows/paths protegidos, merge de PR, deploy, credenciais, skills, trabalho alheio; itens **[NV]** listados acima.
+- **Success metrics**: 34 vereditos com justificativa e alternativa, contagens conferidas (5/10/9/6/4), nenhum gap real do backlog fechado por P01–P34 e nenhuma alteração de código/paths protegidos; eval permanece observação, nunca 5º check.
+- **Carried-forward open questions**: `[NV]` E2E autenticado, adoção humana do briefing, "milhares de agentes", UI do VS Code, builds publicados do Copilot, produção Flora e proteção de branch via API (401); `[NV]` legendas pt-BR/es primárias do vídeo e AHP fora do en; `[NV]` custo por resolução e IC local (`eval_stealth_etapa1.py` é dry-run, exige `--execute-live` + autorização); nenhuma bloqueia o `go` documental.

@@ -1,108 +1,36 @@
-# Decision: 099 — interface 100% pt-BR
+# Decision: 099 — Interface 100% pt-BR
 
 - **Slug**: 099-ptbr-ui
-- **Decidido**: 2026-11-21
-- **Verdict**: **go**
-- **Branch**: `feature/099-ptbr-ui` @ `7183a33fc`
-- **Âncora**: `.specify/feature.json` → `specs/099-ptbr-ui`
-- **Artefatos revisados**: intake | research | define | shape | spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (original 2026-11-21) | specs/099-ptbr-ui/{spec,plan,tasks,analyze,converge}.md | handoff I18nScout
 
-## Contexto / problema
+## Scorecard
 
-O usuário exige 100% pt-BR na interface; outras línguas apenas em termos
-técnicos (OIDC, OAuth, API, JWT, REST, AI, SSO, slug). O levantamento do
-I18nScout encontrou ~140 literais em inglês em ~15 arquivos de `apps/frontend`
-e nenhum mecanismo de tradução. `apps/frontend/src/app.html:2` **já** declara
-`lang="pt-BR"`: o defeito não é o atributo, e sim o texto inline.
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | Requisito de 100% pt-BR não atendido: ~140 literais em inglês em ~15 arquivos de `apps/frontend`, sem i18n; `app.html:2` **já** era `lang="pt-BR"`, então o defeito é o texto inline, não o atributo (`intake.md:7-9`; `research.md:1-2`). |
+| Evidence strength | strong | Inventário I18nScout com `arquivo:linha` em shell, páginas, componentes, módulos `.ts` e erros do backend, mais leitura direta do baseline; gates/lint/type-check/testes são evidência consolidada do handoff, não reexecutados; textos dinâmicos externos **[NV]** (`research.md:3-12,25-30`). |
+| Value vs. inaction | strong | Sem dicionário central não há auditoria única nem garantia de cobertura: inglês permanece em menu, formulários, estados e títulos de coluna visíveis ao usuário (`define.md:5`; `research.md:3-7`). |
+| Feasibility / appetite | adequate | Dicionário tipado `t` (`as const`) + `TranslationKey`, `format()` e `backendErrorMessage()`, sem biblioteca de i18n nem seletor de idioma; exige tocar ~15 arquivos e preservar selectors do ciclo 096 (`shape.md:3-25`; `define.md:FR-001..FR-008`). |
+| Strategic fit | strong | Mudança restrita ao frontend e aos artefatos do ciclo, sem contrato de API, rotas, autenticação, gates, workflows, ADRs ou constituição; mantém os termos técnicos consagrados como exceção explícita (`define.md:Fora de escopo`; `research.md:Termos técnicos permitidos`). |
+| Risk posture | adequate | Selectors pt-BR preservados e testes existentes como rede de segurança; varredura de zero literais e `as const`/`TranslationKey` reduzem tradução parcial e chaves inválidas; IdP/deploy e textos dinâmicos externos **[NV]** (`shape.md:27-33`; `research.md:25-30`). |
 
-A cadeia verificável no código é:
+## Verdict & Rationale
 
-1. `routes/(app)/+layout.svelte:129,137,145,155,158,189,195,206,255,270` —
-   `Channels`, `DMs`, `Tasks`, `My Account`, `Settings`, `Log out`,
-   `AI Insight Panel` e o texto do painel de IA em inglês.
-2. `routes/(app)/tasks/+page.svelte:136,170,191,196,198` —
-   `Tasks`, `No workspaces available`, `Create task`, `Loading...`;
-   `routes/(app)/channels/+page.svelte:114,117,129,151,170,172,196` —
-   `Channels`, `New channel`, `No channels yet.`, `No channel selected`.
-3. `components/chat/ChatLayout.svelte:104,195,208,225`,
-   `components/search/SearchBox.svelte:55-56,70-79`,
-   `components/files/FileUpload.svelte:20,24,50`,
-   `components/workspace/WorkspaceCreate.svelte:31,36`,
-   `components/organization/OrganizationManager.svelte:33,42,46` —
-   textos de interface, placeholders, `aria-label` e fallbacks de erro em inglês.
-4. `components/tasks/kanban.svelte.ts:13-16` (`To Do`, `In Progress`, `Done`) e
-   `lib/utils/search.ts:1-6` (`Message`, `Task`, `File`) — texto visível gerado
-   em módulos `.ts`.
-5. `routes/(auth)/callback/+page.svelte:69` — `Authenticating...`; a tela de
-   login `(auth)/+page.svelte` e seu spec já estavam em pt-BR desde o ciclo 096.
-6. `grep` por `i18n`/`locale` em `apps/frontend/src` — nenhum dicionário ou
-   helper de tradução no baseline; ~140 literais, sem ponto único de auditoria.
+Veredito histórico **`go`** de 2026-11-21 preservado: branch `feature/099-ptbr-ui` @ `7183a33fc`, âncora `.specify/feature.json` → `specs/099-ptbr-ui`, levantamento I18nScout. A decisão original registrou oito compromissos FR-001..FR-008, três critérios SC-001..SC-003 e dez tarefas T001..T010 (todas concluídas), com analyze `critical=0`, `requirements_covered=8/8`, `fr=8/8`, `sc=3/3`, `tasks=10/10`, `errors=[]` (`specs/099-ptbr-ui/analyze.md`). A causa era ausência de camada de tradução, não atributo `lang`: `apps/frontend/src/app.html:2` já declarava `lang="pt-BR"`; os literais apareciam em `(app)/+layout.svelte:129,137,145,155,158,189,195,206,255,270` (Channels, DMs, Tasks, My Account, Settings, Log out, AI Insight Panel), `(app)/tasks/+page.svelte:136,170,191,196,198`, `(app)/channels/+page.svelte:114,117,129,151,170,172,196`, componentes chat/search/files/workspace/organization, `components/tasks/kanban.svelte.ts:13-16` (`To Do`, `In Progress`, `Done`), `lib/utils/search.ts:1-6` (`Message`, `Task`, `File`) e `(auth)/callback/+page.svelte:69` (`Authenticating...`); a tela de login `(auth)/+page.svelte` e seu spec já estavam em pt-BR desde 096 (`research.md:3-9`; `decision.md` original:`Contexto`). A forma escolhida foi um dicionário único e tipado em `lib/i18n/pt-BR.ts` (`t` com chaves achatadas e `TranslationKey`), reexportado por `lib/i18n/index.ts` com `format()` e `backendErrorMessage()`, mapeando códigos `invalid_credentials`, `rate_limited`, `oidc_error`, `conflict`, `validation` (com caso especial `admin_password`) e statuses 401/409/422/429 sem alterar o contrato da API; os termos técnicos autorizados (OIDC, OAuth, API, JWT, REST, AI, SSO, slug, `workspace`, nomes próprios, rotas, identificadores e status canônicos `Todo`/`InProgress`/`Done`/`Archived`) foram mantidos como exceções (`shape.md:3-25`; `research.md:Termos técnicos permitidos`). Os selectors do ciclo 096 (`voce@exemplo.com`, `Senha`, `Mínimo de 15 caracteres`, `Entrar`, `Fazer primeira configuração`, `Criar workspace`, regexes de erro) foram preservados para não quebrar `login-error.svelte.spec.ts:48+` (`research.md:9`; `define.md:FR-008`). IdP externo, download de fontes, deploy remoto, produção e textos dinâmicos fora dos códigos mapeados permanecem **[NV]**; gates/lint/type-check/testes registrados como PASS no handoff consolidado, sem reexecução neste artefato (`research.md:[NV]`).
 
-## Decisão
+## If needs-clarification
 
-Registrar o ciclo 099 como **tradução integral da interface para pt-BR com
-dicionário centralizado**, com oito compromissos rastreáveis (FR-001..FR-008),
-três critérios (SC-001..SC-003) e dez tarefas (T001..T010, todas concluídas):
+- **Blocking questions**: N/A (veredito `go`; as incógnitas abaixo ficam em aberto para o handoff).
+- **Revisit stage**: N/A.
 
-1. **Dicionário (FR-001 / T001)**: `lib/i18n/pt-BR.ts` com `t` (`as const`,
-   chaves achatadas) e `TranslationKey`; `lib/i18n/index.ts` reexporta e expõe
-   `format()`.
-2. **Idioma do documento (FR-002 / T002)**: manter `lang="pt-BR"` em
-   `app.html:2`.
-3. **Autenticação (FR-003 / T003)**: login/callback em pt-BR via dicionário,
-   preservando os textos e selectors do ciclo 096.
-4. **Navegação (FR-004 / T004)**: shell, menu, conta e painel de IA em pt-BR.
-5. **Páginas (FR-005 / T005)**: `tasks`, `channels`, `dms`, `select-org`,
-   `settings` e `demo/**`.
-6. **Componentes (FR-006 / T006–T007)**: chat/thread, arquivos, organização,
-   busca, tarefas, workspace, `kanban.svelte.ts` e `utils/search.ts`.
-7. **Erros do backend (FR-007 / T008)**: `backendErrorMessage` mapeia códigos
-   (`invalid_credentials`, `rate_limited`, `oidc_error`, `conflict`,
-   `validation`, com o caso `admin_password`) e statuses 401/409/422/429 —
-   contrato da API inalterado.
-8. **Testes (FR-008 / T009) e fecho (T010)**: selectors pt-BR preservados,
-   varredura de zero literais e gates/lint/testes verdes.
+## If go — Handoff to `/speckit.specify`
 
-## Evidência de entrada
-
-- Baseline `7183a33fc`, branch `feature/099-ptbr-ui`, `.specify/feature.json` →
-  `specs/099-ptbr-ui`.
-- Handoff I18nScout: ~140 strings em ~15 arquivos, sem i18n; `app.html` já
-  `lang="pt-BR"`; gate do alvo PASS.
-- `apps/frontend/src/routes/(auth)/login-error.svelte.spec.ts:48+` — selectors
-  pt-BR que devem permanecer estáveis.
-- `apps/frontend/package.json` — `check`, `lint`, `test` e `test:e2e` como
-  verificações locais de SC-003.
-
-## Racional
-
-**go.** O defeito é independente de infraestrutura: todo o texto visível está no
-repositório e pode ser substituído por chaves de um dicionário tipado, com
-verificação por inspeção e pelos testes existentes. A mudança não altera
-contrato de API, rotas, autenticação, gates, workflows, ADRs ou constituição; o
-diff é reversível e restrito ao frontend e aos artefatos do ciclo. Manter os
-textos do ciclo 096 protege os selectors e reduz o risco de regressão.
-
-## [NV]
-
-- IdP externo (Zitadel), rede, deploy remoto e comportamento em produção:
-  **[NV]**. Nenhuma chamada externa foi feita.
-- Gates, lint, type-check e testes: registrados como PASS no handoff
-  consolidado; este artefato não reexecutou nenhuma verificação.
-- Textos dinâmicos vindos de serviços externos fora dos códigos mapeados:
-  **[NV]**.
-
-## Fora de âmbito
-
-Mudanças em `.specify/validations/`, `.specify/releases/`,
-`.specify/memory/STATE.md`, `docs/PROGRESSO*`, `specs/*/analyze.md`,
-`specs/*/converge.md`; alteração de required checks, workflows, ADRs ou
-constituição; tradução de logs, comentários, nomes de código, chaves de erro da
-API ou valores canônicos de status; qualquer idioma além de pt-BR na interface.
-
-## Handoff
-
-`/speckit.specify` — especificar o dicionário pt-BR e a substituição integral
-dos literais como requisitos verificáveis (FR-001..FR-008 / SC-001..SC-003) e
-dez tarefas T001..T010, preservando `lang="pt-BR"`, os selectors pt-BR, os
-termos técnicos autorizados e o contrato de erros do backend.
+- **Problem**: Interface misturava português e inglês em ~140 literais em ~15 arquivos, sem dicionário que permitisse auditar a cobertura em pt-BR (`intake.md:7-9`; `define.md:5`).
+- **Chosen approach**: Dicionário pt-BR único, tipado e achatado (`lib/i18n/pt-BR.ts`) com `t`, `TranslationKey`, `format()` e `backendErrorMessage()`; cada literal visível substituído por chave, sem biblioteca de i18n, detecção de navegador ou seletor de idioma (`shape.md:3-25`).
+- **In scope / out of scope**:
+  - **In (FR-001..FR-008 / SC-001..SC-003 / T001..T010)**: `lib/i18n/pt-BR.ts` e `lib/i18n/index.ts`; preservar `lang="pt-BR"` em `app.html:2`; auth/callback, layout/navegação, páginas `(app)/**` e `demo/**`, componentes compartilhados e módulos derivados `kanban.svelte.ts`/`utils/search.ts`; mapeamento de erros do backend por código/status; testes e selectors pt-BR preservados; varredura de zero literais e gates/lint/testes (`define.md:FR-001..FR-008`; `shape.md:5-24`).
+  - **Out/deferred/NV**: backend, contrato da API, códigos de erro, rotas e fluxo OIDC; tradução de logs (`logger.error`), comentários, nomes de código, chaves de erro da API ou valores canônicos de status; idioma diferente de pt-BR; `.specify/validations/`, `.specify/releases/`, `.specify/memory/STATE.md`, `docs/PROGRESSO*`, `specs/*/analyze.md` e `converge.md`; gates, workflows, ADRs e constituição (`define.md:Fora de escopo`; `intake.md:Fronteira`).
+- **Success metrics**: varredura da UI ativa (`routes/**`, `lib/components/**`, `kanban.svelte.ts`, `utils/search.ts`) com zero literais em inglês visíveis (baseline: ~140 literais em ~15 arquivos); apenas os termos técnicos autorizados permanecem (baseline: lista explícita em `research.md`); gates, lint (`prettier`/`eslint`), type-check (`svelte-check`) e testes (`vitest`/`playwright`) verdes com diff restrito (baseline: gate do alvo registrado como PASS no handoff, não reexecutado); analyze `critical=0`, `8/8`, `3/3`, `10/10` (`define.md:SC-001..SC-003`; `analyze.md:9-18,44`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: existem textos inseridos dinamicamente por serviços externos ou pelo backend em produção fora dos códigos mapeados em FR-007 (**[NV]**)?]; [NEEDS CLARIFICATION: IdP externo, deploy remoto e comportamento em produção foram observados após a mudança (**[NV]**)?]; [NEEDS CLARIFICATION: a varredura de zero literais e o lint/type-check/testes foram reexecutados no ambiente final além do registro de PASS do handoff (**[NV]**)?] (`research.md:[NV]`; `shape.md:Entrega`).

@@ -1,122 +1,36 @@
-# Decision: 098 — recuperação da senha do administrador bootstrap via env
+# Decision: 098 — Recuperação da senha do administrador bootstrap via env
 
 - **Slug**: 098-password-recovery
-- **Decidido**: 2026-11-21
-- **Verdict**: **go**
-- **Branch**: `feature/098-password-recovery` @ `76f936e245f70a7bd2735887e7ff8bc5e0c5c06f`
-- **Âncora**: `.specify/feature.json` → `specs/098-password-recovery`
-- **Evidência**: investigação local determinística + relato de produção (096)
-- **Artefatos revisados**: intake | research | define | shape | spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (original 2026-11-21) | specs/098-password-recovery/{spec,plan,tasks,analyze,converge}.md | relato de produção do ciclo 096
 
-## Contexto / problema — causa raiz determinística
+## Scorecard
 
-Relato de produção: `POST /api/v1/auth/password/login` com
-`luis.granja@mdmv.com.br` retorna **401**, embora
-`FLORA_BOOTSTRAP__ADMIN_EMAIL` e `FLORA_BOOTSTRAP__ADMIN_PASSWORD` estejam
-presentes e corretos no ambiente, e os logs não mostrassem sinal da recuperação
-(filtro suprimia `flora_core`). A cadeia explica os três fatos sem falha
-intermitente:
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | Login em produção retornava 401 com `FLORA_BOOTSTRAP__ADMIN_EMAIL`/`ADMIN_PASSWORD` presentes e corretos: a conta já nascera com hash pelo `POST /bootstrap` de 096 (`bootstrap.rs:294-295`) e a recuperação antiga recusava sobrescrever (`password_hash IS NULL` em `user_repository.rs:93-110`) (`intake.md:5-17`; `define.md:5`). |
+| Evidence strength | adequate | Cadeia de quatro pontos verificáveis por leitura direta com `arquivo:linha`, mais relato de produção (401, env correta, sem sinal nos logs por filtro que suprimia `flora_core`); estado real do DB, valores das variáveis e login ao vivo **[NV]** (`research.md:19-36`; `intake.md:Evidência`). |
+| Value vs. inaction | strong | Sem a sobrescrita, a credencial configurada nunca é aplicada à conta que precisa de recuperação e o administrador continua bloqueado; o 401 é o resultado esperado do código, não falha intermitente (`define.md:5`; `analyze.md:Diagnóstico`). |
+| Feasibility / appetite | adequate | Reaproveita as duas variáveis já configuradas — nenhuma chave nova — com `UPDATE users SET password_hash = $2, password_updated_at = $3 WHERE id = $1`, log de `applied` sem segredo, contratos ajustados e documentação de remoção; custo operacional: reaplicação por startup enquanto as variáveis permanecerem (`shape.md:3-24,30-31`). |
+| Strategic fit | strong | Extensão estreita do fallback de 096 para conta com hash pré-existente, sem tocar em OIDC, `POST /bootstrap`, JWT, rate limit ou gates, preservando a fronteira do ciclo (`define.md:FR-005,Fora de escopo`; `shape.md:35-37`). |
+| Risk posture | adequate | Redaction/`skip_serializing`, validação 15..1024, hash via Argon2id antes da escrita e 401 genérico inalterado mitigam vazamento; reaplicação da senha temporária e logs reais em produção permanecem **[NV]** e são mitigados pela documentação de remoção das variáveis (`shape.md:30-37`; `define.md:SC-002`). |
 
-1. `flora-api/src/routes/bootstrap.rs:294-295` — o `POST /bootstrap` de 096 já
-   exige `admin_password` e grava o hash na transação atômica. A conta de
-   produção, criada por esse caminho, **já possui `password_hash` não nulo**.
-2. A recuperação anterior parava em `password_hash.is_some()` e no SQL
-   `WHERE password_hash IS NULL` (`flora-core/src/repositories/user_repository.rs:93-110`)
-   — por design, ignorava exatamente a conta que precisava de recuperação.
-3. `flora-api/src/state/app_state.rs` descartava o retorno (`let _applied`) e o
-   skip não logava: nenhum rastro da recuperação nos logs, compatível com o
-   relato.
-4. `flora-api/src/routes/auth.rs:451-460` — `verify_or_dummy()` devolve o mesmo
-   `Error::InvalidCredentials` (401 genérico) para senha errada, usuário sem
-   hash e conta inativa. Comparando a senha do env com o hash antigo, o 401 é o
-   resultado esperado do código.
+## Verdict & Rationale
 
-Não há indício de problema de rede, DNS, migração ausente ou valor de env
-incorreto. As variáveis estão corretas; o que faltava era a recuperação agir
-sobre uma conta com hash pré-existente.
+Veredito histórico **`go`** de 2026-11-21 preservado: branch `feature/098-password-recovery` @ `76f936e245f70a7bd2735887e7ff8bc5e0c5c06f` (SHA completo registrado), âncora `.specify/feature.json` → `specs/098-password-recovery`, evidência de investigação local determinística + relato de produção (096). A decisão original registrou cinco compromissos FR-001..FR-005, três critérios SC-001..SC-003 e oito tarefas T001..T008 (todas concluídas), com analyze `critical=0`, `requirements_covered=5/5`, `fr=5/5`, `sc=3/3`, `tasks=8/8`, `errors=[]` (`specs/098-password-recovery/analyze.md`). Os quatro pontos da cadeia: `flora-api/src/routes/bootstrap.rs:294-295` já exigia `admin_password` e gravava o hash na transação atômica, logo a conta de produção tinha `password_hash` não nulo; a recuperação anterior parava em `password_hash.is_some()` e no SQL `WHERE password_hash IS NULL` (`flora-core/src/repositories/user_repository.rs:93-110`), ignorando justamente essa conta; `flora-api/src/state/app_state.rs` descartava o retorno (`let _applied`) e o skip não logava, compatível com a ausência de sinal nos logs (filtro suprimia `flora_core`); `flora-api/src/routes/auth.rs:451-460` (`verify_or_dummy`) devolvia o mesmo `Error::InvalidCredentials` (401 genérico) para senha errada, usuário sem hash e conta inativa. A forma escolhida foi usar as próprias variáveis já configuradas como credenciais temporárias: `BootstrapConfig` com `skip_serializing`/`Debug` redactado e validação 15..1024 sem segredo (`bootstrap.rs:21-42,57-81`), `apply_startup_password()` com UPDATE incondicional (`bootstrap.rs:120-128`) e `app_state.rs:96-99` registrando `applied` com "Startup administrator password recovery", mais aviso de e-mail ausente e da sobrescrita (`:111-115,130-132`) e orientação em `.env.example:32-39` de remover ambas as variáveis após a recuperação. Nenhum gate, contrato de login, JWT, rate limit, lock ou infraestrutura foi alterado; o contrato anterior de idempotência foi ajustado à nova semântica de sobrescrita (`define.md:FR-004`; `shape.md:17-24`). Essa semântica foi, por sua vez, estendida em 100 (opt-in `*`) e 101 (alias de login) — evolução documentada, não contradição do `go`. Estado real do DB de produção, valor efetivo das variáveis e login ao vivo permanecem **[NV]**; nenhuma credencial foi lida e nenhuma requisição de login/bootstrap foi executada contra produção; filtro de logging real, Deploy/Coolify, IdP externo e allowlist OIDC também **[NV]**; gate do alvo registrado como PASS no handoff consolidado, sem reexecução neste artefato (`research.md:[NV]`).
 
-## Decisão
+## If needs-clarification
 
-Registrar o ciclo 098 como **recuperação temporária da senha do administrador
-pelas próprias variáveis de env já configuradas**, com cinco compromissos
-rastreáveis (FR-001..FR-005), três critérios (SC-001..SC-003) e oito tarefas
-(T001..T008, todas concluídas):
+- **Blocking questions**: N/A (veredito `go`; as incógnitas abaixo ficam em aberto para o handoff).
+- **Revisit stage**: N/A.
 
-1. **Observabilidade (FR-001 / T001, T004)**: `app_state.rs:96-99` registra
-   `applied` com "Startup administrator password recovery";
-   `bootstrap.rs:111-115,130-132` registra e-mail ausente e sobrescrita, sem
-   segredo.
-2. **Chave (FR-002 / T002, T007)**: `FLORA_BOOTSTRAP__ADMIN_EMAIL` e
-   `FLORA_BOOTSTRAP__ADMIN_PASSWORD` — já presentes em produção — são as
-   credenciais temporárias de recuperação; nenhuma chave nova. Redaction,
-   validação 15..1024 e documentação de remoção após o uso
-   (`.env.example:32-39`).
-3. **Sobrescrita (FR-003 / T003)**: `apply_startup_password()` usa
-   `UPDATE users SET password_hash = $2, password_updated_at = $3 WHERE id = $1`
-   (`bootstrap.rs:120-128`), incondicional — sobrescreve um hash existente a
-   cada startup enquanto as variáveis estiverem definidas.
-4. **Contratos (FR-004 / T005–T006)**: sem env, e-mail ausente, hash
-   pré-existente sobrescrito, sem hash, nenhum segredo em log/resposta; login
-   200 com a senha recuperada e 401 genérico preservado.
-5. **Fronteira (FR-005 / T008)**: gates do alvo PASS (handoff), nenhum toque em
-   `validate/`, `release/`, `STATE.md` ou `PROGRESSO*`; OIDC, `POST /bootstrap`,
-   advisory lock e rate limit inalterados.
+## If go — Handoff to `/speckit.specify`
 
-## Evidência de entrada
-
-- Baseline `76f936e245f70a7bd2735887e7ff8bc5e0c5c06f`, branch
-  `feature/098-password-recovery`.
-- Relato de produção (401 e env correta) e ausência de sinal nos logs, com o
-  filtro `flora_core` suprimido.
-- `flora-core/src/config/bootstrap.rs:1-7,21-42,57-81,96-134` — credenciais
-  temporárias, config sem chave adicional, validação sem segredo e UPDATE
-  incondicional do hash.
-- `flora-api/src/state/app_state.rs:96-99` — `applied` logado no startup.
-- `flora-api/src/routes/auth.rs:83,443-492` e
-  `flora-api/src/middleware/rate_limit.rs:150,195,238-244` — rota alcançável,
-  401 genérico e classe `PasswordLogin` inalterada.
-- `.env.example:32-39` — instrução de remover as variáveis após a recuperação.
-- `flora-tests/src/contract/bootstrap.rs` e `auth.rs:1039-1169` — suítes
-  existentes a ajustar à nova semântica, não a substituir.
-
-## Racional
-
-**go.** O 401 é consequência direta de quatro pontos verificáveis: conta com
-hash gravado no bootstrap, recuperação que recusava sobrescrever, retorno
-descartado sem log e login que comparava com o hash antigo. A correção é isolada:
-as mesmas duas variáveis já configuradas passam a sobrescrever o hash a cada
-startup, com o resultado logado sem segredo e orientação operacional de removê-las
-após o uso. Nenhum gate, contrato de login, JWT, rate limit, lock ou
-infraestrutura é alterado. Todos os FR/SC são verificáveis por contratos e
-inspeção locais; o diff é reversível e a fronteira é preservada. O custo aceito
-é a reaplicação da senha temporária enquanto as variáveis permanecerem definidas
-— mitigada pela documentação e pela remoção das variáveis após a recuperação.
-
-## [NV]
-
-- Estado real do DB de produção (hash da conta, valor efetivo das variáveis) e o
-  login ao vivo: **[NV]**. Nenhuma credencial foi lida e nenhuma requisição de
-  login/bootstrap foi executada contra produção nesta investigação.
-- Filtro de logging real, Deploy/Coolify, IdP externo e allowlist OIDC: **[NV]** —
-  independentes deste ciclo; o veredito autoriza apenas a recuperação local.
-- Correção não executada contra produção neste artefato; o gate do alvo está
-  registrado como PASS no handoff consolidado e este documento não reexecutou
-  gates, build, testes ou formatters.
-
-## Fora de âmbito
-
-Mudanças em `analyze/`, `converge/`, `validate/`, `release/`,
-`.specify/memory/STATE.md` ou `PROGRESSO*`; alteração de required checks,
-workflows, ADRs ou constituição; mudança no contrato do `POST /bootstrap`, no
-advisory lock, no formato do 401, no JWT ou no rate limit; IDP externo,
-allowlist OIDC, nova variável de configuração, interface de "esqueci minha
-senha" ou API pública de troca de senha. Nenhuma senha real é fornecida ou
-registrada neste ciclo.
-
-## Handoff
-
-`/speckit.specify` — especificar a recuperação como requisitos verificáveis
-(FR-001..FR-005 / SC-001..SC-003) e tarefas T001..T008, com as variáveis
-`ADMIN_EMAIL`/`ADMIN_PASSWORD` já configuradas como chave temporária,
-sobrescrita consistente do hash, resultado observável sem segredo, contratos de
-startup e login e fronteira preservada.
+- **Problem**: Conta bootstrap com hash pré-existente ignorada pela recuperação por env, produzindo 401 no login local apesar de `ADMIN_EMAIL`/`ADMIN_PASSWORD` corretos (`intake.md:7-17`).
+- **Chosen approach**: Usar as duas variáveis já configuradas como credenciais temporárias de recuperação, com sobrescrita incondicional e idempotente do hash a cada startup, resultado observável sem segredo e remoção documentada das variáveis após o login; nenhuma chave ou interface nova (`shape.md:3-24,40`).
+- **In scope / out of scope**:
+  - **In (FR-001..FR-005 / SC-001..SC-003 / T001..T008)**: `flora-core/src/config/bootstrap.rs` (credenciais temporárias, redaction, validação 15..1024, `UPDATE users SET password_hash = $2, password_updated_at = $3 WHERE id = $1`), `flora-api/src/state/app_state.rs:96-99` (log de `applied`), contratos em `flora-tests/src/contract/bootstrap.rs` e `auth.rs:1039-1169` (sem env, e-mail ausente, hash pré-existente sobrescrito, sem hash, login 200 com senha recuperada e 401 genérico inalterado, nenhum segredo), `.env.example:32-39` (remoção das variáveis), gates do alvo e rastreabilidade T001..T008 (`define.md:FR-001..FR-005`; `shape.md:5-24`).
+  - **Out/deferred/NV**: `analyze/`, `converge/`, `validate/`, `release/`, `.specify/memory/STATE.md` e `PROGRESSO*`; required checks, workflows, ADRs e constituição; contrato do `POST /bootstrap`, advisory lock, formato do 401, JWT, rate limit `PasswordLogin`; IdP externo, allowlist OIDC, nova variável, "esqueci minha senha" ou API pública de troca de senha; nenhuma senha real fornecida ou registrada (`define.md:Fora de escopo`; `intake.md:Fronteira`).
+- **Success metrics**: restart com as variáveis sobrescreve o hash e o login com a senha do env retorna 200 com `session_token`, permanecendo válido após remoção das variáveis e novo restart (baseline: 401 com env correta); nenhuma credencial em log/resposta/erro/teste/artefato, com `applied` e motivo do skip observáveis (baseline: retorno descartado e sem log); contratos/specs e gates PASS registrado no handoff, diff restrito (baseline: fronteira do ciclo); analyze `critical=0`, `5/5`, `3/3`, `8/8` (`define.md:SC-001..SC-003`; `analyze.md:9-18,44`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: qual é o estado real do DB de produção (hash da conta) e o valor efetivo das variáveis no serviço (**[NV]**)?]; [NEEDS CLARIFICATION: o login ao vivo com a senha recuperada foi executado em produção (**[NV]**)?]; [NEEDS CLARIFICATION: o filtro de logging real permite observar `applied` e os warns (**[NV]**)?]; [NEEDS CLARIFICATION: as variáveis temporárias foram removidas e a API reiniciada após a recuperação (**[NV]**)?]; [NEEDS CLARIFICATION: a conta de produção tem `password_hash` gravado por 096 e por qual caminho, confirmando o diagnóstico?] (`research.md:[NV]`; `intake.md:7-17`).

@@ -1,35 +1,36 @@
-# Decision: 021 — Next vertical slice
+# Decision: 021 — Next vertical slice (unassign, dedup e precedência de busca)
 
-**Verdict:** **go** (scoped)
+- **Slug**: 021-next-vertical-slice
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | problem.md | concept.md | decision.md (anterior) | R1 docs 021 (5, via intake/research) | auditorias `ses_e1d515825ffeRc6tFzKjrFXEzD`, `ses_e1d515824ffewqOPRTcuB2Liu6`
 
-## Chosen slice
+## Scorecard
 
-**S1 — Task unassign contract + assignment notification correctness/dedup + PG search hardening with explicit Meilisearch precedence decision (disposable PostgreSQL 18, Seed/VPS).**  
-Primary 80/20 for cycle 021: make task assignment semantics explicit and verifiable (tri-state PATCH `assignee_id` supporting clear/unassign, deterministic transition-based `Assignment` notification, simple dedup guard) and harden/test PG fallback search edge behavior, while explicitly deciding/recording Meilisearch multi-entity parity as deferred (no indexing-hook wiring in this cycle).
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | O `PATCH` colapsa `assignee_id` ausente e `null` (`or(existing)`), tornando `Some -> None` impossível, e não há guarda contra duplicatas óbvias nem precedência de busca explicitada (`problem.md:7-15`). |
+| Evidence strength | adequate | R1 (`2026-11-16-021-{meilisearch-task-file-search-parity-vps,task-unassign-contract-notification-semantics,macro-search-parity-unassign-notifications,db-gated-tests-unassign-search-parity,optional-meilisearch-pg-coherence-vps}.md`) e 2 auditorias sustentam tri-state, transição efetiva e dedup barato; paridade Meilisearch e janela de corrida são NV (`research.md:6-14`). |
+| Value vs. inaction | strong | Semântica explícita de "não alterar/retirar/definir" e menos ruído de notificação fecham um gap real de correção do contrato de tarefas (`problem.md:26-30`). |
+| Feasibility / appetite | adequate | `Option<Option<Uuid>>` (serde double-option) e dedup query-before-insert são baratos, mas reinterpretar `null` é evolução de contrato e exige testes de regressão (`research.md:6,13`). |
+| Strategic fit | strong | Consolida a direção Postgres-first do roadmap, fixando o fallback PG como base de correção e registrando explicitamente o diferimento do Meilisearch (`intake.md:6,9`; `concept.md:5-10`). |
+| Risk posture | adequate | Transições determinísticas e U0 (sem notificação em unassign) preservam o comportamento atual; dedup é race-prone/unread-only e a paridade Meilisearch segue como NV documentado (`research.md:7-8,14`). |
 
-## Justification (evidence)
+## Verdict & Rationale
 
-- **Roadmap fit:** `OBJETIVO.md`/`ROADMAP.md` define 021 as paridade/confiabilidade de busca/notificações: Meilisearch task/file parity ou decisão explícita de precedence/contrato, endurecimento determinístico do fallback PG, semântica de atribuição/unassign quando contrato suportar com dedup simples, e contratos DB-gated.
-- **Convergent R1:** `docs/research/2026-11-16-021-{meilisearch-task-file-search-parity-vps,task-unassign-contract-notification-semantics,macro-search-parity-unassign-notifications,db-gated-tests-unassign-search-parity,optional-meilisearch-pg-coherence-vps}.md` and audits (`ses_e1d515825ffeRc6tFzKjrFXEzD`, `ses_e1d515824ffewqOPRTcuB2Liu6`) converge on tri-state unassign, transition-only notification (no notify on unassign/self/no-op), cheap query-before-insert dedup, PG fallback as Seed correctness baseline, and Meilisearch indexing wiring as higher-risk/infra-sensitive work.
-- **Value/80/20:** fixes a real correctness/contract gap in core task assignment with deterministic DB-gated evidence, reduces obvious duplicate notification noise, and locks search fallback behavior without adding mandatory services or destabilizing optional Meilisearch.
+Veredito histórico **`go (scoped)` preservado como `go`**; nenhum critério é `weak`/`unknown` e os artefatos não trazem contradição. S1 é o 80/20 do ciclo 021: tri-state `assignee_id` no `PATCH` (omit = sem mudança, `null` = limpar/unassign, valor = definir), notificação `Assignment` somente em transição efetiva para destinatário não-ator (sem notify em unassign/self/no-op), dedup best-effort query-before-insert para `Assignment` não-lido duplicado por `(user_id,target_id)`, endurecimento dos contratos DB-gated do fallback PG e decisão explícita de precedência — Meilisearch preferido quando configurado, PG fallback autoritativo para paridade multi-entidade, com indexação de mutação diferida (sem hooks neste ciclo). Baseline `dev@0dcde353a` (020 merged, PR #223, CI verde); convergência dos cinco docs R1 e das auditorias (`ses_e1d515825f…`, `ses_e1d515824f…`). A mudança de significado de `null` é tratada como evolução de contrato, não como detalhe interno; unicidade/outbox/tx-coupling e paridade Meilisearch ficam NV.
 
-## Scope summary (in)
+## If needs-clarification
 
-- Task API contract: `UpdateTaskRequest.assignee_id` becomes tri-state (`Option<Option<Uuid>>`, serde double-option semantics) so PATCH can distinguish omit (no change), `null` (clear/unassign), and value (set/assign). Create remains value/absent as today.
-- Assignment notification: `flora-api/src/routes/tasks.rs` computes effective transition from `old_assignee_id -> new_assignee_id`; notify assignee only when `Some(new)` and `new != old` and `new != actor` (create/assign/reassign). No notification on unassign (`Some -> None`), self, or no-op. Best-effort insert with simple dedup guard (skip if unread `Assignment` exists for same `user_id` and `target_id`).
-- Search hardening: preserve/clarify PG fallback behavior (type token normalization including singular/plural/CSV forms already supported, bounds/limit, tenant/soft-delete invariants) and add/extend DB-gated contracts for edge cases; keep Meilisearch path/precedence unchanged in code.
-- Explicit precedence/contract decision (documented): Meilisearch-enabled mode takes precedence when configured (current behavior) but **task/file mutation-indexing parity is not guaranteed in 021**; Postgres fallback is authoritative for guaranteed multi-entity parity when Meilisearch is unavailable. Full Meilisearch parity (hooks, delete-on-soft-delete, reindex, deterministic Meilisearch-gated tests) deferred.
-- DB-gated contract tests on disposable PG18 for unassign/assign/reassign/self/no-op/dedup and search edge behavior; SDD artifacts, local verification, PR/CI green, merge/sync, planning updates.
+- **Blocking questions**: N/A (veredito `go`; as quatro perguntas abaixo seguem como carried-forward, não bloqueantes).
+- **Revisit stage**: N/A.
 
-## Key risks
+## If go — Handoff to `/speckit.specify`
 
-1. **PATCH contract evolution:** `assignee_id: null` becomes explicit clear (merge-patch semantics) instead of legacy collapsed/no-op; mitigate with tri-state parsing, clear server-side merge rules, and DB-gated regression tests (omit remains no-op).
-2. **Dedup/consistency limits:** query-before-insert is best-effort and race-prone without uniqueness constraint/tx-coupling; mitigate by guarding obvious unread duplicates only and documenting NVs.
-3. **Meilisearch parity gap remains:** optional Meilisearch mode may miss task/file freshness/completeness without indexing hooks; mitigate by explicit precedence/contract decision, keeping PG fallback path intact/tested, and deferring wiring/reindex/tests.
-
-## NVs / non-goals
-
-- NV: Meilisearch mutation-indexing hooks/parity for tasks/files/messages, Meilisearch-gated deterministic tests, cross-engine ranking/snippet equivalence, `pg_trgm`/i18n/CJK relevance, channel/workspace-level ACL in search.
-- NV: uniqueness constraint/transactional outbox/strong idempotency for notifications, unassign-specific notification type, assignee membership policy changes, mentions/completion/realtime/push delivery.
-- NV: frontend task-edit/unassign UI and search/notification UI, 2vCPU/4GB perf/load/OOM/restore benchmarks, browser e2e/multi-client.
-- Non-goals: new mandatory services, crate convergence, Meilisearch removal, multi-node infra.
+- **Problem**: Contrato de atualização de tarefa não distingue "omitido" de `null` (unassign impossível), notificações de atribuição podem duplicar em retries e a precedência entre backends de busca não está registrada de forma inequívoca (`problem.md:7-15`).
+- **Chosen approach**: S1 — `UpdateTaskRequest.assignee_id` como `Option<Option<Uuid>>`, resolução determinística `old -> new`, `Assignment` só em `Some(new)` com `new != old && new != actor`, dedup não-lido query-before-insert, hardening do fallback PG e decisão documentada de precedência/paridade (`concept.md:5-10`; `decisão anterior:9-19`).
+- **In scope / out of scope**:
+  - **In**: parsing tri-state e regras de merge no servidor; hook de transição em `flora-api/src/routes/tasks.rs` (sem notify em unassign/self/no-op, best-effort); dedup de unread `Assignment` por `(user_id,target_id)`; normalização de tokens de tipo, limites e invariantes tenant/soft-delete no fallback PG; contratos DB-gated em PG18; SDD/validação/release, PR/CI verde, merge/sync.
+  - **Out/NV**: hooks de indexação/paridade Meilisearch para tarefas/arquivos/mensagens, testes determinísticos ancorados no Meilisearch, equivalência de ranking/snippets, `pg_trgm`/i18n/CJK e ACL por canal/workspace, constraint de unicidade/outbox transacional/idempotência forte, tipo de evento específico para unassign, mudança na política de associação, menções/completion/realtime/push, UI frontend, benchmarks 2vCPU/4GB, browser e2e, novos serviços obrigatórios, convergência de crates, remoção do Meilisearch e infra multi-nó.
+- **Success metrics**: O contrato diferencia omitido/`null`/valor e permite `Some -> None`; assign/reassign/retirada/self/no-op/dedup têm comportamento observável distinto sem duplicata não-lida óbvia; contratos PG18 cobrem transições e bordas da busca (normalização, limites, tenant, soft-delete); precedência entre backends registrada nos artefatos (`problem.md:32-37`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: reinterpretação de `assignee_id: null` de "ignorado" para "retirar" é aceitável para clientes existentes?]; [NEEDS CLARIFICATION: retirada deve gerar evento próprio ou permanecer sem notificação?]; [NEEDS CLARIFICATION: a janela de corrida residual da guarda de duplicatas é aceitável neste ciclo?]; [NEEDS CLARIFICATION: paridade de tarefas/arquivos no Meilisearch é diferida ou requisito do contrato de busca?] (`problem.md:42-45`).

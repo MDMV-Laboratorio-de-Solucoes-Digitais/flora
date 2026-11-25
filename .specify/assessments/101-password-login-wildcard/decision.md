@@ -1,131 +1,36 @@
-# Decision: 101 — login com `*` quando a opt-in de bootstrap está ativa
+# Decision: 101 — Login com `*` quando a opt-in de bootstrap está ativa
 
 - **Slug**: 101-password-login-wildcard
-- **Decidido**: 2026-11-21
-- **Verdict**: **go**
-- **Branch**: `feature/101-password-login-wildcard` @ `5890471be35ec21f7c8eba9545bca3544edbd8d9`
-- **Âncora**: `.specify/feature.json` → `specs/101-password-login-wildcard`
-- **Evidência**: investigação local determinística + relato de produção (após 100)
-- **Artefatos revisados**: intake | research | define | shape | spec | plan | tasks
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | define.md | shape.md | decision.md (original 2026-11-21) | specs/101-password-login-wildcard/{spec,plan,tasks,analyze,converge}.md | relato de produção após 100 | docs/governance/2026-11-21-101-password-login-wildcard.md (snapshot 2026-11-21T05:11:11Z)
 
-## Contexto / problema — causa raiz determinística
+## Scorecard
 
-Relato de produção após o ciclo 100: `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` e
-`FLORA_BOOTSTRAP__ADMIN_PASSWORD` estão presentes, o startup aplicou a senha ao
-primeiro usuário ativo (`applied = true`, `flora-api/src/state/app_state.rs:93-99`),
-e `POST /api/v1/auth/password/login` com `email="*"` ainda retorna 401. A cadeia
-explica os fatos sem falha intermitente:
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | Com `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` e `applied = true` (hash gravado no primeiro usuário ativo), `POST /api/v1/auth/password/login` com `email="*"` ainda retornava 401: `auth.rs:451-453` fazia `find_by_email` exata e o e-mail real da conta é desconhecido (`intake.md:Sinal`; `research.md:1-4`). |
+| Evidence strength | adequate | Relato de produção coerente com leitura direta de `auth.rs:447-492` (`find_by_email` → `None` → `verify_or_dummy` → `InvalidCredentials`) e com a opt-in já definida em `bootstrap.rs:56-60,129-143`; identidade da conta, env efetiva e login ao vivo **[NV]** (`research.md:1-11,29-34`). |
+| Value vs. inaction | strong | A senha já estava correta no banco mas inutilizável sem o e-mail real: sem o alias, a recuperação de 100 não resulta em acesso (`define.md:5`; `analyze.md:Diagnóstico`). |
+| Feasibility / appetite | adequate | Reutiliza o mesmo token de opt-in e a mesma seleção determinística do startup, convergindo para o bloco de sessão existente; nenhuma chave, rota ou método de autenticação novo, mas exige garantir que a resolução do login não divirja da do startup (`shape.md:3-25`; `define.md:FR-001..FR-004`). |
+| Strategic fit | strong | Extensão estreita de 100/098 que preserva integralmente 401 genérico, formato OIDC de sessão, JWT, rate limit `PasswordLogin`, `POST /bootstrap` e OIDC (`define.md:FR-003,Fora de escopo`; `converge.md:Fronteira preservada`). |
+| Risk posture | adequate | Alias existe somente sob opt-in explícita, usa a mesma ordem determinística e passa pelo mesmo `verify_or_dummy`; sem opt-in, `*` é apenas e-mail inválido; risco residual de conta ativa mais antiga e de segredos em log permanece **[NV]** e é mitigado por contratos/redaction (`shape.md:27-37`; `converge.md:[NV]`). |
 
-1. `flora-core/src/config/bootstrap.rs:56-60,129-143` — a opt-in `*` já seleciona
-   o primeiro usuário ativo (`created_at ASC, id ASC`) e o hash da senha do env
-   foi gravado nessa conta. A credencial está correta no banco.
-2. `flora-api/src/routes/mod.rs:30` e `auth.rs:80-88` — a rota de login é
-   `/api/v1/auth/password/login`, montada a partir de `create_auth_router()`.
-3. `flora-api/src/routes/auth.rs:451-453` — o handler normaliza `req.email` e
-   faz `find_by_email` **exata**; `*` não é um e-mail e não corresponde a nada.
-4. `flora-api/src/routes/auth.rs:455-460` — sem usuário, `verify_or_dummy` gasta
-   o trabalho dummy e devolve `false`; `Error::InvalidCredentials` produz o
-   401 `invalid_credentials` idêntico ao de senha errada.
-5. `flora-api/src/routes/auth.rs:463-491` — o sucesso emite sessão e JWT no
-   formato OIDC; esse contrato não muda.
-6. `flora-core/src/config/mod.rs:46-52` e `flora-api/src/state/app_state.rs:23-28`
-   — `FLORA_BOOTSTRAP__ADMIN_EMAIL` já está em `config.bootstrap.admin_email` e
-   é acessível ao handler via `AppState.config`. Nenhuma configuração nova é
-   necessária.
+## Verdict & Rationale
 
-O e-mail real da conta bootstrap é desconhecido de quem opera. A senha não
-precisa ser reescrita; falta o alias que permita usá-la.
+Veredito histórico **`go`** de 2026-11-21 preservado: branch `feature/101-password-login-wildcard` @ `5890471be35ec21f7c8eba9545bca3544edbd8d9` (SHA completo registrado), âncora `.specify/feature.json` → `specs/101-password-login-wildcard`, evidência local determinística + relato de produção após 100 e nota de governança com snapshot `2026-11-21T05:11:11Z`. A decisão original registrou quatro compromissos FR-001..FR-004, três critérios SC-001..SC-003 e oito tarefas T001..T008 (todas concluídas), com analyze `critical=0`, `requirements_covered=4/4`, `fr=4/4`, `sc=3/3`, `tasks=8/8`, `errors=[]` (`specs/101-password-login-wildcard/analyze.md`). A cadeia: `flora-core/src/config/bootstrap.rs:56-60,129-143` já selecionava o primeiro usuário ativo (`created_at ASC, id ASC`) e gravara o hash (`applied = true` em `flora-api/src/state/app_state.rs:93-99`); `flora-api/src/routes/mod.rs:30` e `auth.rs:80-88` montavam a rota em `/api/v1/auth/password/login`; `auth.rs:451-453` normalizava `req.email` e fazia `find_by_email` exata, sem token especial; `auth.rs:455-460` executava `verify_or_dummy` e devolvia `Error::InvalidCredentials` (401 `invalid_credentials`) idêntico ao de senha errada; `auth.rs:463-491` emitia sessão e JWT no formato OIDC; `config/mod.rs:46-52` e `app_state.rs:23-28` já expunham `config.bootstrap.admin_email` ao handler sem variável nova. A forma escolhida foi aceitar `email="*"` somente quando `config.bootstrap.admin_email` também for exatamente `*` após `trim()` (reutilizando `is_wildcard_selector()`), resolvendo o mesmo primeiro usuário ativo da recuperação e convergindo para o mesmo `verify_or_dummy`/sessão/rate limit; variantes (`*@x.com`, `foo*`, whitespace) e ausência de opt-in seguiam a busca exata e o 401 genérico, sem fallback, sem escrita e sem segundo método de autenticação (`define.md:FR-001..FR-004`; `shape.md:3-25`). Contratos em `flora-tests/src/contract/auth.rs:1039-1183` e documentação em `.env.example:36-45` (remover `ADMIN_EMAIL`/`ADMIN_PASSWORD` e reiniciar após o login, sem valores reais) fecharam o ciclo. Estado real do DB de produção, identidade da conta alvo, valor efetivo das variáveis e login ao vivo permanecem **[NV]**; nenhuma credencial foi lida e nenhuma requisição de login/bootstrap foi executada contra produção; filtro de logging real, Deploy/Coolify, IdP externo e allowlist OIDC também **[NV]**; gate do alvo registrado como PASS no diagnóstico do ciclo, sem reexecução neste artefato (`research.md:[NV]`; `converge.md:[NV]`).
 
-## Decisão
+## If needs-clarification
 
-Registrar o ciclo 101 como **login wildcard condicionado à opt-in de bootstrap**,
-com quatro compromissos rastreáveis (FR-001..FR-004), três critérios
-(SC-001..SC-003) e oito tarefas (T001..T008, todas concluídas):
+- **Blocking questions**: N/A (veredito `go`; as incógnitas abaixo ficam em aberto para o handoff).
+- **Revisit stage**: N/A.
 
-1. **Wildcard somente com opt-in (FR-001 / T002)**: o literal `*` é aceito como
-   `email` somente quando `config.bootstrap.admin_email` também for exatamente
-   `*` após `trim()` (`is_wildcard_selector()`, `bootstrap.rs:56-60`). Sem a
-   opt-in, `*` segue a busca exata e o 401 genérico — nenhum caminho se abre;
-   variantes como `*@x.com` ou `foo*` nunca ativam o alias.
-2. **Seleção determinística (FR-002 / T003)**: com a opt-in, a rota resolve o
-   primeiro usuário ativo pela mesma consulta de `bootstrap.rs:129-143`
-   (`WHERE is_active = TRUE ORDER BY created_at ASC, id ASC LIMIT 1`); sem
-   usuário ativo → 401 genérico, sem escrita e sem fallback. A seleção do login
-   não pode divergir da do startup.
-3. **401 genérico/sessão (FR-003 / T004–T005)**: `verify_or_dummy` e
-   `Error::InvalidCredentials` (401 `invalid_credentials`) permanecem para senha
-   errada, usuário sem hash, conta inativa, nenhum usuário ou alias sem opt-in.
-   O sucesso devolve a resposta idêntica em formato OIDC (`session_token`,
-   `expires_in`, `user_id`, `next_step`), com o mesmo JWT, TTL, classe
-   `PasswordLogin` e fluxo OIDC. Nenhuma senha, hash ou e-mail real em log,
-   resposta, erro ou mensagem de teste.
-4. **Testes e env (FR-004 / T006–T008)**: contratos em
-   `flora-tests/src/contract/auth.rs:1039-1183` cobrem opt-in `*` → 200/sessão,
-   sem opt-in → 401, variantes → 401, senha errada → 401 idêntico a desconhecido,
-   nenhum usuário ativo → 401, formato de sessão preservado e nenhum segredo;
-   `.env.example:36-45` documenta o alias e a remoção das variáveis após o
-   login. Gates do alvo PASS (handoff), fronteira preservada.
+## If go — Handoff to `/speckit.specify`
 
-## Evidência de entrada
-
-- Baseline `5890471be35ec21f7c8eba9545bca3544edbd8d9`, branch
-  `feature/101-password-login-wildcard`.
-- Relato de produção: opt-in `*` ativa, `applied = true`, login com `*` → 401,
-  e-mail real desconhecido.
-- `flora-api/src/routes/auth.rs:447-492` — `password_login`: normalização,
-  `find_by_email`, `verify_or_dummy`, 401 e emissão de sessão/JWT.
-- `flora-core/src/config/bootstrap.rs:56-60,69-95,129-143` — token `*` e
-  seleção determinística já definidos e testados em 100.
-- `flora-core/src/config/mod.rs:46-52` e `flora-api/src/state/app_state.rs:23-28`
-  — a opt-in já chega ao handler sem nova variável.
-- `flora-api/src/middleware/rate_limit.rs:136,151,195,241-245` — classe
-  `PasswordLogin` inalterada.
-- `flora-tests/src/contract/auth.rs:1039-1183` e
-  `flora-tests/src/contract/bootstrap.rs:410,568-598` — suítes existentes a
-  estender, não a substituir.
-- `.env.example:36-45` — documentação das variáveis temporárias.
-
-## Racional
-
-**go.** O bloqueio é consequência direta de quatro pontos verificáveis: a opt-in
-`*` já gravou a senha no primeiro usuário ativo, o login faz busca exata e não
-conhece o e-mail real, o 401 é genérico e o resultado é observável. A extensão é
-isolada: o mesmo token que já é opt-in explícita passa a ser um alias de `email`
-apenas enquanto a opt-in estiver definida, resolvendo a mesma conta do startup e
-reaproveitando integralmente verificação, sessão, JWT e rate limit. Nenhum gate,
-contrato de login, emissão de sessão, lock ou infraestrutura é alterado. Todos os
-FR/SC são verificáveis por contratos e inspeção locais; o diff é reversível e a
-fronteira é preservada. O custo aceito é a existência temporária de um alias
-válido apenas sob opt-in explícita — mitigado pela exigência de
-`ADMIN_EMAIL=*`, pela seleção determinística, pela documentação de remoção das
-variáveis após o login e pela preservação do 401 genérico.
-
-## [NV]
-
-- Estado real do DB de produção (e-mail do administrador, `is_active`,
-  `created_at`, valor efetivo das variáveis) e login ao vivo: **[NV]**. Nenhuma
-  credencial foi lida e nenhuma requisição de login/bootstrap foi executada
-  contra produção nesta investigação.
-- Filtro de logging real, Deploy/Coolify, IdP externo e allowlist OIDC: **[NV]** —
-  independentes deste ciclo; o veredito autoriza apenas a mudança local.
-- Correção não executada contra produção neste artefato; o gate do alvo está
-  registrado como PASS no handoff consolidado e este documento não reexecutou
-  gates, build, testes ou formatters.
-
-## Fora de âmbito
-
-Mudanças em `analyze/`, `converge/`, `validate/`, `release/`,
-`.specify/memory/STATE.md`, `PROGRESSO*` ou `AGENTS.md`; alteração de required
-checks, workflows, ADRs ou constituição; mudança no contrato do `POST /bootstrap`,
-no advisory lock, no formato do 401, no JWT, no rate limit ou na emissão de
-sessão; IDP externo, allowlist OIDC, nova variável de configuração, nova rota ou
-API alternativa de login. Nenhuma senha real é fornecida ou registrada neste
-ciclo.
-
-## Handoff
-
-`/speckit.specify` — especificar o login wildcard como requisitos verificáveis
-(FR-001..FR-004 / SC-001..SC-003) e tarefas T001..T008, com o `*` aceito somente
-sob a opt-in `FLORA_BOOTSTRAP__ADMIN_EMAIL=*`, seleção determinística do primeiro
-usuário ativo, 401 genérico e sessão OIDC inalterados, nenhum segredo em
-log/resposta, testes e documentação de env e fronteira preservada.
+- **Problem**: Login com `*` retornava 401 apesar de a opt-in já ter gravado a senha no primeiro usuário ativo, porque a rota resolvia a identidade por `find_by_email` exata e o e-mail real é desconhecido (`intake.md:Sinal`; `define.md:5`).
+- **Chosen approach**: Aceitar `email="*"` somente sob a opt-in `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` (comparação exata nos dois lados após `trim()`), resolvendo o mesmo primeiro usuário ativo de `bootstrap.rs:129-143` e reaproveitando integralmente verificação, 401, sessão OIDC, JWT e rate limit; sem nova chave, rota ou API alternativa (`shape.md:3-25`).
+- **In scope / out of scope**:
+  - **In (FR-001..FR-004 / SC-001..SC-003 / T001..T008)**: `flora-api/src/routes/auth.rs` (alias `*` condicionado a `config.bootstrap.admin_email`, resolução determinística do primeiro ativo, convergência para `verify_or_dummy`/`Error::InvalidCredentials` e resposta idêntica `session_token`/`expires_in`/`user_id`/`next_step`), eventual helper compartilhado em `flora-core` para a seleção, contratos em `flora-tests/src/contract/auth.rs:1039-1183` (opt-in → 200/sessão; sem opt-in → 401; variantes → 401; senha errada → 401 idêntico a desconhecido; nenhum ativo → 401; formato preservado; nenhum segredo), `.env.example:36-45` (alias enquanto a opt-in estiver ativa; remoção das variáveis e restart após o login) (`define.md:FR-001..FR-004`; `shape.md:5-24`).
+  - **Out/deferred/NV**: contrato do `POST /bootstrap` (201/409), advisory lock, emissão de sessão, formato do 401, JWT, rate limit `PasswordLogin` e fluxo OIDC; nova variável, rota, UI ou API de login alternativa; gravar senha/hash no login; IdP externo; `validate/`, `release/`, `STATE.md`, `PROGRESSO*`, `AGENTS.md`; gates, workflows, ADRs e constituição; nenhuma senha real fornecida ou registrada (`define.md:Fora de escopo`; `converge.md:Fronteira preservada`).
+- **Success metrics**: com `ADMIN_EMAIL=*` e a senha temporária já aplicada, login com `email="*"` retorna 200 com sessão em formato OIDC sem conhecer o e-mail real, e o alias deixa de funcionar após remover as variáveis enquanto a senha permanece válida para o e-mail real (baseline: 401 com `applied = true`); sem opt-in, `*` é tratado como endereço comum → 401 genérico, sem seleção, fallback ou conta alterada (baseline: busca exata falha); nenhuma senha/hash/e-mail real em log, resposta, erro, teste ou artefato, com 401 indistinguível e sessão com os campos usuais; analyze `critical=0`, `4/4`, `3/3`, `8/8` (`define.md:SC-001..SC-003`; `analyze.md:9-18,46`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: qual é a conta alvo no DB de produção (e-mail real, `is_active`, `created_at`) e ela é a administradora esperada (**[NV]**)?]; [NEEDS CLARIFICATION: o login wildcard com a credencial de recuperação, a emissão de sessão e o acesso a `/tasks` foram executados em produção (**[NV]**)?]; [NEEDS CLARIFICATION: a medição dos logs em produção confirma a ausência de senha, hash e e-mail real (**[NV]**)?]; [NEEDS CLARIFICATION: ambas as variáveis temporárias foram removidas e a API reiniciada após o login confirmado (**[NV]**)?] (`research.md:[NV]`; `converge.md:[NV]`).

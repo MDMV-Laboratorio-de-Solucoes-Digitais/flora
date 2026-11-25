@@ -1,91 +1,36 @@
-# Decision: 015 — Next vertical slice
+# Decision: 015 — Next vertical slice (realtime mínimo + catch-up determinístico)
 
-**Verdict:** **go** (scoped)
+- **Slug**: 015-next-vertical-slice
+- **Decided**: 2026-11-25
+- **Verdict**: go
+- **Artifacts reviewed**: intake.md | research.md | problem.md | concept.md | decision.md (anterior) | 014 decision | docs/research/2026-11-16-014-realtime-delivery-vps-options.md | docs/research/2026-11-16-014-ws-codebase-audit.md
 
-## Chosen slice
+## Scorecard
 
-**A — Minimal realtime delivery + deterministic catch-up for persisted channel messages (single-node, Postgres-authoritative).**  
-Primary 80/20 for cycle 015: ship a reliable recovery path via **cursor-correct message catch-up** backed by Postgres and a **minimal in-process WS subscription/fanout** for same-node delivery, so committed messages become visible to other authorized clients in near-realtime and always recoverable on reconnect/reload. **Do not** require Valkey/Postgres LISTEN/NOTIFY, multi-node delivery, or full realtime feature parity.
+| Criterion | Rating | Justification |
+|-----------|--------|---------------|
+| Problem validity | strong | 013 persistiu mensagens REST e 014 escopou autoridade/protocolo WS, mas falta registry/fanout, REST não emite eventos e `list_messages` não é cursor-determinístico (`before` aceito mas offset/0 e filtro em-handler), sem catch-up no FE (`research.md` via decisão anterior:12; `intake.md:25-31`). |
+| Evidence strength | adequate | Consenso multilíngue (EN/es/de/fr/zh-CN/ja; ko/ru parcial NV) por keyset/cursor estável (UUIDv7/`created_at,id`), fanout in-process viável single-node e NOTIFY/pubsub não duráveis; plano DB-gated PG18 + Vitest, sem e2e ao vivo (`decisão anterior:15,38-56`; `intake.md:38-40`). |
+| Value vs. inaction | strong | Fecha a fatia de comunicação antes de B (binários) e C (operabilidade) e antes de adaptadores de escala; mensagens commitadas tornam-se visíveis em near-realtime e sempre recuperáveis no reconnect/reload (decisão anterior:12-14). |
+| Feasibility / appetite | adequate | Postgres já é source of truth; cursor + hub in-process reusam WS/auth/DTO de 014 sem novo serviço obrigatório, cabendo em 2 vCPU/4 GB; dependência do merge 014 e sufiência de índices são NV (`decisão anterior:13,66-67,85-91`). |
+| Strategic fit | strong | ROADMAP P0.2/4 (realtime mínimo confiável) e perfil Seed Postgres-first/VPS-barato; correção = Postgres + catch-up determinístico, push como best-effort (decisão anterior:8,78-83; `intake.md:6,38`). |
+| Risk posture | adequate | Non-goals duros (multi-node, exactly-once, Valkey/NOTIFY, outbox), buffers limitados, dedupe por `id`, interface adapter-friendly e DB como caminho de recuperação; NV-1..NV-5 registrados (decisão anterior:57-76,85-91). |
 
-## Justification (evidence)
+## Verdict & Rationale
 
-- **P0 usability/correctness:** 013 persisted REST messages and 014 scoped WS session authority/protocol alignment, but delivery remains incomplete: no subscription registry/fanout, REST mutations emit no realtime events, `list_messages` is not cursor-deterministic (`before` accepted but offset/0 used, in-handler delete filter), and frontend lacked working sync/catch-up (`flora-api/src/routes/channels.rs`, `websocket.rs`, `docs/research/2026-11-16-014-ws-codebase-audit.md`, `014-realtime-delivery-vps-options.md`, ROADMAP P0.2/4).
-- **80/20 leverage:** Postgres is already source of truth; adding stable cursor reads + in-process broadcast reuses existing WS/auth/DTO foundations with **no new mandatory infra**, fitting 2 vCPU/4 GB Seed. Push treated as best-effort with DB catch-up matches robust practice (NOTIFY/pubsub loss, reconnect gaps).
-- **Sequencing:** completes the core communication slice before higher-complexity work (files binary I/O security surface, operability/boot refactors) and before scale adapters (Valkey/NOTIFY/Streams).
-- **Research consensus (EN/es/de/fr/zh-CN/ja; ko/ru partial NV):** keyset/cursor by stable monotonic key (UUIDv7/`created_at,id`) for "after cursor" feeds; in-process fanout viable single-node; LISTEN/NOTIFY useful but non-durable/connection-sensitive; SSE strong for notify-then-fetch but adds transport churn now (`research.md`).
+Veredito histórico **`go (scoped)` preservado como `go`**. O scorecard confirma a Opção A — realtime delivery mínimo + catch-up determinístico para mensagens persistidas (single-node, Postgres-authoritative) — sobre B (upload binário) e C (operabilidade Seed/VPS), em ciclo pós-014 (PR #217 em andamento/merge esperado). Fatos preservados: `GET/POST /channels` e `/messages` já existem com checagens org/workspace/channel, mas `Pagination{limit,offset:0}` e filtro de deletados em-handler impedem catch-up por cursor; `GET /ws` tem helpers de auth DB-backed (target 014) e envelopes tagged, porém `Subscribe` é ack-only, sem registry/fanout/consumer bridge; `flora-messaging` é publish-only; o FE usava `/api/v1/ws` com query token e shapes divergentes. A dependência do estado final de 014 (NV-1), a ausência de medições de load/memória em VPS (NV-2), cobertura multilíngue parcial (NV-3), sufiência de schema/índice (NV-4) e `apps/web`/e2e fora de escopo (NV-5) limitam o escopo, não invertem a decisão de entregar recuperação determinística primeiro.
 
-## Scope (in) — file-by-file implementation checklist
+## If needs-clarification
 
-> Planned targets (confirm exact symbols/paths at implementation time; keep diff minimal).
+- **Blocking questions**: N/A (veredito `go`; merges 014, índices de cursor e limites de buffer seguem como carried-forward).
+- **Revisit stage**: N/A.
 
-### Backend — catch-up contract (Postgres-authoritative)
-- `flora-core/src/traits/*message_repository*` & `flora-core/src/repositories/*message_repository*` (Postgres impl): add/support cursor query (e.g. `after`/`before` or keyset params) with deterministic ordering and documented deleted/edited behavior; ensure/select supporting index if missing (verify `messages` indexes/migration need).
-- `flora-api/src/routes/channels.rs`: wire query params to cursor semantics (honor `before`, add `after` and/or explicit sync response metadata/cursor), remove non-deterministic offset-only recovery behavior, keep org/workspace/channel authorization intact; on successful `post_message` (and minimally `edit_message`/`delete_message` if included) emit canonical realtime event after commit/save.
-- `flora-api/src/routes/mod.rs`: only if exposing explicit `/api/v1/messages/sync` alias (prefer extending existing list endpoint/contract first).
+## If go — Handoff to `/speckit.specify`
 
-### Backend — in-process realtime delivery
-- `flora-api/src/state/app_state.rs` (+ state module/types): add shared realtime hub/broadcaster handle (process-local, no external service).
-- `flora-api/src/routes/websocket.rs` (or extracted `realtime` module): per-connection subscription set (org/channel-scoped), register on `Subscribe`/remove on `Unsubscribe`/cleanup on disconnect, forward canonical `NewMessage` events from hub to matching subscribers with bounded buffering/backpressure policy; define sender-echo/dedupe semantics; keep DB-backed auth/tenant checks and 014 transport/protocol decisions.
-- `flora-api/src/routes/channels.rs` (and WS send path if applicable): publish canonical payload aligned to REST `MessageResponse` fields to hub (and retain best-effort Valkey publish if configured, non-authoritative).
-
-### Frontend — catch-up + realtime consumer
-- `apps/frontend/src/lib/api/messages.ts` (or equivalent API module): request messages with cursor/after support and parse deterministic ordering/cursor metadata.
-- `apps/frontend/src/lib/api/websocket.ts`: subscribe/unsubscribe per active channel, handle canonical tagged envelopes, surface reconnect and gap signals.
-- `apps/frontend/src/lib/api/mappers.ts` & `apps/frontend/src/lib/state/MessageStore.svelte.ts`: consistent mapping and idempotent upsert/merge by message `id`.
-- `apps/frontend/src/lib/components/chat/ChatLayout.svelte` (and channel views): initial REST load, subscribe active channel, on reconnect/event trigger incremental catch-up, avoid duplicate render on REST-send vs WS delivery.
-- `apps/frontend/src/routes/+layout.svelte` / `(app)/+layout.svelte` (as needed): WS lifecycle aligned with auth/org/token changes per 014.
-
-### Tests & docs
-- `flora-api` unit tests: cursor param parsing/normalization, envelope/event serialization, subscription routing helpers (pure where possible).
-- `flora-tests` DB-gated contracts/integration (PG18 disposable): deterministic catch-up ordering and tenant isolation, cursor progression/no-duplicate/no-silent-gap within committed set, mutation visibility semantics.
-- `apps/frontend/tests/unit/*`: websocket client classification/merge behavior and cursor fetch integration points (mocked).
-- `.github/workflows/rust.yml`: include new env-gated/`--ignored` DB tests in `db-tests` job if added.
-- `docs/dev-smoke.md`: manual steps for two-client realtime + disconnect/reconnect catch-up (NV if not executed).
-
-## Deterministic verification plan
-
-1. `cargo fmt --all -- --check`
-2. `cargo clippy --workspace --all-targets -- -D warnings` (document scoped fallback only if unavoidable/preexisting)
-3. `cargo test -p flora-core --lib`
-4. `cargo test -p flora-api`
-5. `cargo test -p flora-tests --lib`
-6. DB-gated (Postgres 18, disposable/alt-port ok):  
-   `FLORA_DATABASE__POSTGRES_URL=... cargo test -p flora-tests <catchup_delivery_contract_filter> -- --ignored --test-threads=1`
-7. `cd apps/frontend && bun run check && bun run lint && bun run test:unit -- --run --project server && bun run build`
-8. **NV (not claimed):** live multi-browser/client e2e, real network/proxy/TLS, Valkey/Meilisearch boot permutations, 2 vCPU/4 GB load/concurrency sizing, 5432-default-port smoke, OIDC/JWKS, `apps/web`, deploy/merge/release.
-
-## Risks and mitigations
-
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Cursor semantics wrong (duplicates/gaps/reordering) | Silent missed or duplicated messages | Use stable keyset order (UUIDv7/id and/or `created_at,id`), idempotent merge, DB-gated determinism tests, define deleted/edit visibility. |
-| In-process fanout only (single node) | No cross-instance delivery | Explicit non-goal; keep event/hub interface adapter-friendly for future Valkey/LISTEN-NOTIFY. |
-| Backpressure/memory on 4 GB VPS | Dropped events or resource pressure | Bounded per-conn/channel buffers and subscription caps, drop-oldest-with-catch-up signal or equivalent, rely on DB recovery. |
-| Sender echo / REST+WS duplication | UI duplicates | Canonical event IDs + client dedupe by `id`; define single emission rule per committed mutation. |
-| REST/WS DTO drift | Broken clients | One canonical payload shape aligned to `MessageResponse`; mapper/unit tests. |
-| 014 not fully merged/aligned | Integration friction | Treat 014 auth/path/protocol alignment as base; implement only compatible deltas and note dependency. |
-| Index/migration need for cursor query | Perf regression or schema churn | Verify existing indexes/query plans; add minimal migration only if evidenced necessary. |
-
-## Non-goals (015)
-
-- Binary file upload/download/streaming, storage writes, attachment handling, quota enforcement changes beyond existing metadata behavior (**slice B**).
-- Seed/VPS operability refactors: Meilisearch optional boot decoupling, compose profiles/resource limits, DB pool wiring/init dedup, broad env contract cleanup (**slice C**), except incidental doc notes.
-- Multi-node/cross-process fanout, durable exactly-once delivery, Valkey consumer bridge, Postgres LISTEN/NOTIFY listener, outbox/streams.
-- Presence/typing/read receipts, threads UX expansion, reactions, message search/notification wiring, full edit/delete realtime taxonomy if non-trivial.
-- New `/messages/sync` subsystem beyond a thin alias to the same cursor list semantics (if needed).
-- Browser Playwright/e2e, OIDC/JWKS end-to-end, `apps/web`, deploy/production rollout, merges/releases, secrets/services.
-
-## Debloat / VPS notes
-
-- **No new mandatory services or daemons.** Correctness = Postgres + deterministic catch-up; realtime = in-process best-effort.
-- Keep payloads small (IDs/canonical fields), enforce bounded fanout state, and prefer simple backoff/limits over feature-rich brokers.
-- Preserve Valkey as optional side-channel only; do not couple correctness to it.
-- Favor extending existing routes/repos over new crates/abstractions; interface seams only where they replace future adapters cheaply.
-
-## NVs
-
-- NV-1: 014 merge/runtime state and final WS auth/protocol details not executed/verified here; checklist assumes 014 intent as baseline.
-- NV-2: No load/memory measurements on target VPS; buffer/subscription limits require tuning.
-- NV-3: Multilingual research coverage partial for **ko/ru/pt-BR** (triangulated, no conflicts found); primary recommendations rest on PostgreSQL/Axum/RFC/Docker/MDN evidence.
-- NV-4: Existing `messages` schema/index adequacy for chosen cursor strategy to be confirmed at implementation time.
-- NV-5: `apps/web` and browser e2e remain out of scope/unverified.
+- **Problem**: Entrega incompleta após 013/014: sem subscription registry/fanout, mutations REST não emitem eventos, `list_messages` não é determinístico por cursor e o FE não tem sync/catch-up funcional (`decisão anterior:12`; `intake.md:29-31`).
+- **Chosen approach**: Opção A — cursor keyset estável (`after`/`before` por `created_at,id`/UUIDv7) + hub de broadcast in-process por processo, com canonical `NewMessage` alinhado a `MessageResponse`, dedupe por `id`, backpressure limitado e DB/REST como autoridade; sem Valkey/NOTIFY obrigatórios (decisão anterior:5-8,21-36).
+- **In scope / out of scope**:
+  - **In (backend)**: traits/repositórios de mensagens em `flora-core` (consulta por cursor, ordenação determinística, índice se necessário), `flora-api/src/routes/channels.rs` (honrar `before`, adicionar `after`/metadado de cursor, publicar evento canônico pós-commit), `routes/mod.rs` (alias fino `/messages/sync` se preciso), `flora-api/src/state/app_state.rs` (hub process-local) e `routes/websocket.rs` (subscriptions por org/canal, register/cleanup, forward com buffers limitados, manter auth 014); **FE**: `lib/api/messages.ts`, `lib/api/websocket.ts`, `lib/api/mappers.ts`, `MessageStore.svelte.ts` (upsert idempotente por `id`), `ChatLayout.svelte` e layouts; **testes/docs**: unit tests de cursor/envelope/routing, contratos DB-gated PG18 (ordenação, tenant isolation, sem duplicata/gap no conjunto commitado), Vitest, `db-tests` no CI e `docs/dev-smoke.md` (decisão anterior:21-43).
+  - **Out / NV**: upload/download binário e anexos (B), refactors de operabilidade/Seed (C: Meilisearch boot, compose profiles/limits, pool/env) salvo notas incidentais, multi-node/cross-process fanout, exactly-once durability, ponte Valkey consumer, listener NOTIFY/outbox/streams, presença/typing/receipts, reações, search/notifications, taxonomia completa edit/delete, novo `/messages/sync` além do alias fino, Playwright/e2e, OIDC/JWKS real, `apps/web`, deploy/merge/release/secrets. NV-1: 014 merge/runtime e detalhes finais de auth/protocolo não verificados; NV-2: sem medições de load/memória; NV-3: ko/ru/pt-BR parcial; NV-4: índices de `messages` a confirmar; NV-5: `apps/web`/browser e2e (decisão anterior:69-91).
+- **Success metrics**: Mensagem commitada fica visível para outros clientes autorizados no mesmo nó em near-realtime e é sempre recuperável por cursor após reconnect/reload, sem duplicatas ou gaps silenciosos; contratos DB-gated fixam ordenação/tenant/mutação e o FE faz merge idempotente por `id` (`decisão anterior:38-43`; `intake.md:29-31`).
+- **Carried-forward open questions**: [NEEDS CLARIFICATION: 014 já está mergeado/runtime estável para servir de base?]; [NEEDS CLARIFICATION: `created_at,id` ou UUIDv7 como chave de cursor e os índices existentes a suportam?]; [NEEDS CLARIFICATION: limites de buffer/subscription e política drop-oldest-with-catch-up para 4 GB?]; [NEEDS CLARIFICATION: como definir visibilidade de mensagens editadas/deletadas no catch-up e semântica de eco do remetente?]. NV-3: cobertura ko/ru/pt-BR parcial; NV-5: `apps/web`/e2e (`decisão anterior:60-64,85-91`).
