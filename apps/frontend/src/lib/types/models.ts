@@ -81,3 +81,20 @@ export interface NotificationItem {
 	isRead: boolean;
 	createdAt: ISO8601Date;
 }
+
+export interface RoleItem {
+	id: UUID;
+	name: string;
+	description: string | null;
+	permissions: string[];
+	isBuiltin: boolean;
+}
+
+export interface OrganizationMemberItem {
+	userId: UUID;
+	email: string;
+	displayName: string;
+	roleId: UUID;
+	roleName: string;
+	joinedAt: ISO8601Date;
+}

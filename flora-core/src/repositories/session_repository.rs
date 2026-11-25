@@ -132,6 +132,22 @@ impl SessionRepository for PgSessionRepository {
         Ok(())
     }
 
+    async fn revoke_for_user_and_organization(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<()> {
+        let _ = sqlx::query(
+            "UPDATE sessions SET is_active = false WHERE user_id = $1 AND organization_id = $2",
+        )
+        .bind(user_id)
+        .bind(organization_id)
+        .execute(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(())
+    }
+
     async fn clean_expired(&self) -> Result<usize> {
         let result = sqlx::query("DELETE FROM sessions WHERE expires_at < NOW()")
             .execute(&self.pool)

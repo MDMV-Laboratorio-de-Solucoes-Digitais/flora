@@ -242,3 +242,23 @@ Recontagem via `find` no worktree `feature/117-notifications-ui-and-honest-navig
 ### Estado verificado — 2026-11-23 (ciclo 118; append-only)
 
 Recontagem via `find` no worktree `feature/118-oidc-callback-mock-idp-exchange`: `specs/` 108 diretórios (578 arquivos), `.specify/assessments/` 106 diretórios (448 arquivos), `.specify/validations/` 104 diretórios (119 arquivos), `.specify/releases/` 104 diretórios (104 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+
+### Estado verificado — 2026-11-24 (ciclo 119; append-only)
+
+Recontagem via `find` no worktree `feature/119-rbac-roles-admin-ui`: `specs/` 109 diretórios (583 arquivos), `.specify/assessments/` 107 diretórios (453 arquivos), `.specify/validations/` 105 diretórios (122 arquivos), `.specify/releases/` 105 diretórios (105 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+
+### Estado verificado — 2026-11-24 (ciclo 120; append-only)
+
+Recontagem via `find` no worktree `feature/120-hitl-receipt-http-endpoint`: `specs/` 110 diretórios (588 arquivos), `.specify/assessments/` 108 diretórios (458 arquivos), `.specify/validations/` 106 diretórios (125 arquivos), `.specify/releases/` 106 diretórios (106 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+
+### Estado verificado — 2026-11-24 (ciclo 121; append-only)
+
+Recontagem via `find` no worktree `feature/121-settings-theme-selector`: `specs/` 111 diretórios (593 arquivos), `.specify/assessments/` 109 diretórios (463 arquivos), `.specify/validations/` 107 diretórios (128 arquivos), `.specify/releases/` 107 diretórios (107 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.
+
+
+### Estado verificado — 2026-11-24 (ciclo 122; append-only)
+
+Recontagem via `find` no worktree `feature/122-org-members-rbac-management`: `specs/` 112 diretórios (598 arquivos), `.specify/assessments/` 110 diretórios (468 arquivos), `.specify/validations/` 108 diretórios (131 arquivos), `.specify/releases/` 108 diretórios (108 arquivos), `.specify/bugs/` 8 diretórios (26 arquivos), `docs/adr/` 8 arquivos; `docs/research/` mantém 137 arquivos `.md` na raiz sem `index.md` (138 com ele) mais 11 arquivos em `docs/research/mdmv-multiagent/` (148 arquivos de pesquisa no total sem `index.md`). Notas anteriores preservadas; nenhuma reescrita. **[NV]** CI futuro, Forgejo e produção.

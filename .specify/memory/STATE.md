@@ -1194,3 +1194,82 @@ anterior foi alterada.
 
 - **Achados endereçados (`72547119`)**: exigência de `email_verified == Some(true)` em `IdTokenClaims` / `exchange_code_and_verify_id_token`, método atômico `UserRepository::set_oidc_subject_if_absent` (`flora-core/src/{traits/repository.rs,repositories/user_repository.rs}`) vinculando contas locais sem `oidc_subject` (`NULL`) apenas uma vez enquanto ativas, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação do `issuer` no Discovery, `validate_jwks_uri` estrita (`url::Host`, bloqueando `http://localhost.evil.com` e userinfo), sanitização de mensagens `Error::OidcProvider`, remoção da aresta `base64` não usada de `flora-tests` no `Cargo.lock` e ampliação dos testes em `oidc.rs` (`9/9`), `registration.rs` (`email_verified=false`, `exp=-3600s`, `http://localhost.evil.com/keys`) e `contract/auth.rs` (vinculação atômica + rejeição hijack `401`).
 - **Evidência local (`task-1323`)**: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo deny check bans licenses sources` (`bans ok, licenses ok, sources ok`), `cargo test --workspace` (`flora-api` `50 passed`, `flora-core` `35+21`, `flora-tests` `36 passed; 82 ignored`), `check_gate_integrity.py` PASS (`82` total) e `contract::auth::db_` **`25 passed; 0 failed`** (`77.95s` em Postgres 18.7). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.
+
+
+## Sessão: flora - UI CRUD de administração de papéis RBAC em /settings (ciclo 119, append-only)
+
+- **Identidade e baseline (`2026-11-24`, Bloco 0.c / Bloco 5)**:
+  - `session_title`: `flora - UI CRUD de administração de papéis RBAC em /settings` · `session_id`: `20261123-210500-orch-v49`
+  - Branch: `feature/119-rbac-roles-admin-ui` · Worktree: `.specify/queue/worktrees/119-rbac-roles-admin-ui` · Baseline `github/dev`: `42c38bf52`
+  - Escolha 80/20 (`1280/3125`, `IMPLEMENTAÇÃO`): fechar a lacuna CRUD de administração de papéis RBAC (`/api/v1/roles`) de `BF-02` em `/settings`, com DoD verificável em Vitest + Chromium Playwright real + WCAG 2.2 AA (`#405`–`#408`).
+- **Entrega (`FR-001`..`FR-004`, SemVer MINOR `0.10.1 -> 0.11.0`)**:
+  - `apps/frontend/src/lib/types/models.ts`, `src/lib/utils/roles.ts` (`ROLE_PERMISSION_OPTIONS` com 27 permissões canônicas sem `*`, normalização e validação), `src/lib/api/roles.ts` (`GET/POST/PATCH/DELETE /api/v1/roles`), `src/lib/state/RoleStore.svelte.ts` (`syncContext` + `loadSequence` + `pendingLoad`) e `tests/unit/roles.test.ts` (`9` casos).
+  - `apps/frontend/src/lib/components/rbac/RoleManager.svelte`, `src/routes/(app)/settings/+page.svelte`, `src/lib/i18n/pt-BR.ts` (papéis nativos somente leitura com badge `Nativo`, CRUD completo em personalizados, proteção anti-loop em `$effect` e mapeamento `403`/`409` em `pt-BR`).
+  - `apps/frontend/src/routes/layout.css`: ajuste de `:root` `--primary` e `--ring` para `152 76% 25%` (mantendo `.dark` inalterado), elevando o contraste no tema claro de `2.72:1` para `5.85:1` (WCAG 2.2 AA).
+  - `apps/frontend/tests/e2e/seed-flow.e2e.ts` (Passo 9): cobertura em `.dark` e claro com `page.reload()`, `POST 201`, `PATCH 200`, `DELETE 204` e capturas `18-settings-roles-dark.png` / `19-settings-roles-light.png`.
+- **Evidência local (`[EV]`, `task-1679`, `task-1692`)**:
+  - `bun run check`: `svelte-check found 0 errors and 0 warnings`; `bun run lint`: `prettier --check . && eslint .` exit `0`.
+  - `bun run test:unit -- --run --project server`: `Test Files 19 passed (19)`, `Tests 80 passed (80)` (incl. `9/9` em `roles.test.ts`).
+  - `VITE_API_URL=http://127.0.0.1:3000 bun run build`: `✓ built in 15.92s`, exit `0`.
+  - `python3 scripts/ci/check_gate_integrity.py && python3 scripts/ci/check_deploy_workflows.py && python3 scripts/ci/check_deploy_workflows.py --self-test`: `gate-integrity: PASS` (`82` pisos DB intactos), `deploy-workflows: PASS`, `deploy-workflow-self-test: PASS`.
+  - `bun run test:e2e` (Chromium + `flora-api` + `vite preview` + Postgres 18.7 `127.0.0.1:15433`): **`4 passed (59.9s)`** e **`14/14` auditorias WCAG 2.2 AA: `sem achados`**; capturas em <https://gist.github.com/lfgranja/6cef0d5c451c7050df6fa80aa2489468>.
+- **Contagens (`find`)**: `specs/` `109` dirs (`583` arquivos), `.specify/assessments/` `107` (`453`), `.specify/validations/` `105` (`122`), `.specify/releases/` `105` (`105`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`auth`/`rbac`) / R4 / R7**: `docs/governance/2026-11-23-119-briefing-compreensao.md`, `docs/governance/2026-11-23-119-rbac-roles-admin-ui.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.11.0`), `converge.md`, issues `#405`..`#408`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), PR de promoção `dev -> main` e deploy manual em staging/produção via Coolify (`workflow_dispatch`).
+
+
+## Sessão: flora - endpoint HTTP RBAC para emissão de recibo HITL (POST /api/v1/hitl/receipts) (ciclo 120, append-only)
+
+- **Identidade e baseline (`2026-11-24`, Bloco 0.c / Bloco 5)**:
+  - `session_title`: `flora - endpoint HTTP RBAC para emissão de recibo HITL (POST /api/v1/hitl/receipts)` · `session_id`: `20261124-071000-orch-v49`
+  - Branch: `feature/120-hitl-receipt-http-endpoint` · Worktree: `.specify/queue/worktrees/120-hitl-receipt-http-endpoint` · Baseline `github/dev`: `e47983874`
+  - Escolha 80/20 (`2000/3125`, `IMPLEMENTAÇÃO`, **`BF-03 -> fechado`**): expor endpoint HTTP RBAC (`Permission::OrgAdmin`) `POST /api/v1/hitl/receipts` sobre `HitlReceiptAdapter` / `HitlReceiptPort` (`#411`–`#413`).
+- **Entrega (`FR-001`..`FR-004`, SemVer MINOR `0.11.0 -> 0.12.0`)**:
+  - `flora-core/src/error.rs`: `Error::ServiceUnavailable(_)` destacado para HTTP `503 SERVICE_UNAVAILABLE` sanitizado (`{"error":"service_unavailable","message":"Service temporarily unavailable"}`) + teste unitário `service_unavailable_returns_sanitized_503_without_internal_detail`.
+  - `flora-api/src/routes/hitl.rs` & `flora-api/src/routes/mod.rs`: rota `/api/v1/hitl/receipts` com `EmitHitlReceiptRequest` (`#[serde(deny_unknown_fields)]`), `can_emit_hitl_receipt`, `build_decision` (`operator_id` exclusivo da sessão autenticada), `require_hitl_operator`, ordenação `validate_decision` (`422`) antes de `Error::Configuration` → `Error::ServiceUnavailable` (`503` sem vazar `FLORA_HITL__HMAC_SECRET`), log sanitizado e `3` testes unitários.
+  - `flora-tests/src/contract/{mod.rs,hitl.rs}` + lockstep `scripts/ci/check_gate_integrity.py` & `.github/workflows/rust.yml`: perna `hitl: 3` (`82 -> 85` pisos DB).
+- **Evidência local (`[EV]`, `task-1870`, `task-1883`)**:
+  - `TDD RED` (`task-1870`): `0 passed; 3 failed` (`404 Not Found: null`) antes de montar `/api/v1/hitl/receipts`.
+  - `cargo fmt --all -- --check`: exit `0`; `cargo clippy --workspace --all-targets -- -D warnings`: `0` erros.
+  - `cargo deny check bans licenses sources`: `bans ok, licenses ok, sources ok`.
+  - `cargo test --workspace`: `flora-api` `53 passed` (incl. `3/3` em `routes::hitl::tests`), `flora-core` `36 + 21 passed`, `flora-tests` `36 passed; 85 ignored`.
+  - `python3 scripts/ci/check_gate_integrity.py && python3 scripts/ci/check_deploy_workflows.py && python3 scripts/ci/check_deploy_workflows.py --self-test`: `gate-integrity: PASS` (`all 11 db contract floors intact (85 total)`), `deploy-workflows: PASS`, `deploy-workflow-self-test: PASS`.
+  - `cargo test -p flora-tests contract::hitl::db::db_ -- --ignored --test-threads=1` (PG 18.7 `127.0.0.1:15433`): **`3 passed; 0 failed`** (`1.11s`).
+- **Contagens (`find`)**: `specs/` `110` dirs (`588` arquivos), `.specify/assessments/` `108` (`458`), `.specify/validations/` `106` (`125`), `.specify/releases/` `106` (`106`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`auth / rbac / hitl`) / R4 / R7**: `docs/governance/2026-11-24-120-briefing-compreensao.md`, `docs/governance/2026-11-24-120-hitl-receipt-http-endpoint.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.12.0`), `converge.md`, issues `#411`–`#413`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), promoção `dev -> main` e deploy manual no Coolify (`workflow_dispatch`).
+
+
+## Sessão: flora - seletor interativo de tema claro/escuro em /settings e contraste destrutivo WCAG (ciclo 121, append-only)
+
+- **Identidade e baseline (`2026-11-24`, Bloco 0.c / Bloco 5)**:
+  - `session_title`: `flora - seletor interativo de tema claro/escuro em /settings e contraste destrutivo WCAG` · `session_id`: `20261124-075500-orch-v49`
+  - Branch: `feature/121-settings-theme-selector` · Worktree: `.specify/queue/worktrees/121-settings-theme-selector` · Baseline `github/dev`: `2ff91e229`
+  - Escolha 80/20 (`1500/3125`, `IMPLEMENTAÇÃO` + `CORREÇÃO`, **`BF-04 -> fechado`**): seletor interativo de tema claro/escuro em `/settings`, correção WCAG `:root --destructive` e polimento `RoleManager` (`#415`–`#418`).
+- **Entrega (`FR-001`..`FR-004`, SemVer MINOR `0.12.0 -> 0.13.0`)**:
+  - `apps/frontend/src/lib/utils/theme.ts` & `src/lib/state/ThemeStore.svelte.ts`: utilitários puros injetáveis (`flora.theme`, `parseThemePreference`, `resolveInitialTheme`, `syncThemeClass`, `applyThemePreference`) + store Svelte 5 Runes + `4` testes TDD (`tests/unit/theme.test.ts`).
+  - `apps/frontend/src/lib/components/settings/ThemeSelector.svelte`, `src/lib/i18n/pt-BR.ts` & `src/routes/(app)/settings/+page.svelte`: card `Aparência` (`Claro` / `Escuro`, `aria-pressed`, `role="group"`, `aria-live="polite"`).
+  - `apps/frontend/src/routes/layout.css` & `src/lib/components/rbac/RoleManager.svelte`: `:root --destructive` ajustado para `0 84.2% 40%` (mantendo `.dark`); `cancelEditing()` limpa `errorMessage` e `$effect` limpa `errorMessage`/`successMessage` ao trocar ou limpar contexto.
+  - `apps/frontend/tests/e2e/seed-flow.e2e.ts`: Passo 9 clicando nos botões `Claro`/`Escuro` e validando persistência pós-`page.reload()` + Gist `62253fe7a30a00b665e8277ae7b719cf`.
+- **Evidência local (`[EV]`, `task-2015`, `task-2049`, `task-2063`)**:
+  - `TDD RED` (`task-2015`): `Cannot find module '$lib/state/ThemeStore.svelte'` (exit `1`) → GREEN (`task-2049`): `bun run check` (`0 errors and 0 warnings`), `bun run lint` (`exit 0`), Vitest `server` (`20/20` arquivos, `84/84` testes), `vite build` (`1m 2s`, exit `0`), `check_gate_integrity.py` (`PASS`, `85` pisos), `check_deploy_workflows.py` + `--self-test` (`PASS`), e `bun run test:e2e` (**`4 passed (1.4m)`**, **`14/14` WCAG 2.2 AA: `sem achados`**).
+- **Contagens (`find`)**: `specs/` `111` dirs (`593` arquivos), `.specify/assessments/` `109` (`463`), `.specify/validations/` `107` (`128`), `.specify/releases/` `107` (`107`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Governança / R4 / R7**: `docs/governance/2026-11-24-121-settings-theme-selector.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.13.0`), `converge.md`, issues `#415`–`#418`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), promoção `dev -> main` e deploy manual no Coolify (`workflow_dispatch`).
+
+
+## Sessão: flora - gestão de membros e atribuição/revogação de papéis RBAC em /settings (ciclo 122, append-only)
+
+- **Identidade e baseline (`2026-11-24`, Bloco 0.c / Bloco 5)**:
+  - `session_title`: `flora - gestão de membros e atribuição/revogação de papéis RBAC em /settings` · `session_id`: `20261124-084600-orch-v49`
+  - Branch: `feature/122-org-members-rbac-management` · Worktree: `.specify/queue/worktrees/122-org-members-rbac-management` · Baseline `github/dev`: `8f984adb7` · `FONTE_FACTORY`: `b1deab1`
+  - Escolha 80/20 (`IMPLEMENTAÇÃO` + `CORREÇÃO`, **`BF-02 -> fechado`** — conclui todos os itens acionáveis `BF-01`..`BF-04` do `backlog_de_fechamento`; permanecem apenas itens bloqueados externamente `BF-05` RLS runtime e `BF-06` expiração operacional `2026-11-29T23:59:59Z`).
+- **Entrega (`FR-001`..`FR-004`, SemVer MINOR `0.13.0 -> 0.14.0`)**:
+  - `flora-core/src/traits/repository.rs` & `repositories/membership_repository.rs`: `update_role(user_id, organization_id, role_id)` atômico preservando `joined_at` e `metadata`.
+  - `flora-api/src/routes/rbac.rs`: `GET/POST /api/v1/roles/members`, hardening de `assign_role`/`revoke_role` contra auto-rebaixamento/auto-revogação (`403`) e divergência de papel (`409`), `#[serde(deny_unknown_fields)]` e `2` testes unitários; `flora-tests/src/contract/rbac.rs` (`+2` contratos PG 18) + lockstep `rbac: 3 -> 5` (`85 -> 87`) em `check_gate_integrity.py` e `.github/workflows/rust.yml`.
+  - `apps/frontend`: `OrganizationMemberItem` (`models.ts`), `utils/members.ts`, `api/roles.ts` (`encodeURIComponent(roleId)` + endpoints de membros), `MemberStore.svelte.ts` (Runes), `MemberManager.svelte` + `pt-BR.ts` em `/settings`, `tests/unit/members.test.ts` (`5/5` TDD) e Passo 10 E2E em `seed-flow.e2e.ts` + Gist `2458075a6526da72fd23bd43cf9f2fda`.
+- **Evidência local (`[EV]`, `task-2207`, `task-2234`, `task-2283`, `task-2315`, `task-2376`)**:
+  - Rust: `TDD RED` (`0/2`) → GREEN: `fmt`, `clippy --all-targets -- -D warnings`, `cargo deny` (`bans ok, licenses ok, sources ok`), `cargo test --workspace` (`flora-api` `55/55`, `flora-core` `36+21`, `flora-tests` `36/87`), `contract::rbac::db::db_` **`5/5`**, `check_gate_integrity.py` (`PASS`, **`87` pisos**), `check_deploy_workflows.py` + `--self-test` (`PASS`).
+  - Frontend & E2E: `TDD RED` (`exit 1`) → `bun run check` (`0/0`), `bun run lint` (`exit 0`), Vitest `server` (`21/21` / `89/89`), `vite build` (`1m 20s`), Playwright E2E Chromium + `flora-api` recompilado + PG 18.7 (**`4 passed (37.5s)`**, **`15/15` auditorias WCAG 2.2 AA: `sem achados`**).
+- **Contagens (`find`)**: `specs/` `112` dirs (`598` arquivos), `.specify/assessments/` `110` (`468`), `.specify/validations/` `108` (`131`), `.specify/releases/` `108` (`108`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- **Briefing (`auth`/`rbac`) / R4 / R7**: `docs/governance/2026-11-24-122-briefing-compreensao.md`, `docs/governance/2026-11-24-122-org-members-rbac-management.md`, `validate.md` (`APROVADO com ressalva [NV]`), `evidence.md`, `release.md` (`0.14.0`), `converge.md`, issues `#420`–`#423`. **[NV]**: CI remoto do PR em `dev`, ACR independente (`research`, `pro`), promoção `dev -> main` e deploy manual no Coolify (`workflow_dispatch`).
+- **Remediação ACR Rodada 1 (`#424`, 2026-11-24T20:35Z, append-only)**:
+  - ACR `6cb4c881` (`REPROVADO`, `1H/1M/4L`) remediado localmente: `MembershipRepository::delete_with_role` atômico + `SessionRepository::revoke_for_user_and_organization` em `revoke_role`, checagem explícita de membership em `flora-api/src/routes/search.rs`, `validate_member_email` com `Error::Validation` (`422`), expansão de contrato DB em `flora-tests/src/contract/rbac.rs` (`401` pós-revogação, `422`, `404` inativo/cross-org) e correções em `MemberManager.svelte` + `pt-BR.ts` (`members.roleConflict`, selo `Você` exato, `roleStore.syncContext`, reset de `addRoleId`, `novalidate`) + asserções E2E.
+  - Revalidação local `[EV]` pós-edição: `fmt/clippy/deny/test --workspace` (`55/55`, `36+21`, `36/87`), `contract::rbac::db` **`5/5`**, `contract::search::db` **`8/8`**, `check_gate_integrity.py` (`87` pisos), frontend `check/lint/89 testes/build` e `test:e2e` (**`4 passed (1.9m)`**, **`15/15` WCAG 2.2 AA `sem achados`**). PR `#424` re-submetido para CI remoto + ACR Rodada 2 (`[NV]` até conclusão).

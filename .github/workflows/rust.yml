@@ -43,6 +43,10 @@ jobs:
       # required job so the required check name does not change (no protection deadlock).
       - name: Gate integrity (required checks / floors / no vacuity)
         run: python3 scripts/ci/check_gate_integrity.py
+      - name: Deploy workflow contract (manual, branch-guarded, fail-closed)
+        run: python3 scripts/ci/check_deploy_workflows.py
+      - name: Deploy workflow validator self-test
+        run: python3 scripts/ci/check_deploy_workflows.py --self-test
 
   db-tests:
     runs-on: ubuntu-latest
@@ -112,8 +116,9 @@ jobs:
           run_leg files         contract::files::db_          7
           run_leg tasks         contract::tasks::db::db_      4
           run_leg workspace     contract::workspace::db::db_  3
-          run_leg rbac          contract::rbac::db::db_     3
+          run_leg rbac          contract::rbac::db::db_     5
           run_leg bootstrap     contract::bootstrap::tests::db_ 13
+          run_leg hitl          contract::hitl::db::db_      3
 
   # 028: FASE 0 closure — informational supply-chain gates. Neither blocks merges yet;
   # promotion to required checks requires CODEOWNERS and a review window (Fatia B).

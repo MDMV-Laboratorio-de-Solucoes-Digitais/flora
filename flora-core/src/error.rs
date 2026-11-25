@@ -349,6 +349,10 @@ impl IntoResponse for Error {
                 axum::http::StatusCode::TOO_MANY_REQUESTS,
                 serde_json::json!({ "error": "rate_limited", "message": self.to_string() }),
             ),
+            Self::ServiceUnavailable(_) => (
+                axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                serde_json::json!({ "error": "service_unavailable", "message": "Service temporarily unavailable" }),
+            ),
             Self::Database(_)
             | Self::Migration(_)
             | Self::Storage(_)
@@ -357,7 +361,6 @@ impl IntoResponse for Error {
             | Self::Messaging(_)
             | Self::NotificationDispatch(_)
             | Self::Configuration(_)
-            | Self::ServiceUnavailable(_)
             | Self::IoError(_)
             | Self::Internal(_) => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -365,5 +368,32 @@ impl IntoResponse for Error {
             ),
         };
         (status, Json(body)).into_response()
+    }
+}
+
+#[cfg(test)]
+#[expect(
+    clippy::expect_used,
+    reason = "test assertions for HTTP error sanitization"
+)]
+mod tests {
+    use super::Error;
+    use axum::{http::StatusCode, response::IntoResponse};
+
+    #[tokio::test]
+    async fn service_unavailable_returns_sanitized_503_without_internal_detail() {
+        let response =
+            Error::ServiceUnavailable("FLORA_HITL__HMAC_SECRET pool down detail".to_owned())
+                .into_response();
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+        let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("body bytes");
+        let raw = String::from_utf8(bytes.to_vec()).expect("utf8 body");
+        assert!(!raw.contains("FLORA_HITL__HMAC_SECRET"));
+        assert!(!raw.contains("pool down detail"));
+        let json: serde_json::Value = serde_json::from_str(&raw).expect("json body");
+        assert_eq!(json["error"], "service_unavailable");
+        assert_eq!(json["message"], "Service temporarily unavailable");
     }
 }

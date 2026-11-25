@@ -382,3 +382,35 @@ permanece como registro do momento da medição; nenhuma linha foi reescrita.
 ### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
 
 - Remediação ACR PR `#403` (`72547119`): `UserRepository::set_oidc_subject_if_absent` atômico, `email_verified == Some(true)` obrigatório, `oidc_http_client()` (`Policy::none()` + timeouts), checagem de `issuer` no Discovery, `validate_jwks_uri` estrita contra prefix bypass/userinfo, sanitização de `Error::OidcProvider` e cobertura ampliada (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` pisos). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.
+
+
+### Estado verificado — 2026-11-24 (ciclo 119; append-only)
+
+- Recontagem via `find` (`feature/119-rbac-roles-admin-ui` sobre `github/dev@42c38bf52`): `specs/` `109` diretórios (`583` arquivos), `.specify/assessments/` `107` (`453`), `.specify/validations/` `105` (`122`), `.specify/releases/` `105` (`105`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 119 (`1280/3125`, UI CRUD de papéis RBAC de `BF-02` concluída): `RoleItem`, `utils/roles.ts`, `api/roles.ts`, `RoleStore.svelte.ts` (`9/9` Vitest), `RoleManager.svelte` + chaves `pt-BR` em `/settings`, ajuste `:root --primary`/`--ring` (`152 76% 25%`, `5.85:1` em tema claro), Passo 9 E2E Chromium + WCAG 2.2 AA (`18-settings-roles-dark.png` e `19-settings-roles-light.png` em Gist público) e Briefing `auth`/`rbac` (`#405`–`#408`), SemVer `0.10.1 -> 0.11.0`.
+- Gate local (`[EV]`, `task-1679`, `task-1692`): `bun run check` (`0/0`), `bun run lint` (exit `0`), Vitest `server` (`19` arquivos / `80` testes), `vite build` (`15.92s`), `check_gate_integrity.py` PASS (`82` pisos), `check_deploy_workflows.py` + `--self-test` PASS, e `bun run test:e2e` (**`4 passed (59.9s)`**, **`14/14` WCAG 2.2 AA: `sem achados`**).
+- **[NV]** CI remoto do PR 119 em `dev`, ACR independente, promoção `dev -> main` e deploy/produção no Coolify; histórico preservado.
+
+
+### Estado verificado — 2026-11-24 (ciclo 120; append-only)
+
+- Recontagem via `find` (`feature/120-hitl-receipt-http-endpoint` sobre `github/dev@e47983874`): `specs/` `110` diretórios (`588` arquivos), `.specify/assessments/` `108` (`458`), `.specify/validations/` `106` (`125`), `.specify/releases/` `106` (`106`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 120 (`2000/3125`, **`BF-03 -> fechado`**): mapeamento `Error::ServiceUnavailable` → `503` sanitizado (`flora-core/src/error.rs`), endpoint RBAC `POST /api/v1/hitl/receipts` (`flora-api/src/routes/{hitl.rs,mod.rs}`) com `#[serde(deny_unknown_fields)]`, `operator_id` exclusivo da sessão e fail-closed sem vazamento, `3` contratos PostgreSQL 18 (`hitl: 3`, trava lockstep `82 -> 85`), Briefing `auth / rbac / hitl` (`#411`–`#413`) e SemVer MINOR `0.11.0 -> 0.12.0`.
+- Gate local (`[EV]`, `task-1870`, `task-1883`): `fmt`, `clippy -D warnings`, `cargo deny`, `cargo test --workspace` (`flora-api` `53`, `flora-core` `36+21`, `flora-tests` `36/85 ignored`), `check_gate_integrity.py` (`PASS`, `85` pisos), `check_deploy_workflows.py` + `--self-test` (`PASS`) e `contract::hitl::db::db_` **`3 passed; 0 failed`**.
+- **[NV]** CI remoto do PR 120 em `dev`, ACR independente, promoção `dev -> main` e deploy/produção no Coolify; histórico preservado.
+
+
+### Estado verificado — 2026-11-24 (ciclo 121; append-only)
+
+- Recontagem via `find` (`feature/121-settings-theme-selector` sobre `github/dev@2ff91e229`): `specs/` `111` diretórios (`593` arquivos), `.specify/assessments/` `109` (`463`), `.specify/validations/` `107` (`128`), `.specify/releases/` `107` (`107`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 121 (`1500/3125`, **`BF-04 -> fechado`**): `utils/theme.ts` (`flora.theme`), `ThemeStore.svelte.ts` (`4/4` TDD), `ThemeSelector.svelte` + `pt-BR.ts` em `/settings`, contraste `:root --destructive: 0 84.2% 40%`, polimento `RoleManager.svelte`, Passo 9 E2E clicando em `Claro`/`Escuro` + `page.reload()` + Gist `62253fe7a30a00b665e8277ae7b719cf`, SemVer MINOR `0.12.0 -> 0.13.0` (`#415`–`#418`).
+- Gate local (`[EV]`, `task-2015`, `task-2049`, `task-2063`): `bun run check` (`0/0`), `bun run lint` (exit `0`), Vitest `server` (`20` arquivos / `84` testes), `vite build` (`1m 2s`), `check_gate_integrity.py` (`PASS`, `85` pisos), `check_deploy_workflows.py` + `--self-test` (`PASS`), e `bun run test:e2e` (**`4 passed (1.4m)`**, **`14/14` WCAG 2.2 AA: `sem achados`**).
+- **[NV]** CI remoto do PR 121 em `dev`, ACR independente, promoção `dev -> main` e deploy/produção no Coolify; histórico preservado.
+
+
+### Estado verificado — 2026-11-24 (ciclo 122; append-only)
+
+- Recontagem via `find` (`feature/122-org-members-rbac-management` sobre `github/dev@8f984adb7`): `specs/` `112` diretórios (`598` arquivos), `.specify/assessments/` `110` (`468`), `.specify/validations/` `108` (`131`), `.specify/releases/` `108` (`108`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 122 (**`BF-02 -> fechado`**, conclui todos os itens acionáveis do `backlog_de_fechamento`): `MembershipRepository::update_role`, `GET/POST /api/v1/roles/members`, hardening de `assign_role`/`revoke_role` (`403` auto-rebaixamento/auto-revogação), lockstep DB `rbac: 3 -> 5` (`85 -> 87`), `MemberStore.svelte.ts` (`5/5` TDD) + `MemberManager.svelte` + `pt-BR.ts` em `/settings`, Passo 10 E2E (`4 passed`, `15/15` WCAG `sem achados`, Gist `2458075a6526da72fd23bd43cf9f2fda`), Briefing `auth`/`rbac` (`#420`–`#423`) e SemVer MINOR `0.13.0 -> 0.14.0`.
+- Gate local (`[EV]`): `fmt`/`clippy`/`deny`/`test --workspace` (`flora-api 55`, `flora-core 36+21`), `contract::rbac::db::db_` **`5/5`**, `check_gate_integrity.py` (`PASS`, `87` pisos), `check_deploy_workflows.py` (`PASS`), `bun run check`/`lint`/`test:unit` (`21/21` / `89/89`)/`build`/`test:e2e`.
+- **[NV]** CI remoto do PR 122 em `dev`, ACR independente, promoção `dev -> main` e deploy/produção no Coolify; histórico preservado.

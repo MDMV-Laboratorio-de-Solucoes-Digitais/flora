@@ -7,6 +7,7 @@ pub mod bootstrap;
 pub mod channels;
 pub mod files;
 pub mod health;
+pub mod hitl;
 pub mod notifications;
 pub mod org;
 pub mod rbac;
@@ -50,6 +51,7 @@ pub fn create_router(app_state: AppState) -> Router {
             "/api/v1/notifications",
             notifications::create_notifications_router(),
         )
+        .nest("/api/v1/hitl", hitl::create_hitl_router())
         // WebSocket for real-time messaging
         .route("/ws", get(websocket::websocket_handler))
         .route("/api/v1/ws", get(websocket::websocket_handler))

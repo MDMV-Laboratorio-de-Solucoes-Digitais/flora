@@ -84,6 +84,45 @@ impl MembershipRepository for PgMembershipRepository {
         Ok(created)
     }
 
+    async fn update_role(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        role_id: Uuid,
+    ) -> Result<Membership> {
+        let updated = sqlx::query_as::<_, Membership>(
+            "UPDATE memberships
+             SET role_id = $3
+             WHERE user_id = $1 AND organization_id = $2
+             RETURNING user_id, organization_id, role_id, joined_at, metadata",
+        )
+        .bind(user_id)
+        .bind(organization_id)
+        .bind(role_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        updated.ok_or(Error::MembershipNotFound)
+    }
+
+    async fn delete_with_role(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+        role_id: Uuid,
+    ) -> Result<bool> {
+        let result = sqlx::query(
+            "DELETE FROM memberships WHERE user_id = $1 AND organization_id = $2 AND role_id = $3",
+        )
+        .bind(user_id)
+        .bind(organization_id)
+        .bind(role_id)
+        .execute(&self.pool)
+        .await
+        .map_err(Error::from_sqlx)?;
+        Ok(result.rows_affected() > 0)
+    }
+
     async fn delete(&self, user_id: Uuid, organization_id: Uuid) -> Result<()> {
         let result =
             sqlx::query("DELETE FROM memberships WHERE user_id = $1 AND organization_id = $2")

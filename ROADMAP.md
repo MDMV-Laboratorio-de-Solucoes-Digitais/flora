@@ -314,3 +314,35 @@ artefatos 072 são 62 specs / 59 assessments / 58 validations / 58 releases /
 ### Adendo Rodada 2 — 2026-11-23 (ciclo 118, append-only)
 
 - Remediação ACR PR `#403` (`72547119`): `set_oidc_subject_if_absent` atômico (`flora-core`), `email_verified == Some(true)`, `oidc_http_client()` (`Policy::none()` + timeouts `5s`/`10s`), validação de `issuer` no Discovery + `validate_jwks_uri` estrita, sanitização de erros `Error::OidcProvider` e remoção de `base64` em `flora-tests/Cargo.toml` (`task-1323`: `flora-api` `50`, `contract::auth::db_` `25/25`, `check_gate_integrity.py` PASS `82` total). **[NV]**: ACR Rodada 2, CI remoto pós-remediação e Zitadel externo real.
+
+
+## Estado verificado — 2026-11-24 (ciclo 119; append-only)
+
+- Recontagem via `find` (`feature/119-rbac-roles-admin-ui` sobre `github/dev@42c38bf52`): `specs/` `109` diretórios (`583` arquivos, `001`–`119`), `.specify/assessments/` `107` (`453`), `.specify/validations/` `105` (`122`), `.specify/releases/` `105` (`105`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 119 (`1280/3125`, UI CRUD de papéis RBAC de `BF-02` fechada): `RoleItem`/`utils/roles.ts`/`api/roles.ts`/`RoleStore.svelte.ts` (`9/9` Vitest), `RoleManager.svelte` + `pt-BR.ts` em `/settings` (papéis nativos somente leitura e CRUD completo em personalizados com isolamento multi-contexto), ajuste WCAG em `layout.css` (`:root --primary`/`--ring: 152 76% 25%`, `5.85:1`), Passo 9 E2E em `.dark` e claro (`4 passed`, `14/14 WCAG 2.2 AA: sem achados`, capturas em Gist `6cef0d5c451c7050df6fa80aa2489468`) e Briefing `auth`/`rbac` (`#405`–`#408`), SemVer `0.10.1 -> 0.11.0`. PR `#404` já havia aterrissado em `github/dev@42c38bf52` com workflows manuais de deploy por ambiente (`ADR-0003`) e validadores `check_deploy_workflows.py`.
+- Próximo candidato 80/20 mapeado: endpoint HTTP para `HitlReceiptAdapter` (`BF-03`), seletor de tema em `/settings` (`BF-04`) ou UI de atribuição de papéis a membros da organização (`member:*`, item remanescente de RBAC).
+- **[NV]** CI remoto do PR 119, ACR independente, staging real, Forgejo e produção; histórico preservado.
+
+
+## Estado verificado — 2026-11-24 (ciclo 120; append-only)
+
+- Recontagem via `find` (`feature/120-hitl-receipt-http-endpoint` sobre `github/dev@e47983874`): `specs/` `110` diretórios (`588` arquivos, `001`–`120`), `.specify/assessments/` `108` (`458`), `.specify/validations/` `106` (`125`), `.specify/releases/` `106` (`106`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 120 (`2000/3125`, **`BF-03 -> fechado`**): `Error::ServiceUnavailable` → `503` sanitizado (`flora-core/src/error.rs`), rota RBAC `POST /api/v1/hitl/receipts` (`flora-api/src/routes/{hitl.rs,mod.rs}`), `3` contratos DB (`flora-tests/src/contract/hitl.rs`), trava lockstep `hitl: 3` (`82 -> 85`), Briefing `auth/rbac/hitl` (`#411`–`#413`) e SemVer MINOR `0.11.0 -> 0.12.0`.
+- Próximo candidato 80/20 mapeado: seletor interativo de tema escuro/claro em `/settings` (`BF-04`) + contraste `:root --destructive` em tema claro, ou UI de atribuição/revogação de papéis a membros (`BF-02` remanescente).
+- **[NV]** CI remoto do PR 120, ACR independente, staging real, Forgejo e produção; histórico preservado.
+
+
+## Estado verificado — 2026-11-24 (ciclo 121; append-only)
+
+- Recontagem via `find` (`feature/121-settings-theme-selector` sobre `github/dev@2ff91e229`): `specs/` `111` diretórios (`593` arquivos, `001`–`121`), `.specify/assessments/` `109` (`463`), `.specify/validations/` `107` (`128`), `.specify/releases/` `107` (`107`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 121 (`1500/3125`, **`BF-04 -> fechado`**): seletor interativo de tema claro/escuro (`ThemeSelector.svelte`, `ThemeStore.svelte.ts`, `utils/theme.ts` `flora.theme`) em `/settings`, correção WCAG `:root --destructive: 0 84.2% 40%`, polimento `RoleManager.svelte`, Passo 9 E2E (`4 passed`, `14/14 WCAG 2.2 AA: sem achados`, capturas em Gist `62253fe7a30a00b665e8277ae7b719cf`), issues `#415`–`#418`, SemVer MINOR `0.12.0 -> 0.13.0`.
+- Próximo candidato 80/20 mapeado: UI + endpoints de atribuição/revogação de papéis e listagem/convite de membros da organização (`BF-02` remanescente, `member:*` / `/api/v1/rbac/roles/{id}/assign`) ou avaliação final dos itens com bloqueio externo (`BF-05` RLS runtime / `BF-06` bootstrap expiry).
+- **[NV]** CI remoto do PR 121, ACR independente, staging real, Forgejo e produção; histórico preservado.
+
+
+## Estado verificado — 2026-11-24 (ciclo 122; append-only)
+
+- Recontagem via `find` (`feature/122-org-members-rbac-management` sobre `github/dev@8f984adb7`): `specs/` `112` diretórios (`598` arquivos, `001`–`122`), `.specify/assessments/` `110` (`468`), `.specify/validations/` `108` (`131`), `.specify/releases/` `108` (`108`), `.specify/bugs/` `8` (`26`), `docs/adr/` `8`, `docs/research/` `137` na raiz sem `index.md` (+`11` em `mdmv-multiagent/` = `148`).
+- Ciclo 122 (**`BF-02 -> fechado`**, encerrando todos os itens acionáveis `BF-01`–`BF-04` do `backlog_de_fechamento`): `MembershipRepository::update_role`, `GET/POST /api/v1/roles/members`, hardening de `assign_role`/`revoke_role` (`403` auto-rebaixamento/auto-revogação), lockstep DB `rbac: 3 -> 5` (`85 -> 87`), `MemberStore.svelte.ts` (`5/5` TDD) + `MemberManager.svelte` em `/settings`, Passo 10 E2E (`4 passed (37.5s)`, `15/15` WCAG `sem achados`, Gist `2458075a6526da72fd23bd43cf9f2fda`), Briefing `auth`/`rbac` (`#420`–`#423`) e SemVer MINOR `0.13.0 -> 0.14.0`.
+- `backlog_de_fechamento` acionável encerrado (`BF-01`–`BF-04` todos `fechado`); restam apenas bloqueios externos/operacionais (`BF-05` ativação de RLS runtime mediante autorização SE e `BF-06` expiração de `FLORA_BOOTSTRAP__ADMIN_EMAIL=*` em `2026-11-29T23:59:59Z`).
+- **[NV]** CI remoto do PR 122, ACR independente, staging real, Forgejo e produção; histórico preservado.
