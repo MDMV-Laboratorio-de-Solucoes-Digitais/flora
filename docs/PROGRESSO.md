@@ -609,3 +609,10 @@ permanecem intactas; apenas acréscimos.
 - **Evidência local ([EV])**: `bun run check` 4902 arquivos/0 erros; `bun run lint` exit 0; Vitest 2/2; `check_gate_integrity.py` PASS (87 pisos, 05:48:17Z→06:03:01Z); `git diff --check` RC 0.
 - **Bloqueio registrado**: E2E local `evidence_status: blocked` após três tentativas (webServer 120 s; migration checksum em `:5432`; `CI=true`/porta ocupada; 900 s sem assertion). `e2e-browser` é advisory; required checks remotos são a autoridade de merge. Automação de provisionamento E2E (PG18 fresco + `dev-mint` pré-compilado + reuse) vai como próximo passo ao SWE. Detalhes em `.specify/validations/123-authorized-file-download/evidence.md`.
 - **[NV]**: CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.
+
+## Ciclo 124 — exclusão de arquivos em /files (2026-11-25, append-only)
+
+- **Âncora**: `session_title` = `flora - exclusao de arquivos em /files`; branch `fix/124-file-delete-ui`; base `github/dev@cab1cab8ed74`. Critério 80/20 `impacto4 × confiança5 × fechamento4 × esforço⁻¹3 × risco⁻¹3 = 720/3125` — IMPLEMENTAÇÃO residual de P0 “arquivos básicos”, consumidor = dono do arquivo em `/files`.
+- **Entrega**: ação “Excluir” com confirmação inline acessível em `FilePreview`; callback `handleDeleted` em `+page.svelte` remove o item do `FileStore` somente após `204`; chaves pt-BR `file.delete*`/`files.deleted`; Passo 5d no smoke E2E. Backend, migrations, gate e required checks inalterados.
+- **Evidência local ([EV])**: `bun run check` 4902 arquivos/0 erros; `bun run lint` exit 0; `check_gate_integrity.py` PASS (87 pisos, 07:03:50Z→07:15:40Z); `git diff --check` RC 0. Roteiro/evidência em `.specify/validations/124-file-delete-ui/`.
+- **[NV]/bloqueios**: contrato DB não reexecutado localmente (checksum antigo em `:5432`) e E2E local não repetido após as três falhas do ciclo 123; `db-tests`/`e2e-browser` remotos são a autoridade e serão colados no PR. PR #433 (`dev→main`) permanece escalado ao SWE; nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.

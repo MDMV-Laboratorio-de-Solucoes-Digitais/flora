@@ -82,6 +82,12 @@
 		errorMessage = '';
 	}
 
+	function handleDeleted(deleted: FileAttachment) {
+		fileStore.removeFile(deleted.id);
+		successMessage = format('files.deleted', { name: deleted.fileName });
+		errorMessage = '';
+	}
+
 	onMount(async () => {
 		if (!authState.isAuthenticated || !authState.token) {
 			await goto('/');
@@ -167,7 +173,7 @@
 			<p class="text-sm text-muted-foreground">{t['files.empty']}</p>
 		{:else}
 			{#each fileStore.files as file (file.id)}
-				<FilePreview {file} />
+				<FilePreview {file} onDelete={handleDeleted} />
 			{/each}
 		{/if}
 	</div>
