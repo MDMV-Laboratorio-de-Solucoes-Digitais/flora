@@ -196,6 +196,7 @@ test('smoke: select-org -> workspace/channel -> message -> task', async ({ page 
 		.click();
 	const deleteResponse = await deleteResponsePromise;
 	expect(deleteResponse.status()).toBe(204);
+	expect(deleteResponse.request().headers()['authorization']).toMatch(/^Bearer /);
 	await expect(page.getByText(uploadedFileName, { exact: true })).toHaveCount(0);
 	const reloadAfterDeletePromise = page.waitForResponse(
 		(response) =>

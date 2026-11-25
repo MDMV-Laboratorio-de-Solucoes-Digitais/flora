@@ -43,7 +43,7 @@ Uma correção foi necessária durante a validação: `confirmingDelete` renomea
 
 ## Bloco C — contrato backend
 
-O endpoint `DELETE /api/v1/files/{id}` já existe (`flora-api/src/routes/files.rs:98,308-329`) e o contrato `db_delete_owner_and_non_owner_behavior` cobre owner `204`, não-owner `403`, cross-org `404` e ausência na listagem (`flora-tests/src/contract/files.rs:483-548`). Não foi reexecutado localmente porque o Postgres compartilhado em `:5432` falha com `migration 20240818000001 was previously applied but has been modified` desde o ciclo 123. O `db-tests` remoto é a autoridade; status no head do PR é `[NV]` até observação.
+O endpoint `DELETE /api/v1/files/{id}` já existe (`flora-api/src/routes/files.rs:98,308-329`) e o contrato cobre owner `204`, não-owner `403` (`flora-tests/src/contract/files.rs:483-548`) e cross-org `404` (`db_cross_org_cannot_read_download_delete`, `:369-430`); a ausência na listagem vem do filtro `is_deleted = true` em `file_repository.rs:52`, não de uma asserção nesse contrato. Não foi reexecutado localmente porque o Postgres compartilhado em `:5432` falha com `migration 20240818000001 was previously applied but has been modified` desde o ciclo 123. O `db-tests` remoto é a autoridade; status no head do PR é `[NV]` até observação.
 
 ## Bloco D — E2E local
 

@@ -130,7 +130,9 @@
 		</div>
 	{/if}
 	{#if successMessage}
-		<div class="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">{successMessage}</div>
+		<div role="status" class="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+			{successMessage}
+		</div>
 	{/if}
 
 	<div class="space-y-4 rounded-lg border p-4">
