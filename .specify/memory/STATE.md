@@ -1315,3 +1315,7 @@ anterior foi alterada.
 - **Entrega**: 42 `problem.md` no formato canônico — 30 novos, 5 reescritos (`010`, `020`–`023`), 7 novos ao lado de `define.md` fino (`107`–`113`). Nenhum veredito/intake/research/spec/gate/CI/código alterado.
 - **Evidência local ([EV])**: 42/42 com Slug exato, 8 seções, Users/Stakeholders, métricas com baseline, Cost of Inaction e `[NEEDS CLARIFICATION:]`; paths não-symlink; `git diff --check` RC 0.
 - **[NV]**: gate/CI remoto, ACR e merge até observação ao vivo; nenhum merge de `main`, deploy, auto-merge, force-push ou toque em trabalho alheio.
+
+### Suplemento — gate (2026-11-25T03:33Z, append-only)
+
+- `[EV]` gate local: FAIL→FAIL→PASS. Causas ambientais: SIGABRT em `aws-lc-sys` (memória/swap) e ENOSPC em `chrono-tz` (btrfs metadata); após `cargo clean` no target próprio e `CARGO_BUILD_JOBS=2`, `gate-integrity: PASS` (`87` pisos, `GATE_RC=0`, 03:18:11Z→03:32:52Z). Sem código/gate/CI alterados; CI remoto observado via PR #428.

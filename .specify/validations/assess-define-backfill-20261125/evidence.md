@@ -1,6 +1,6 @@
 # Evidence — backfill/regularização de problem definition (42 assessments)
 
-**Data/hora**: 2026-11-25T02:55Z · **Base**: `github/dev@df75b1bcd` · **Worktree**: `.specify/queue/worktrees/assess-define-backfill-20261125`
+**Data/hora**: 2026-11-25T03:33Z · **Base**: `github/dev@df75b1bcd` · **Worktree**: `.specify/queue/worktrees/assess-define-backfill-20261125`
 
 | Passo | Ação | Saída observada | Resultado | Captura |
 |---|---|---|---|---|
@@ -8,7 +8,7 @@
 | 2 | Contar artefatos | 30 criações + 5 reescritas + 7 criações = 42 slugs | PASS | Bloco A |
 | 3 | Formato canônico | 42/42 com H1, Slug e 7 seções obrigatórias | PASS | Bloco A |
 | 4 | Conteúdo | Users/Stakeholders, baseline, Cost of Inaction e `[NEEDS CLARIFICATION:]` presentes | PASS | Bloco A |
-| 5 | Gate determinístico | ver Bloco B | ver Bloco B | Bloco B |
+| 5 | Gate determinístico | PASS na 3ª tentativa; duas falhas ambientais documentadas | PASS | Bloco B |
 | 6 | Higiene | `DIFFCHECK_RC=0`; 42 paths no status | PASS | Bloco C |
 | 7 | Preservação alheia | checkout sujo/worktrees alheias intactos; PR #410 não mesclado | PASS | Bloco C |
 
@@ -62,11 +62,29 @@ OK  113-bug-status bytes 6105 q 5
 DEFINE_BACKFILL_OK 42 / 42
 ```
 
-`bytes` = UTF-8 bytes; `q` = contagem de `[NEEDS CLARIFICATION:` em Open Questions. Arquivos `define.md` dos 7 slugs recentes permaneceram intactos.
+`bytes` = UTF-8 bytes; `q` = contagem de `[NEEDS CLARIFICATION:]` em Open Questions. Arquivos `define.md` dos 7 slugs recentes permaneceram intactos.
 
 ## Bloco B — gate determinístico
 
-Anexado após execução na worktree isolada, com `TMPDIR` gravável.
+1ª tentativa (2026-11-25T02:57:50Z → 03:02:04Z): `gate-integrity: FAIL`; `cargo --ignored --list failed (rc=101)` por `cc-rs`/`aws-lc-sys` SIGABRT sob pressão de memória (`free -h`: 379 MiB livres, swap 6,5/8 GiB; load ~16). Nenhum arquivo de código foi alterado.
+
+2ª tentativa (2026-11-25T03:02:21Z → 03:14:10Z), com `CARGO_BUILD_JOBS=1`: `FAIL`; erro extraído: `failed to build archive .../chrono-tz...rlib: failed to rename archive file: No space left on device (os error 28)`. Btrfs em `/home` com metadata 5,49/6,00 GiB e nenhum chunk livre.
+
+3ª tentativa (2026-11-25T03:18:11Z → 03:32:52Z), após `cargo clean` no `target/` desta worktree (3.189 arquivos / 817,5 MiB removidos) e `CARGO_BUILD_JOBS=2`:
+
+```text
+gate-integrity: PASS
+  ok  job frontend-build present and non-vacuous
+  ok  job rust-build present and non-vacuous
+  ok  job db-tests present and non-vacuous
+  ok  job dependency-review present and non-vacuous
+  ok  rust.yml contains 'cargo build --workspace'
+  ok  rust.yml contains 'cargo test --workspace'
+  ok  all 11 db contract floors intact (87 total)
+GATE_RC=0
+```
+
+As duas falhas são ambientais (OOM/ENOSPC em btrfs), não regressão de código: o diff é exclusivamente documental e o gate passou no mesmo checkout após limpeza do target. Checks remotos no head exato do PR são registrados separadamente.
 
 ## Bloco C — higiene e preservação
 

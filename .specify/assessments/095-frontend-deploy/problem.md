@@ -10,8 +10,8 @@ O FQDN `flora.mdmv.qzz.io` não serve o frontend: ele serve a API Rust. A cadeia
 
 ## Affected Users & Stakeholders
 
-- **Users**: usuário final que abre a aplicação no FQDN e navega para `/tasks`, recebendo 404 da API Rust (`research.md:55`); maintainer/SE que relatou o defeito (`intake.md:34`).
-- **Stakeholders**: dono do gate ADR-0003 (deploy fora do gate de merge); operador de deploy/Coolify; responsável por DNS/FQDN; [ASSUMPTION] consumidores das rotas de API na origem atual, não identificados (`research.md:85`).
+- **Users**: usuário final que abre a aplicação no FQDN e navega para `/tasks`, recebendo 404 da API Rust (`research.md:55`); maintainer/SE que relatou o defeito (`intake.md:18`).
+- **Stakeholders**: dono do gate ADR-0003 (deploy fora do gate de merge); operador de deploy/Coolify; responsável por DNS/FQDN; [ASSUMPTION] consumidores das rotas de API na origem atual, não identificados (`research.md:41`).
 
 ## Goals
 
@@ -41,10 +41,10 @@ A aplicação continua inacessível no FQDN, com `/` e `/tasks` retornando 404 e
 
 ## Open Questions
 
-- [NEEDS CLARIFICATION: quais são as configurações atuais de DNS/FQDN e de deploy no Coolify, dado que não foram observadas neste snapshot (**[NV]**)?] (`intake.md:37`)
-- [NEEDS CLARIFICATION: qual é a resposta HTTP real de `/`, `/tasks`, `/health`, `/metrics` e `/llms.txt` nas duas origens após a mudança (**[NV]**)?] (`intake.md:38`)
-- [NEEDS CLARIFICATION: quem detém a autorização para disparar a publicação manual e para promover o deploy?] (`intake.md:39`)
-- [NEEDS CLARIFICATION: existem consumidores de `flora.mdmv.qzz.io` que dependam das rotas da API nessa origem?] (`intake.md:40`; `research.md:85`)
-- [NEEDS CLARIFICATION: qual estratégia de rollback se aplica se a separação de origens quebrar o login ou o websocket?] (`intake.md:41`; `research.md:87`)
-- [NEEDS CLARIFICATION: o header CORS e o `config.js` entregues ao browser foram verificados em produção ou permanecem apenas como contrato especificado (**[NV]**)?] (`intake.md:42`)
-- [NEEDS CLARIFICATION: como o desvio entre a publicação prevista no GHCR (FR-002) e o build direto do Git no Coolify deve ser refletido nos artefatos do ciclo?] (`research.md:83`)
+- [NEEDS CLARIFICATION: quais são as configurações atuais de DNS/FQDN e de deploy no Coolify, dado que não foram observadas neste snapshot (**[NV]**)?] (`intake.md:23`)
+- [NEEDS CLARIFICATION: qual é a resposta HTTP real de `/`, `/tasks`, `/health`, `/metrics` e `/llms.txt` nas duas origens após a mudança (**[NV]**)?] (`intake.md:24`)
+- [NEEDS CLARIFICATION: quem detém a autorização para disparar a publicação manual e para promover o deploy?] (`intake.md:25`)
+- [NEEDS CLARIFICATION: existem consumidores de `flora.mdmv.qzz.io` que dependam das rotas da API nessa origem?] (`intake.md:26`; `research.md:41`)
+- [NEEDS CLARIFICATION: qual estratégia de rollback se aplica se a separação de origens quebrar o login ou o websocket?] (`intake.md:27`; `research.md:42`)
+- [NEEDS CLARIFICATION: o header CORS e o `config.js` entregues ao browser foram verificados em produção ou permanecem apenas como contrato especificado (**[NV]**)?] (`intake.md:28`)
+- [NEEDS CLARIFICATION: como o desvio entre a publicação prevista no GHCR (FR-002) e o build direto do Git no Coolify deve ser refletido nos artefatos do ciclo?] (`research.md:38`)

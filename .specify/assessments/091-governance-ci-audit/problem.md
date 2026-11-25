@@ -41,9 +41,9 @@ Sem auditoria viva, uma divergência entre a proteção real e a ADR-0003 pode p
 
 ## Open Questions
 
-- [NEEDS CLARIFICATION: qual é o estado ao vivo dos required checks e da proteção de `dev`/`main` no momento da auditoria, além do registrado como **[NV]**?] (`intake.md:32`)
-- [NEEDS CLARIFICATION: qual divergência concreta entre documentação e prática motivou a auditoria, se houver alguma?] (`intake.md:33`)
-- [NEEDS CLARIFICATION: qual é o destino e a reavaliação das demais emendas pendentes registradas como escaladas **[NV]** a maintainer?] (`intake.md:34`)
-- [NEEDS CLARIFICATION: qual é o estado atual do deploy em produção conduzido pela ligação MDMV-Autonoma, incluindo health e imagem de rollback?] (`intake.md:35`)
-- [NEEDS CLARIFICATION: como os itens diferidos (Tauri/OTLP, leg RBAC) devem ser acompanhados até uma eventual reavaliação?] (`intake.md:36`)
-- [NEEDS CLARIFICATION: qual audiência e periodicidade são esperadas para o relatório de auditoria viva?] (`intake.md:37`)
+- [NEEDS CLARIFICATION: qual é o estado ao vivo dos required checks e da proteção de `dev`/`main` no momento da auditoria, além do registrado como **[NV]**?] (`intake.md:23`)
+- [NEEDS CLARIFICATION: qual divergência concreta entre documentação e prática motivou a auditoria, se houver alguma?] (`intake.md:24`)
+- [NEEDS CLARIFICATION: qual é o destino e a reavaliação das demais emendas pendentes registradas como escaladas **[NV]** a maintainer?] (`intake.md:25`)
+- [NEEDS CLARIFICATION: qual é o estado atual do deploy em produção conduzido pela ligação MDMV-Autonoma, incluindo health e imagem de rollback?] (`intake.md:26`)
+- [NEEDS CLARIFICATION: como os itens diferidos (Tauri/OTLP, leg RBAC) devem ser acompanhados até uma eventual reavaliação?] (`intake.md:27`)
+- [NEEDS CLARIFICATION: qual audiência e periodicidade são esperadas para o relatório de auditoria viva?] (`intake.md:28`)

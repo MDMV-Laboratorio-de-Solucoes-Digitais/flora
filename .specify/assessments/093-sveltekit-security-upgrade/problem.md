@@ -41,10 +41,10 @@ O merge de `dev` para `main` continua bloqueado pelo `dependency-review`, e os a
 
 ## Open Questions
 
-- [NEEDS CLARIFICATION: qual é a contagem viva de advisories no painel do GitHub após a correção, dado que só o inventário de entrada foi registrado (**[NV]**)?] (`intake.md:31`; `research.md:64`)
-- [NEEDS CLARIFICATION: o `dependency-review` da PR #318 voltou a passar na CI remota, considerando que gate local verde não a substitui (**[NV]**)?] (`intake.md:32`)
-- [NEEDS CLARIFICATION: existem consumidores de `svelte.config.js` ou do alias `$lib` fora de `apps/frontend` que precisem ser considerados?] (`intake.md:33`)
-- [NEEDS CLARIFICATION: qual é a expectativa de compatibilidade com o runtime de deploy (`adapter-node`) após a mudança de major?] (`intake.md:34`)
-- [NEEDS CLARIFICATION: há versões residuais das versões afetadas em outros locks do repositório além dos dois do frontend?] (`intake.md:35`)
-- [NEEDS CLARIFICATION: qual é a janela de reconsulta do estado remoto antes de qualquer promoção da PR #318?] (`intake.md:36`)
+- [NEEDS CLARIFICATION: qual é a contagem viva de advisories no painel do GitHub após a correção, dado que só o inventário de entrada foi registrado (**[NV]**)?] (`intake.md:23`; `research.md:64`)
+- [NEEDS CLARIFICATION: o `dependency-review` da PR #318 voltou a passar na CI remota, considerando que gate local verde não a substitui (**[NV]**)?] (`intake.md:24`)
+- [NEEDS CLARIFICATION: existem consumidores de `svelte.config.js` ou do alias `$lib` fora de `apps/frontend` que precisem ser considerados?] (`intake.md:25`)
+- [NEEDS CLARIFICATION: qual é a expectativa de compatibilidade com o runtime de deploy (`adapter-node`) após a mudança de major?] (`intake.md:26`)
+- [NEEDS CLARIFICATION: há versões residuais das versões afetadas em outros locks do repositório além dos dois do frontend?] (`intake.md:27`)
+- [NEEDS CLARIFICATION: qual é a janela de reconsulta do estado remoto antes de qualquer promoção da PR #318?] (`intake.md:28`)
 - [NEEDS CLARIFICATION: como reconciliar o registro de T001..T009 em `tasks.md`/`decision.md` com o `tasks=6/6` de `analyze.md`/`converge.md`?] (`research.md:67`)
