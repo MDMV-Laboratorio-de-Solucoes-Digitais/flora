@@ -130,7 +130,7 @@ There is no root `verify.sh`, no nextest config, and no Python pytest suite. Fac
 - Package managers coexist: `bun.lock` is used by CI and local frontend commands; `package-lock.json` is used by the Docker image with `npm ci`. Keep both in sync when dependencies change.
 - PostgreSQL 18+ is mandatory for Seed. `docker-compose.yml` profiles: default `postgres`, `realtime` (Valkey), `search` (Meilisearch).
 - Required checks: `frontend-build`, `rust-build`, `db-tests`, `dependency-review` (PR-only). `e2e-browser`, `supply-chain-vet`, OSV scan, Forgejo mirror, and branch-protection audit are advisory.
-- Deploy uses Coolify via manual `workflow_dispatch`; never assume a deploy happened because a PR merged.
+- Deploy uses Coolify via push/merge to `dev` (staging) and `main` (production); `workflow_dispatch` is the manual backup. Deploy steps fail closed when webhook secrets are missing; never assume a deploy happened without its workflow evidence.
 - Absolute rule: no credentials in docs, logs, commits, or tool output. Use local token files only via shell variables.
 
 ## Testing & QA

@@ -18,7 +18,7 @@ O proprietário determinou que push, PR e merge **nunca** devem ser decisões hu
    - nomes de job únicos (`frontend-build`, `rust-build`) para que required checks sejam inequívocos;
    - cada leg `db-tests` soma os contadores `N passed` do libtest e exige um piso (13/4/8/8/5/6/4/3 — total 51), falhando se o filtro casar zero testes ou se `cargo` falhar (`pipefail`);
    - `timeout-minutes` e `concurrency` por job;
-   - `docker-staging.yml` corrigido (`secrets.*` movido para `env`) e com gatilho de push desligado — deploy continua fora do gate de merge e segue sendo uma decisão explícita separada.
+   - `docker-staging.yml` corrigido (`secrets.*` movido para `env`); o gatilho de push foi reativado apenas em `dev` pela decisão SWE de 2026-11-25 (emenda abaixo) — deploy continua fora do gate de merge e sob contrato determinístico separado.
 3. **Proteção de branch:** `dev` e `main` passam a exigir os checks `frontend-build`, `rust-build`, `db-tests` e `dependency-review`, com *strict* (branch atualizada) e `enforce_admins`. Sem required reviews — isso reintroduziria decisão humana.
 4. **Jobs informativos** (`supply-chain-vet`, `e2e-browser`, `osv-scan`) permanecem `continue-on-error`/advisory e **nunca** entram no conjunto de required checks.
 
@@ -27,7 +27,7 @@ O proprietário determinou que push, PR e merge **nunca** devem ser decisões hu
 - Positivo: nenhuma alteração entra em `dev`/`main` sem compilação, clippy estrito, checagem de supply-chain e suíte de testes com contagem mínima verificada.
 - Risco residido: GitHub trata `skipped` como sucesso em required check. Portanto nenhum job obrigatório pode ter `if:` ou `continue-on-error`. `dependency-review` roda apenas em PR — aceitável porque merges ocorrem via PR.
 - Risco operacional: renomear um job muda o nome do check e pode travar todos os PRs. Após qualquer renomeação, os required checks devem ser reselecionados a partir de um run recente na branch base.
-- Deploy (GHCR + Coolify) fica explicitamente fora desta ADR: continua manual via `workflow_dispatch`.
+- Deploy (GHCR + Coolify) fica explicitamente fora dos required checks desta ADR: é automático por push/merge em `dev` (staging) ou `main` (produção), com `workflow_dispatch` como backup manual; o contrato é validado por `scripts/ci/check_deploy_workflows.py` (emenda 2026-11-25).
 - O ciclo 037 é o primeiro executado sob esta política; o merge só é realizado após verificação real dos checks no PR.
 
 ## Verificação
@@ -46,3 +46,10 @@ A regra nova prevalece sobre qualquer cláusula anterior de aprovador distinto/r
 Reforço operacional: **CI/CD GREEN é suficiente** para conduzir o merge para `dev/` de forma autônoma, sem aprovação. Se o CI/CD **não inspirar confiança**, o próximo 80/20 **IMEDIATO** é reforçar o CI/CD até que ele inspire confiança suficiente para conduzir o merge para `dev/` sem necessidade de aprovação — não escalar para aprovação humana.
 
 - **Status inalterado:** Accepted. A Decisão e as Consequências acima permanecem; apenas a condição de aprovador/revisão é superada por esta emenda.
+
+## Emenda 2026-11-25 — deploy automático por branch (decisão SWE)
+
+- Decisão SWE: todo push/merge em `dev` publica os artefatos de staging (API + web) e todo push/merge em `main` publica os de produção (API + web); `workflow_dispatch` permanece como acionamento manual de contingência.
+- Implementação: `on.push.branches` contém exatamente `dev` em `docker-staging.yml`/`docker-staging-web.yml` e exatamente `main` em `docker-frontend.yml`/`docker-production-api.yml`. O guard de job `github.ref` e o fail-closed do webhook continuam obrigatórios; as etapas de webhook usam `github.event_name == 'push' || inputs.deploy`.
+- Nenhum required check, piso, ratchet ou tripwire foi enfraquecido: o deploy segue fora do gate de merge e `scripts/ci/check_deploy_workflows.py` (com `--self-test`) rejeita trigger sem branch, branch errada, cross-env ref, webhook reaproveitado, `:latest`, `cancel-in-progress: true`, `continue-on-error` e etapa fail-closed ausente.
+- **[NV]**: estado ao vivo do GitHub Actions, segredos Coolify e resultado do deploy não foram observados nesta mudança; nenhum deploy foi disparado.
