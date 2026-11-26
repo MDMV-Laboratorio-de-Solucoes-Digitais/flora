@@ -1,10 +1,13 @@
 name: Build & Deploy Flora API — Staging (GHCR -> Coolify)
 
-# Manual ONLY (ADR-0003): a webhook call is a real deploy and is never part of
-# push/PR/merge automation. Staging is fed from `dev`; production from `main`.
-# The deploy step fails closed when the webhook secret is missing so a run can
-# never look green while skipping the deploy.
+# Automatic on push/merge to `dev` (staging); `workflow_dispatch` is the manual
+# backup. Staging is fed from `dev`; production from `main`. The job guard
+# rejects every other ref and the fail-closed step stops a run whose webhook
+# secret is missing instead of reporting green while skipping the deploy.
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
     inputs:
       deploy:
@@ -31,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fail closed when the deploy webhook is missing
-        if: ${{ inputs.deploy && env.DEPLOY_WEBHOOK == '' }}
+        if: ${{ (github.event_name == 'push' || inputs.deploy) && env.DEPLOY_WEBHOOK == '' }}
         run: |
           echo "::error::COOLIFY_STAGING_API_DEPLOY_WEBHOOK is not configured; refusing a deploy that would silently skip."
           exit 1
@@ -54,7 +57,7 @@ jobs:
             ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:${{ github.sha }}
 
       - name: Trigger Coolify staging API deploy
-        if: ${{ inputs.deploy }}
+        if: ${{ github.event_name == 'push' || inputs.deploy }}
         env:
           WEBHOOK_URL: ${{ env.DEPLOY_WEBHOOK }}
           API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}

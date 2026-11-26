@@ -49,3 +49,10 @@ Documento novo e append-only. Nenhuma linha de `STATE.md`, `PROGRESSO.md`, ADRs,
 - A imagem GHCR permaneceu privada (`401` no pull do Coolify). O app `Flora Web` (UUID `uvykanlrkyp5dzrkktaj5bup`) foi reconfigurado para **buildar direto do Git**: repositório `MDMV-Laboratorio-de-Solucoes-Digitais/flora.git`, branch `dev`, `base_directory=/apps/frontend`, `dockerfile_location=/Dockerfile`, porta 3000, FQDN `https://flora.mdmv.qzz.io`, `FLORA_API_BASE_URL=https://flora-api.mdmv.qzz.io`. Deploy `kwzqvvvkeldq2zmyxa12fu3g` **finished**.
 - API migrou para `https://flora-api.mdmv.qzz.io` com CORS `https://flora.mdmv.qzz.io`. Medição final: frontend `/`, `/tasks`, `/config.js` → **200**; API `/health`, `/llms.txt` → **200**; preflight CORS → **200**; página inicial renderizada em navegador real.
 - **[NV] remanescente:** fluxo E2E autenticado e healthcheck do Coolify (`unknown`, sem health check configurado). Rollback = reapontar o FQDN para a origem/imagem anterior, sem force-push.
+
+## (f) Emenda 2026-11-25 — publicação automática por branch
+
+- A decisão de 2026-11-20 (item c.1, publicação manual) foi superada pela decisão SWE de 2026-11-25: push/merge em `dev` publica `flora:staging` e `flora-web:staging`; push/merge em `main` publica `flora:production` e `flora-web:production`. `workflow_dispatch` permanece como backup manual.
+- Esta emenda é documental e determinística; não altera o estado remoto observado em (e), não executa deploy e não muda DNS/CORS/FQDN. Nenhuma credencial ou valor secreto é registrado.
+- O contrato dos quatro workflows é verificado por `python3 scripts/ci/check_deploy_workflows.py` (e `--self-test`); cross-environment ref, webhook reaproveitado, `:latest`, cancelamento e `continue-on-error` continuam proibidos.
+- **[NV]** execução ao vivo, webhooks e healthcheck do Coolify; reconsultar antes de afirmar deploy aplicado.

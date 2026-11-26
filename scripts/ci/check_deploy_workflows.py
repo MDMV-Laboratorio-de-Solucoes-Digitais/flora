@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Deterministic contract guard for the four manual Flora deploy workflows.
+"""Deterministic contract guard for the four branch-scoped Flora deploy workflows.
 
-ADR-0003 keeps deploy manual (`workflow_dispatch`) and outside the merge gate.
-This script refuses drift that would make a deploy silent, automatic, or able to
-cross environments: push triggers, wrong source branch, reused webhook secrets,
-shared image tags, cancellation of an in-flight deploy, or a missing-webhook
-step that would let a run look green while skipping the deploy.
+Push/merge to `dev` deploys staging; push/merge to `main` deploys production;
+`workflow_dispatch` stays as the manual backup. This script refuses drift that
+would make a deploy silent, cross-environment, or able to skip the webhook:
+unfiltered/wrong-branch push triggers, missing branch guards, reused webhook
+secrets, shared image tags, cancellation of an in-flight deploy, a
+`continue-on-error` deploy step, or a missing-webhook step that would let a run
+look green while skipping the deploy.
 
 Stdlib only: no PyYAML, no network, no GitHub API in the CI path.
 
@@ -51,7 +53,10 @@ SPEC: dict[str, tuple[str, str, str, str]] = {
     ),
 }
 WEBHOOKS = {value[2] for value in SPEC.values()}
-OTHER_TRIGGERS = {"push", "pull_request", "schedule", "workflow_run", "repository_dispatch"}
+OTHER_TRIGGERS = {"pull_request", "schedule", "workflow_run", "repository_dispatch"}
+DEPLOY_IF = "github.event_name == 'push' || inputs.deploy"
+FAIL_CLOSED_IF = f"if: ${{{{ ({DEPLOY_IF}) && env.DEPLOY_WEBHOOK == '' }}}}"
+WEBHOOK_IF = f"if: ${{{{ {DEPLOY_IF} }}}}"
 
 
 def _on_block(text: str) -> list[str]:
@@ -67,6 +72,35 @@ def _on_block(text: str) -> list[str]:
     return []
 
 
+def _push_branches(text: str) -> list[str] | None:
+    """Branches listed under on.push.branches, or None when push is absent."""
+    in_on = in_push = in_branches = False
+    branches: list[str] = []
+    for line in text.splitlines():
+        if re.match(r"^on:\s*$", line):
+            in_on = True
+            continue
+        if not in_on:
+            continue
+        if line.strip() and not line.startswith((" ", "\t")):
+            break
+        stripped = line.strip()
+        if stripped == "push:":
+            in_push, in_branches = True, False
+            continue
+        if not in_push:
+            continue
+        if stripped == "branches:":
+            in_branches = True
+            continue
+        if in_branches and stripped.startswith("- "):
+            branches.append(stripped[2:].strip().strip("'\""))
+            continue
+        if stripped:
+            break
+    return branches if in_push else None
+
+
 def validate_text(filename: str, text: str) -> list[str]:
     spec = SPEC.get(filename)
     if spec is None:
@@ -76,11 +110,18 @@ def validate_text(filename: str, text: str) -> list[str]:
     triggers = _on_block(text)
 
     if "workflow_dispatch:" not in triggers:
-        errors.append(f"{filename}: manual workflow_dispatch trigger is missing")
+        errors.append(f"{filename}: manual workflow_dispatch backup is missing")
+    if "push:" not in triggers:
+        errors.append(f"{filename}: automatic push trigger is missing")
     for trigger in triggers:
         key = trigger.split(":", 1)[0]
         if key in OTHER_TRIGGERS:
             errors.append(f"{filename}: forbidden automatic trigger {key!r}")
+    branches = _push_branches(text)
+    if branches != [branch]:
+        errors.append(
+            f"{filename}: on.push.branches {branches!r} != expected ['{branch}']"
+        )
 
     guard = f"if: ${{{{ github.ref == 'refs/heads/{branch}' }}}}"
     if guard not in text:
@@ -88,6 +129,13 @@ def validate_text(filename: str, text: str) -> list[str]:
     other_branch = "main" if environment == "staging" else "dev"
     if f"refs/heads/{other_branch}" in text:
         errors.append(f"{filename}: cross-environment branch ref refs/heads/{other_branch}")
+
+    if FAIL_CLOSED_IF not in text:
+        errors.append(
+            f"{filename}: fail-closed step must also guard push events ({DEPLOY_IF})"
+        )
+    if WEBHOOK_IF not in text:
+        errors.append(f"{filename}: webhook step must fire on push ({DEPLOY_IF})")
 
     found_webhooks = [name for name in sorted(WEBHOOKS) if name in text]
     if found_webhooks != [webhook]:
@@ -137,6 +185,9 @@ def validate_all(workflows: Path = WORKFLOWS) -> list[str]:
 
 SELF_TEST_BASE = """name: fixture
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
 concurrency:
   group: fixture
@@ -152,8 +203,10 @@ jobs:
       DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_STAGING_API_DEPLOY_WEBHOOK }}
     steps:
       - name: Fail closed when the deploy webhook is missing
+        if: ${{ (github.event_name == 'push' || inputs.deploy) && env.DEPLOY_WEBHOOK == '' }}
         run: echo "::error::COOLIFY_STAGING_API_DEPLOY_WEBHOOK is not configured; refusing a deploy that would silently skip."
-      - name: Build
+      - name: Trigger deploy
+        if: ${{ github.event_name == 'push' || inputs.deploy }}
         run: echo ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:staging
 """
 
@@ -164,8 +217,24 @@ def self_test() -> int:
     if validate_text(filename, SELF_TEST_BASE):
         failures.append("valid fixture was rejected")
     mutations = {
-        "automatic push trigger": ("  workflow_dispatch:", "  push:"),
+        "push trigger pointed at production": ("      - dev", "      - main"),
+        "unfiltered push trigger": ("  push:\n    branches:\n      - dev\n", "  push:\n"),
+        "wildcard push branches": ("      - dev", "      - '**'"),
+        "push trigger removed": ("  push:\n    branches:\n      - dev\n", ""),
+        "pull_request trigger added": ("  push:\n", "  pull_request:\n"),
         "wrong source branch": ("refs/heads/dev", "refs/heads/main"),
+        "webhook skipped on manual dispatch": (
+            "if: ${{ github.event_name == 'push' || inputs.deploy }}\n        run: echo ghcr.io",
+            "if: ${{ github.event_name == 'push' }}\n        run: echo ghcr.io",
+        ),
+        "webhook skipped on push": (
+            "if: ${{ github.event_name == 'push' || inputs.deploy }}\n        run: echo ghcr.io",
+            "if: ${{ inputs.deploy }}\n        run: echo ghcr.io",
+        ),
+        "fail-closed step ignores push": (
+            "if: ${{ (github.event_name == 'push' || inputs.deploy) && env.DEPLOY_WEBHOOK == '' }}",
+            "if: ${{ inputs.deploy && env.DEPLOY_WEBHOOK == '' }}",
+        ),
         "reused production webhook": (
             "COOLIFY_STAGING_API_DEPLOY_WEBHOOK",
             "COOLIFY_FRONTEND_DEPLOY_WEBHOOK",
@@ -173,6 +242,10 @@ def self_test() -> int:
         "cancellation of live deploy": (
             "cancel-in-progress: false",
             "cancel-in-progress: true",
+        ),
+        "continue-on-error deploy": (
+            "      - name: Trigger deploy\n",
+            "      - name: Trigger deploy\n        continue-on-error: true\n",
         ),
         "missing fail-closed step": (
             "::error::COOLIFY_STAGING_API_DEPLOY_WEBHOOK is not configured",
@@ -207,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
     for line in failures:
         print(f"  ERR {line}")
     if not failures:
-        print(f"  ok  {len(SPEC)} manual, branch-guarded, fail-closed deploy workflows")
+        print(f"  ok  {len(SPEC)} push-automated, branch-guarded, fail-closed deploy workflows")
     return 1 if failures else 0
 
 

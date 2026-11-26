@@ -26,7 +26,10 @@ Além disso, a prova do ADR-0005 mostrou que **ligar enforcement hoje quebraria 
    required, preservando ADR-0003.
 3. Deploy em produção, troca de credenciais da role, mudança de required
    checks/protections/CODEOWNERS e tag/release continuam exigindo autorização explícita
-   do SE (`docs/research/2026-11-16-036-authorization-matrix.md:28,40`).
+   do SE (`docs/research/2026-11-16-036-authorization-matrix.md:28,40`). A exceção é o
+   deploy automático de `main` decidido pelo SWE em 2026-11-25 e registrado na emenda do
+   ADR-0003: ele é disparado por push/merge sob guard determinístico, sem autorização
+   casuística; as demais mudanças listadas permanecem sob autorização do SE.
 4. Reversão = desativar policies/FORCE no DB e voltar ao filtro da app; nenhuma ação
    destrutiva de dados.
 
@@ -56,3 +59,9 @@ removida (mutation test). Nada marcado verde sem execução (ADR-0001).
 ## Relationship
 
 Depende de ADR-0004 e ADR-0005. Não altera o regime de merge autônomo do ADR-0003.
+
+## Nota 2026-11-25 — deploy automático e required checks
+
+- A promoção rotineira para produção por push/merge em `main` não condiciona required check algum: os quatro workflows de deploy ficam fora do conjunto `frontend-build`/`rust-build`/`db-tests`/`dependency-review` e são guardados por `scripts/ci/check_deploy_workflows.py`.
+- `if:` e `continue-on-error` nas etapas de deploy não entram nos jobs obrigatórios; a regra desta ADR contra gate vazio permanece intacta.
+- **[NV]** execução real do deploy e estado de RLS em produção; nenhuma autorização de flip de RLS foi derivada desta nota.

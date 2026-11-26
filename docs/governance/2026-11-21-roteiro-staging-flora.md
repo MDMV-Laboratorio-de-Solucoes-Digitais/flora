@@ -233,3 +233,11 @@ curl -sS "$API_URL/api/v1/bootstrap/status"; echo
 - Evidência (screenshot/log):
 - Impacto:
 ```
+
+## 14. Deploy automático — 2026-11-25 (append-only)
+
+- Gatilho: push/merge em `dev` → `docker-staging.yml` (API) + `docker-staging-web.yml` (web); push/merge em `main` → `docker-production-api.yml` (API) + `docker-frontend.yml` (web). `workflow_dispatch` segue como backup manual com o input `deploy`.
+- Guardas: `on.push.branches` com uma única branch, `if: ${{ github.ref == 'refs/heads/<branch>' }}`, fail-closed se o webhook secret faltar e etapa de webhook com `github.event_name == 'push' || inputs.deploy`. Tags `:staging`/`:production` por ambiente, nunca `:latest`; `cancel-in-progress: false`.
+- Verificação determinística local antes de considerar o deploy: `python3 scripts/ci/check_deploy_workflows.py` e `python3 scripts/ci/check_deploy_workflows.py --self-test`.
+- Rollback: reapontar o app Coolify para a imagem do SHA anterior (tag `<image>:<sha>` publicada) ou usar `workflow_dispatch` com `deploy: false` para publicar sem disparar webhook; sem force-push e sem mudança de proteção de branch.
+- **[NV]** resultado do deploy automático, configuração ao vivo dos webhooks e healthchecks do Coolify não observados nesta mudança; nenhum deploy foi disparado. Checar depois com `FLORA_WEB_URL=... FLORA_API_URL=... python3 scripts/deploy/check_endpoints.py` (somente leitura) e conferir `/`/`/tasks` na web e `/health` na API.

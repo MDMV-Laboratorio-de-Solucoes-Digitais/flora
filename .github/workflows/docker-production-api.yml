@@ -1,9 +1,13 @@
 name: Build & Deploy Flora API — Production (GHCR -> Coolify)
 
-# Manual ONLY (ADR-0003). Production API is fed from `main`; a dispatch from
-# `dev` is rejected by the job guard. Creating the webhook secret is a human
-# action; until then the fail-closed step stops the run before any publish.
+# Automatic on push/merge to `main` (production API); `workflow_dispatch` is
+# the manual backup. A dispatch from `dev` is rejected by the job guard, and
+# the fail-closed step stops the run before any publish while the webhook
+# secret is missing.
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       deploy:
@@ -30,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fail closed when the deploy webhook is missing
-        if: ${{ inputs.deploy && env.DEPLOY_WEBHOOK == '' }}
+        if: ${{ (github.event_name == 'push' || inputs.deploy) && env.DEPLOY_WEBHOOK == '' }}
         run: |
           echo "::error::COOLIFY_PRODUCTION_API_DEPLOY_WEBHOOK is not configured; refusing a deploy that would silently skip."
           exit 1
@@ -53,7 +57,7 @@ jobs:
             ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora:${{ github.sha }}
 
       - name: Trigger Coolify production API deploy
-        if: ${{ inputs.deploy }}
+        if: ${{ github.event_name == 'push' || inputs.deploy }}
         env:
           WEBHOOK_URL: ${{ env.DEPLOY_WEBHOOK }}
           API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
