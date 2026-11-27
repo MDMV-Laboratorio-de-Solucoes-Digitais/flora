@@ -1,9 +1,13 @@
 name: Build & Deploy Flora Web — Production (GHCR -> Coolify)
 
-# Manual ONLY (ADR-0003). This webhook deploys the production web app; it must
-# never be dispatched from `dev`. The existing repository secret name is kept
-# so no live GitHub configuration change is needed for this workflow.
+# Automatic on push/merge to `main` (production web); `workflow_dispatch` is
+# the manual backup. A push/merge from `dev` cannot reach this workflow's job
+# guard, and the existing secret names are kept so no live configuration change
+# is needed. The deploy fails closed when its webhook secret is missing.
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       deploy:
@@ -30,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fail closed when the deploy webhook is missing
-        if: ${{ inputs.deploy && env.DEPLOY_WEBHOOK == '' }}
+        if: ${{ (github.event_name == 'push' || inputs.deploy) && env.DEPLOY_WEBHOOK == '' }}
         run: |
           echo "::error::COOLIFY_FRONTEND_DEPLOY_WEBHOOK is not configured; refusing a deploy that would silently skip."
           exit 1
@@ -54,7 +58,7 @@ jobs:
             ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora-web:${{ github.sha }}
 
       - name: Trigger Coolify production web deploy
-        if: ${{ inputs.deploy }}
+        if: ${{ github.event_name == 'push' || inputs.deploy }}
         env:
           WEBHOOK_URL: ${{ env.DEPLOY_WEBHOOK }}
           API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}

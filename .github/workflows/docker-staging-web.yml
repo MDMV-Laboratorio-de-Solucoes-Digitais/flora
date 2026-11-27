@@ -1,8 +1,13 @@
 name: Build & Deploy Flora Web — Staging (GHCR -> Coolify)
 
-# Manual ONLY (ADR-0003). Staging web is a separate app/FQDN from the staging
-# API and from production; never reuse the production webhook or image tag.
+# Automatic on push/merge to `dev` (staging); `workflow_dispatch` is the manual
+# backup. Staging web is a separate app/FQDN from the staging API and from
+# production; never reuse the production webhook or image tag. The job guard
+# rejects every other ref and the deploy fails closed without its webhook.
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
     inputs:
       deploy:
@@ -29,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fail closed when the deploy webhook is missing
-        if: ${{ inputs.deploy && env.DEPLOY_WEBHOOK == '' }}
+        if: ${{ (github.event_name == 'push' || inputs.deploy) && env.DEPLOY_WEBHOOK == '' }}
         run: |
           echo "::error::COOLIFY_STAGING_WEB_DEPLOY_WEBHOOK is not configured; refusing a deploy that would silently skip."
           exit 1
@@ -53,7 +58,7 @@ jobs:
             ghcr.io/mdmv-laboratorio-de-solucoes-digitais/flora-web:${{ github.sha }}
 
       - name: Trigger Coolify staging web deploy
-        if: ${{ inputs.deploy }}
+        if: ${{ github.event_name == 'push' || inputs.deploy }}
         env:
           WEBHOOK_URL: ${{ env.DEPLOY_WEBHOOK }}
           API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}

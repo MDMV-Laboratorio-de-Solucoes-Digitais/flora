@@ -638,3 +638,51 @@ permanecem intactas; apenas acréscimos.
 - **Entrega**: `create_with_quota` transacional com `pg_advisory_xact_lock`, `SUM(size_bytes)` ativo por org/workspace e `INSERT` na mesma transação; `upload_file`/`create_file` usam o mesmo caminho; contrato DB `db_aggregate_quota_rejects_second_upload` cobre 201 → 413, 1 linha e 0 blob órfão; piso `files` 7→8 em lockstep. Nenhuma migration, rota ou required check alterado.
 - **Evidência local ([EV])**: contrato 1 passed e suíte `contract::files::db_` 8 passed em PG18 descartável em `:15436` (15:39:15Z→15:39:29Z); `cargo fmt --all -- --check` RC 0; `cargo check -p flora-core -p flora-api -p flora-tests` 0 erros; `cargo clippy -p flora-core -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS com 89 pisos (15:40:59Z→15:41:01Z); `git diff --check` RC 0. Roteiro/evidência em `.specify/validations/126-aggregate-quota/`.
 - **[NV]**: required checks remotos no head do PR e efeitos de produção. Nenhum merge de `main`, deploy, auto-merge ou force-push executado por esta sessão.
+
+## Estado verificado — 2026-11-23 (configuração de deploy)
+
+- Contrato versionado: quatro workflows `workflow_dispatch` (staging ← `dev`, produção ← `main`) com branch guard, webhooks distintos, `cancel-in-progress: false` e fail-closed quando o segredo falta. Novos validadores determinísticos: `scripts/ci/check_deploy_workflows.py` (CI + self-test) e `scripts/deploy/check_endpoints.py` (self-test + verificação de web/API/CORS/bootstrap).
+- Runbook `docs/governance/deploy-coolify-cloudflare.md` com matriz de FQDNs/tags/segredos, passos Coolify/Cloudflare, pendentes humanos e rollback; `README.md:61` aponta para ele.
+- Gates locais: `check_deploy_workflows.py`, self-test, `check_gate_integrity.py` e self-test do checker de endpoints PASS. Medição ao vivo: produção `ok=true`; staging `ok=false` (web/FQDN ausentes e `/api/v1/bootstrap/status` → 404).
+- **[NV]**: estado real das apps no Coolify, healthchecks, segredos a criar e DNS `flora-staging-web` — sem credenciais nesta estação. Nenhum deploy, merge, mudança de DNS ou credencial foi executado.
+
+## Estado verificado — 2026-11-23 (configuração ao vivo)
+
+- Healthchecks habilitados em `Flora`, `Flora - Staging` e `Flora Web` (GET, 10/5/5); app `Flora Web - Staging` criada no Coolify (Git `dev`, `/apps/frontend`, `/Dockerfile`, auto-deploy off) com `FLORA_API_BASE_URL` de staging.
+- API de staging recebeu `FLORA_APP__ENV`, `FLORA_APP__BASE_URL`, `FLORA_APP__CORS_ORIGINS` e `FLORA_APP__JWT_SECRET` (valor não registrado). Três segredos de webhook criados no GitHub; DNS `flora-staging-web` criado no Cloudflare (CNAME proxied, confirmado por DoH).
+- Deploys de staging (API e web) disparados; primeiro build da web falhou por caminho duplicado do Dockerfile, corrigido e redeploy disparado. Status final em `docs/governance/deploy-coolify-cloudflare.md` §8.
+- **[NV]**: promoção `dev→main` da web de produção e remoção das env temporárias `FLORA_BOOTSTRAP__*` (prazo 2026-11-29) — decisões humanas, não executadas.
+
+## Estado verificado — 2026-11-23T16:08Z (resultado final)
+
+- Deploys de staging concluídos: API `finished`, web `finished`. `check_endpoints.py` → `ok=true` para produção e staging (7 sondas 200 em cada, CORS por origem correto).
+- `bootstrap/status` em staging agora retorna 200, mas `available:false`: DB de staging contém dados; zero state do handoff segue pendente de reset humano.
+- Nenhum deploy de produção, merge, force-push ou alteração de segredo de produção executado. Detalhes em `docs/governance/deploy-coolify-cloudflare.md` §8.
+
+## Estado verificado — 2026-11-23 (ações Tier 4 autorizadas nesta sessão)
+
+- Descoberto que o app de API de staging apontava para o **mesmo DB de produção** (`mdmv_core`); `DATABASE_URL` foi repontado para o database isolado `flora-staging-db` (`/flora_staging`), duplicata que apontava para produção removida. Redeploy da API de staging disparado.
+- Removidas as quatro variáveis `FLORA_BOOTSTRAP__ADMIN_EMAIL`/`ADMIN_PASSWORD` da app da API de produção; redeploy disparado.
+- App `Flora Web` promovida de `dev` para `main` e deploy disparado; deployment anterior `qmqbepulw7bjwysru6hy9svb` preservado para rollback.
+- Rotacionados os dois `manual_webhook_secret_github` que haviam aparecido em saída de ferramenta; GitHub não possui hooks configurados (0), então não houve reconciliação externa.
+- Resultado final das validações pendente da conclusão dos três builds.
+
+## Estado verificado — 2026-11-25T18:37Z (fechamento 80/20 pós ciclo 126)
+
+- **Promoção observada `[EV]`:** PR [#439](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/439) (base `main`, head `dev@75548f8dea`) passou a `merged: true` em REST e GraphQL às **18:19:18Z**; `github/main = a075a6ea8b`. Decisão humana — nenhum agente mesclou `main`, habilitou auto-merge, fez force-push ou disparou deploy.
+- **Origem entregue `[EV]`:** PR [#438](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/438) (`1783000c7f`, quota agregada transacional) é ancestral de `github/dev = 75548f8dea`; a API REST segue `open`/`behind` com `merge_commit_sha` de ref temporário. Fechar/triagem é oportunidade de automação.
+- **Gate `[EV]`:** `check_gate_integrity.py` PASS em worktree limpa de `github/dev` (89 pisos, 11 legs, `GATE_RC=0`); `check_deploy_workflows.py` + self-test PASS; 6/6 check-runs `success` no head exato; `e2e-browser` com 16 rotas `WCAG 2.2 AA: sem achados`.
+- **Bloco 5:** nenhum candidato de `IMPLEMENTAÇÃO`/`CORREÇÃO` elegível. Os achados axe de 2026-11-22 (BC-01) foram fechados no ciclo 112 (`6288a85693`) e provados no CI; autoria no chat fechada no ciclo 116; DMs é placeholder P2 fora do Seed. Restam itens de autorização/capacidade e REFINIMENTO, listados em `.specify/queue/cycle-128-closure.md` e na nota corrente de `.specify/memory/STATE.md`.
+- **Nenhum ciclo novo aberto:** encerramento na porta 0.9 com `backlog_de_fechamento` sem candidato elegível; zero código, PR, merge ou deploy por agente nesta sessão. Worktrees órfãs e arquivos sujos do checkout compartilhado preservados.
+- **`[NV]`:** deploy/efeitos de produção e verificação ao vivo de proteção de branch. Registro didático completo: `.specify/queue/cycle-128-closure.md`; ledger `.specify/queue/concurrency.jsonl` linhas 163–164.
+
+## Estado verificado — 2026-11-26T19:40Z (orquestração 80/20 v4.9, resumo append-only)
+
+- **`[EV]`** ALVO `/home/luis/development/MDMV/projetos/flora`; FONTE_FACTORY ao vivo `18be3fb3` (prompt registrou `b1deab1`) — factory é fonte de ideias, nunca autoridade; nada transplantado.
+- **`[EV]`** `gh api` nas proteções de `dev`/`main` → RC 0, contexts required `db-tests`, `dependency-review`, `frontend-build`, `rust-build`; `gh pr list --state open` → `[]`. Gate autoritativo `python3 scripts/ci/check_gate_integrity.py`: primeira execução RED por cache `cargo` corrompido (`cc-1.4.4` sem `src/target/`), restaurado do tarball oficial; reexecução **PASS** (11 legs / 89 pisos) em worktree limpa de `github/dev`; `check_deploy_workflows.py` PASS.
+- **`[EV]`** Check-runs no head exato: required verdes/skip permitido; `mirror` e dois `build-and-push` falharam, advisory. `github/dev=b44b53cdea`, `github/main=a075a6ea8b`, `origin/dev=1910d1c7d5` (Forgejo divergente).
+- **`[EV]`** `AGENTS.md` aprovado no working tree (`# Repository Guidelines`, oito seções), sem PR. Contagens SDD: 101 specs, 99 assessments, 8 bugs, 97 validations, 97 releases, constituição v1.4.0; cifras antigas permanecem como histórico.
+- **`[EV]`** Bloco 5 sem candidato `IMPLEMENTAÇÃO`/`CORREÇÃO` elegível; restam autorização/capacidade/refinamento (BC-04/05/11, GAP-0.7, FORGE-01, CRED-01, RLS-01, TAU-01, ZIT-01, DM-01, SDD-01, DEP-01, PR-438, ISO-01, BC-06/07/08/09/10/13, HLT-01). Zero PR/commit/merge/deploy; 5 worktrees e checkout sujo preservados.
+- **`[NV]`** CI futura, produção/deploy, credenciais, reconciliação Forgejo e decisões humanas: reconsultar ao vivo antes de agir.
+
+- **Correção append-only (2026-11-26T19:50Z):** a referência ao INBOX de 26/11 na nota anterior é histórica/`[NV]`; o arquivo não existe neste checkout. O pacote de escalonamento ao SWE é `.specify/memory/STATE.md:1133-1145`.
