@@ -1401,3 +1401,99 @@ anterior foi alterada.
 ### Verificação local concluída — ciclo 126 (2026-11-25T15:42Z, append-only)
 
 - `[EV]` `cargo test -p flora-tests db_aggregate_quota_rejects_second_upload -- --ignored --test-threads=1` 1 passed e `contract::files::db_` 8 passed em PG18 descartável (`:15436`); `cargo fmt --all -- --check` RC 0; `cargo check -p flora-core -p flora-api -p flora-tests` 0 erros; `cargo clippy -p flora-core -p flora-api -p flora-tests --all-targets -- -D warnings` RC 0; `check_gate_integrity.py` PASS (89 pisos, 15:40:59Z→15:41:01Z). Um erro de compilação do teste por `Config` não importado foi corrigido e o re-run passou. CI remoto permanece `[NV]` até o head do PR.
+
+## Configuração de deploy — 2026-11-23 (append-only)
+
+- **Âncora:** checkout `fix/promo-355-conflict` @ `eabbdba`; `github/main = 2551c09f`; nenhuma troca de branch, commit, push, merge ou deploy.
+- **Entrega:** contrato de quatro workflows manuais com branch guard (`dev` → staging, `main` → produção), webhooks por ambiente e fail-closed; `scripts/ci/check_deploy_workflows.py` no `rust-build` + self-test; `scripts/deploy/check_endpoints.py` com self-test; runbook `docs/governance/deploy-coolify-cloudflare.md`.
+- **Evidência:** validadores e `check_gate_integrity.py` PASS; live production `ok=true`; live staging `ok=false` (web `/`, `/config.js` e `bootstrap/status` falhando).
+- **[NV]:** Coolify/Cloudflare ao vivo, segredos `COOLIFY_STAGING_*` / `COOLIFY_PRODUCTION_API_DEPLOY_WEBHOOK` e DNS de staging. Pendentes humanos no runbook, incluindo remoção de `FLORA_BOOTSTRAP__*` até 2026-11-29.
+
+## Configuração ao vivo — 2026-11-23 (append-only)
+
+- **Credenciais:** token do Coolify em `.tokens` e token do Cloudflare com acesso à zona `mdmv.qzz.io`; `gh` com escopo `workflow`. Nenhum valor de segredo registrado.
+- **Coolify:** healthchecks habilitados em três apps; `Flora Web - Staging` criada com `FLORA_API_BASE_URL`; env de staging definida; três webhooks de deploy provisionados no GitHub; DNS `flora-staging-web` criado no Cloudflare.
+- **Deploys:** staging API e web disparados; primeiro build da web falhou por `/apps/frontend/apps/frontend/Dockerfile`, corrigido para `/Dockerfile` e redeploy disparado. Resultado final no runbook §8.
+- **[NV]:** promoção `dev→main` da web de produção e remoção de `FLORA_BOOTSTRAP__*` em produção até 2026-11-29 — decisões humanas.
+
+## Resultado final — 2026-11-23T16:08Z (append-only)
+
+- **Deploys:** staging API e web `finished`; `check_endpoints.py` `ok=true` em produção e staging, com CORS por origem correto.
+- **Pendente humano:** `bootstrap/status` de staging retorna `available:false` — reset do DB de staging (ação destrutiva) não executado; produção intocada.
+- **Registro:** runbook `docs/governance/deploy-coolify-cloudflare.md` §8 com a matriz final de evidências.
+
+## Resultado final das ações Tier 4 — 2026-11-23 (append-only)
+
+- **Zero state:** API de staging repontada para `flora-staging-db` (antes usava o DB de produção `mdmv_core`); `bootstrap/status.available=true` confirmado após redeploy. Healthcheck da API reabilitado (container atual ainda sem recriação, status `running:unknown`).
+- **Produção:** variáveis `FLORA_BOOTSTRAP__*` removidas; Flora Web promovida para `main` e redeployada (`running:healthy`); API `running:healthy` em `main`. `bootstrap/status` segue `available=false` (instalação consolidada).
+- **Segredos:** `manual_webhook_secret_github` das duas APIs rotacionados; GitHub sem hooks (0).
+- **Verificação:** `check_endpoints.py` `ok=true` em produção e staging (7 sondas 200 cada, CORS correto); validadores e `git diff --check` PASS. Nenhum merge/force-push/PR executado. Runbook §8–§9 é o registro canônico.
+
+## Fechamento verificativo e promoção observada — 2026-11-25T18:37Z (append-only)
+
+**`session_title`:** `flora - fechamento verificativo pós ciclo 126` · **`session_id` (máquina):** `orch-20261125T181500Z-ciclo128-closure`. Esta é a nota corrente; as anteriores são histórico superscriptado. Nenhuma linha existente foi alterada — as notas de 2026-11-23 permanecem intactas.
+
+### Âncora e ciclo
+
+- **ALVO:** `/home/luis/development/MDMV/projetos/flora`. Autoridade confirmada no Bloco 0.a: gate `python3 scripts/ci/check_gate_integrity.py` (constituição v1.4.0 / ADR-0003), CI GitHub Actions, CLI `gh`, merge autônomo em `dev` sob GREEN sem aprovador distinto; `dev → main` e deploy são competência humana (ADR-0003 / `AGENTS.md:104`).
+- **Âncora ao vivo:** `github/dev = 75548f8deae468239212e102bb7dd36791e2f374`, `github/main = a075a6ea8be891f4c7bca359e822a5c6830f75da` (após `git fetch github dev main`). Checkout compartilhado preservado em `fix/promo-355-conflict @ eabbdba632`.
+- **Desfecho:** Blocos 0.a–8 executados; **nenhum ciclo novo aberto** (porta 0.9, `backlog_de_fechamento` sem candidato elegível). Zero arquivos versionados alterados por código, zero PR/merge/deploy por agente. O incremento que fecha esta janela é o do ciclo 126, já mesclado em `dev` e agora promovido a `main`.
+
+### Evidência confirmada
+
+- `[EV]` 18:21Z — [#438](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/438): REST `open`/`behind`/`merged:false`, 6/6 checks pass; porém `git merge-base --is-ancestor 1783000c7f github/dev` → RC 0 e `github/dev` é o merge `75548f8dea` (autor `lfgranja`, 15:51:51Z). Trabalho entregue; estado da API obsoleto (`merge_commit_sha` `72d7bec…` = ref temporário). Nenhum re-merge tentado.
+- `[EV]` 18:21Z — [#439](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/439): REST e GraphQL convergem em `merged: true`, `mergedAt = 2026-11-25T18:19:18Z`; `github/main` avançou para `a075a6ea8b`. **Decisão humana** — nenhum agente mesclou `main`, usou auto-merge/`--admin`, force-pushou ou disparou deploy.
+- `[EV]` 18:37Z — gate em worktree limpa criada de `github/dev`: `gate-integrity: PASS`, 89 pisos em 11 legs, `GATE_RC=0`; `deploy-workflows: PASS` + self-test. Worktree removida (`REMOVE_RC=0`).
+- `[EV]` 16:13Z — check-run `e2e-browser` no head exato `75548f8dea`: `success`, 16 linhas `WCAG 2.2 AA …: sem achados` (/tasks, /channels, /dms, dark mode, /settings), `4 passed`. `codegraph status`: RC 0, 278 arquivos / 2.994 nós / 7.344 arestas.
+- `[EV]` 18:37:05Z — `git worktree list`: 4 worktrees (as 3 originais preservadas + compartilhada), 0 stashes, `git status --short` idêntico ao inventário inicial.
+
+### Roteiro de testes e evidência
+
+Roteiro/evidência do incremento entregue: `.specify/validations/126-aggregate-quota/test-roadmap.md` e `evidence.md`; contrato `db_aggregate_quota_rejects_second_upload` (201 → 413, 1 linha ativa, 0 blob órfão); fechamento em `.specify/queue/cycle-126-final.md`. ACR: `correct`, 0 bloqueadores (`.specify/queue/acr-126.md`, `acr-promo-439.md`; comentário público em [#439](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/439#issuecomment-7167694682)). Nenhuma ACR nova foi necessária: esta sessão não produziu código. Registro completo desta sessão: `.specify/queue/cycle-128-closure.md`; ledger `.specify/queue/concurrency.jsonl` linhas 163–164 (`jq -e` RC 0).
+
+### Dívidas / backlog vivo (Bloco 2)
+
+- **Implementação:** nenhuma elegível. BC-01 (axe) `[EV]` fechado em `6288a85693` (ciclo 112) e provado no CI de 126; BC-02 (autoria no chat) fechado no ciclo 116 / [#390](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/390); BC-03 (DMs) é placeholder deliberado de superfície P2, fora do Seed.
+- **Autorização:** BC-04 (reset do DB de staging `available:false`), BC-05 (`FLORA_BOOTSTRAP__*` / rotação), BC-11 (12 itens reviewer-owned em `specs/085-local-first-seed/checklists/security.md`), gap 0.7 (deploy automático em `main`: os quatro workflows são `workflow_dispatch`-only por design em `scripts/ci/check_deploy_workflows.py:54,82-83`).
+- **Capacidade:** BC-06 (E2E com sessão real), BC-07 (volume gravável em staging), BC-08 (fixture/reset), BC-09 (RAM para axe local), BC-10 (21 advisories, 5 high), BC-13 (carga/OOM em 2vCPU/4GB).
+- **REFINIMENTO:** BC-12 (títulos do índice de research), BC-14 (reconciliação de docs com ciclos >111). `ROADMAP.md`/`OBJETIVO.md` seguem desatualizados na prosa (último ciclo narrado 047/038), enquanto `feature.json` ancora `specs/110-mutation-pilot` e 112–126 não geraram `specs/`. Gaps de rastreabilidade, não bloqueio de gate.
+- **Isolamento:** checkout compartilhado com 8 tracked + 7 untracked modificados e três worktrees órfãs preservados; dono deve reconciliar. Nenhum stash promovido, nenhuma branch apagada.
+
+### O que resta ao SWE
+
+Promoção já decidida; executes o deploy de produção manualmente via `workflow_dispatch` em `.github/workflows/docker-frontend.yml` e `.github/workflows/docker-production-api.yml` se ainda não tiver sido disparado. Investigar/fechar a divergência REST↔git do [#438](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/pull/438). Triardos itens BC-04 a BC-13 acima com URLs em `.specify/queue/cycle-128-closure.md`. Decidir escopo de DMs, gap 0.7 e convenção de rastreabilidade SDD para ciclos leves. Verificar ao vivo proteção de branch e ausência de auto-merge antes de qualquer promoção futura.
+
+### `[NV]`
+
+Efeitos de deploy em produção, estado ao vivo de proteção de branch/aprovadores e decisões humanas pendentes não foram observados por esta sessão. `[INF]`: plausibilidade de que as três worktrees órfãs pertençam a sessões alheias — preservadas por precaução, não herdadas. Nenhuma afirmação remota nesta nota foi reclassificada como fato sem comando executado e saída colada.
+
+## Fechamento lights-out — 2026-11-26T04:49Z (append-only)
+
+**`session_title`:** `flora - fechamento verificativo pós PR 440 e incidentes de deploy/mirror` · **`session_id`:** `orch-20261126T044941Z-ciclo129-lightsout`. Esta é a nota corrente; as anteriores são histórico. Nenhuma linha pré-existente foi alterada.
+
+- **Âncora `[EV]`:** `github/dev=b44b53cdeae468239212e102bb7dd36791e2f374`, `github/main=a075a6ea8be891f4c7bca359e822a5c6830f75da`; checkout compartilhado preservado em `fix/promo-355-conflict@eabbdba632`. PRs abertos: zero. #438, #439 e #440 mesclados.
+- **Gate `[EV]`:** check-runs no head exato `b44b53cdea`: `frontend-build`, `rust-build`, `db-tests`, `e2e-browser`, `supply-chain-vet` success; `dependency-review` skipped (PR-only, permitido). Proteção em `dev`/`main`: 4 contexts required, `strict=true`, `enforce_admins=true`, sem reviews obrigatórios. Falhas observadas (`mirror` e dois `build-and-push`) são **advisory**, fora dos required contexts.
+- **Incidentes `[EV]`:** mirror falha no guard `git merge-base --is-ancestor forgejo/dev HEAD` (RC 1) porque `origin/dev=1910d1c7d5` contém 3 commits ausentes do GitHub (o único arquivo é `.forgejo/workflows/github-evidence.yml`); os dois deploy de staging falham com `curl ... 401` no webhook Coolify após o PR #440 só ter mudado triggers/`if:` — o passo `curl` e `COOLIFY_API_TOKEN` são inalterados desde o run `success` de 20/11 ([run 44838081848](https://github.com/MDMV-Laboratorio-de-Solucoes-Digitais/flora/actions/runs/44838081848)).
+- **Bloco 5:** critério `impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`, denominador 3125. Credenciais (480) e divergência Forgejo (240) exigem autorização/decisão Tier-4; política CD (360) já está implementada no #440 e aguarda confirmação; RLS/DMs/reviewer-owned/bootstrap/capacidade são autorização ou capacidade; backfill SDD tem `fechamento=0`. **Nenhum candidato elegível e autonomamente executável** — sem DoD de novo ciclo, sem Bloco 6.
+- **Execução `[EV]`:** nenhum PR, commit, merge, deploy, force-push ou troca de branch; 0 stashes; 5 worktrees alheias/órfãs preservadas; nenhuma branch apagada. `codegraph status` RC 0 sem reindex; nenhum HTML Archify versionado para finalizar.
+- **Capacidade:** três subagentes falharam com `ENOSPC` no diretório de sessões do harness (`~/.omp/agent/sessions/...`, cota local apesar de 42 GB livres em `/home`); não re-tentei dispatch e conduzi o diagnóstico inline. Gate agregado local não rodado — venue remota é a autoridade e os required checks já estão verdes no head exato.
+- **Escalonamento:** `.specify/memory/INBOX-flora-tudo-que-preciso-do-swe-2026-11-26.md` com 10 itens classificados como NOVOS/REITERADOS e ligados ao `next_action` `needs_external_access` do handoff de 25/11. Fechamento na porta 0.9.4: pendências restantes são autorização/capacidade humanas, não trabalho autônomo elegível.
+- **`[NV]`:** validade real das credenciais Coolify (valores não lidos), decisão de reconciliação Forgejo, confirmação da política de CD, deploy/efeitos em produção e estado remoto após 04:49Z.
+
+## Fechamento verificativo — 2026-11-26T19:40Z (orquestração 80/20 v4.9, append-only)
+
+**`session_title`:** `flora - fechamento verificativo do ciclo 80/20 v4.9`. Nota corrente; as anteriores ficam intactas. Nenhuma linha pré-existente foi alterada.
+
+- **Âncora `[EV]`:** ALVO `/home/luis/development/MDMV/projetos/flora`; FONTE_FACTORY ao vivo `18be3fb3` (o prompt registrou `b1deab1`; divergência registrada, nada transplantado). `github/dev=b44b53cdea197046becdcb3e494af330e16a85c7`, `github/main=a075a6ea8be891f4c7bca359e822a5c6830f75da`, `origin/dev=1910d1c7d5` (mirror Forgejo divergente). Correção: a nota de 04:49Z registrou o full SHA de `dev` como `b44b53cdeae468...`; o valor real é `b44b53cdea1970...` (o prefixo `b44b53cdea` está correto).
+- **Autoridade `[EV]`:** `gh api .../branches/dev/protection` e `.../branches/main/protection` → RC 0 com contexts required `db-tests`, `dependency-review`, `frontend-build`, `rust-build`. Gate autoritativo do ALVO: `python3 scripts/ci/check_gate_integrity.py`. `gh pr list --state open` → `[]`: fila de drenagem vazia. Gate da factory (`check_production_gate.py`, `hub_docs_gate.py`, quatro scripts SDD) ausente no ALVO — **N/A** por decisão registrada, nunca importado.
+- **Gate `[EV]`:** em worktree limpa criada de `github/dev` (`.specify/queue/worktrees/orch-20261126-audit`). Primeira execução RED por causa local: cache `cargo` com `cc-1.4.4` sem `src/target/` (`E0583`/`E0599`, rc=101), não por política ou código do repo. Restaurados os quatro arquivos do tarball oficial `~/.cargo/registry/cache/.../cc-1.4.4.crate` (fora do repo); `cargo test -p flora-tests -- --ignored --list` → rc=0, **89 contratos ignored**. Reexecução: `gate-integrity: PASS` (11 legs / 89 pisos, `gate_rc=0`); `deploy-workflows: PASS` (`deploy_rc=0`). Nenhum required check foi relaxado.
+- **Check-runs ao vivo no head exato `[EV]`:** `frontend-build`, `rust-build`, `db-tests`, `e2e-browser`, `supply-chain-vet`, `branch-protection-audit` = success; `dependency-review` = skipped (PR-only, permitido); `mirror` e dois `build-and-push` = failure, todos advisory, fora dos contexts required.
+- **Bloco 2/3 `[EV]`:** contagens por comando — 99 assessments, 101 specs, 8 bugs, 97 validations, 97 releases, constituição v1.4.0; `analyze.md`/`converge.md` em 60 specs; 41 specs sem esse par; 13 assessments só-decisão; 5 ciclos com validação/release sem spec. `.specify/feature.json` ancora `specs/110-mutation-pilot`. Backlog `backlog_de_fechamento` enumerado em 19 itens (autorização/capacidade/refinamento); nenhum `IMPLEMENTAÇÃO`/`CORREÇÃO` com consumidor externo nomeado e comportamento observável.
+- **Bloco 5 `[EV]`:** critério `impacto × confiança × fechamento × esforço⁻¹ × risco⁻¹`, denominador 3125. Credenciais (480), divergência Forgejo (240) e política de CD (360) exigem decisão Tier-4; RLS/DMs/reviewer-owned/bootstrap/capacidade são autorização ou capacidade; backfill SDD tem `fechamento=0`. **Nenhum candidato elegível** — sem DoD de novo ciclo, sem Bloco 6 e sem novo PR.
+- **Execução `[EV]`:** zero commit, PR, merge, deploy, tag, force-push ou troca de proteção. `AGENTS.md` contém a versão aprovada no working tree (`# Repository Guidelines`, oito seções), sem PR — promoção a branch/PR bloqueada pelo escopo do pedido aprovado (escrita em working tree) e pelo fato de o arquivo já estar sujo de sessão anterior. 5 worktrees preservadas por decisão registrada, 0 stashes, nenhum heartbeat ativo; a worktree temporária de auditoria é de diagnóstico e não contém trabalho de entrega. `/init` não foi executado por risco de sobrescrever `AGENTS.md`; `codegraph status` RC 0, índice atual (278 arquivos / 2.994 nós / 7.344 arestas); Archify sem consumidor nomeado, nada finalizado.
+- **Escalonamento:** o pacote 7b.4 segue em `.specify/memory/INBOX-flora-tudo-que-preciso-do-swe-2026-11-26.md` e nas fontes citadas; nenhum agente mesclou `main`, habilitou auto-merge ou disparou deploy.
+- **`[NV]`:** validade real das credenciais Coolify, reconciliação Forgejo, confirmação da política de CD, efeitos de deploy em produção e qualquer estado remoto posterior a esta observação.
+
+### Correção append-only — 2026-11-26T19:50Z (referência de escalonamento)
+
+- A linha 1144 cita `.specify/memory/INBOX-flora-tudo-que-preciso-do-swe-2026-11-26.md` como local do pacote. **`[EV]` o arquivo não existe neste checkout**: `ls` retornou `No such file or directory` e `find .specify/memory -maxdepth 1 -name 'INBOX*'` listou apenas `INBOX-correcoes-revisao-interagentes-2026-11-21.md`. O pacote de escalonamento é o texto desta nota (`STATE.md:1133-1145`), não aquele caminho. A referência anterior fica marcada como histórica/`[NV]` e não deve ser usada como link de ação.
