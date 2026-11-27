@@ -1,6 +1,6 @@
 # Runbook — deploy Flora Workspace (GitHub → GHCR → Coolify → Cloudflare)
 
-**Data:** 2026-11-23 · **Autoridade:** ADR-0003 — merge é determinístico, **deploy é manual e humano**. Nenhum workflow dispara em `push`, `pull_request` ou merge. A configuração de apps, segredos e DNS foi aplicada nesta data com as credenciais disponíveis; o resultado das validações ao vivo está na §7.
+**Data:** 2026-11-23 · **Atualizado:** 2026-11-26 (PR #440 em `github/dev`) · **Política vigente:** ADR-0003 mantém merge determinístico; o deploy é **automático por push/merge** — `dev`→staging, `main`→produção — com `workflow_dispatch` como backup manual. A política manual-only registrada em 2026-11-23 está **superada**; §7–§9 permanecem como registro histórico e a correção datada está no final deste runbook. A configuração de apps, segredos e DNS foi aplicada em 2026-11-23 com as credenciais disponíveis; o resultado das validações ao vivo está na §7.
 
 ## 1. Matriz de ambientes
 
@@ -11,14 +11,15 @@
 
 Regras do contrato versionado (validadas por `scripts/ci/check_deploy_workflows.py`):
 
-- `workflow_dispatch` é o único gatilho; qualquer `push`/`pull_request`/`schedule` reprova o gate.
+- `push` em `dev` (staging) ou `main` (produção) e `workflow_dispatch` (backup manual) são os únicos gatilhos; `pull_request`/`schedule`/`workflow_run`/`repository_dispatch` reprovam o gate.
 - Job guard: `refs/heads/dev` nos workflows de staging, `refs/heads/main` nos de produção. Dispatch desde a branch errada é ignorado pelo job.
 - Cada workflow usa **um** webhook secreto; webhooks de staging e produção nunca são reutilizados.
 - `cancel-in-progress: false` — um deploy em andamento nunca é cancelado.
 - Se `deploy=true` (padrão) e o segredo do webhook não existe, o job falha antes do build: um run nunca termina verde sem ter deployado. Use `-f deploy=false` apenas para publicar a imagem sem acionar o Coolify.
+- Em eventos `push`, o deploy ao Coolify sempre acontece; `-f deploy=false` só se aplica ao disparo manual por `workflow_dispatch`.
 - Nenhuma tag `:latest`; sempre tag de ambiente + SHA imutável.
 
-Para disparar (ação humana, nunca automação):
+Gatilho automático: push/merge em `dev` (staging) ou `main` (produção). Os comandos abaixo são o backup manual por `workflow_dispatch`:
 
 ```bash
 gh workflow run 'Build & Deploy Flora API — Staging (GHCR -> Coolify)' --ref dev -f deploy=true
@@ -86,7 +87,7 @@ FLORA_WEB_URL=https://flora-staging-web.mdmv.qzz.io FLORA_API_URL=https://flora-
 | Zero state do staging | **Concluído:** `bootstrap/status.available=true` após isolar o DB e redeployar a API. |
 | Variáveis temporárias de recuperação em produção | **Concluído:** quatro entradas `FLORA_BOOTSTRAP__*` removidas e API redeployada. |
 | Promoção `dev→main` da web de produção | **Concluído no Coolify:** app `Flora Web` em `main`, deploy `finished`, `running:healthy`. Nenhum merge git foi feito. |
-| Decidir se CD continua manual ou passa a ser automático | **Em aberto:** mudança de política — este runbook mantém manual (ADR-0003). |
+| Decidir se CD continua manual ou passa a ser automático | **Resolvido (2026-11-26, PR #440 em `github/dev`):** CD automático por push/merge (`dev`→staging, `main`→produção), `workflow_dispatch` como backup. Registro histórico de 2026-11-23: decisão em aberto e runbook mantinha o fluxo manual (ADR-0003). |
 | Revisão do First Seed/roteiro completo no staging | **Em aberto pelo SE:** zero state confirmado; cenários do roteiro seguem execução humana. |
 
 Rollback: reapontar o app no Coolify para o deployment anterior bem-sucedido, sem force-push e sem desativar gates.
@@ -116,3 +117,17 @@ Rollback: reapontar o app no Coolify para o deployment anterior bem-sucedido, se
 - **Ressalva:** o healthcheck da API de staging está habilitado, mas o container atual ainda não foi recriado após essa habilitação; o status do Coolify aparece `running:unknown` até o próximo deploy, embora `/health` responda 200.
 
 Nenhum merge, force-push ou alteração de branch protection foi executado. Nenhum valor de segredo foi registrado em arquivo, chat ou log.
+
+---
+
+## 10. Nota de correção datada — 2026-11-26
+
+As seções §7, §8 e §9 são **registro histórico de 2026-11-23** e descrevem fielmente o que foi feito naquela data, sob a política manual-only então vigente (ADR-0003). Essa política foi **superada pelo PR #440 em `github/dev`**: o deploy passou a ser automático por push/merge — `dev`→staging e `main`→produção — com `workflow_dispatch` mantido apenas como backup manual.
+
+Efeitos práticos da política vigente:
+
+- `docker-staging.yml` e `docker-staging-web.yml`: `on.push.branches: dev`, job guard `refs/heads/dev`.
+- `docker-production-api.yml` e `docker-frontend.yml`: `on.push.branches: main`, job guard `refs/heads/main`.
+- O validador `scripts/ci/check_deploy_workflows.py` exige o gatilho de `push` **e** o backup `workflow_dispatch`, rejeita outros gatilhos, exige webhook distinto por app, `cancel-in-progress: false` e fail-closed quando o segredo de webhook falta.
+
+As afirmações sobre gatilhos e sobre a decisão em aberto escritas em 2026-11-23 nas seções acima não representam mais a política vigente; foram preservadas apenas como evidência datada. Nenhum valor de segredo foi registrado — apenas os nomes.
