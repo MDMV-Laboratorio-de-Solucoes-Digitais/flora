@@ -58,7 +58,7 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 5. **Atomic Conventional Commits**: One file per commit (strictly enforced).
 6. **Trait-based services**: Use Traits to define functionality; services implement Traits for swappability.
 7. **PR-driven**: Merges to `main` require 100% CI approval.
-8. **Automated Deploy**: Merges to `main` trigger deployment to Coolify via GitHub Actions.
+8. **Automated Deploy**: pushes/merges to `dev` deploy staging and to `main` deploy production via GitHub Actions (`workflow_dispatch` is the manual backup). See [deploy runbook](docs/governance/deploy-coolify-cloudflare.md).
 
 ## 🖥️ Frontend apps
 
@@ -69,7 +69,7 @@ See [ADR-0001](docs/adr/0001-seed-v01-mechanism-substitutions.md).
 
 Current repo state (prefer executable config over this list): Rust CI (`.github/workflows/rust.yml`) runs
 `cargo fmt --all -- --check`, strict `cargo clippy --workspace --all-targets -- -D warnings`,
-`cargo deny check bans licenses sources`, `cargo build`/`cargo test`, six PostgreSQL 18 DB-gated suites,
+`cargo deny check bans licenses sources`, `cargo build`/`cargo test`, 11 PostgreSQL 18 DB-gated legs (89 contracts, HITL included),
 and one informational Chromium browser smoke;
 frontend CI targets `apps/frontend` (`.github/workflows/ci.yml`). `cargo-deny` config is `deny.toml`;
 `cargo-vet` store is versioned (informational gate), and `lefthook`/`cargo-nextest` are absent.
